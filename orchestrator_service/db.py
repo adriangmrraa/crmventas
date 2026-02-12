@@ -510,6 +510,30 @@ class Database:
             EXCEPTION
                 WHEN duplicate_object THEN NULL;
             END $$;
+            """,
+            # Parche 20: Tabla clients (CRM - página Clientes, análoga a patients en dental)
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'clients') THEN
+                    CREATE TABLE clients (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        phone_number VARCHAR(50) NOT NULL,
+                        first_name VARCHAR(100),
+                        last_name VARCHAR(100),
+                        email VARCHAR(255),
+                        status VARCHAR(50) DEFAULT 'active',
+                        notes TEXT,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW(),
+                        CONSTRAINT clients_tenant_phone_unique UNIQUE (tenant_id, phone_number)
+                    );
+                    CREATE INDEX idx_clients_tenant ON clients(tenant_id);
+                    CREATE INDEX idx_clients_tenant_phone ON clients(tenant_id, phone_number);
+                    CREATE INDEX idx_clients_status ON clients(tenant_id, status);
+                END IF;
+            END $$;
             """
         ]
 

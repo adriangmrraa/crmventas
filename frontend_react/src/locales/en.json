@@ -18,7 +18,8 @@
     "app_name": "Dental Clinic",
     "app_name_crm": "CRM Sales",
     "entities": "Entities",
-    "sellers": "Sellers"
+    "sellers": "Sellers",
+    "clients": "Clients"
   },
   "common": {
     "save": "Save",
@@ -392,6 +393,36 @@
     "error_link_entity": "Error linking to entity.",
     "first_name": "First name",
     "last_name": "Last name"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Manage your client portfolio and contacts.",
+    "new_client": "New client",
+    "search_placeholder": "Search by name, phone or email...",
+    "all_statuses": "All statuses",
+    "status_active": "Active",
+    "status_inactive": "Inactive",
+    "client": "Client",
+    "contact": "Contact",
+    "status": "Status",
+    "date_added": "Date added",
+    "view_detail": "View detail",
+    "edit_client": "Edit client",
+    "create_client": "Create client",
+    "phone": "Phone",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "email": "Email",
+    "phone_required": "Phone number is required.",
+    "confirm_delete": "Delete this client? This cannot be undone.",
+    "error_save": "Error saving.",
+    "error_delete": "Error deleting.",
+    "error_load": "Error loading client.",
+    "no_clients": "No clients yet. Create one with New client.",
+    "personal_data": "Personal data",
+    "not_found": "Client not found.",
+    "back_to_list": "Back to clients",
+    "actions": "Actions"
   },
   "clinics": {
     "title": "Clinics",

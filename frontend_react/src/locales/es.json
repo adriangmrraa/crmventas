@@ -18,7 +18,8 @@
     "app_name": "Dental Clinic",
     "app_name_crm": "CRM Ventas",
     "entities": "Entidades",
-    "sellers": "Vendedores"
+    "sellers": "Vendedores",
+    "clients": "Clientes"
   },
   "common": {
     "save": "Guardar",
@@ -392,6 +393,36 @@
     "error_link_entity": "Error al asociar a entidad.",
     "first_name": "Nombre",
     "last_name": "Apellido"
+  },
+  "clients": {
+    "title": "Clientes",
+    "subtitle": "Gestioná tu cartera de clientes y contactos.",
+    "new_client": "Nuevo cliente",
+    "search_placeholder": "Buscar por nombre, teléfono o email...",
+    "all_statuses": "Todos los estados",
+    "status_active": "Activo",
+    "status_inactive": "Inactivo",
+    "client": "Cliente",
+    "contact": "Contacto",
+    "status": "Estado",
+    "date_added": "Fecha alta",
+    "view_detail": "Ver ficha",
+    "edit_client": "Editar cliente",
+    "create_client": "Crear cliente",
+    "phone": "Teléfono",
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "email": "E-mail",
+    "phone_required": "El teléfono es obligatorio.",
+    "confirm_delete": "¿Eliminar este cliente? No se podrá deshacer.",
+    "error_save": "Error al guardar.",
+    "error_delete": "Error al eliminar.",
+    "error_load": "Error al cargar el cliente.",
+    "no_clients": "No hay clientes. Creá uno desde el botón Nuevo cliente.",
+    "personal_data": "Datos personales",
+    "not_found": "Cliente no encontrado.",
+    "back_to_list": "Volver a clientes",
+    "actions": "Acciones"
   },
   "clinics": {
     "title": "Sedes",

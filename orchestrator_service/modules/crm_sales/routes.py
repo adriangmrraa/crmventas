@@ -10,6 +10,7 @@ from uuid import UUID
 
 from .models import (
     LeadCreate, LeadUpdate, LeadResponse, LeadAssignRequest, LeadStageUpdateRequest,
+    ClientCreate, ClientUpdate, ClientResponse,
     WhatsAppConnectionCreate, WhatsAppConnectionResponse,
     TemplateResponse, TemplateSyncRequest,
     CampaignCreate, CampaignUpdate, CampaignResponse, CampaignLaunchRequest,
@@ -28,13 +29,14 @@ router = APIRouter(prefix="", tags=["CRM Sales"])
 async def list_leads(
     status: Optional[str] = None,
     assigned_seller_id: Optional[UUID] = None,
-    limit: int = Query(50, le=100 ),
+    search: Optional[str] = Query(None, description="Search by name, phone, email"),
+    limit: int = Query(50, le=100),
     offset: int = Query(0, ge=0),
     context: dict = Depends(get_current_user_context)
 ):
     """
     List all leads for the current tenant with optional filters.
-    Supports pagination and filtering by status and assigned seller.
+    Excludes soft-deleted (status='deleted'). Supports search by first_name, last_name, phone_number, email.
     """
     tenant_id = context["tenant_id"]
     
@@ -43,9 +45,9 @@ async def list_leads(
                status, stage_id, assigned_seller_id, source, meta_lead_id, tags,
                created_at, updated_at
         FROM leads
-        WHERE tenant_id = $1
+        WHERE tenant_id = $1 AND (status IS NULL OR status != 'deleted')
     """
-    params = [tenant_id]
+    params: list = [tenant_id]
     param_idx = 2
     
     if status:
@@ -56,6 +58,11 @@ async def list_leads(
     if assigned_seller_id:
         query += f" AND assigned_seller_id = ${param_idx}"
         params.append(assigned_seller_id)
+        param_idx += 1
+    
+    if search and search.strip():
+        query += f" AND (first_name ILIKE ${param_idx} OR last_name ILIKE ${param_idx} OR phone_number ILIKE ${param_idx} OR email ILIKE ${param_idx})"
+        params.append(f"%{search.strip()}%")
         param_idx += 1
     
     query += f" ORDER BY created_at DESC LIMIT ${param_idx} OFFSET ${param_idx + 1}"
@@ -212,6 +219,176 @@ async def update_lead_stage(
         raise HTTPException(status_code=404, detail="Lead not found")
     
     return dict(row)
+
+
+@router.delete("/leads/{lead_id}", status_code=200)
+async def delete_lead(
+    lead_id: UUID,
+    context: dict = Depends(get_current_user_context)
+):
+    """Soft-delete a lead (set status to 'deleted')."""
+    tenant_id = context["tenant_id"]
+    result = await db.pool.execute(
+        "UPDATE leads SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        lead_id, tenant_id
+    )
+    if result == "UPDATE 0":
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {"status": "deleted", "id": str(lead_id)}
+
+
+# ============================================
+# CLIENTS ENDPOINTS (tabla clients - página Clientes)
+# ============================================
+
+@router.get("/clients", response_model=List[ClientResponse])
+async def list_clients(
+    search: Optional[str] = Query(None, description="Search by name, phone, email"),
+    status: Optional[str] = None,
+    limit: int = Query(100, le=200),
+    offset: int = Query(0, ge=0),
+    context: dict = Depends(get_current_user_context),
+):
+    """List clients for the current tenant. Excludes soft-deleted (status='deleted')."""
+    tenant_id = context["tenant_id"]
+    query = """
+        SELECT id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at
+        FROM clients
+        WHERE tenant_id = $1 AND (status IS NULL OR status != 'deleted')
+    """
+    params: list = [tenant_id]
+    idx = 2
+    if search and search.strip():
+        query += f" AND (first_name ILIKE ${idx} OR last_name ILIKE ${idx} OR phone_number ILIKE ${idx} OR email ILIKE ${idx})"
+        params.append(f"%{search.strip()}%")
+        idx += 1
+    if status:
+        query += f" AND status = ${idx}"
+        params.append(status)
+        idx += 1
+    query += f" ORDER BY created_at DESC LIMIT ${idx} OFFSET ${idx + 1}"
+    params.extend([limit, offset])
+    rows = await db.pool.fetch(query, *params)
+    return [dict(r) for r in rows]
+
+
+@router.post("/clients", response_model=ClientResponse, status_code=201)
+async def create_client(
+    payload: ClientCreate,
+    context: dict = Depends(get_current_user_context),
+):
+    """Create a client. Phone must be unique per tenant."""
+    tenant_id = context["tenant_id"]
+    existing = await db.pool.fetchrow(
+        "SELECT id FROM clients WHERE tenant_id = $1 AND phone_number = $2",
+        tenant_id, payload.phone_number.strip()
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Ya existe un cliente con ese teléfono en esta entidad.")
+    row = await db.pool.fetchrow("""
+        INSERT INTO clients (tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at
+    """,
+        tenant_id,
+        payload.phone_number.strip(),
+        (payload.first_name or "").strip() or None,
+        (payload.last_name or "").strip() or None,
+        (payload.email or "").strip() or None,
+        (payload.status or "active").strip(),
+        (payload.notes or "").strip() or None,
+    )
+    return dict(row)
+
+
+@router.get("/clients/{client_id}", response_model=ClientResponse)
+async def get_client(
+    client_id: int,
+    context: dict = Depends(get_current_user_context),
+):
+    """Get one client by id."""
+    tenant_id = context["tenant_id"]
+    row = await db.pool.fetchrow(
+        "SELECT id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at FROM clients WHERE id = $1 AND tenant_id = $2",
+        client_id, tenant_id
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return dict(row)
+
+
+@router.put("/clients/{client_id}", response_model=ClientResponse)
+async def update_client(
+    client_id: int,
+    payload: ClientUpdate,
+    context: dict = Depends(get_current_user_context),
+):
+    """Update a client."""
+    tenant_id = context["tenant_id"]
+    updates = []
+    params: list = []
+    idx = 1
+    if payload.first_name is not None:
+        updates.append(f"first_name = ${idx}")
+        params.append((payload.first_name or "").strip() or None)
+        idx += 1
+    if payload.last_name is not None:
+        updates.append(f"last_name = ${idx}")
+        params.append((payload.last_name or "").strip() or None)
+        idx += 1
+    if payload.email is not None:
+        updates.append(f"email = ${idx}")
+        params.append((payload.email or "").strip() or None)
+        idx += 1
+    if payload.phone_number is not None:
+        updates.append(f"phone_number = ${idx}")
+        params.append(payload.phone_number.strip())
+        idx += 1
+    if payload.status is not None:
+        updates.append(f"status = ${idx}")
+        params.append(payload.status.strip())
+        idx += 1
+    if payload.notes is not None:
+        updates.append(f"notes = ${idx}")
+        params.append((payload.notes or "").strip() or None)
+        idx += 1
+    if not updates:
+        row = await db.pool.fetchrow(
+            "SELECT id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at FROM clients WHERE id = $1 AND tenant_id = $2",
+            client_id, tenant_id
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        return dict(row)
+    updates.append("updated_at = NOW()")
+    params.append(client_id)
+    params.append(tenant_id)
+    where_id_placeholder = len(params) - 1
+    where_tenant_placeholder = len(params)
+    set_clause = ", ".join(updates)
+    row = await db.pool.fetchrow(
+        f"UPDATE clients SET {set_clause} WHERE id = ${where_id_placeholder} AND tenant_id = ${where_tenant_placeholder} RETURNING id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at",
+        *params
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return dict(row)
+
+
+@router.delete("/clients/{client_id}", status_code=200)
+async def delete_client(
+    client_id: int,
+    context: dict = Depends(get_current_user_context),
+):
+    """Soft-delete a client (set status to 'deleted')."""
+    tenant_id = context["tenant_id"]
+    result = await db.pool.execute(
+        "UPDATE clients SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        client_id, tenant_id
+    )
+    if result == "UPDATE 0":
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return {"status": "deleted", "id": client_id}
 
 
 # ============================================

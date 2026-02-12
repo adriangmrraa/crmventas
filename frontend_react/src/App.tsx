@@ -16,6 +16,8 @@ import ConfigView from './views/ConfigView';
 import LeadsView from './modules/crm_sales/views/LeadsView';
 import LeadDetailView from './modules/crm_sales/views/LeadDetailView';
 import SellersView from './modules/crm_sales/views/SellersView';
+import ClientsView from './modules/crm_sales/views/ClientsView';
+import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -63,6 +65,8 @@ function App() {
                     } />
                     <Route path="crm/leads" element={<LeadsView />} />
                     <Route path="crm/leads/:id" element={<LeadDetailView />} />
+                    <Route path="crm/clientes" element={<ClientsView />} />
+                    <Route path="crm/clientes/:id" element={<ClientDetailView />} />
                     <Route path="crm/vendedores" element={
                       <ProtectedRoute allowedRoles={['ceo']}>
                         <SellersView />

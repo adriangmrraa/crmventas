@@ -62,6 +62,47 @@ class LeadStageUpdateRequest(BaseModel):
 
 
 # ============================================
+# CLIENTS (página Clientes CRM - tabla propia, análoga a patients)
+# ============================================
+
+class ClientCreate(BaseModel):
+    """Request body for creating a client"""
+    phone_number: str = Field(..., description="Client phone number")
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    status: str = Field(default="active", description="active, inactive, etc.")
+    notes: Optional[str] = None
+
+
+class ClientUpdate(BaseModel):
+    """Request body for updating a client"""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ClientResponse(BaseModel):
+    """Response model for client data"""
+    id: int
+    tenant_id: int
+    phone_number: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================
 # WHATSAPP CONNECTIONS
 # ============================================
 

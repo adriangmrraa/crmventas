@@ -18,7 +18,8 @@
     "app_name": "Clinique dentaire",
     "app_name_crm": "CRM Ventes",
     "entities": "Entités",
-    "sellers": "Vendeurs"
+    "sellers": "Vendeurs",
+    "clients": "Clients"
   },
   "common": {
     "save": "Enregistrer",
@@ -391,6 +392,36 @@
     "error_link_entity": "Erreur lors de l'association à l'entité.",
     "first_name": "Prénom",
     "last_name": "Nom"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Gérez votre portefeuille clients et contacts.",
+    "new_client": "Nouveau client",
+    "search_placeholder": "Rechercher par nom, téléphone ou email...",
+    "all_statuses": "Tous les statuts",
+    "status_active": "Actif",
+    "status_inactive": "Inactif",
+    "client": "Client",
+    "contact": "Contact",
+    "status": "Statut",
+    "date_added": "Date d'ajout",
+    "view_detail": "Voir la fiche",
+    "edit_client": "Modifier le client",
+    "create_client": "Créer le client",
+    "phone": "Téléphone",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "E-mail",
+    "phone_required": "Le numéro de téléphone est obligatoire.",
+    "confirm_delete": "Supprimer ce client ? Cette action est irréversible.",
+    "error_save": "Erreur lors de l'enregistrement.",
+    "error_delete": "Erreur lors de la suppression.",
+    "error_load": "Erreur lors du chargement du client.",
+    "no_clients": "Aucun client. Créez-en un avec Nouveau client.",
+    "personal_data": "Données personnelles",
+    "not_found": "Client introuvable.",
+    "back_to_list": "Retour aux clients",
+    "actions": "Actions"
   },
   "clinics": {
     "title": "Cliniques",

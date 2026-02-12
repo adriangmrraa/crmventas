@@ -6,9 +6,9 @@ tenacity
 structlog
 asyncpg
 redis
-langchain==0.1.0
-langchain-openai==0.0.5
-langchain-community==0.0.13
+langchain>=0.2.0
+langchain-openai>=0.1.0
+langchain-community>=0.2.0
 python-dotenv
 prometheus-client
 requests

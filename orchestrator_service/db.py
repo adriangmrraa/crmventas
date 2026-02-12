@@ -534,6 +534,17 @@ class Database:
                     CREATE INDEX idx_clients_status ON clients(tenant_id, status);
                 END IF;
             END $$;
+            """,
+            # Parche 21: Columna assigned_seller_id en leads (si la tabla existía sin ella)
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'assigned_seller_id') THEN
+                    ALTER TABLE leads ADD COLUMN assigned_seller_id UUID REFERENCES users(id);
+                    CREATE INDEX IF NOT EXISTS idx_leads_seller ON leads(tenant_id, assigned_seller_id);
+                END IF;
+            END $$;
             """
         ]
 

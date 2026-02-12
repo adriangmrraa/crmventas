@@ -84,7 +84,13 @@ const UrgencyBadge = ({ level }: { level: UrgencyRecord['urgency_level'] }) => {
 
 export default function DashboardView() {
   const { t } = useTranslation();
-  const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [stats, setStats] = useState<AnalyticsStats | null>({
+    ia_conversations: 0,
+    ia_appointments: 0,
+    active_urgencies: 0,
+    total_revenue: 0,
+    growth_data: [],
+  });
   const [urgencies, setUrgencies] = useState<UrgencyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'weekly' | 'monthly'>('weekly');
@@ -118,6 +124,14 @@ export default function DashboardView() {
 
       } catch (error) {
         console.error('Error loading analytics:', error);
+        setStats({
+          ia_conversations: 0,
+          ia_appointments: 0,
+          active_urgencies: 0,
+          total_revenue: 0,
+          growth_data: [],
+        });
+        setUrgencies([]);
       } finally {
         setLoading(false);
       }
@@ -214,9 +228,9 @@ export default function DashboardView() {
                 <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t('dashboard.completed')}</span>
               </div>
             </div>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats?.growth_data}>
+            <div className="h-[300px] min-h-[300px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <AreaChart data={stats?.growth_data ?? []}>
                   <defs>
                     <linearGradient id="colorIA" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />

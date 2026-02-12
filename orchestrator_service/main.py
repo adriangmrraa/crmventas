@@ -49,6 +49,7 @@ _default_origins = [
     "http://localhost:3000",
     "https://dentalogic-frontend.onrender.com",
     "https://dentalogic.co",
+    "https://crmventas-frontend.ugwrjq.easypanel.host",  # EasyPanel CRM Ventas frontend
 ]
 _env_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if _env_origins:
@@ -75,6 +76,14 @@ app.include_router(admin_router)
 SUPPORTED_NICHES = ["dental", "crm_sales"]
 for niche in SUPPORTED_NICHES:
     NicheManager.load_niche_router(app, niche)
+
+# Dental also under /admin/core so frontend dashboard (stats/summary, chat/urgencies) resolves
+try:
+    from modules.dental import routes as dental_routes
+    app.include_router(dental_routes.router, prefix="/admin/core", tags=["Dental (Admin)"])
+    logger.info("✅ Dental API also mounted at /admin/core")
+except Exception as e:
+    logger.warning(f"Could not mount Dental under /admin/core: {e}")
 
 # CRM Sales also under /admin/core/crm so proxy/CORS work (same path as other admin routes)
 try:

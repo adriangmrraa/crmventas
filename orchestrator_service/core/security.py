@@ -93,3 +93,14 @@ async def get_allowed_tenant_ids(user_data=Depends(verify_admin_token)) -> List[
         return [int(first)] if first is not None else [1]
     except Exception:
         return [1]  # Fallback para no devolver 500
+
+
+async def get_current_user_context(user_data=Depends(verify_admin_token)) -> dict:
+    """
+    Retorna el contexto del usuario actual para usar en dependencias de FastAPI.
+    """
+    return {
+        "user_id": user_data.user_id,
+        "role": user_data.role,
+        "tenant_id": await get_resolved_tenant_id(user_data),
+    }

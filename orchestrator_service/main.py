@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import AgentExecutor
+from langchain.agents.load_tools import load_tools
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
@@ -104,7 +105,8 @@ async def get_agent_executor(tenant_id: int):
     ])
     
     # Create agent with niche-specific tools and prompt
-    agent = create_tool_calling_agent(llm, tools, prompt_template)
+    from langchain.agents import create_openai_tools_agent
+    agent = create_openai_tools_agent(llm, tools, prompt_template)
     return AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 # --- EVENTOS ---

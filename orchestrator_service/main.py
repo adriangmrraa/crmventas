@@ -43,19 +43,25 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 # --- APP SETUP ---
 app = FastAPI(title="Nexus Orchestrator", version="7.6.0")
 
-# CORS
-origins = [
+# CORS: merge defaults with CORS_ALLOWED_ORIGINS (comma-separated) for EasyPanel/custom deployments
+_default_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://dentalogic-frontend.onrender.com",
-    "https://dentalogic.co"
+    "https://dentalogic.co",
 ]
+_env_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if _env_origins:
+    _default_origins.extend(o.strip() for o in _env_origins.split(",") if o.strip())
+origins = list(dict.fromkeys(_default_origins))  # dedupe, keep order
+logger.info(f"CORS allow_origins: {origins}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # --- SOCKET.IO ---

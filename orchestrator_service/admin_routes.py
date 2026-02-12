@@ -5,7 +5,7 @@ import logging
 import httpx
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Header
 from pydantic import BaseModel
 
 from db import db

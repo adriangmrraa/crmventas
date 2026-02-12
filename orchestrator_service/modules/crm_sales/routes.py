@@ -15,7 +15,7 @@ from .models import (
 from core.security import get_current_user_context
 from db import db
 
-router = APIRouter(prefix="/crm_sales", tags=["CRM Sales"])
+router = APIRouter(prefix="", tags=["CRM Sales"])
 
 # ============================================
 # LEADS ENDPOINTS

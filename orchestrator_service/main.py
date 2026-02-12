@@ -21,6 +21,7 @@ from db import db
 from admin_routes import router as admin_router
 from auth_routes import router as auth_router
 import modules.dental.tools_provider  # Import to register dental tools
+import modules.crm_sales.tools_provider  # Import to register CRM Sales tools
 from core.socket_manager import sio
 from core.context import current_customer_phone, current_patient_id, current_tenant_id
 from core.tools import tool_registry

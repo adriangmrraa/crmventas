@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "agenda": "Agenda",
+    "leads": "Leads",
     "patients": "Patients",
     "chats": "Conversations",
     "staff": "Personnel",
@@ -46,7 +47,12 @@
     "load_error": "Impossible de charger les paramètres.",
     "language_es": "Español",
     "language_en": "English",
-    "language_fr": "Français"
+    "language_fr": "Français",
+    "niche_label": "Mode de l'établissement",
+    "niche_help": "Basculer entre Dentaire (agenda, patients) et CRM Ventes (leads). Le menu et la vue se mettent à jour immédiatement.",
+    "niche_dental": "Dentaire",
+    "niche_crm_sales": "CRM Ventes",
+    "niche_updated": "Mode mis à jour. Le menu a changé."
   },
   "login": {
     "title": "Dentalogic",

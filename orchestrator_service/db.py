@@ -486,6 +486,15 @@ class Database:
                     ALTER TABLE tenants ADD COLUMN niche_type TEXT DEFAULT 'dental';
                 END IF;
             END $$;
+            """,
+            # Parche 18: Columna stage_id en leads (API CRM)
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='leads' AND column_name='stage_id') THEN
+                    ALTER TABLE leads ADD COLUMN stage_id UUID;
+                END IF;
+            END $$;
             """
         ]
 

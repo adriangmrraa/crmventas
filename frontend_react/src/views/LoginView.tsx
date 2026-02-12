@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
-import api from '../api/axios';
+import api, { setTenantId } from '../api/axios';
 import { Lock, Mail, Shield, AlertCircle, CheckCircle } from 'lucide-react';
 
 const DEMO_EMAIL = 'gamarraadrian200@gmail.com';
@@ -70,7 +70,9 @@ const LoginView: React.FC = () => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
-      login(response.data.access_token, response.data.user);
+      const user = response.data.user;
+      if (user?.tenant_id != null) setTenantId(String(user.tenant_id));
+      login(response.data.access_token, user);
       navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || t('login.login_error'));
@@ -85,7 +87,9 @@ const LoginView: React.FC = () => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email: DEMO_EMAIL, password: DEMO_PASSWORD });
-      login(response.data.access_token, response.data.user);
+      const user = response.data.user;
+      if (user?.tenant_id != null) setTenantId(String(user.tenant_id));
+      login(response.data.access_token, user);
       navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || t('login.login_error'));

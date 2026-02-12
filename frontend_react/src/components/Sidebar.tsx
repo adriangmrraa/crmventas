@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
 
   const menuItems = [
     { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
+    { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary'], niche: ['crm_sales'] },
     { id: 'agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/agenda', roles: ['ceo', 'professional', 'secretary'], niche: ['dental'] },
     { id: 'patients', labelKey: 'nav.patients' as const, icon: <Users size={20} />, path: '/pacientes', roles: ['ceo', 'professional', 'secretary'], niche: ['dental'] },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
@@ -52,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') return false;
+    if (path === '/crm/leads') return location.pathname === path || location.pathname.startsWith('/crm/leads/');
     return location.pathname === path;
   };
 

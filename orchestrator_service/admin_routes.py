@@ -41,6 +41,7 @@ class ChatSendMessage(BaseModel):
 
 class ClinicSettingsUpdate(BaseModel):
     ui_language: Optional[str] = None
+    niche_type: Optional[str] = None  # 'dental' | 'crm_sales' — switches tenant mode and UI
 
 # --- HELPERS ---
 async def emit_appointment_event(event_type: str, data: Dict[str, Any], request: Request):
@@ -116,15 +117,29 @@ async def get_tenants(user_data=Depends(verify_admin_token)):
 
 @router.get("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
-    row = await db.pool.fetchrow("SELECT clinic_name, config FROM tenants WHERE id = $1", resolved_tenant_id)
+    row = await db.pool.fetchrow(
+        "SELECT clinic_name, config, COALESCE(niche_type, 'dental') AS niche_type FROM tenants WHERE id = $1",
+        resolved_tenant_id
+    )
     if not row: return {}
-    return {"name": row["clinic_name"], "ui_language": row["config"].get("ui_language", "en")}
+    return {
+        "name": row["clinic_name"],
+        "ui_language": (row["config"] or {}).get("ui_language", "en"),
+        "niche_type": row["niche_type"] or "dental",
+    }
 
 @router.patch("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     if payload.ui_language:
         await db.pool.execute("UPDATE tenants SET config = jsonb_set(COALESCE(config, '{}'), '{ui_language}', to_jsonb($1::text)) WHERE id = $2", payload.ui_language, resolved_tenant_id)
-    return {"status": "ok"}
+    niche_type = None
+    if payload.niche_type is not None and payload.niche_type in ("dental", "crm_sales"):
+        await db.pool.execute("UPDATE tenants SET niche_type = $1 WHERE id = $2", payload.niche_type, resolved_tenant_id)
+        niche_type = payload.niche_type
+    out = {"status": "ok"}
+    if niche_type is not None:
+        out["niche_type"] = niche_type
+    return out
 
 @router.get("/internal/credentials/{name}", tags=["Internal"])
 async def get_internal_credential(name: str, x_internal_token: str = Header(None)):

@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "agenda": "Agenda",
+    "leads": "Leads",
     "patients": "Patients",
     "chats": "Conversations",
     "staff": "Staff",
@@ -46,7 +47,12 @@
     "load_error": "Could not load settings.",
     "language_es": "Español",
     "language_en": "English",
-    "language_fr": "Français"
+    "language_fr": "Français",
+    "niche_label": "Location mode",
+    "niche_help": "Switch between Dental (agenda, patients) and Sales CRM (leads). The menu and data view update immediately.",
+    "niche_dental": "Dental",
+    "niche_crm_sales": "Sales CRM",
+    "niche_updated": "Mode updated. The menu has been switched."
   },
   "login": {
     "title": "Dentalogic",

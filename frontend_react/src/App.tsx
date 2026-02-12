@@ -13,6 +13,8 @@ import UserApprovalView from './views/UserApprovalView';
 import ProfileView from './views/ProfileView';
 import ClinicsView from './views/ClinicsView';
 import ConfigView from './views/ConfigView';
+import LeadsView from './modules/crm_sales/views/LeadsView';
+import LeadDetailView from './modules/crm_sales/views/LeadDetailView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -58,6 +60,8 @@ function App() {
                         <ConfigView />
                       </ProtectedRoute>
                     } />
+                    <Route path="crm/leads" element={<LeadsView />} />
+                    <Route path="crm/leads/:id" element={<LeadDetailView />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Layout>

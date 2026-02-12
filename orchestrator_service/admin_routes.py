@@ -115,6 +115,19 @@ async def get_tenants(user_data=Depends(verify_admin_token)):
     rows = await db.pool.fetch("SELECT id, clinic_name, bot_phone_number, config FROM tenants ORDER BY id ASC")
     return [dict(r) for r in rows]
 
+def _config_as_dict(config):  # config from DB can be dict (JSONB) or str
+    if config is None:
+        return {}
+    if isinstance(config, dict):
+        return config
+    if isinstance(config, str):
+        try:
+            return json.loads(config) if config.strip() else {}
+        except (json.JSONDecodeError, AttributeError):
+            return {}
+    return {}
+
+
 @router.get("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     row = await db.pool.fetchrow(
@@ -122,9 +135,10 @@ async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_ten
         resolved_tenant_id
     )
     if not row: return {}
+    config = _config_as_dict(row.get("config"))
     return {
         "name": row["clinic_name"],
-        "ui_language": (row["config"] or {}).get("ui_language", "en"),
+        "ui_language": config.get("ui_language", "en"),
         "niche_type": row["niche_type"] or "dental",
     }
 

@@ -35,6 +35,8 @@ interface TenantOption {
     clinic_name: string;
 }
 
+type KpisByRowRecord = Record<string, { total_leads: number; by_status: Record<string, number> }>;
+
 const SellersView: React.FC = () => {
     const { t } = useTranslation();
     const [users, setUsers] = useState<StaffUser[]>([]);
@@ -54,7 +56,7 @@ const SellersView: React.FC = () => {
         first_name: '', last_name: '', email: '', phone_number: '', is_active: true,
     });
     const [editFormSubmitting, setEditFormSubmitting] = useState(false);
-    const [kpisByRow, setKpisByRow] = useState<Record<string, { total_leads: number; by_status: Record<string, number } }>>({});
+    const [kpisByRow, setKpisByRow] = useState<KpisByRowRecord>({});
 
     useEffect(() => {
         fetchUsers();

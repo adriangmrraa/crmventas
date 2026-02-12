@@ -6,6 +6,7 @@ import httpx
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from pydantic import BaseModel
 
 from db import db
 from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, ADMIN_TOKEN

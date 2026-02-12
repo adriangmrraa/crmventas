@@ -545,6 +545,16 @@ class Database:
                     CREATE INDEX IF NOT EXISTS idx_leads_seller ON leads(tenant_id, assigned_seller_id);
                 END IF;
             END $$;
+            """,
+            # Parche 22: Columna meta_lead_id en leads (ID de Meta Lead Ads si la tabla existía sin ella)
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'meta_lead_id') THEN
+                    ALTER TABLE leads ADD COLUMN meta_lead_id TEXT;
+                END IF;
+            END $$;
             """
         ]
 

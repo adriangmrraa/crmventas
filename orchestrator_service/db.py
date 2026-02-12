@@ -495,6 +495,21 @@ class Database:
                     ALTER TABLE leads ADD COLUMN stage_id UUID;
                 END IF;
             END $$;
+            """,
+            # Parche 19: Roles setter y closer para CRM (vendedores)
+            """
+            DO $$
+            DECLARE
+                cname text;
+            BEGIN
+                SELECT conname INTO cname FROM pg_constraint WHERE conrelid = 'public.users'::regclass AND contype = 'c' AND pg_get_constraintdef(oid) LIKE '%role%' LIMIT 1;
+                IF cname IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE public.users DROP CONSTRAINT IF EXISTS %I', cname);
+                END IF;
+                ALTER TABLE public.users ADD CONSTRAINT users_role_check CHECK (role IN ('ceo', 'professional', 'secretary', 'setter', 'closer'));
+            EXCEPTION
+                WHEN duplicate_object THEN NULL;
+            END $$;
             """
         ]
 

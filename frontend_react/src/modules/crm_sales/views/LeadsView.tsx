@@ -57,10 +57,17 @@ export default function LeadsView() {
       const response = await api.get<Lead[]>(CRM_LEADS_BASE, { params });
       setLeads(Array.isArray(response.data) ? response.data : []);
     } catch (err: unknown) {
-      const message = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : 'Failed to load leads';
-      setError(String(message));
+      const ax = err as { response?: { status?: number; data?: { detail?: string } }; message?: string };
+      let message = 'Failed to load leads.';
+      if (ax.response) {
+        const detail = ax.response.data?.detail;
+        message = detail || (ax.response.status === 401 ? 'Session expired. Please log in again.' : ax.response.status === 403 ? 'You do not have access.' : `Error ${ax.response.status}.`);
+      } else if (ax.message) {
+        message = ax.message.includes('Network') || ax.message.includes('CORS') || ax.message.includes('Failed to fetch')
+          ? 'Cannot reach the server. Ensure the backend is running and CORS allows this origin (redeploy if needed).'
+          : String(ax.message);
+      }
+      setError(message);
       setLeads([]);
     } finally {
       setLoading(false);

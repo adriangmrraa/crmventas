@@ -102,7 +102,8 @@ const LoginView: React.FC = () => {
     e.preventDefault();
     setError(null);
     setMessage(null);
-    if ((role === 'professional' || role === 'secretary') && !tenantId) {
+    const needsTenant = role === 'professional' || role === 'secretary' || role === 'setter' || role === 'closer';
+    if (needsTenant && !tenantId) {
       setError(t('login.clinic_required'));
       return;
     }
@@ -114,7 +115,7 @@ const LoginView: React.FC = () => {
         role,
         first_name: firstName,
         last_name: lastName,
-        tenant_id: role === 'professional' || role === 'secretary' ? Number(tenantId) : null,
+        tenant_id: needsTenant ? Number(tenantId) : null,
         specialty: role === 'professional' ? (specialty || null) : null,
         phone_number: phoneNumber || null,
         registration_id: registrationId || null,
@@ -230,20 +231,22 @@ const LoginView: React.FC = () => {
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="professional">{t('login.role_professional')}</option>
                 <option value="secretary">{t('login.role_secretary')}</option>
+                <option value="setter">{t('login.role_setter')}</option>
+                <option value="closer">{t('login.role_closer')}</option>
                 <option value="ceo">{t('login.role_ceo')}</option>
               </select>
             </div>
           )}
 
-          {isRegistering && (role === 'professional' || role === 'secretary') && (
+          {isRegistering && (role === 'professional' || role === 'secretary' || role === 'setter' || role === 'closer') && (
             <div className="input-group">
-              <label>{t('login.clinic')} <span className="required-dot">*</span></label>
+              <label>{(role === 'setter' || role === 'closer') ? t('login.entity') : t('login.clinic')} <span className="required-dot">*</span></label>
               <select
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value === '' ? '' : Number(e.target.value))}
-                required={role === 'professional' || role === 'secretary'}
+                required={role === 'professional' || role === 'secretary' || role === 'setter' || role === 'closer'}
               >
-                <option value="">{t('login.choose_clinic')}</option>
+                <option value="">{(role === 'setter' || role === 'closer') ? t('login.choose_entity') : t('login.choose_clinic')}</option>
                 {clinics.map((c) => (
                   <option key={c.id} value={c.id}>{c.clinic_name}</option>
                 ))}
@@ -303,7 +306,7 @@ const LoginView: React.FC = () => {
             </>
           )}
 
-          {isRegistering && role === 'secretary' && (
+          {isRegistering && (role === 'secretary' || role === 'setter' || role === 'closer') && (
             <div className="input-group">
               <label>{t('login.phone')}</label>
               <div className="input-wrapper">

@@ -38,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'patients', labelKey: 'nav.patients' as const, icon: <Users size={20} />, path: '/pacientes', roles: ['ceo', 'professional', 'secretary'], niche: ['dental'] },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
     { id: 'approvals', labelKey: 'nav.staff' as const, icon: <ShieldCheck size={20} />, path: '/aprobaciones', roles: ['ceo'], niche: ['dental'] },
+    { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'], niche: ['crm_sales'] },
     { id: 'tenants', labelKey: 'nav.clinics' as const, icon: <ShieldCheck size={20} />, path: '/sedes', roles: ['ceo'], niche: ['dental', 'crm_sales'] },
     { id: 'analytics', labelKey: 'nav.strategy' as const, icon: <BarChart3 size={20} />, path: '/analytics/professionals', roles: ['ceo'], niche: ['dental'] },
     { id: 'treatments', labelKey: 'nav.treatments' as const, icon: <Clock size={20} />, path: '/tratamientos', roles: ['ceo', 'secretary'], niche: ['dental'] },
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') return false;
     if (path === '/crm/leads') return location.pathname === path || location.pathname.startsWith('/crm/leads/');
+    if (path === '/crm/vendedores') return location.pathname === path;
     return location.pathname === path;
   };
 

@@ -38,7 +38,7 @@ async def verify_admin_token(
         raise HTTPException(status_code=401, detail="Token de sesión expirado o inválido.")
     
     # 3. Validar Rol (CEOs, Secretarias y Profesionales tienen acceso básico)
-    if user_data.role not in ['ceo', 'secretary', 'professional']:
+    if user_data.role not in ['ceo', 'secretary', 'professional', 'setter', 'closer']:
         raise HTTPException(status_code=403, detail="No tienes permisos suficientes para realizar esta acción.")
 
     # Inyectar datos del usuario en el request state para uso posterior

@@ -67,17 +67,17 @@ async def list_clinics_public():
 async def register(payload: UserRegister):
     """
     Registers a new user in 'pending' status.
-    Para professional/secretary exige tenant_id (sede). Crea fila en professionals con is_active=FALSE.
+    Para professional/secretary/setter/closer exige tenant_id (sede o entidad). Crea fila en professionals con is_active=FALSE.
     """
     existing = await db.fetchval("SELECT id FROM users WHERE email = $1", payload.email)
     if existing:
         raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado.")
 
-    if payload.role in ("professional", "secretary"):
+    if payload.role in ("professional", "secretary", "setter", "closer"):
         if payload.tenant_id is None:
             raise HTTPException(
                 status_code=400,
-                detail="Debés elegir una sede/clínica para registrarte como profesional o secretaría.",
+                detail="Debés elegir una sede/clínica o entidad para registrarte.",
             )
         tenant_exists = await db.pool.fetchval("SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id)
         if not tenant_exists:
@@ -94,7 +94,7 @@ async def register(payload: UserRegister):
             VALUES ($1, $2, $3, $4, 'pending', $5, $6)
         """, user_id, payload.email, password_hash, payload.role, first_name, last_name)
 
-        if payload.role in ("professional", "secretary"):
+        if payload.role in ("professional", "secretary", "setter", "closer"):
             tenant_id = int(payload.tenant_id)
             uid = uuid.UUID(user_id)
             wh_json = json.dumps(_default_working_hours())

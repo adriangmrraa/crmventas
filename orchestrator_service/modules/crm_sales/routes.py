@@ -1,7 +1,9 @@
 """
 CRM Sales Module - FastAPI Routes
-Endpoints for managing leads, WhatsApp connections, templates, and campaigns
+Endpoints for managing leads, WhatsApp connections, templates, campaigns, and sellers
 """
+import uuid as uuid_lib
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from uuid import UUID
@@ -10,9 +12,10 @@ from .models import (
     LeadCreate, LeadUpdate, LeadResponse, LeadAssignRequest, LeadStageUpdateRequest,
     WhatsAppConnectionCreate, WhatsAppConnectionResponse,
     TemplateResponse, TemplateSyncRequest,
-    CampaignCreate, CampaignUpdate, CampaignResponse, CampaignLaunchRequest
+    CampaignCreate, CampaignUpdate, CampaignResponse, CampaignLaunchRequest,
+    SellerCreate, SellerUpdate,
 )
-from core.security import get_current_user_context
+from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
 from db import db
 
 router = APIRouter(prefix="", tags=["CRM Sales"])
@@ -162,16 +165,15 @@ async def assign_lead(
     request: LeadAssignRequest,
     context: dict = Depends(get_current_user_context)
 ):
-    """Assign a lead to a seller"""
+    """Assign a lead to a seller (user_id; seller must be setter/closer with professional row in this tenant)."""
     tenant_id = context["tenant_id"]
     
-    # Verify seller exists and belongs to tenant
     seller = await db.pool.fetchrow(
-        "SELECT id FROM users WHERE id = $1 AND tenant_id = $2",
+        "SELECT 1 FROM professionals p JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer') WHERE p.user_id = $1 AND p.tenant_id = $2",
         request.seller_id, tenant_id
     )
     if not seller:
-        raise HTTPException(status_code=404, detail="Seller not found")
+        raise HTTPException(status_code=404, detail="Seller not found or not in this entity")
     
     row = await db.pool.fetchrow("""
         UPDATE leads
@@ -388,3 +390,208 @@ async def launch_campaign(
     # TODO: Implement actual campaign launch logic (queue messages)
     
     return dict(row)
+
+
+# ============================================
+# SELLERS (Vendedores: setter/closer en professionals)
+# ============================================
+
+@router.get("/sellers")
+async def list_sellers(
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+    user_data=Depends(verify_admin_token),
+):
+    """
+    Lista vendedores (professionals con user.role in setter, closer) de tenants CRM.
+    Solo tenants con niche_type = 'crm_sales'.
+    """
+    crm_ids = await db.pool.fetch(
+        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'dental') = 'crm_sales'",
+        allowed_ids
+    )
+    crm_tenant_ids = [int(r["id"]) for r in crm_ids]
+    if not crm_tenant_ids:
+        return []
+    rows = await db.pool.fetch("""
+        SELECT p.id, p.tenant_id, p.user_id, p.first_name, p.last_name, p.email, p.phone_number, p.is_active, u.role
+        FROM professionals p
+        JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
+        WHERE p.tenant_id = ANY($1::int[])
+        ORDER BY p.tenant_id, p.first_name, p.last_name
+    """, crm_tenant_ids)
+    return [dict(row) for row in rows]
+
+
+@router.get("/sellers/by-user/{user_id}")
+async def get_sellers_by_user(
+    user_id: str,
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+    user_data=Depends(verify_admin_token),
+):
+    """Obtiene los registros de vendedor (professionals) para un user_id en tenants CRM."""
+    try:
+        uid = UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id inválido")
+    crm_ids = await db.pool.fetch(
+        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'dental') = 'crm_sales'",
+        allowed_ids
+    )
+    crm_tenant_ids = [int(r["id"]) for r in crm_ids]
+    if not crm_tenant_ids:
+        return []
+    rows = await db.pool.fetch("""
+        SELECT p.*, u.role
+        FROM professionals p
+        JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
+        WHERE p.user_id = $1 AND p.tenant_id = ANY($2::int[])
+    """, uid, crm_tenant_ids)
+    return [dict(r) for r in rows]
+
+
+@router.put("/sellers/{id}")
+async def update_seller(
+    id: int,
+    payload: SellerUpdate,
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+    user_data=Depends(verify_admin_token),
+):
+    """Actualiza datos del vendedor (tabla professionals). Solo en tenants CRM y si es setter/closer."""
+    # Ensure this professional is a seller in a CRM tenant
+    row = await db.pool.fetchrow("""
+        SELECT p.id, p.tenant_id FROM professionals p
+        JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
+        JOIN tenants t ON t.id = p.tenant_id AND COALESCE(t.niche_type, 'dental') = 'crm_sales'
+        WHERE p.id = $1 AND p.tenant_id = ANY($2::int[])
+    """, id, allowed_ids)
+    if not row:
+        raise HTTPException(status_code=404, detail="Vendedor no encontrado")
+    updates = []
+    params = []
+    idx = 1
+    if payload.first_name is not None:
+        updates.append(f"first_name = ${idx}")
+        params.append(payload.first_name)
+        idx += 1
+    if payload.last_name is not None:
+        updates.append(f"last_name = ${idx}")
+        params.append(payload.last_name)
+        idx += 1
+    if payload.email is not None:
+        updates.append(f"email = ${idx}")
+        params.append(payload.email)
+        idx += 1
+    if payload.phone_number is not None:
+        updates.append(f"phone_number = ${idx}")
+        params.append(payload.phone_number)
+        idx += 1
+    if payload.is_active is not None:
+        updates.append(f"is_active = ${idx}")
+        params.append(payload.is_active)
+        idx += 1
+    if not updates:
+        return {"id": id, "status": "unchanged"}
+    params.append(id)
+    updates.append("updated_at = NOW()")
+    set_clause = ", ".join(updates)
+    where_idx = len(params)
+    await db.pool.execute(f"UPDATE professionals SET {set_clause} WHERE id = ${where_idx}", *params)
+    return {"id": id, "status": "updated"}
+
+
+@router.get("/sellers/{id}/analytics")
+async def get_seller_analytics(
+    id: int,
+    tenant_id: int = Query(..., description="Tenant ID for scope"),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+    user_data=Depends(verify_admin_token),
+):
+    """
+    KPIs del vendedor para CRM: leads asignados, por estado, etc.
+    id = professional id; tenant_id = scope; leads.assigned_seller_id = user_id del vendedor.
+    """
+    if tenant_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    seller = await db.pool.fetchrow("""
+        SELECT p.id, p.user_id, p.first_name, p.last_name
+        FROM professionals p
+        JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
+        JOIN tenants t ON t.id = p.tenant_id AND COALESCE(t.niche_type, 'dental') = 'crm_sales'
+        WHERE p.id = $1 AND p.tenant_id = $2
+    """, id, tenant_id)
+    if not seller:
+        raise HTTPException(status_code=404, detail="Vendedor no encontrado")
+    user_id = seller["user_id"]
+    today = datetime.utcnow()
+    if start_date and end_date:
+        try:
+            start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        except ValueError:
+            start = today.replace(day=1)
+            end = today
+    else:
+        start = today.replace(day=1)
+        end = today
+    # Leads asignados a este vendedor en el rango
+    by_status = await db.pool.fetch("""
+        SELECT status, COUNT(*) AS count
+        FROM leads
+        WHERE tenant_id = $1 AND assigned_seller_id = $2
+        AND created_at BETWEEN $3 AND $4
+        GROUP BY status
+    """, tenant_id, user_id, start, end)
+    total = await db.pool.fetchval("""
+        SELECT COUNT(*) FROM leads
+        WHERE tenant_id = $1 AND assigned_seller_id = $2
+        AND created_at BETWEEN $3 AND $4
+    """, tenant_id, user_id, start, end)
+    return {
+        "id": id,
+        "user_id": str(user_id),
+        "name": f"{seller['first_name'] or ''} {seller['last_name'] or ''}".strip(),
+        "period": {"start": start.isoformat(), "end": end.isoformat()},
+        "total_leads": total or 0,
+        "by_status": {r["status"]: r["count"] for r in by_status},
+    }
+
+
+@router.post("/sellers", status_code=201)
+async def create_seller(
+    payload: SellerCreate,
+    resolved_tenant_id: int = Depends(get_resolved_tenant_id),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+    user_data=Depends(verify_admin_token),
+):
+    """
+    Crea un vendedor (user setter/closer + fila en professionals) en un tenant CRM.
+    Solo en tenants con niche_type = crm_sales.
+    """
+    if payload.role not in ("setter", "closer"):
+        raise HTTPException(status_code=400, detail="role debe ser setter o closer")
+    tenant_id = int(payload.tenant_id) if payload.tenant_id is not None else resolved_tenant_id
+    if tenant_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    niche = await db.pool.fetchval("SELECT COALESCE(niche_type, 'dental') FROM tenants WHERE id = $1", tenant_id)
+    if niche != "crm_sales":
+        raise HTTPException(status_code=400, detail="El tenant no es de tipo CRM ventas")
+    existing_user = await db.pool.fetchrow("SELECT id FROM users WHERE email = $1", payload.email)
+    if existing_user:
+        uid = existing_user["id"]
+        if await db.pool.fetchval("SELECT 1 FROM professionals WHERE user_id = $1 AND tenant_id = $2", uid, tenant_id):
+            raise HTTPException(status_code=409, detail="Ese correo ya está vinculado como vendedor en esta entidad.")
+    else:
+        uid = uuid_lib.uuid4()
+        await db.pool.execute(
+            "INSERT INTO users (id, email, password_hash, role, first_name, last_name, status) VALUES ($1, $2, 'hash_placeholder', $3, $4, $5, 'active')",
+            uid, payload.email, payload.role, (payload.first_name or "").strip(), (payload.last_name or "").strip()
+        )
+    first_name = (payload.first_name or "").strip() or "Vendedor"
+    last_name = (payload.last_name or "").strip() or " "
+    await db.pool.execute("""
+        INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, TRUE, NOW(), NOW())
+    """, tenant_id, uid, first_name, last_name, payload.email, (payload.phone_number or "").strip() or None)
+    return {"status": "created", "user_id": str(uid)}

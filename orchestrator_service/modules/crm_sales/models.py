@@ -161,3 +161,26 @@ class CampaignResponse(CampaignBase):
 class CampaignLaunchRequest(BaseModel):
     """Request to launch a campaign"""
     immediate: bool = Field(default=False, description="Launch immediately or use scheduled_at")
+
+
+# ============================================
+# SELLERS (vendedores: setter/closer en professionals)
+# ============================================
+
+class SellerCreate(BaseModel):
+    """Request body for creating a seller (admin)"""
+    first_name: str
+    last_name: Optional[str] = ""
+    email: str
+    phone_number: Optional[str] = None
+    role: str = Field(..., description="setter | closer")
+    tenant_id: Optional[int] = None
+
+
+class SellerUpdate(BaseModel):
+    """Request body for updating a seller"""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    is_active: Optional[bool] = None

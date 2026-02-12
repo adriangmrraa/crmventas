@@ -15,7 +15,9 @@
     "close_menu": "Cerrar menú",
     "expand": "Expandir",
     "collapse": "Contraer",
-    "app_name": "Dental Clinic"
+    "app_name": "Dental Clinic",
+    "app_name_crm": "CRM Ventas",
+    "entities": "Entidades"
   },
   "common": {
     "save": "Guardar",
@@ -522,8 +524,11 @@
   },
   "layout": {
     "app_title": "Sistema Dental",
+    "app_title_crm": "CRM Ventas",
     "branch": "Sucursal",
     "branch_principal": "Principal",
+    "entity": "Entidad",
+    "entity_principal": "Principal",
     "notification_handoff": "Derivación Humana",
     "notification_reason": "Motivo",
     "click_to_open_chat": "Click para abrir chat"

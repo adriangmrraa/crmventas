@@ -5,7 +5,7 @@ import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import type { Lead } from './LeadsView';
 
-const CRM_LEADS_BASE = '/niche/crm_sales/leads';
+const CRM_LEADS_BASE = '/admin/core/crm/leads';
 
 export default function LeadDetailView() {
   const { id } = useParams<{ id: string }>();

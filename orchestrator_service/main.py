@@ -76,6 +76,14 @@ SUPPORTED_NICHES = ["dental", "crm_sales"]
 for niche in SUPPORTED_NICHES:
     NicheManager.load_niche_router(app, niche)
 
+# CRM Sales also under /admin/core/crm so proxy/CORS work (same path as other admin routes)
+try:
+    from modules.crm_sales import routes as crm_routes
+    app.include_router(crm_routes.router, prefix="/admin/core/crm", tags=["CRM Sales (Admin)"])
+    logger.info("✅ CRM API also mounted at /admin/core/crm")
+except Exception as e:
+    logger.warning(f"Could not mount CRM under /admin/core/crm: {e}")
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 

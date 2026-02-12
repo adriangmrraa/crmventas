@@ -122,15 +122,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </button>
             <h1 className="text-lg lg:text-xl font-semibold text-medical-900 truncate max-w-[150px] md:max-w-none">
-              {t('layout.app_title')}
+              {t(user?.niche_type === 'crm_sales' ? 'layout.app_title_crm' : 'layout.app_title')}
             </h1>
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
-            {/* Tenant Selector - Hidden on small mobile */}
+            {/* Tenant/Entity Selector - Hidden on small mobile */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm">
-              <span className="text-gray-500">{t('layout.branch')}:</span>
-              <span className="font-medium text-medical-900">{t('layout.branch_principal')}</span>
+              <span className="text-gray-500">{t(user?.niche_type === 'crm_sales' ? 'layout.entity' : 'layout.branch')}:</span>
+              <span className="font-medium text-medical-900">{t(user?.niche_type === 'crm_sales' ? 'layout.entity_principal' : 'layout.branch_principal')}</span>
             </div>
 
             {/* User Menu */}

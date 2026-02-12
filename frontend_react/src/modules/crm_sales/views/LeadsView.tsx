@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, Search, MessageSquare } from 'lucide-react';
+import { Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
-const CRM_LEADS_BASE = '/niche/crm_sales/leads';
+const CRM_LEADS_BASE = '/admin/core/crm/leads';
+const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
 
 export interface Lead {
   id: string;
@@ -21,6 +22,14 @@ export interface Lead {
   updated_at: string;
 }
 
+const defaultForm = {
+  phone_number: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  status: 'new' as const,
+};
+
 export default function LeadsView() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -29,6 +38,11 @@ export default function LeadsView() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [formData, setFormData] = useState(defaultForm);
+  const [saving, setSaving] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeads();
@@ -63,6 +77,61 @@ export default function LeadsView() {
       (lead.email || '').toLowerCase().includes(term)
     );
   });
+
+  const handleOpenModal = (lead: Lead | null = null) => {
+    if (lead) {
+      setEditingLead(lead);
+      setFormData({
+        phone_number: lead.phone_number,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        email: lead.email || '',
+        status: (lead.status as typeof defaultForm.status) || 'new',
+      });
+    } else {
+      setEditingLead(null);
+      setFormData(defaultForm);
+    }
+    setModalError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setModalError(null);
+    try {
+      if (editingLead) {
+        await api.put(`${CRM_LEADS_BASE}/${editingLead.id}`, {
+          first_name: formData.first_name || null,
+          last_name: formData.last_name || null,
+          email: formData.email || null,
+          status: formData.status,
+        });
+      } else {
+        if (!formData.phone_number.trim()) {
+          setModalError('Phone number is required.');
+          return;
+        }
+        await api.post(CRM_LEADS_BASE, {
+          phone_number: formData.phone_number.trim(),
+          first_name: formData.first_name || undefined,
+          last_name: formData.last_name || undefined,
+          email: formData.email || undefined,
+          status: formData.status,
+        });
+      }
+      await fetchLeads();
+      setIsModalOpen(false);
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : editingLead ? 'Failed to update lead' : 'Failed to create lead';
+      setModalError(String(msg));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -102,7 +171,7 @@ export default function LeadsView() {
           </select>
           <button
             type="button"
-            onClick={() => navigate('/crm/leads/new')}
+            onClick={() => handleOpenModal(null)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 text-sm font-medium"
           >
             <Plus size={18} />
@@ -125,7 +194,7 @@ export default function LeadsView() {
             <p>No leads yet.</p>
             <button
               type="button"
-              onClick={() => navigate('/crm/leads/new')}
+              onClick={() => handleOpenModal(null)}
               className="mt-3 text-medical-600 hover:underline font-medium"
             >
               Add your first lead
@@ -139,7 +208,7 @@ export default function LeadsView() {
                 <li
                   key={lead.id}
                   className="bg-white border border-gray-200 rounded-lg p-4 hover:border-medical-300 hover:shadow-sm transition-all cursor-pointer flex items-center justify-between gap-4"
-                  onClick={() => navigate(`/crm/leads/${lead.id}`)}
+                  onClick={() => handleOpenModal(lead)}
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-medical-100 flex items-center justify-center shrink-0">
@@ -170,6 +239,93 @@ export default function LeadsView() {
               );
             })}
           </ul>
+        )}
+
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
+                  {editingLead ? <Edit className="text-medical-600" size={22} /> : <Plus className="text-medical-600" size={22} />}
+                  {editingLead ? 'Edit lead' : 'New lead'}
+                </h2>
+              </div>
+              <form onSubmit={handleModalSubmit} className="p-6 space-y-4">
+                {modalError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
+                    <AlertCircle size={16} /> {modalError}
+                  </div>
+                )}
+                {!editingLead && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Phone number *</label>
+                    <input
+                      required
+                      type="tel"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">First name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Last name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Status</label>
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof defaultForm.status })}
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-all"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 py-2 bg-medical-600 text-white font-bold rounded-lg hover:bg-medical-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {saving ? <Loader2 className="animate-spin" size={20} /> : t('common.save')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </div>

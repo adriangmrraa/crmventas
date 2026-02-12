@@ -15,7 +15,9 @@
     "close_menu": "Fermer le menu",
     "expand": "Développer",
     "collapse": "Réduire",
-    "app_name": "Clinique dentaire"
+    "app_name": "Clinique dentaire",
+    "app_name_crm": "CRM Ventes",
+    "entities": "Entités"
   },
   "common": {
     "save": "Enregistrer",
@@ -521,8 +523,11 @@
   },
   "layout": {
     "app_title": "Système dentaire",
+    "app_title_crm": "CRM Ventes",
     "branch": "Succursale",
     "branch_principal": "Principal",
+    "entity": "Entité",
+    "entity_principal": "Principal",
     "notification_handoff": "Dérivation humaine",
     "notification_reason": "Motif",
     "click_to_open_chat": "Cliquer pour ouvrir le chat"

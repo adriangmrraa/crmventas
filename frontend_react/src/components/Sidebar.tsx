@@ -66,7 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
             <Stethoscope size={18} className="text-white" />
           </div>
           {(!collapsed || onCloseMobile) && (
-            <span className="font-semibold text-lg truncate whitespace-nowrap">{t('nav.app_name')}</span>
+            <span className="font-semibold text-lg truncate whitespace-nowrap">
+              {t(user?.niche_type === 'crm_sales' ? 'nav.app_name_crm' : 'nav.app_name')}
+            </span>
           )}
         </div>
 
@@ -95,23 +97,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
 
       {/* Navigation */}
       <nav className={`flex-1 py-4 overflow-y-auto overflow-x-hidden ${collapsed && !onCloseMobile ? 'px-2' : 'px-3'}`}>
-        {filteredItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => {
-              navigate(item.path);
-              onCloseMobile?.();
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 group ${isActive(item.path)
-              ? 'bg-white/10 text-white'
-              : 'text-gray-400 hover:bg-white/5 hover:text-white'
-              }`}
-            title={collapsed && !onCloseMobile ? t(item.labelKey) : undefined}
-          >
-            <span className="flex-shrink-0 group-hover:scale-110 transition-transform">{item.icon}</span>
-            {(!collapsed || onCloseMobile) && <span className="font-medium text-sm truncate">{t(item.labelKey)}</span>}
-          </button>
-        ))}
+        {filteredItems.map((item) => {
+          const labelKey = (item.id === 'tenants' && user?.niche_type === 'crm_sales') ? 'nav.entities' : item.labelKey;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                navigate(item.path);
+                onCloseMobile?.();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 group ${isActive(item.path)
+                ? 'bg-white/10 text-white'
+                : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`}
+              title={collapsed && !onCloseMobile ? t(labelKey) : undefined}
+            >
+              <span className="flex-shrink-0 group-hover:scale-110 transition-transform">{item.icon}</span>
+              {(!collapsed || onCloseMobile) && <span className="font-medium text-sm truncate">{t(labelKey)}</span>}
+            </button>
+          );
+        })}
 
         <button
           onClick={logout}

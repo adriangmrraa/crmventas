@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from langchain_openai import ChatOpenAI
-from langchain_core.agent import AgentExecutor
+from langchain.agents import AgentExecutor
 from langchain.agents.load_tools import load_tools
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage

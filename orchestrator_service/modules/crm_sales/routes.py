@@ -792,6 +792,11 @@ async def list_agenda_events(
     if tenant_id not in allowed_ids:
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    try:
+        start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=400, detail="start_date and end_date must be valid ISO 8601 strings")
     query = """
         SELECT e.id, e.tenant_id, e.seller_id, e.title, e.start_datetime, e.end_datetime,
                e.lead_id, e.client_id, e.notes, e.source, e.status, e.created_at, e.updated_at,
@@ -803,7 +808,7 @@ async def list_agenda_events(
         WHERE e.tenant_id = $1 AND e.status != 'cancelled'
           AND e.start_datetime < $3 AND e.end_datetime > $2
     """
-    params: list = [tenant_id, start_date, end_date]
+    params: list = [tenant_id, start_dt, end_dt]
     if seller_id is not None:
         query += " AND e.seller_id = $4"
         params.append(seller_id)

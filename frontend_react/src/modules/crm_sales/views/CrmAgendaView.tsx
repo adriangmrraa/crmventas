@@ -9,9 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useTranslation } from '../../../context/LanguageContext';
 import AgendaEventForm, { type AgendaEventFormData, type SellerOption } from '../components/AgendaEventForm';
 import MobileAgenda from '../../../components/MobileAgenda';
-import DateStrip from '../../../components/DateStrip';
 import { addDays, subDays, startOfDay, endOfDay } from 'date-fns';
-import { format, parseISO } from 'date-fns';
 
 const CRM_AGENDA_EVENTS = '/admin/core/crm/agenda/events';
 const CRM_SELLERS = '/admin/core/crm/sellers';
@@ -239,8 +237,7 @@ export default function CrmAgendaView() {
 
         {isMobile ? (
           <div className="flex flex-col flex-1 min-h-0">
-            <DateStrip selectedDate={selectedDate || new Date()} onDateSelect={(d) => setSelectedDate(d)} />
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
               <MobileAgenda
                 appointments={mobileAppointments}
                 googleBlocks={[]}

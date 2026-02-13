@@ -225,3 +225,30 @@ class SellerUpdate(BaseModel):
     email: Optional[str] = None
     phone_number: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+# ============================================
+# SELLER AGENDA EVENTS (agenda por vendedor)
+# ============================================
+
+class AgendaEventCreate(BaseModel):
+    """Request body for creating an agenda event"""
+    seller_id: int = Field(..., description="Professional (seller) ID")
+    title: str = Field(..., min_length=1)
+    start_datetime: datetime
+    end_datetime: datetime
+    lead_id: Optional[UUID] = None
+    client_id: Optional[int] = None
+    notes: Optional[str] = None
+    source: str = Field(default="manual", description="manual | ai")
+
+
+class AgendaEventUpdate(BaseModel):
+    """Request body for updating an agenda event"""
+    title: Optional[str] = None
+    start_datetime: Optional[datetime] = None
+    end_datetime: Optional[datetime] = None
+    lead_id: Optional[UUID] = None
+    client_id: Optional[int] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None  # scheduled | completed | cancelled

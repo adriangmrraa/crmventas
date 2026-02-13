@@ -43,6 +43,16 @@ class ClinicSettingsUpdate(BaseModel):
     ui_language: Optional[str] = None
     niche_type: Optional[str] = None  # 'dental' | 'crm_sales' — switches tenant mode and UI
 
+class TenantUpdate(BaseModel):
+    clinic_name: Optional[str] = None
+    bot_phone_number: Optional[str] = None
+    calendar_provider: Optional[str] = None  # 'local' | 'google' — stored in config
+
+class TenantCreate(BaseModel):
+    clinic_name: str
+    bot_phone_number: str
+    calendar_provider: Optional[str] = None  # 'local' | 'google'
+
 # --- HELPERS ---
 async def emit_appointment_event(event_type: str, data: Dict[str, Any], request: Request):
     if hasattr(request.app.state, 'emit_appointment_event'):
@@ -114,6 +124,53 @@ async def get_tenants(user_data=Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403)
     rows = await db.pool.fetch("SELECT id, clinic_name, bot_phone_number, config FROM tenants ORDER BY id ASC")
     return [dict(r) for r in rows]
+
+@router.put("/tenants/{tenant_id}", tags=["Sedes"])
+async def update_tenant(tenant_id: int, payload: TenantUpdate, user_data=Depends(verify_admin_token)):
+    if user_data.role != 'ceo': raise HTTPException(status_code=403)
+    existing = await db.pool.fetchrow("SELECT id FROM tenants WHERE id = $1", tenant_id)
+    if not existing: raise HTTPException(status_code=404, detail="Tenant not found")
+    updates, params = [], []
+    pos = 1
+    if payload.clinic_name is not None:
+        updates.append(f"clinic_name = ${pos}"); params.append(payload.clinic_name); pos += 1
+    if payload.bot_phone_number is not None:
+        updates.append(f"bot_phone_number = ${pos}"); params.append(payload.bot_phone_number); pos += 1
+    if payload.calendar_provider is not None and payload.calendar_provider in ("local", "google"):
+        updates.append("config = jsonb_set(COALESCE(config, '{}'), '{calendar_provider}', to_jsonb($%s::text))" % pos)
+        params.append(payload.calendar_provider); pos += 1
+    if not updates:
+        return {"status": "ok"}
+    params.append(tenant_id)
+    query = "UPDATE tenants SET " + ", ".join(updates) + f", updated_at = NOW() WHERE id = ${pos}"
+    await db.pool.execute(query, *params)
+    return {"status": "ok"}
+
+@router.post("/tenants", tags=["Sedes"])
+async def create_tenant(payload: TenantCreate, user_data=Depends(verify_admin_token)):
+    if user_data.role != 'ceo': raise HTTPException(status_code=403)
+    cp = payload.calendar_provider if payload.calendar_provider in ("local", "google") else "local"
+    config = json.dumps({"calendar_provider": cp})
+    try:
+        await db.pool.execute(
+            "INSERT INTO tenants (clinic_name, bot_phone_number, config) VALUES ($1, $2, $3::jsonb)",
+            payload.clinic_name, payload.bot_phone_number, config
+        )
+    except Exception as e:
+        if "unique" in str(e).lower() or "duplicate" in str(e).lower():
+            raise HTTPException(status_code=400, detail="bot_phone_number already in use")
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"status": "created"}
+
+@router.delete("/tenants/{tenant_id}", tags=["Sedes"])
+async def delete_tenant(tenant_id: int, user_data=Depends(verify_admin_token)):
+    if user_data.role != 'ceo': raise HTTPException(status_code=403)
+    existing = await db.pool.fetchrow("SELECT id FROM tenants WHERE id = $1", tenant_id)
+    if not existing: raise HTTPException(status_code=404, detail="Tenant not found")
+    count = await db.pool.fetchval("SELECT COUNT(*) FROM tenants")
+    if count <= 1: raise HTTPException(status_code=400, detail="Cannot delete the last tenant")
+    await db.pool.execute("DELETE FROM tenants WHERE id = $1", tenant_id)
+    return {"status": "deleted"}
 
 def _config_as_dict(config):  # config from DB can be dict (JSONB) or str
     if config is None:

@@ -191,6 +191,28 @@
     "source_gcalendar": "GCal",
     "origin": "Origen"
   },
+  "agenda_crm": {
+    "title": "Agenda",
+    "subtitle": "Agenda por vendedor. Reuniones, llamadas y actividades.",
+    "all_sellers": "Todos los vendedores",
+    "form_new": "Nuevo evento",
+    "form_edit": "Editar evento",
+    "seller": "Vendedor",
+    "select_seller": "Seleccionar vendedor",
+    "title_required": "El título es obligatorio",
+    "datetime_required": "Indicá fecha y hora de inicio y fin",
+    "end_after_start": "La hora de fin debe ser posterior a la de inicio",
+    "save_error": "Error al guardar",
+    "title": "Título",
+    "title_placeholder": "Ej: Llamada con cliente, Reunión",
+    "start": "Inicio",
+    "end": "Fin",
+    "notes": "Notas",
+    "notes_placeholder": "Notas opcionales...",
+    "save": "Guardar",
+    "cancel_event": "Cancelar evento",
+    "alert_past_date": "No se pueden crear eventos en fechas u horarios pasados."
+  },
   "patients": {
     "title": "Pacientes",
     "new_patient": "Nuevo paciente",

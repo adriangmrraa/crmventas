@@ -565,6 +565,32 @@ class Database:
                     ALTER TABLE leads ADD COLUMN tags JSONB DEFAULT '[]';
                 END IF;
             END $$;
+            """,
+            # Parche 24: Tabla seller_agenda_events (agenda por vendedor en CRM Sales)
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'seller_agenda_events') THEN
+                    CREATE TABLE seller_agenda_events (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        seller_id INTEGER NOT NULL REFERENCES professionals(id) ON DELETE CASCADE,
+                        title TEXT NOT NULL,
+                        start_datetime TIMESTAMPTZ NOT NULL,
+                        end_datetime TIMESTAMPTZ NOT NULL,
+                        lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+                        client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+                        notes TEXT,
+                        source TEXT DEFAULT 'manual',
+                        status TEXT DEFAULT 'scheduled',
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                    CREATE INDEX idx_seller_agenda_tenant ON seller_agenda_events(tenant_id);
+                    CREATE INDEX idx_seller_agenda_seller ON seller_agenda_events(tenant_id, seller_id);
+                    CREATE INDEX idx_seller_agenda_range ON seller_agenda_events(tenant_id, start_datetime, end_datetime);
+                END IF;
+            END $$;
             """
         ]
 

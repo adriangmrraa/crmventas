@@ -191,6 +191,28 @@
     "source_gcalendar": "GCalendar",
     "origin": "Origin"
   },
+  "agenda_crm": {
+    "title": "Agenda",
+    "subtitle": "Agenda per seller. Meetings, calls and activities.",
+    "all_sellers": "All sellers",
+    "form_new": "New event",
+    "form_edit": "Edit event",
+    "seller": "Seller",
+    "select_seller": "Select seller",
+    "title_required": "Title is required",
+    "datetime_required": "Please set start and end date and time",
+    "end_after_start": "End time must be after start time",
+    "save_error": "Error saving",
+    "title": "Title",
+    "title_placeholder": "E.g. Call with client, Meeting",
+    "start": "Start",
+    "end": "End",
+    "notes": "Notes",
+    "notes_placeholder": "Optional notes...",
+    "save": "Save",
+    "cancel_event": "Cancel event",
+    "alert_past_date": "Cannot create events in the past."
+  },
   "patients": {
     "title": "Patients",
     "new_patient": "New patient",

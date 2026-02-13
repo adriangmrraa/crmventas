@@ -191,6 +191,28 @@
     "source_gcalendar": "GCal",
     "origin": "Origine"
   },
+  "agenda_crm": {
+    "title": "Agenda",
+    "subtitle": "Agenda par vendeur. Réunions, appels et activités.",
+    "all_sellers": "Tous les vendeurs",
+    "form_new": "Nouvel événement",
+    "form_edit": "Modifier l'événement",
+    "seller": "Vendeur",
+    "select_seller": "Sélectionner un vendeur",
+    "title_required": "Le titre est obligatoire",
+    "datetime_required": "Renseignez la date et l'heure de début et de fin",
+    "end_after_start": "L'heure de fin doit être après l'heure de début",
+    "save_error": "Erreur lors de l'enregistrement",
+    "title": "Titre",
+    "title_placeholder": "Ex. Appel client, Réunion",
+    "start": "Début",
+    "end": "Fin",
+    "notes": "Notes",
+    "notes_placeholder": "Notes optionnelles...",
+    "save": "Enregistrer",
+    "cancel_event": "Annuler l'événement",
+    "alert_past_date": "Impossible de créer des événements dans le passé."
+  },
   "patients": {
     "title": "Patients",
     "new_patient": "Nouveau patient",

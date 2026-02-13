@@ -15,6 +15,7 @@ from .models import (
     TemplateResponse, TemplateSyncRequest,
     CampaignCreate, CampaignUpdate, CampaignResponse, CampaignLaunchRequest,
     SellerCreate, SellerUpdate,
+    AgendaEventCreate, AgendaEventUpdate,
 )
 from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
 from db import db
@@ -772,3 +773,139 @@ async def create_seller(
         VALUES ($1, $2, $3, $4, $5, $6, TRUE, NOW(), NOW())
     """, tenant_id, uid, first_name, last_name, payload.email, (payload.phone_number or "").strip() or None)
     return {"status": "created", "user_id": str(uid)}
+
+
+# ============================================
+# SELLER AGENDA (eventos por vendedor)
+# ============================================
+
+@router.get("/agenda/events")
+async def list_agenda_events(
+    start_date: str = Query(..., description="ISO start date"),
+    end_date: str = Query(..., description="ISO end date"),
+    seller_id: Optional[int] = Query(None, description="Filter by seller (professional) ID"),
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """List agenda events for the current tenant in the given date range. Optional filter by seller."""
+    tenant_id = context["tenant_id"]
+    if tenant_id not in allowed_ids:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    query = """
+        SELECT e.id, e.tenant_id, e.seller_id, e.title, e.start_datetime, e.end_datetime,
+               e.lead_id, e.client_id, e.notes, e.source, e.status, e.created_at, e.updated_at,
+               p.first_name AS seller_first_name, p.last_name AS seller_last_name
+        FROM seller_agenda_events e
+        JOIN professionals p ON p.id = e.seller_id
+        JOIN users u ON u.id = p.user_id AND u.role IN ('setter', 'closer')
+        JOIN tenants t ON t.id = e.tenant_id AND COALESCE(t.niche_type, 'dental') = 'crm_sales'
+        WHERE e.tenant_id = $1 AND e.status != 'cancelled'
+          AND e.start_datetime < $3 AND e.end_datetime > $2
+    """
+    params: list = [tenant_id, start_date, end_date]
+    if seller_id is not None:
+        query += " AND e.seller_id = $4"
+        params.append(seller_id)
+    query += " ORDER BY e.start_datetime ASC"
+    rows = await db.pool.fetch(query, *params)
+    return [
+        {
+            **dict(r),
+            "seller_name": f"{r.get('seller_first_name') or ''} {r.get('seller_last_name') or ''}".strip(),
+            "appointment_datetime": r["start_datetime"].isoformat() if r.get("start_datetime") else None,
+            "end_datetime": r["end_datetime"].isoformat() if r.get("end_datetime") else None,
+        }
+        for r in rows
+    ]
+
+
+@router.post("/agenda/events", status_code=201)
+async def create_agenda_event(
+    payload: AgendaEventCreate,
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """Create an agenda event for a seller."""
+    tenant_id = context["tenant_id"]
+    if tenant_id not in allowed_ids:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    # Verify seller belongs to this tenant and is setter/closer
+    seller = await db.pool.fetchrow("""
+        SELECT p.id FROM professionals p
+        JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
+        JOIN tenants t ON t.id = p.tenant_id AND COALESCE(t.niche_type, 'dental') = 'crm_sales'
+        WHERE p.id = $1 AND p.tenant_id = $2
+    """, payload.seller_id, tenant_id)
+    if not seller:
+        raise HTTPException(status_code=404, detail="Vendedor no encontrado en esta entidad")
+    row = await db.pool.fetchrow("""
+        INSERT INTO seller_agenda_events (tenant_id, seller_id, title, start_datetime, end_datetime, lead_id, client_id, notes, source, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'scheduled')
+        RETURNING id, tenant_id, seller_id, title, start_datetime, end_datetime, lead_id, client_id, notes, source, status, created_at, updated_at
+    """, tenant_id, payload.seller_id, payload.title, payload.start_datetime, payload.end_datetime,
+        payload.lead_id, payload.client_id, payload.notes, payload.source)
+    return dict(row)
+
+
+@router.put("/agenda/events/{event_id}")
+async def update_agenda_event(
+    event_id: UUID,
+    payload: AgendaEventUpdate,
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """Update an agenda event."""
+    tenant_id = context["tenant_id"]
+    if tenant_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    existing = await db.pool.fetchrow(
+        "SELECT id FROM seller_agenda_events WHERE id = $1 AND tenant_id = $2",
+        event_id, tenant_id
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    updates, params = [], []
+    pos = 1
+    if payload.title is not None:
+        updates.append(f"title = ${pos}"); params.append(payload.title); pos += 1
+    if payload.start_datetime is not None:
+        updates.append(f"start_datetime = ${pos}"); params.append(payload.start_datetime); pos += 1
+    if payload.end_datetime is not None:
+        updates.append(f"end_datetime = ${pos}"); params.append(payload.end_datetime); pos += 1
+    if payload.lead_id is not None:
+        updates.append(f"lead_id = ${pos}"); params.append(payload.lead_id); pos += 1
+    if payload.client_id is not None:
+        updates.append(f"client_id = ${pos}"); params.append(payload.client_id); pos += 1
+    if payload.notes is not None:
+        updates.append(f"notes = ${pos}"); params.append(payload.notes); pos += 1
+    if payload.status is not None and payload.status in ("scheduled", "completed", "cancelled"):
+        updates.append(f"status = ${pos}"); params.append(payload.status); pos += 1
+    if not updates:
+        return {"status": "ok"}
+    params.extend([event_id, tenant_id])
+    await db.pool.execute(
+        "UPDATE seller_agenda_events SET " + ", ".join(updates) + f", updated_at = NOW() WHERE id = ${pos} AND tenant_id = ${pos + 1}",
+        *params
+    )
+    return {"status": "ok"}
+
+
+@router.delete("/agenda/events/{event_id}")
+async def delete_agenda_event(
+    event_id: UUID,
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """Cancel (soft) or delete an agenda event. We set status to cancelled."""
+    tenant_id = context["tenant_id"]
+    if tenant_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
+    result = await db.pool.execute(
+        "UPDATE seller_agenda_events SET status = 'cancelled', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        event_id, tenant_id
+    )
+    if result == "UPDATE 0":
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    return {"status": "cancelled"}

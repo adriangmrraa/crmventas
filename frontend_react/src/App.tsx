@@ -18,6 +18,7 @@ import LeadDetailView from './modules/crm_sales/views/LeadDetailView';
 import SellersView from './modules/crm_sales/views/SellersView';
 import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
+import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -63,6 +64,7 @@ function App() {
                         <ConfigView />
                       </ProtectedRoute>
                     } />
+                    <Route path="crm/agenda" element={<CrmAgendaView />} />
                     <Route path="crm/leads" element={<LeadsView />} />
                     <Route path="crm/leads/:id" element={<LeadDetailView />} />
                     <Route path="crm/clientes" element={<ClientsView />} />

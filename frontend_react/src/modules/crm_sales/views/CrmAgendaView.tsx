@@ -111,7 +111,7 @@ export default function CrmAgendaView() {
     const start = startOfDay(subDays(base, 7));
     const end = endOfDay(addDays(base, 7));
     lastRangeRef.current = null;
-    fetchData(start, end, !isMobile);
+    fetchData(start, end, false);
   }, [selectedSellerId, fetchData]);
 
   useEffect(() => {

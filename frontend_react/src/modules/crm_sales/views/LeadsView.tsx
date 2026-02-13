@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle } from 'lucide-react';
+import { Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
@@ -43,10 +43,29 @@ export default function LeadsView() {
   const [formData, setFormData] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeads();
   }, [statusFilter]);
+
+  const handleConvertToClient = async (e: React.MouseEvent, lead: Lead) => {
+    e.stopPropagation();
+    if (!window.confirm(t('leads.confirm_convert_to_client'))) return;
+    setConvertingId(lead.id);
+    try {
+      await api.post(`${CRM_LEADS_BASE}/${lead.id}/convert-to-client`);
+      await fetchLeads();
+      navigate('/crm/clientes');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : t('leads.error_convert_to_client');
+      alert(msg);
+    } finally {
+      setConvertingId(null);
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -230,6 +249,15 @@ export default function LeadsView() {
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">
                       {lead.status.replace('_', ' ')}
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleConvertToClient(e, lead)}
+                      disabled={convertingId === lead.id}
+                      className="p-2 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50"
+                      title={t('leads.convert_to_client')}
+                    >
+                      {convertingId === lead.id ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {

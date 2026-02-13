@@ -115,8 +115,12 @@ async def get_agent_executor(tenant_id: int):
         context_data = await get_dental_context(tenant_id)
         system_prompt = prompt_loader.load_prompt('dental', 'base_assistant.txt', context_data)
     elif niche_type == 'crm_sales':
-        # TODO: Implement CRM context and prompts in future phases
-        system_prompt = "Sos un asistente de ventas inteligente."
+        # CRM: cuando agendan una reunión usá book_sales_meeting; la persona pasa a ser lead (no cliente).
+        system_prompt = (
+            "Sos un asistente de ventas inteligente. Cuando el usuario quiera agendar una reunión, "
+            "una demo o una llamada, usá la herramienta book_sales_meeting con la fecha/hora, el motivo y el nombre si lo da. "
+            "Al agendar, la persona se registra como lead (después el equipo puede pasarla a cliente activo desde el CRM)."
+        )
     else:
         system_prompt = "You are a helpful assistant."
     

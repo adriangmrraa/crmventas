@@ -238,6 +238,49 @@ async def delete_lead(
     return {"status": "deleted", "id": str(lead_id)}
 
 
+@router.post("/leads/{lead_id}/convert-to-client", response_model=ClientResponse, status_code=201)
+async def convert_lead_to_client(
+    lead_id: UUID,
+    context: dict = Depends(get_current_user_context),
+):
+    """Convert a lead into a client. Creates the client from lead data and sets lead status to closed_won."""
+    tenant_id = context["tenant_id"]
+    lead = await db.pool.fetchrow(
+        "SELECT id, tenant_id, phone_number, first_name, last_name, email FROM leads WHERE id = $1 AND tenant_id = $2",
+        lead_id,
+        tenant_id,
+    )
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    existing = await db.pool.fetchrow(
+        "SELECT id FROM clients WHERE tenant_id = $1 AND phone_number = $2",
+        tenant_id,
+        lead["phone_number"],
+    )
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Ya existe un cliente con ese teléfono. Podés editarlo desde la página de Clientes.",
+        )
+    row = await db.pool.fetchrow("""
+        INSERT INTO clients (tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'active', NULL, NOW(), NOW())
+        RETURNING id, tenant_id, phone_number, first_name, last_name, email, status, notes, created_at, updated_at
+    """,
+        tenant_id,
+        lead["phone_number"],
+        (lead["first_name"] or "").strip() or None,
+        (lead["last_name"] or "").strip() or None,
+        (lead["email"] or "").strip() or None,
+    )
+    await db.pool.execute(
+        "UPDATE leads SET status = 'closed_won', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        lead_id,
+        tenant_id,
+    )
+    return dict(row)
+
+
 # ============================================
 # CLIENTS ENDPOINTS (tabla clients - página Clientes)
 # ============================================
@@ -299,6 +342,12 @@ async def create_client(
         (payload.status or "active").strip(),
         (payload.notes or "").strip() or None,
     )
+    if payload.lead_id:
+        await db.pool.execute(
+            "UPDATE leads SET status = 'closed_won', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            payload.lead_id,
+            tenant_id,
+        )
     return dict(row)
 
 

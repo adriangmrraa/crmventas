@@ -6,6 +6,7 @@ import { useTranslation } from '../../../context/LanguageContext';
 import PageHeader from '../../../components/PageHeader';
 
 const CRM_CLIENTS_BASE = '/admin/core/crm/clients';
+const CRM_LEADS_BASE = '/admin/core/crm/leads';
 const STATUS_OPTIONS = ['active', 'inactive'] as const;
 
 export interface Client {
@@ -38,6 +39,8 @@ export default function ClientsView() {
   });
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [leads, setLeads] = useState<{ id: string; phone_number: string; first_name?: string; last_name?: string; email?: string }[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -84,6 +87,7 @@ export default function ClientsView() {
           last_name: formData.last_name || undefined,
           email: formData.email || undefined,
           status: formData.status,
+          ...(selectedLeadId ? { lead_id: selectedLeadId } : {}),
         });
       }
       fetchClients();
@@ -121,8 +125,9 @@ export default function ClientsView() {
     setShowModal(true);
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = async () => {
     setEditingClient(null);
+    setSelectedLeadId(null);
     setFormData({
       first_name: '',
       last_name: '',
@@ -131,12 +136,34 @@ export default function ClientsView() {
       status: 'active',
     });
     setShowModal(true);
+    try {
+      const res = await api.get<typeof leads>(CRM_LEADS_BASE, { params: { limit: 200 } });
+      setLeads(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setLeads([]);
+    }
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingClient(null);
+    setSelectedLeadId(null);
     setModalError(null);
+  };
+
+  const handleSelectLead = (leadId: string) => {
+    setSelectedLeadId(leadId || null);
+    if (!leadId) return;
+    const lead = leads.find((l) => l.id === leadId);
+    if (lead) {
+      setFormData({
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email: lead.email || '',
+        status: 'active',
+      });
+    }
   };
 
   return (
@@ -307,6 +334,23 @@ export default function ClientsView() {
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{modalError}</div>
               )}
               <div className="space-y-4">
+                {!editingClient && leads.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.load_from_lead')}</label>
+                    <select
+                      value={selectedLeadId || ''}
+                      onChange={(e) => handleSelectLead(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                      <option value="">{t('clients.select_lead_placeholder')}</option>
+                      {leads.map((lead) => (
+                        <option key={lead.id} value={lead.id}>
+                          {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number} — {lead.phone_number}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {!editingClient && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.phone')} *</label>

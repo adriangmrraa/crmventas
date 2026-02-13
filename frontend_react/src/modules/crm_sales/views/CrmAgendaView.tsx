@@ -11,6 +11,8 @@ import AgendaEventForm, { type AgendaEventFormData, type SellerOption } from '..
 import MobileAgenda from '../../../components/MobileAgenda';
 import { addDays, subDays, startOfDay, endOfDay } from 'date-fns';
 
+const FETCH_DEBOUNCE_MS = 400;
+
 const CRM_AGENDA_EVENTS = '/admin/core/crm/agenda/events';
 const CRM_SELLERS = '/admin/core/crm/sellers';
 
@@ -44,6 +46,9 @@ export default function CrmAgendaView() {
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
   const [formData, setFormData] = useState<Partial<AgendaEventFormData>>({});
   const calendarRef = useRef<FullCalendar>(null);
+  const lastRangeRef = useRef<{ start: string; end: string; seller: string } | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadDoneRef = useRef(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -51,34 +56,31 @@ export default function CrmAgendaView() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const fetchSellers = useCallback(async () => {
-    try {
-      const res = await api.get(CRM_SELLERS);
-      const list = (res.data || []).filter((s: SellerOption) => s.is_active);
-      setSellers(list);
-      return list;
-    } catch (e) {
-      console.error('Error fetching sellers:', e);
-      return [];
-    }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get(CRM_SELLERS);
+        if (cancelled) return;
+        const list = (res.data || []).filter((s: SellerOption) => s.is_active);
+        setSellers(list);
+      } catch (e) {
+        console.error('Error fetching sellers:', e);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const fetchData = useCallback(async (isBackground = false) => {
+  const fetchData = useCallback(async (startDate: Date, endDate: Date, isBackground = false) => {
+    const rangeKey = `${startDate.getTime()}-${endDate.getTime()}-${selectedSellerId}`;
+    if (lastRangeRef.current?.start === startDate.toISOString() && lastRangeRef.current?.end === endDate.toISOString() && lastRangeRef.current?.seller === selectedSellerId) {
+      return;
+    }
+    lastRangeRef.current = { start: startDate.toISOString(), end: endDate.toISOString(), seller: selectedSellerId };
+
     try {
       if (!isBackground) setLoading(true);
       else setIsBackgroundSyncing(true);
-
-      let startDate: Date;
-      let endDate: Date;
-      if (calendarRef.current) {
-        const api = calendarRef.current.getApi();
-        startDate = api.view.activeStart;
-        endDate = api.view.activeEnd;
-      } else {
-        const base = selectedDate || new Date();
-        startDate = startOfDay(subDays(base, 7));
-        endDate = endOfDay(addDays(base, 7));
-      }
 
       const params: Record<string, string> = {
         start_date: startDate.toISOString(),
@@ -88,33 +90,51 @@ export default function CrmAgendaView() {
         params.seller_id = selectedSellerId;
       }
 
-      const [eventsRes, sellersList] = await Promise.all([
-        api.get(CRM_AGENDA_EVENTS, { params }),
-        sellers.length === 0 ? fetchSellers() : Promise.resolve(sellers),
-      ]);
-
-      if (sellersList?.length && sellers.length === 0) setSellers(sellersList);
+      const eventsRes = await api.get(CRM_AGENDA_EVENTS, { params });
       const list = eventsRes.data || [];
       setEvents(list);
+      initialLoadDoneRef.current = true;
     } catch (err) {
       console.error('Error fetching agenda:', err);
     } finally {
       if (!isBackground) setLoading(false);
       else setIsBackgroundSyncing(false);
     }
-  }, [selectedSellerId, sellers.length, fetchSellers]);
-
-  useEffect(() => {
-    fetchSellers();
-  }, [fetchSellers]);
-
-  useEffect(() => {
-    fetchData();
   }, [selectedSellerId]);
 
+  const fetchDataForRange = useCallback((start: Date, end: Date, isBackground = false) => {
+    fetchData(start, end, isBackground);
+  }, [fetchData]);
+
   useEffect(() => {
-    if (isMobile && selectedDate) fetchData(true);
-  }, [selectedDate, isMobile]);
+    const base = selectedDate || new Date();
+    const start = startOfDay(subDays(base, 7));
+    const end = endOfDay(addDays(base, 7));
+    lastRangeRef.current = null;
+    fetchData(start, end, !isMobile);
+  }, [selectedSellerId, fetchData]);
+
+  useEffect(() => {
+    if (isMobile && selectedDate) {
+      const start = startOfDay(selectedDate);
+      const end = endOfDay(selectedDate);
+      fetchData(start, end, true);
+    }
+  }, [selectedDate, isMobile, fetchData]);
+
+  const handleDatesSet = useCallback((info: { start: Date; end: Date }) => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      fetchDataForRange(info.start, info.end, true);
+    }, FETCH_DEBOUNCE_MS);
+  }, [fetchDataForRange]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   const filteredEvents = selectedSellerId && selectedSellerId !== 'all'
     ? events.filter((e) => e.seller_id.toString() === selectedSellerId)
@@ -165,6 +185,18 @@ export default function CrmAgendaView() {
     setShowModal(true);
   };
 
+  const refetchCurrentRange = useCallback(() => {
+    if (calendarRef.current) {
+      const api = calendarRef.current.getApi();
+      lastRangeRef.current = null;
+      fetchData(api.view.activeStart, api.view.activeEnd, true);
+    } else {
+      const base = selectedDate || new Date();
+      lastRangeRef.current = null;
+      fetchData(startOfDay(subDays(base, 7)), endOfDay(addDays(base, 7)), true);
+    }
+  }, [fetchData, selectedDate]);
+
   const handleSave = async (data: AgendaEventFormData) => {
     if (selectedEvent) {
       await api.put(`${CRM_AGENDA_EVENTS}/${selectedEvent.id}`, {
@@ -183,13 +215,13 @@ export default function CrmAgendaView() {
         source: 'manual',
       });
     }
-    await fetchData();
+    await refetchCurrentRange();
     setShowModal(false);
   };
 
   const handleDelete = async (id: string) => {
     await api.delete(`${CRM_AGENDA_EVENTS}/${id}`);
-    await fetchData();
+    await refetchCurrentRange();
     setShowModal(false);
   };
 
@@ -282,7 +314,7 @@ export default function CrmAgendaView() {
                     right: 'timeGridDay,timeGridWeek,dayGridMonth',
                   }}
                   height="auto"
-                  datesSet={() => fetchData()}
+                  datesSet={handleDatesSet}
                   dateClick={handleDateClick}
                   eventClick={handleEventClick}
                   slotMinTime="08:00:00"

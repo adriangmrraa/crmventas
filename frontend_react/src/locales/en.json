@@ -416,6 +416,11 @@
     "first_name": "First name",
     "last_name": "Last name"
   },
+  "leads": {
+    "convert_to_client": "Convert to client",
+    "confirm_convert_to_client": "Convert this lead to client? A client will be created with the same data and the lead will be set to Closed won.",
+    "error_convert_to_client": "Could not convert to client."
+  },
   "clients": {
     "title": "Clients",
     "subtitle": "Manage your client portfolio and contacts.",
@@ -441,6 +446,8 @@
     "error_delete": "Error deleting.",
     "error_load": "Error loading client.",
     "no_clients": "No clients yet. Create one with New client.",
+    "load_from_lead": "Load from lead",
+    "select_lead_placeholder": "Select a lead to load data...",
     "personal_data": "Personal data",
     "not_found": "Client not found.",
     "back_to_list": "Back to clients",

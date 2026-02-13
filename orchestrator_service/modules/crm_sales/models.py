@@ -73,6 +73,7 @@ class ClientCreate(BaseModel):
     email: Optional[EmailStr] = None
     status: str = Field(default="active", description="active, inactive, etc.")
     notes: Optional[str] = None
+    lead_id: Optional[UUID] = Field(None, description="If provided, this lead is marked as closed_won after creating the client")
 
 
 class ClientUpdate(BaseModel):

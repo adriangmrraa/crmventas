@@ -415,6 +415,11 @@
     "first_name": "Prénom",
     "last_name": "Nom"
   },
+  "leads": {
+    "convert_to_client": "Convertir en client",
+    "confirm_convert_to_client": "Convertir ce lead en client ? Un client sera créé avec les mêmes données et le lead passera à l'état Gagné.",
+    "error_convert_to_client": "Impossible de convertir en client."
+  },
   "clients": {
     "title": "Clients",
     "subtitle": "Gérez votre portefeuille clients et contacts.",
@@ -440,6 +445,8 @@
     "error_delete": "Erreur lors de la suppression.",
     "error_load": "Erreur lors du chargement du client.",
     "no_clients": "Aucun client. Créez-en un avec Nouveau client.",
+    "load_from_lead": "Charger depuis un lead",
+    "select_lead_placeholder": "Sélectionner un lead pour charger les données...",
     "personal_data": "Données personnelles",
     "not_found": "Client introuvable.",
     "back_to_list": "Retour aux clients",

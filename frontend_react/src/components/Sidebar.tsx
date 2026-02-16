@@ -8,9 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Stethoscope,
-  BarChart3,
   Home,
-  Clock,
   ShieldCheck,
   LogOut,
   User,
@@ -31,27 +29,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   const { user, logout } = useAuth();
   const { t } = useTranslation();
 
+  // Single-niche: solo CRM Ventas (no dental)
   const menuItems = [
-    { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
-    { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary'], niche: ['crm_sales'] },
-    { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary'], niche: ['crm_sales'] },
-    { id: 'agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/agenda', roles: ['ceo', 'professional', 'secretary'], niche: ['dental'] },
-    { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary'], niche: ['crm_sales'] },
-    { id: 'patients', labelKey: 'nav.patients' as const, icon: <Users size={20} />, path: '/pacientes', roles: ['ceo', 'professional', 'secretary'], niche: ['dental'] },
-    { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
-    { id: 'approvals', labelKey: 'nav.staff' as const, icon: <ShieldCheck size={20} />, path: '/aprobaciones', roles: ['ceo'], niche: ['dental'] },
-    { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'], niche: ['crm_sales'] },
-    { id: 'tenants', labelKey: 'nav.clinics' as const, icon: <ShieldCheck size={20} />, path: '/sedes', roles: ['ceo'], niche: ['dental', 'crm_sales'] },
-    { id: 'analytics', labelKey: 'nav.strategy' as const, icon: <BarChart3 size={20} />, path: '/analytics/professionals', roles: ['ceo'], niche: ['dental'] },
-    { id: 'treatments', labelKey: 'nav.treatments' as const, icon: <Clock size={20} />, path: '/tratamientos', roles: ['ceo', 'secretary'], niche: ['dental'] },
-    { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={20} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary'], niche: ['dental', 'crm_sales'] },
-    { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={20} />, path: '/configuracion', roles: ['ceo'], niche: ['dental', 'crm_sales'] },
+    { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'] },
+    { id: 'tenants', labelKey: 'nav.entities' as const, icon: <ShieldCheck size={20} />, path: '/sedes', roles: ['ceo'] },
+    { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={20} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={20} />, path: '/configuracion', roles: ['ceo'] },
   ];
 
   const filteredItems = menuItems.filter(item =>
-    user &&
-    item.roles.includes(user.role) &&
-    (!item.niche || (user.niche_type && item.niche.includes(user.niche_type)))
+    user && item.roles.includes(user.role)
   );
 
   const isActive = (path: string) => {
@@ -73,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
           </div>
           {(!collapsed || onCloseMobile) && (
             <span className="font-semibold text-lg truncate whitespace-nowrap">
-              {t(user?.niche_type === 'crm_sales' ? 'nav.app_name_crm' : 'nav.app_name')}
+              {t('nav.app_name_crm')}
             </span>
           )}
         </div>
@@ -104,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
       {/* Navigation */}
       <nav className={`flex-1 py-4 overflow-y-auto overflow-x-hidden ${collapsed && !onCloseMobile ? 'px-2' : 'px-3'}`}>
         {filteredItems.map((item) => {
-          const labelKey = (item.id === 'tenants' && user?.niche_type === 'crm_sales') ? 'nav.entities' : item.labelKey;
+          const labelKey = item.labelKey;
           return (
             <button
               key={item.id}

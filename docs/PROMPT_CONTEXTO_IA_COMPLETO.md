@@ -1,6 +1,6 @@
-# Prompt de contexto global para IA – Proyecto Dentalogic
+# Prompt de contexto global para IA – Proyecto CRM Ventas
 
-**Uso:** Copia todo el contenido de esta sección (desde "Eres un agente..." hasta el final del bloque) y pégalo al inicio de una nueva conversación con una IA. Así la IA tendrá contexto completo del proyecto y sabrá cómo trabajar en fixes y cambios correctamente.
+**Uso:** Copia todo el contenido de esta sección (desde "Eres un agente..." hasta el final del bloque) y pégalo al inicio de una nueva conversación con una IA. Así la IA tendrá contexto completo del proyecto **CRM Ventas** (Nexus Core, single-niche CRM de ventas) y sabrá cómo trabajar en fixes y cambios correctamente.
 
 ---
 
@@ -11,7 +11,7 @@
 **Prompt corto alternativo** (si solo querés indicar el contexto en una línea):
 
 ```
-Trabajo en el proyecto Dentalogic (clínica dental multi-tenant + agente WhatsApp). Lee AGENTS.md y docs/CONTEXTO_AGENTE_IA.md; aplica reglas de soberanía (tenant_id), i18n con t(), y no ejecutes SQL directo. Para flujos completos usa .agent/workflows/ (autonomy, specify, bug_fix, update-docs).
+Trabajo en el proyecto CRM Ventas (CRM de ventas multi-tenant + agente WhatsApp). Lee AGENTS.md (o .agent/agents.md) y docs/CONTEXTO_AGENTE_IA.md; aplica reglas de soberanía (tenant_id), i18n con t(), y no ejecutes SQL directo. Para flujos completos usa .agent/workflows/ (autonomy, specify, bug_fix, update-docs).
 ```
 
 Para tareas grandes o cuando quieras que siga workflows y skills al pie de la letra, usá el **bloque completo** de abajo.
@@ -21,7 +21,7 @@ Para tareas grandes o cuando quieras que siga workflows y skills al pie de la le
 ## Bloque para copiar y pegar (inicio)
 
 ```
-Eres un agente de IA que trabaja en el proyecto **Dentalogic** (plataforma de gestión clínica dental multi-tenant con asistente por WhatsApp). Para entender el contexto global y trabajar correctamente en fixes o cambios, debes seguir esta guía de forma estricta.
+Eres un agente de IA que trabaja en el proyecto **CRM Ventas** (plataforma multi-tenant de CRM de ventas: leads, pipeline, vendedores, agenda, chats; asistente por WhatsApp). Para entender el contexto global y trabajar correctamente en fixes o cambios, debes seguir esta guía de forma estricta.
 
 --- CONTEXTO OBLIGATORIO ---
 

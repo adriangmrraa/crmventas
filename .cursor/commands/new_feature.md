@@ -1,3 +1,3 @@
 Ejecuta el **workflow New Feature** (nueva funcionalidad).
 
-**Instrucción:** Sigue `.agent/workflows/new_feature.md`. Análisis técnico (DB, GCal, WhatsApp), implementación backend en orchestrator_service, frontend en frontend_react (Glassmorphism, axios), verificación Sovereign (aislamiento, flujo completo).
+**Instrucción:** Sigue `CRM VENTAS/.agent/workflows/new_feature.md`. Análisis de impacto (DB, credenciales, servicios, multi-tenancy), implementación backend first en orchestrator_service, luego frontend en frontend_react. Sovereign check: todas las queries con tenant_id, credenciales por tenant, scroll isolation. Todo dentro de CRM VENTAS.

@@ -43,25 +43,30 @@ interface ChatMessage {
   is_derivhumano?: boolean;
 }
 
-interface PatientContext {
-  patient_id?: number;
-  patient_name?: string;
-  urgency_level?: 'normal' | 'high' | 'emergency' | 'low';
-  urgency_reason?: string;
-  upcoming_appointment?: {
+/** Contexto de lead para panel CRM (GET /admin/core/crm/leads/phone/{phone}/context) */
+interface LeadContext {
+  lead: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    status?: string;
+    email?: string;
+  } | null;
+  upcoming_event: {
+    id: string;
+    title: string;
     date: string;
-    type: string;
-    duration_minutes?: number;
-    professional_name: string;
-  };
-  last_appointment?: {
+    end_datetime?: string;
+    status?: string;
+  } | null;
+  last_event: {
+    id: string;
+    title: string;
     date: string;
-    type: string;
-    duration_minutes?: number;
-    professional_name: string;
-  };
-  treatment_plan?: any;
-  diagnosis?: string;
+    status?: string;
+  } | null;
+  is_guest: boolean;
 }
 
 interface Toast {
@@ -84,7 +89,7 @@ export default function ChatsView() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [patientContext, setPatientContext] = useState<PatientContext | null>(null);
+  const [leadContext, setLeadContext] = useState<LeadContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -245,7 +250,7 @@ export default function ChatsView() {
     // Evento: Paciente actualizado (urgencia, etc)
     socketRef.current.on('PATIENT_UPDATED', (data: { phone_number: string; urgency_level: string }) => {
       if (selectedSession?.phone_number === data.phone_number) {
-        fetchPatientContext(data.phone_number);
+        fetchLeadContext(data.phone_number);
       }
 
       setSessions(prev => prev.map(s =>
@@ -258,7 +263,7 @@ export default function ChatsView() {
     // Evento: Nuevo turno agendado (refrescar contexto)
     socketRef.current.on('NEW_APPOINTMENT', (data: { phone_number: string }) => {
       if (selectedSession?.phone_number === data.phone_number) {
-        fetchPatientContext(data.phone_number);
+        fetchLeadContext(data.phone_number);
       }
 
       // Mostrar toast si el turno es nuevo (idioma según selector)
@@ -296,9 +301,12 @@ export default function ChatsView() {
 
   useEffect(() => {
     if (selectedSession) {
+      setLeadContext(null);
       fetchMessages(selectedSession.phone_number, selectedSession.tenant_id);
-      fetchPatientContext(selectedSession.phone_number, selectedSession.tenant_id);
+      fetchLeadContext(selectedSession.phone_number, selectedSession.tenant_id);
       markAsRead(selectedSession.phone_number, selectedSession.tenant_id);
+    } else {
+      setLeadContext(null);
     }
   }, [selectedSession]);
 
@@ -371,14 +379,14 @@ export default function ChatsView() {
     fetchMessages(selectedSession.phone_number, selectedSession.tenant_id, true);
   };
 
-  const fetchPatientContext = async (phone: string, tenantId?: number) => {
+  const fetchLeadContext = async (phone: string, tenantId?: number) => {
     try {
       const params = tenantId != null ? { tenant_id_override: tenantId } : {};
-      const response = await api.get(`/admin/patients/phone/${phone}/context`, { params });
-      setPatientContext(response.data);
+      const response = await api.get(`/admin/core/crm/leads/phone/${encodeURIComponent(phone)}/context`, { params });
+      setLeadContext(response.data);
     } catch (error) {
-      console.error('Error fetching patient context:', error);
-      setPatientContext(null);
+      console.error('Error fetching lead context:', error);
+      setLeadContext(null);
     }
   };
 
@@ -915,14 +923,14 @@ export default function ChatsView() {
 
               {/* Patient / Contact Info — Lead vs Paciente (solo con turno = ficha con historial) */}
               {(() => {
-                const hasAppointments = !!(patientContext?.last_appointment || patientContext?.upcoming_appointment);
-                const apiPatient = (patientContext as { patient?: { first_name?: string; last_name?: string } })?.patient;
-                const nameFromApi = apiPatient ? [apiPatient.first_name, apiPatient.last_name].filter(Boolean).join(' ').trim() : '';
-                const displayName = (patientContext as any)?.patient_name || nameFromApi || selectedSession.patient_name || selectedSession.phone_number;
+                const hasEvents = !!(leadContext?.last_event || leadContext?.upcoming_event);
+                const displayName = leadContext?.lead
+                  ? [leadContext.lead.first_name, leadContext.lead.last_name].filter(Boolean).join(' ').trim() || selectedSession.patient_name || selectedSession.phone_number
+                  : selectedSession.patient_name || selectedSession.phone_number;
                 return (
                   <>
-                    <div className={`p-3 rounded-lg ${hasAppointments ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'}`}>
-                      {hasAppointments ? (
+                    <div className={`p-3 rounded-lg ${hasEvents ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'}`}>
+                      {hasEvents ? (
                         <>
                           <h4 className="text-xs font-medium text-gray-500 mb-2">{t('chats.patient_label')}</h4>
                           <p className="font-medium">{displayName}</p>
@@ -938,25 +946,19 @@ export default function ChatsView() {
                       )}
                     </div>
 
-                    {hasAppointments ? (
+                    {hasEvents ? (
                       <>
                         {/* Last Appointment */}
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
                             <Calendar size={12} /> {t('chats.last_appointment')}
                           </h4>
-                          {patientContext?.last_appointment ? (
+                          {leadContext?.last_event ? (
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">{patientContext.last_appointment.type}</p>
+                              <p className="text-sm font-medium">{leadContext.last_event.title}</p>
                               <div className="flex items-center gap-2 text-xs text-gray-500">
-                                <span>{new Date(patientContext.last_appointment.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                {patientContext.last_appointment.duration_minutes && (
-                                  <span className="bg-gray-200 px-1.5 rounded-sm">{patientContext.last_appointment.duration_minutes} min</span>
-                                )}
+                                <span>{new Date(leadContext.last_event.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
-                              <p className="text-[11px] text-gray-400">
-                                {t('chats.professional_label')}: {patientContext.last_appointment.professional_name}
-                              </p>
                             </div>
                           ) : (
                             <p className="text-sm text-gray-400">{t('chats.no_previous_appointments')}</p>
@@ -968,36 +970,22 @@ export default function ChatsView() {
                           <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
                             <Clock size={12} /> {t('chats.upcoming_appointment')}
                           </h4>
-                          {patientContext?.upcoming_appointment ? (
+                          {leadContext?.upcoming_event ? (
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">{patientContext.upcoming_appointment.type}</p>
+                              <p className="text-sm font-medium">{leadContext.upcoming_event.title}</p>
                               <div className="flex items-center gap-2 text-xs text-primary font-medium">
-                                <span>{new Date(patientContext.upcoming_appointment.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                {patientContext.upcoming_appointment.duration_minutes && (
-                                  <span className="bg-medical-100 px-1.5 rounded-sm">{patientContext.upcoming_appointment.duration_minutes} min</span>
-                                )}
+                                <span>{new Date(leadContext.upcoming_event.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
-                              <p className="text-[11px] text-gray-400">
-                                {t('chats.professional_label')}: {patientContext.upcoming_appointment.professional_name}
-                              </p>
                             </div>
                           ) : (
                             <p className="text-sm text-gray-400">{t('chats.no_scheduled_appointments')}</p>
                           )}
                         </div>
 
-                        {/* Treatment Plan */}
+                        {/* Tratamiento (CRM: no aplica) */}
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <h4 className="text-xs font-medium text-gray-500 mb-2">{t('chats.current_treatment')}</h4>
-                          {patientContext?.treatment_plan ? (
-                            <div className="text-sm bg-medical-50 p-2 rounded border border-medical-100 text-medical-800 italic">
-                              {typeof patientContext.treatment_plan === 'string'
-                                ? patientContext.treatment_plan
-                                : JSON.stringify(patientContext.treatment_plan, null, 2)}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-400 italic">{t('chats.no_treatment_plan')}</p>
-                          )}
+                          <p className="text-sm text-gray-400 italic">{t('chats.no_treatment_plan')}</p>
                         </div>
                       </>
                     ) : (

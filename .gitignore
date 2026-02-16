@@ -135,3 +135,7 @@ frontend_react/.env.development.local
 # Migration backups
 *.sql.backup
 db/backups/
+
+# EasyPanel (puede contener credenciales)
+docs/easypanel-dentalforge-template.json
+docs/easypanel-dentalforge-README.md

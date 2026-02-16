@@ -1,3 +1,3 @@
 Ejecuta el **workflow Verify** (verificación).
 
-**Instrucción:** Sigue `.agent/workflows/verify.md`. Backend: verify_backend.ps1, verify_phases.py, pytest. Frontend: npm run build en frontend_react. Integraciones y opcionalmente `/audit`. Reporta resultados.
+**Instrucción:** Sigue `CRM VENTAS/.agent/workflows/verify.md`. Ejecuta tests, build e integración según el plan; opcionalmente audit de soberanía. Si algo falla, reporta y sugiere correcciones. Todo dentro de CRM VENTAS.

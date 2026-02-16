@@ -23,7 +23,7 @@
 
 ## 🌟 Vision & Value Proposition
 
-**Nexus Core CRM** is a sovereign, multi-tenant platform designed for modern sales organizations. Born from the transformation of Dentalogic, it retains enterprise-grade architecture while enabling complete business logic customization through pluggable modules.
+**CRM Ventas** is a sovereign, multi-tenant CRM platform for sales organizations. Single product focus: leads, pipeline, vendedores, agenda, and WhatsApp-powered conversations. Enterprise-grade architecture with strict tenant isolation.
 
 ### 🎯 For Whom
 
@@ -180,7 +180,7 @@ CRM Ventas/
 │   │   ├── views/               # Dashboard, Pipeline, Leads, Chats, Landing, etc.
 │   │   ├── context/              # AuthContext, LanguageContext
 │   │   ├── locales/             # es.json, en.json, fr.json
-│   │   └── modules/              # Pluggable modules (dental, crm_sales)
+│   │   └── modules/              # Pluggable modules (crm_sales only – single-niche CRM)
 │   ├── package.json
 │   └── vite.config.ts
 ├── 📂 orchestrator_service/      # FastAPI Core (Orchestrator)
@@ -192,8 +192,7 @@ CRM Ventas/
 │   ├── analytics_service.py      # Agent metrics
 │   ├── core/                     # Agnostic core (auth, chat, security)
 │   ├── modules/                  # Pluggable business modules
-│   │   ├── dental/               # Dental clinic module
-│   │   └── crm_sales/            # Sales CRM module
+│   │   └── crm_sales/            # Sales CRM module (leads, clients, sellers, agenda, routes under /admin/core/crm)
 │   └── requirements.txt
 ├── 📂 whatsapp_service/          # YCloud relay & Whisper
 │   ├── main.py
@@ -327,6 +326,8 @@ docker-compose up -d --build
 | [**SPECS index**](docs/SPECS_IMPLEMENTADOS_INDICE.md) | Consolidated specs and where each feature is documented. |
 | [**Context for AI agents**](docs/CONTEXTO_AGENTE_IA.md) | Entry point for another IA: stack, rules, API, DB, i18n. |
 | [**Prompt for IA**](docs/PROMPT_CONTEXTO_IA_COMPLETO.md) | Copy-paste block for full project context in a new chat. |
+| [**Verificación CRM vs Clínicas**](docs/VERIFICACION_SALUD_CRM_VS_CLINICAS.md) | Paridad funcional, endpoints admin core, checklist. |
+| [**Plan paridad**](docs/plans/plan-paridad-crm-vs-clinicas.md) | Plan de implementación por fases (DB, chat, stats, contexto lead, ChatsView). |
 
 ---
 

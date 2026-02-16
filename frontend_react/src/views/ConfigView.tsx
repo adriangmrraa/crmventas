@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings, Globe, Loader2, CheckCircle2, Stethoscope, Users } from 'lucide-react';
+import { Settings, Globe, Loader2, CheckCircle2 } from 'lucide-react';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 
 type UiLanguage = 'es' | 'en' | 'fr';
-type NicheType = 'dental' | 'crm_sales';
 
 interface ClinicSettings {
     name: string;
@@ -15,7 +13,6 @@ interface ClinicSettings {
     hours_start?: string;
     hours_end?: string;
     ui_language: UiLanguage;
-    niche_type?: NicheType;
 }
 
 const LANGUAGE_OPTIONS: { value: UiLanguage; labelKey: string }[] = [
@@ -27,15 +24,12 @@ const LANGUAGE_OPTIONS: { value: UiLanguage; labelKey: string }[] = [
 export default function ConfigView() {
     const { t, setLanguage } = useTranslation();
     const { updateUser } = useAuth();
-    const navigate = useNavigate();
     const [settings, setSettings] = useState<ClinicSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [nicheSaving, setNicheSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [selectedLang, setSelectedLang] = useState<UiLanguage>('en');
-    const [nicheType, setNicheType] = useState<NicheType>('dental');
 
     useEffect(() => {
         fetchSettings();
@@ -47,9 +41,7 @@ export default function ConfigView() {
             const res = await api.get<ClinicSettings>('/admin/core/settings/clinic');
             setSettings(res.data);
             setSelectedLang((res.data.ui_language as UiLanguage) || 'en');
-            const serverNiche = (res.data.niche_type as NicheType) || 'dental';
-            setNicheType(serverNiche);
-            updateUser({ niche_type: serverNiche });
+            updateUser({ niche_type: 'crm_sales' });
         } catch (err) {
             setError(t('config.load_error'));
         } finally {
@@ -71,27 +63,6 @@ export default function ConfigView() {
             setError(t('config.save_error'));
 } finally {
         setSaving(false);
-        }
-    };
-
-    const handleNicheChange = async (value: NicheType) => {
-        if (value === nicheType) return;
-        setSuccess(null);
-        setError(null);
-        setNicheSaving(true);
-        try {
-            const res = await api.patch<{ status: string; niche_type?: NicheType }>('/admin/core/settings/clinic', { niche_type: value });
-            const newNiche = res.data.niche_type ?? value;
-            setNicheType(newNiche);
-            setSettings((prev) => (prev ? { ...prev, niche_type: newNiche } : null));
-            updateUser({ niche_type: newNiche });
-            setSuccess(t('config.niche_updated'));
-            if (newNiche === 'crm_sales') navigate('/crm/leads', { replace: true });
-            else navigate('/', { replace: true });
-        } catch (err) {
-            setError(t('config.save_error'));
-        } finally {
-            setNicheSaving(false);
         }
     };
 
@@ -142,45 +113,8 @@ export default function ConfigView() {
                             ))}
                         </div>
                         <p className="text-xs text-gray-400 mt-3">
-                            {t('config.current_clinic')}: <strong>{settings.name}</strong>
+                            {t('config.current_entity')}: <strong>{settings.name}</strong>
                         </p>
-                    </div>
-
-                    {/* Niche switch — handoff-style: one tap to switch Dental ↔ CRM Ventas */}
-                    <div className="bg-white border-l-4 border-orange-500 border border-gray-200 rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Users size={20} className="text-orange-600" />
-                            <h2 className="text-lg font-semibold text-gray-800">{t('config.niche_label')}</h2>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-4">
-                            {t('config.niche_help')}
-                        </p>
-                        <div className="flex flex-wrap gap-3">
-                            <button
-                                type="button"
-                                onClick={() => handleNicheChange('dental')}
-                                disabled={nicheSaving}
-                                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all border-2 min-h-[48px] touch-manipulation ${nicheType === 'dental'
-                                    ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {nicheSaving && nicheType !== 'dental' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Stethoscope size={20} />}
-                                {t('config.niche_dental')}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleNicheChange('crm_sales')}
-                                disabled={nicheSaving}
-                                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all border-2 min-h-[48px] touch-manipulation ${nicheType === 'crm_sales'
-                                    ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {nicheSaving && nicheType !== 'crm_sales' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Users size={20} />}
-                                {t('config.niche_crm_sales')}
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

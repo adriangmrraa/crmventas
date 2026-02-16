@@ -5,7 +5,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 
-/** Clínica = Tenant en backend. Incluye config.calendar_provider: 'local' | 'google'. */
+/** Sede/Entidad = Tenant en backend. Incluye config.calendar_provider: 'local' | 'google'. */
 export interface Clinica {
     id: number;
     clinic_name: string;
@@ -23,7 +23,7 @@ const CALENDAR_PROVIDER_OPTIONS = (t: (k: string) => string) => [
 export default function ClinicsView() {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const isEntity = user?.niche_type === 'crm_sales';
+    const isEntity = true; // Single-niche: solo CRM Ventas
     const [clinicas, setClinicas] = useState<Clinica[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);

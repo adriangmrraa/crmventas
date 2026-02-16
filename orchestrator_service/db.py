@@ -483,7 +483,7 @@ class Database:
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tenants' AND column_name='niche_type') THEN
-                    ALTER TABLE tenants ADD COLUMN niche_type TEXT DEFAULT 'dental';
+                    ALTER TABLE tenants ADD COLUMN niche_type TEXT DEFAULT 'crm_sales';
                 END IF;
             END $$;
             """,
@@ -591,6 +591,20 @@ class Database:
                     CREATE INDEX idx_seller_agenda_range ON seller_agenda_events(tenant_id, start_datetime, end_datetime);
                 END IF;
             END $$;
+            """,
+            # Parche 25: Human override en leads (chat: intervención humana 24h, paridad con Clínicas)
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'human_handoff_requested') THEN
+                    ALTER TABLE leads ADD COLUMN human_handoff_requested BOOLEAN DEFAULT FALSE;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'human_override_until') THEN
+                    ALTER TABLE leads ADD COLUMN human_override_until TIMESTAMPTZ DEFAULT NULL;
+                END IF;
+            END $$;
             """
         ]
 
@@ -663,6 +677,55 @@ class Database:
         """
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(query, tenant_id, phone_number, first_name, status)
+
+    async def ensure_lead_exists(
+        self,
+        tenant_id: int,
+        phone_number: str,
+        customer_name: Optional[str] = None,
+        source: str = "whatsapp",
+    ):
+        """
+        Ensures a lead record exists for this tenant + phone (CRM Sales).
+        customer_name: WhatsApp display name; split into first_name/last_name.
+        If lead exists, updates name when customer_name is provided.
+        Returns the lead row (id, etc.).
+        """
+        parts = (customer_name or "").strip().split(None, 1)
+        first_name = parts[0] if parts else None
+        last_name = parts[1] if len(parts) > 1 else None
+        async with self.pool.acquire() as conn:
+            existing = await conn.fetchrow(
+                "SELECT id, first_name, last_name FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                tenant_id,
+                phone_number,
+            )
+            if existing:
+                if first_name is not None or last_name is not None:
+                    fn = first_name or existing["first_name"]
+                    ln = last_name if last_name is not None else existing["last_name"]
+                    await conn.execute(
+                        "UPDATE leads SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name), updated_at = NOW() WHERE id = $3",
+                        fn,
+                        ln,
+                        existing["id"],
+                    )
+                return existing
+            fn = first_name or "Lead"
+            ln = last_name or ""
+            row = await conn.fetchrow(
+                """
+                INSERT INTO leads (tenant_id, phone_number, first_name, last_name, status, source, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 'new', $5, NOW(), NOW())
+                RETURNING id, tenant_id, phone_number, first_name, last_name, status, source
+                """,
+                tenant_id,
+                phone_number,
+                fn,
+                ln,
+                source,
+            )
+            return row
 
     async def get_chat_history(self, from_number: str, limit: int = 15, tenant_id: Optional[int] = None) -> List[dict]:
         """Returns list of {'role': ..., 'content': ...} in chronological order. Opcional tenant_id para aislamiento por clínica."""

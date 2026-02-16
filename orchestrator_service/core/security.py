@@ -51,7 +51,7 @@ async def get_resolved_tenant_id(user_data=Depends(verify_admin_token)) -> int:
     Resuelve el tenant_id real consultando la tabla professionals mediante el UUID del current_user.
     Garantiza aislamiento total: nunca se usa tenant_id del JWT sin validar contra BD.
     - Si el usuario es professional: tenant_id de su fila en professionals.
-    - Si es CEO/secretary (sin fila en professionals): primera clínica (tenants ORDER BY id LIMIT 1).
+    - Si es CEO/secretary (sin fila en professionals): primera sede (tenants ORDER BY id LIMIT 1).
     """
     try:
         tid = await db.pool.fetchval(
@@ -74,7 +74,7 @@ async def get_resolved_tenant_id(user_data=Depends(verify_admin_token)) -> int:
 async def get_allowed_tenant_ids(user_data=Depends(verify_admin_token)) -> List[int]:
     """
     Lista de tenant_id que el usuario puede ver (chats, sesiones).
-    CEO: todos los tenants. Secretary/Professional: solo su clínica resuelta.
+    CEO: todos los tenants. Secretary/Professional: solo su sede resuelta.
     """
     try:
         if user_data.role == "ceo":

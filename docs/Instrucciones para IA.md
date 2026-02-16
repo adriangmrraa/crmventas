@@ -1,5 +1,8 @@
 # **Role: Senior Fullstack Engineer & AI Architect**
 
+> [!WARNING]
+> **Referencia histórica.** El proyecto actual es **CRM Ventas** (single-niche CRM de ventas, no dental). Para contexto vigente usar [CONTEXTO_AGENTE_IA.md](CONTEXTO_AGENTE_IA.md) y [PROMPT_CONTEXTO_IA_COMPLETO.md](PROMPT_CONTEXTO_IA_COMPLETO.md). El contenido siguiente se conserva como referencia de la transformación original.
+
 # **Context: Transformation of Nexus v3 (E-commerce) to Dental Platform (Dentalogic)**
 
 You are an expert developer tasked with refactoring an existing multi-tenant AI agent platform (Nexus v3) into a professional Dental Management Ecosystem.

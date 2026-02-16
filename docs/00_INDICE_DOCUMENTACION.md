@@ -1,6 +1,7 @@
-# Índice de documentación – Dentalogic
+# Índice de documentación – CRM Ventas
 
 Este documento lista **todos** los archivos de la carpeta `docs/` con una breve descripción. Sirve como mapa para encontrar rápidamente qué documento consultar.  
+**Proyecto:** CRM Ventas (Nexus Core) – single-niche CRM de ventas (leads, pipeline, vendedores, agenda, chats).  
 **Protocolo:** Non-Destructive Fusion. Última revisión: 2026-02.
 
 ---
@@ -31,7 +32,7 @@ Este documento lista **todos** los archivos de la carpeta `docs/` con una breve 
 
 | Archivo | Contenido |
 |---------|-----------|
-| [API_REFERENCE.md](API_REFERENCE.md) | Referencia completa de la API: autenticación, auth, configuración, usuarios, sedes, pacientes, turnos, chat, profesionales, calendario, tratamientos, estadísticas, analítica, health, chat IA. Incluye Swagger en `/docs`, ReDoc en `/redoc`. |
+| [API_REFERENCE.md](API_REFERENCE.md) | Referencia completa de la API: autenticación, prefijos `/admin/core` y `/admin/core/crm`, usuarios, sedes, leads, clientes, vendedores, agenda, chat (sesiones, mensajes, human-intervention, remove-silence, contexto lead), estadísticas, urgencias, health, chat IA. Swagger en `/docs`, ReDoc en `/redoc`. |
 | [audit_26_calendario_hibrido_2026-02-10.md](audit_26_calendario_hibrido_2026-02-10.md) | Auditoría del calendario híbrido: verificación código vs especificación (contenido migrado a 01_architecture, 08_troubleshooting, SPECS_IMPLEMENTADOS_INDICE). |
 | [AUDIT_ESTADO_COMPLETO_POR_PAGINA.md](AUDIT_ESTADO_COMPLETO_POR_PAGINA.md) | Auditoría estado completo por página del frontend. |
 | [AUDIT_ESTADO_PROYECTO.md](AUDIT_ESTADO_PROYECTO.md) | Estado del proyecto: backend, frontend, BD, specs vs código; endpoints por módulo; acciones correctivas; trazabilidad en SPECS_IMPLEMENTADOS_INDICE. |
@@ -45,6 +46,15 @@ Este documento lista **todos** los archivos de la carpeta `docs/` con una breve 
 | [riesgos_entendimiento_agente_agendar.md](riesgos_entendimiento_agente_agendar.md) | Riesgos de entendimiento del agente al agendar: análisis y mitigaciones. |
 | [SPECS_IMPLEMENTADOS_INDICE.md](SPECS_IMPLEMENTADOS_INDICE.md) | Índice de especificaciones implementadas: consolidación de .spec.md retirados; dónde está documentada cada funcionalidad. |
 | [TRANSFORMACION_AGNOSTICA_NICHO.md](TRANSFORMACION_AGNOSTICA_NICHO.md) | Transformación a plataforma agnóstica de nicho: base reutilizable, qué cambia por nicho, ejemplo CRM vendedores/setters, 10 prompts clave para empezar; para arrancar conversación con agente de código (leer con CONTEXTO_AGENTE_IA y PROMPT_CONTEXTO_IA_COMPLETO). |
+| [VERIFICACION_SALUD_CRM_VS_CLINICAS.md](VERIFICACION_SALUD_CRM_VS_CLINICAS.md) | Verificación de salud CRM VENTAS vs CLINICASV1.0: paridad funcional, endpoints faltantes, ajustes frontend/DB y checklist para que CRM funcione igual que Clínicas B1.0 adaptado al dominio CRM. |
+
+---
+
+## Planes (docs/plans/)
+
+| Archivo | Contenido |
+|---------|-----------|
+| [plan-paridad-crm-vs-clinicas.md](plans/plan-paridad-crm-vs-clinicas.md) | Plan de implementación paso a paso para cerrar las brechas de VERIFICACION_SALUD_CRM_VS_CLINICAS: Fase 0 DB (parche leads), Fase 1 ChatService, Fases 2–4 backend (chat, dashboard, contexto lead), Fase 5 frontend ChatsView, Fase 6 verificación y docs. |
 
 ---
 
@@ -59,7 +69,7 @@ Este documento lista **todos** los archivos de la carpeta `docs/` con una breve 
 
 ## Total
 
-- **En `docs/`:** 29 archivos Markdown (15 numerados 01–31, 14 por nombre).
-- **En raíz:** AGENTS.md, README.md.
+- **En `docs/`:** 29+ archivos Markdown (numerados 01–31, por nombre, planes y transformación).
+- **En raíz:** AGENTS.md (o .agent/agents.md), README.md.
 
-Para una lista detallada de endpoints y contratos API, usar [API_REFERENCE.md](API_REFERENCE.md) y Swagger en `http://localhost:8000/docs`.
+Para una lista detallada de endpoints y contratos API, usar [API_REFERENCE.md](API_REFERENCE.md) y Swagger en `http://localhost:8000/docs`. En CRM Ventas las rutas admin están bajo **`/admin/core/*`** y el módulo CRM bajo **`/admin/core/crm/*`** (leads, clients, sellers, agenda/events).

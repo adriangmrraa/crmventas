@@ -11,7 +11,7 @@ class NicheManager:
         Determines the niche type from tenant configuration.
         Defaults to 'dental' if not specified.
         """
-        return tenant_config.get("niche_type", "dental")
+        return tenant_config.get("niche_type", "crm_sales")
 
     @staticmethod
     def load_niche_router(app, niche_type: str):

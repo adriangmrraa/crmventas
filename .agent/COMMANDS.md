@@ -1,6 +1,6 @@
-# Comandos de Workflows y Skills – Dentalogic / Antigravity
+# Comandos de Workflows y Skills – CRM VENTAS
 
-Este documento es la **referencia única** para que tú (humano) y el agente (IA) trabajen en coordinación.  
+Este documento es la **referencia única** para que tú (humano) y el agente (IA) trabajen en coordinación. Todo el trabajo se realiza **dentro de CRM VENTAS**.  
 Cuando uses un comando, el agente debe cargar el workflow o la skill correspondiente y actuar según sus instrucciones.
 
 ---
@@ -63,6 +63,7 @@ También puedes **escribir el comando a mano** en el chat (ej. "Ejecuta /autonom
 | Comando | Archivo | Descripción |
 |--------|---------|-------------|
 | `/autonomy` | [autonomy.md](workflows/autonomy.md) | Motor completo SDD: scaffolding → advisor → specify → plan → gate → implement → verify → audit → review → push → finish. Se detiene si confianza &lt;70%, drift crítico o tests fallan 3 veces. |
+| `/fusion_stable` | [fusion_stable.md](workflows/fusion_stable.md) | Guía para construir/validar la versión estable del CRM (núcleo backend, módulo CRM, agenda, chats, frontend). |
 | `/bug_fix` o **bug fix** | [bug_fix.md](workflows/bug_fix.md) | Proceso para diagnosticar y solucionar bugs (logs, integraciones, patrones de arreglo, verificación). |
 | `/new_feature` | [new_feature.md](workflows/new_feature.md) | Nueva funcionalidad siguiendo arquitectura plana y protocolo Gala (DB, GCal, WhatsApp, frontend, verificación Sovereign). |
 | `/mobile-adapt` | [mobile-adapt.md](workflows/mobile-adapt.md) | Adaptar una vista de escritorio a experiencia mobile sin romper desktop. |
@@ -90,6 +91,14 @@ Las skills se activan cuando tu **mensaje o tarea** coincide con los triggers. E
 | **Backend_Sovereign** | `backend`, `fastapi`, `db`, `auth`, `v8.0`, `JIT`, `tenancy` | Arquitectura, endpoints, seguridad, multi-tenant, idempotencia. |
 | **Frontend_Nexus** | `frontend`, `react`, `ui`, `hooks`, `tsx`, `componentes` | Componentes React, API, estado, Tailwind. |
 | **DB_Evolution** | `schema`, `migration`, `sql`, `rag`, `idempotent` | Cambios de DB, migraciones, JSONB clínico. |
+
+### Dominio CRM y fusión (Nexus Estable)
+
+| Skill | Triggers típicos | Uso |
+|-------|-------------------|-----|
+| **CRM_Sales_Module** | `leads`, `pipeline`, `deals`, `sellers`, `agenda`, `calendar`, `crm_sales` | Módulo CRM: leads, etapas, vendedores, agenda híbrida, tools de reserva. |
+| **Platform_AI_Fusion** | `vault`, `rag`, `agents`, `roi`, `magic`, `onboarding`, `credentials` | Vault, RAG, agentes polimórficos, integraciones opcionales. |
+| **Fusion_Architect** | `fusión`, `estable`, `migrar`, `decidir`, `CRM vs Platform` | Decidir de qué proyecto tomar cada pieza; guiar integraciones. |
 
 ### Comunicación e integraciones
 

@@ -3,7 +3,7 @@ import uuid
 import json
 import logging
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Header
 from pydantic import BaseModel
@@ -118,6 +118,99 @@ async def send_chat_message(payload: ChatSendMessage, request: Request, backgrou
     background_tasks.add_task(send_to_whatsapp_task, payload.phone, payload.message, business_number)
     return {"status": "sent", "correlation_id": correlation_id}
 
+@router.put("/chat/sessions/{phone}/read", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
+async def mark_chat_session_read(phone: str, tenant_id: int, allowed_ids: List[int] = Depends(get_allowed_tenant_ids)):
+    if tenant_id not in allowed_ids: raise HTTPException(status_code=403)
+    return {"status": "ok", "phone": phone, "tenant_id": tenant_id}
+
+@router.post("/chat/human-intervention", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
+async def toggle_human_intervention(payload: HumanInterventionToggle, request: Request, allowed_ids: List[int] = Depends(get_allowed_tenant_ids)):
+    if payload.tenant_id not in allowed_ids: raise HTTPException(status_code=403)
+    norm_phone = normalize_phone(payload.phone)
+    if payload.activate:
+        override_until = datetime.now(ARG_TZ) + timedelta(milliseconds=payload.duration or 86400000)
+        await db.pool.execute("""
+            UPDATE leads SET human_handoff_requested = TRUE, human_override_until = $1, updated_at = NOW()
+            WHERE tenant_id = $2 AND (phone_number = $3 OR phone_number = $4)
+        """, override_until, payload.tenant_id, norm_phone, payload.phone)
+        await emit_appointment_event("HUMAN_OVERRIDE_CHANGED", {"phone_number": payload.phone, "tenant_id": payload.tenant_id, "enabled": True, "until": override_until.isoformat()}, request)
+        return {"status": "activated", "phone": payload.phone, "tenant_id": payload.tenant_id, "until": override_until.isoformat()}
+    else:
+        await db.pool.execute("""
+            UPDATE leads SET human_handoff_requested = FALSE, human_override_until = NULL, updated_at = NOW()
+            WHERE tenant_id = $1 AND (phone_number = $2 OR phone_number = $3)
+        """, payload.tenant_id, norm_phone, payload.phone)
+        await emit_appointment_event("HUMAN_OVERRIDE_CHANGED", {"phone_number": payload.phone, "tenant_id": payload.tenant_id, "enabled": False}, request)
+        return {"status": "deactivated", "phone": payload.phone, "tenant_id": payload.tenant_id}
+
+class RemoveSilencePayload(BaseModel):
+    phone: str
+    tenant_id: int
+
+@router.post("/chat/remove-silence", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
+async def remove_silence(payload: RemoveSilencePayload, request: Request, allowed_ids: List[int] = Depends(get_allowed_tenant_ids)):
+    if payload.tenant_id not in allowed_ids: raise HTTPException(status_code=403)
+    norm_phone = normalize_phone(payload.phone)
+    await db.pool.execute("""
+        UPDATE leads SET human_handoff_requested = FALSE, human_override_until = NULL, updated_at = NOW()
+        WHERE tenant_id = $1 AND (phone_number = $2 OR phone_number = $3)
+    """, payload.tenant_id, norm_phone, payload.phone)
+    await emit_appointment_event("HUMAN_OVERRIDE_CHANGED", {"phone_number": payload.phone, "tenant_id": payload.tenant_id, "enabled": False}, request)
+    return {"status": "removed", "phone": payload.phone, "tenant_id": payload.tenant_id}
+
+# --- DASHBOARD (paridad Clínicas) ---
+@router.get("/stats/summary", tags=["Estadísticas"])
+async def get_dashboard_stats(
+    range: str = "weekly",
+    user_data=Depends(verify_admin_token),
+    tenant_id: int = Depends(get_resolved_tenant_id),
+):
+    days = 7 if range == "weekly" else 30
+    try:
+        ia_conversations = await db.pool.fetchval("""
+            SELECT COUNT(DISTINCT m.from_number) FROM chat_messages m
+            JOIN leads l ON m.from_number = l.phone_number AND l.tenant_id = m.tenant_id
+            WHERE m.tenant_id = $1 AND m.created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
+        """, tenant_id, days) or 0
+        ia_events = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM seller_agenda_events e
+            WHERE e.tenant_id = $1 AND e.start_datetime >= CURRENT_DATE - INTERVAL '1 day' * $2
+        """, tenant_id, days) or 0
+        growth_rows = await db.pool.fetch("""
+            SELECT DATE(start_datetime) as date, COUNT(*) as completed_events
+            FROM seller_agenda_events WHERE tenant_id = $1 AND start_datetime >= CURRENT_DATE - INTERVAL '1 day' * $2
+            GROUP BY DATE(start_datetime) ORDER BY date ASC
+        """, tenant_id, days)
+        growth_data = [{"date": (r["date"].strftime("%Y-%m-%d") if hasattr(r["date"], "strftime") else str(r["date"])), "ia_referrals": 0, "completed_appointments": r["completed_events"]} for r in growth_rows]
+        if not growth_data:
+            growth_data = [{"date": date.today().isoformat(), "ia_referrals": 0, "completed_appointments": 0}]
+        return {
+            "ia_conversations": ia_conversations,
+            "ia_appointments": ia_events,
+            "active_urgencies": 0,
+            "total_revenue": 0.0,
+            "growth_data": growth_data,
+        }
+    except Exception as e:
+        logger.error(f"Error en get_dashboard_stats: {e}")
+        raise HTTPException(status_code=500, detail="Error al cargar estadísticas.")
+
+@router.get("/chat/urgencies", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
+async def get_recent_urgencies(limit: int = 10, tenant_id: int = Depends(get_resolved_tenant_id)):
+    try:
+        rows = await db.pool.fetch("""
+            SELECT l.id, TRIM(COALESCE(l.first_name,'') || ' ' || COALESCE(l.last_name,'')) as lead_name, l.phone_number as phone,
+                   'NORMAL' as urgency_level, 'Lead reciente' as reason, l.updated_at as timestamp
+            FROM leads l WHERE l.tenant_id = $1 ORDER BY l.updated_at DESC NULLS LAST LIMIT $2
+        """, tenant_id, limit)
+        return [
+            {"id": str(r["id"]), "patient_name": r["lead_name"], "phone": r["phone"], "urgency_level": r["urgency_level"], "reason": r["reason"], "timestamp": r["timestamp"].strftime("%d/%m %H:%M") if r.get("timestamp") and hasattr(r["timestamp"], "strftime") else str(r.get("timestamp") or "")}
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching urgencies: {e}")
+        return []
+
 # --- RUTAS DE CONFIGURACIÓN / TENANTS ---
 @router.get("/tenants", tags=["Sedes"])
 async def get_tenants(user_data=Depends(verify_admin_token)):
@@ -188,7 +281,7 @@ def _config_as_dict(config):  # config from DB can be dict (JSONB) or str
 @router.get("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     row = await db.pool.fetchrow(
-        "SELECT clinic_name, config, COALESCE(niche_type, 'dental') AS niche_type FROM tenants WHERE id = $1",
+        "SELECT clinic_name, config, COALESCE(niche_type, 'crm_sales') AS niche_type FROM tenants WHERE id = $1",
         resolved_tenant_id
     )
     if not row: return {}
@@ -196,20 +289,15 @@ async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_ten
     return {
         "name": row["clinic_name"],
         "ui_language": config.get("ui_language", "en"),
-        "niche_type": row["niche_type"] or "dental",
+        "niche_type": row["niche_type"] or "crm_sales",
     }
 
 @router.patch("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     if payload.ui_language:
         await db.pool.execute("UPDATE tenants SET config = jsonb_set(COALESCE(config, '{}'), '{ui_language}', to_jsonb($1::text)) WHERE id = $2", payload.ui_language, resolved_tenant_id)
-    niche_type = None
-    if payload.niche_type is not None and payload.niche_type in ("dental", "crm_sales"):
-        await db.pool.execute("UPDATE tenants SET niche_type = $1 WHERE id = $2", payload.niche_type, resolved_tenant_id)
-        niche_type = payload.niche_type
+    # Single-niche: only crm_sales; ignore niche_type changes from client
     out = {"status": "ok"}
-    if niche_type is not None:
-        out["niche_type"] = niche_type
     return out
 
 @router.get("/internal/credentials/{name}", tags=["Internal"])

@@ -1,3 +1,3 @@
-Ejecuta el **workflow Autonomy** (Motor de Ejecución Autónoma SDD v2.0).
+Ejecuta el **workflow Autonomy** (motor autónomo).
 
-**Instrucción:** Lee y sigue estrictamente todas las fases descritas en `.agent/workflows/autonomy.md`. Comienza por la Fase 1 (Scaffolding) y avanza según las condiciones de confianza y los checkpoints. Detente si confianza < 70%, hay drift crítico en audit o los tests fallan 3 veces. No ejecutes SQL directo; propón comandos al usuario.
+**Instrucción:** Sigue `CRM VENTAS/.agent/workflows/autonomy.md`. Encadena: specify → (clarify si hay ambigüedades) → plan → (gate: umbral de confianza) → implement → verify → update-docs (y opcionalmente advisor, audit, review, push, finish según el flujo SDD). Respeta spec-first, soberanía multi-tenant y no ejecutar SQL directo. Condiciones de parada: confianza < 70%, drift respecto a spec, o tests fallan 3 veces. Usa skills y reglas de `CRM VENTAS/.agent/agents.md`.

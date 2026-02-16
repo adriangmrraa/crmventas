@@ -1,6 +1,16 @@
-# API Reference - Dentalogic
+# API Reference - CRM Ventas
 
-Referencia de los endpoints del **Orchestrator** (FastAPI). Base URL típica: `http://localhost:8000` en desarrollo o la URL del servicio en producción.
+Referencia de los endpoints del **Orchestrator** (FastAPI) para **CRM Ventas** (Nexus Core). Base URL típica: `http://localhost:8000` en desarrollo o la URL del servicio en producción.
+
+## Prefijos en CRM Ventas
+
+| Prefijo | Contenido |
+|---------|-----------|
+| **`/auth`** | Login, registro, clínicas, me, profile (público o con JWT). |
+| **`/admin/core`** | Rutas administrativas: usuarios, tenants, settings, **chat** (tenants, sessions, messages, read, human-intervention, remove-silence), **stats/summary**, **chat/urgencies**, config/deployment, internal/credentials. Requieren **JWT + X-Admin-Token**. |
+| **`/admin/core/crm`** | Módulo CRM: **leads** (CRUD, phone/context), **clients**, **sellers**, **whatsapp/connections**, **templates**, **campaigns**, **agenda/events**. Requieren JWT + X-Admin-Token. |
+| **`/chat`** | POST: envío de mensaje al agente IA (usado por WhatsApp Service). |
+| **`/health`** | Health check (público). |
 
 ## Documentación interactiva (OpenAPI / Swagger)
 
@@ -8,11 +18,11 @@ En la misma base del Orchestrator están disponibles:
 
 | URL | Descripción |
 |-----|-------------|
-| **[/docs](http://localhost:8000/docs)** | **Swagger UI**: contrato completo, agrupado por tags (Auth, Pacientes, Turnos, Chat, etc.). Permite probar endpoints desde el navegador; en *Authorize* se pueden configurar **Bearer** (JWT) y **X-Admin-Token**. |
+| **[/docs](http://localhost:8000/docs)** | **Swagger UI**: contrato completo, agrupado por tags (Auth, CRM Sales, etc.). Configurar **Bearer** (JWT) y **X-Admin-Token** en *Authorize*. |
 | **[/redoc](http://localhost:8000/redoc)** | **ReDoc**: documentación en formato lectura. |
-| **[/openapi.json](http://localhost:8000/openapi.json)** | Esquema OpenAPI 3.x en JSON para importar en Postman, Insomnia o herramientas de generación de clientes. |
+| **[/openapi.json](http://localhost:8000/openapi.json)** | Esquema OpenAPI 3.x en JSON para Postman, Insomnia o generación de clientes. |
 
-Sustituye `localhost:8000` por la URL del Orchestrator en tu entorno (ej. en producción: `https://dentalogic-orchestrator.ugwrjq.easypanel.host`).
+Sustituye `localhost:8000` por la URL del Orchestrator en tu entorno.
 
 ---
 
@@ -23,27 +33,29 @@ Sustituye `localhost:8000` por la URL del Orchestrator en tu entorno (ej. en pro
 3. [Configuración de clínica](#configuración-de-clínica-idioma-ui)
 4. [Usuarios y aprobaciones](#usuarios-y-aprobaciones)
 5. [Sedes (Tenants)](#sedes-tenants)
-6. [Pacientes](#pacientes)
-7. [Turnos (Appointments)](#turnos-appointments)
-8. [Chat (multi-tenant)](#chat-multi-tenant)
-9. [Profesionales](#profesionales)
-10. [Calendario y bloques](#calendario-y-bloques)
-11. [Tratamientos](#tratamientos-services)
-12. [Estadísticas y analíticas](#analítica-y-estadísticas)
-13. [Otros (health, chat IA)](#otros)
+6. [Chat (admin core)](#chat-admin-core)
+7. [Estadísticas y urgencias (admin core)](#estadísticas-y-urgencias-admin-core)
+8. [CRM: Leads, clientes, vendedores, agenda](#crm-leads-clientes-vendedores-agenda)
+9. [Contexto de lead por teléfono](#contexto-de-lead-por-teléfono)
+10. [Pacientes (referencia legacy)](#pacientes)
+11. [Turnos (Appointments)](#turnos-appointments)
+12. [Profesionales / Vendedores](#profesionales)
+13. [Calendario y bloques](#calendario-y-bloques)
+14. [Tratamientos](#tratamientos-services)
+15. [Otros (health, chat IA)](#otros)
 
 ---
 
 ## Autenticación y headers
 
-Todas las rutas bajo **`/admin/*`** exigen:
+Todas las rutas bajo **`/admin/core/*`** (y **`/admin/core/crm/*`**) exigen:
 
 | Header | Obligatorio | Descripción |
 |--------|-------------|-------------|
 | **`Authorization`** | Sí | `Bearer <JWT>`. El JWT se obtiene con `POST /auth/login`. |
 | **`X-Admin-Token`** | Sí (si está configurado en servidor) | Token estático de infraestructura. El frontend lo inyecta desde `VITE_ADMIN_TOKEN`. Sin este header, el backend responde **401** aunque el JWT sea válido. |
 
-Rutas **públicas** (sin estos headers): `GET /auth/clinics`, `POST /auth/register`, `POST /auth/login`, `GET /health`.
+Rutas **públicas** (sin JWT/X-Admin-Token): `GET /auth/clinics`, `POST /auth/register`, `POST /auth/login`, `GET /health`.
 
 ---
 
@@ -112,9 +124,9 @@ Requiere `Authorization: Bearer <JWT>`. Devuelve el usuario autenticado (id, ema
 ## Configuración de clínica (idioma UI)
 
 ### Obtener configuración
-`GET /admin/settings/clinic`
+`GET /admin/core/settings/clinic`
 
-Devuelve la configuración de la clínica del tenant resuelto del usuario (nombre, horarios, **idioma de la UI**). Requiere autenticación admin.
+Devuelve la configuración de la clínica/entidad del tenant resuelto del usuario (nombre, horarios, **idioma de la UI**). Requiere autenticación admin.
 
 **Response:**
 - `name`: nombre de la clínica (`tenants.clinic_name`)
@@ -122,12 +134,12 @@ Devuelve la configuración de la clínica del tenant resuelto del usuario (nombr
 - `hours_start`, `hours_end`, `time_zone`, etc.
 
 ### Actualizar idioma de la plataforma
-`PATCH /admin/settings/clinic`
+`PATCH /admin/core/settings/clinic`
 
 Actualiza la configuración de la clínica. Solo se envían los campos a modificar.
 
 ### Configuración de despliegue
-`GET /admin/config/deployment`
+`GET /admin/core/config/deployment`
 
 Devuelve datos de configuración del despliegue (feature flags, URLs, etc.) para el frontend. Requiere autenticación admin.
 
@@ -144,17 +156,17 @@ Valores permitidos: `"es"`, `"en"`, `"fr"`. Se persiste en `tenants.config.ui_la
 Todas las rutas requieren autenticación admin. Solo **CEO** puede aprobar/rechazar usuarios.
 
 ### Usuarios pendientes
-`GET /admin/users/pending`
+`GET /admin/core/users/pending`
 
 Lista usuarios con `status = 'pending'` (registrados pero no aprobados). Útil para la vista de Aprobaciones.
 
 ### Listar usuarios
-`GET /admin/users`
+`GET /admin/core/users`
 
 Lista usuarios del sistema. Filtrado por tenant según rol (CEO ve todos los suyos; secretaria/profesional solo su tenant).
 
 ### Cambiar estado de usuario
-`POST /admin/users/{user_id}/status`
+`POST /admin/core/users/{user_id}/status`
 
 Aprueba o rechaza un usuario pendiente.
 
@@ -167,22 +179,22 @@ Aprueba o rechaza un usuario pendiente.
 Solo **CEO** puede gestionar sedes. Requieren autenticación admin.
 
 ### Listar sedes
-`GET /admin/tenants`
+`GET /admin/core/tenants`
 
 Devuelve todas las clínicas/sedes del CEO.
 
 ### Crear sede
-`POST /admin/tenants`
+`POST /admin/core/tenants`
 
 **Payload:** Incluye `clinic_name`, `config` (JSON, ej. `calendar_provider`, `ui_language`), etc.
 
 ### Actualizar sede
-`PUT /admin/tenants/{tenant_id}`
+`PUT /admin/core/tenants/{tenant_id}`
 
 Actualiza nombre y/o configuración de la sede.
 
 ### Eliminar sede
-`DELETE /admin/tenants/{tenant_id}`
+`DELETE /admin/core/tenants/{tenant_id}`
 
 Elimina la sede (restricciones de integridad según esquema).
 
@@ -303,19 +315,83 @@ Fuerza el mirroring entre Google Calendar y la BD local (bloqueos externos → `
 
 ---
 
-## Chat (multi-tenant)
+## Chat (admin core)
 
-Las rutas de chat filtran por `tenant_id`; Human Override y ventana 24h son independientes por clínica.
+Todas las rutas de chat están bajo **`/admin/core/chat/*`**. Filtran por `tenant_id`; Human Override y ventana 24h se persisten en la tabla **leads** (columnas `human_handoff_requested`, `human_override_until`).
 
-- `GET /admin/chat/tenants` — Clínicas disponibles para Chats (CEO: todas; otros: una). Response: `[{ "id", "clinic_name" }]`.
-- `GET /admin/chat/sessions?tenant_id=<id>` — Sesiones de esa clínica (obligatorio `tenant_id`).
-- `GET /admin/chat/messages/{phone}?tenant_id=<id>` — Historial por clínica.
-- `PUT /admin/chat/sessions/{phone}/read?tenant_id=<id>` — Marcar como leído.
-- `POST /admin/chat/human-intervention` — Body: `phone`, `tenant_id`, `activate`, `duration`.
-- `POST /admin/chat/remove-silence` — Body: `phone`, `tenant_id`.
-- `POST /admin/chat/send` — Body: `phone`, `tenant_id`, `message`.
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/admin/core/chat/tenants` | Clínicas/entidades disponibles para Chats (CEO: todas; otros: una). Response: `[{ "id", "clinic_name" }]`. |
+| GET | `/admin/core/chat/sessions?tenant_id=<id>` | Sesiones de chat del tenant (leads con mensajes recientes; incluye `status`, `human_override_until`, `unread_count`). |
+| GET | `/admin/core/chat/messages/{phone}?tenant_id=<id>` | Historial de mensajes por teléfono y tenant. |
+| PUT | `/admin/core/chat/sessions/{phone}/read` | Marcar conversación como leída. Query: `tenant_id`. Response: `{ "status": "ok" }`. |
+| POST | `/admin/core/chat/human-intervention` | Activar/desactivar intervención humana (24h de silencio IA). Body: `phone`, `tenant_id`, `activate` (bool), `duration` (minutos opcional). Actualiza `leads.human_handoff_requested` y `leads.human_override_until`. |
+| POST | `/admin/core/chat/remove-silence` | Quitar silencio: vuelve a habilitar respuestas de la IA. Body: `phone`, `tenant_id`. Pone `human_handoff_requested = false`, `human_override_until = null` en el lead. |
+| POST | `/admin/core/chat/send` | Enviar mensaje manual desde el panel. Body: `phone`, `tenant_id`, `message`. |
+
+---
+
+## Estadísticas y urgencias (admin core)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/admin/core/stats/summary` | Resumen de métricas CRM para el Dashboard. Query: `range` (opcional, `weekly` \| `monthly`). Response: `ia_conversations`, `ia_appointments`, `active_urgencies`, `total_revenue`, `growth_data` (array por día). |
+| GET | `/admin/core/chat/urgencies` | Lista de urgencias/leads recientes para el panel. Response: array de `{ lead_name, phone, urgency_level, reason, timestamp }`. |
+
+---
+
+## CRM: Leads, clientes, vendedores, agenda
+
+Todas las rutas CRM están bajo **`/admin/core/crm/*`**. Requieren autenticación admin; filtrado por `tenant_id`.
+
+- **Leads:** `GET/POST /admin/core/crm/leads`, `GET/PUT/DELETE /admin/core/crm/leads/{lead_id}`, `POST /admin/core/crm/leads/{id}/assign`, `PUT /admin/core/crm/leads/{id}/stage`, `POST /admin/core/crm/leads/{id}/convert-to-client`.
+- **Clientes:** `GET/POST /admin/core/crm/clients`, `GET/PUT/DELETE /admin/core/crm/clients/{client_id}`.
+- **Vendedores:** `GET /admin/core/crm/sellers`, `GET /admin/core/crm/sellers/by-user/{user_id}`, `PUT /admin/core/crm/sellers/{id}`, `POST /admin/core/crm/sellers`, `GET /admin/core/crm/sellers/{id}/analytics`.
+- **Agenda:** `GET/POST /admin/core/crm/agenda/events`, `PUT/DELETE /admin/core/crm/agenda/events/{event_id}`.
+- **WhatsApp/Templates/Campaigns:** `GET/POST /admin/core/crm/whatsapp/connections`, `GET /admin/core/crm/templates`, `POST /admin/core/crm/templates/sync`, `GET/POST /admin/core/crm/campaigns`, `POST /admin/core/crm/campaigns/{id}/launch`.
+
+---
+
+## Contexto de lead por teléfono
+
+`GET /admin/core/crm/leads/phone/{phone}/context`
+
+Devuelve el contexto del lead para el panel de Chats (nombre, próximo evento, último evento). Query opcional: `tenant_id_override` (si el usuario puede ver varios tenants).
+
+**Response (200):**
+```json
+{
+  "lead": {
+    "id": "uuid",
+    "first_name": "Juan",
+    "last_name": "Pérez",
+    "phone_number": "+54911...",
+    "status": "contacted",
+    "email": "juan@mail.com"
+  },
+  "upcoming_event": {
+    "id": "uuid",
+    "title": "Llamada de seguimiento",
+    "date": "2026-02-20T10:00:00",
+    "end_datetime": "2026-02-20T10:30:00",
+    "status": "scheduled"
+  },
+  "last_event": {
+    "id": "uuid",
+    "title": "Reunión inicial",
+    "date": "2026-02-10T14:00:00",
+    "status": "completed"
+  },
+  "is_guest": false
+}
+```
+
+Si no hay lead para ese teléfono en el tenant: `lead: null`, `upcoming_event: null`, `last_event: null`, `is_guest: true`.
 
 ## Pacientes
+
+> [!NOTE]
+> **CRM Ventas:** En este proyecto el contacto principal es el **lead** (tabla `leads`). El contexto para Chats se obtiene con `GET /admin/core/crm/leads/phone/{phone}/context`. Las rutas siguientes (pacientes, turnos con patient_id) se conservan como referencia para integraciones o specs legacy; el frontend actual usa leads, clients y agenda/events bajo `/admin/core/crm`.
 
 Todas las rutas de pacientes están aisladas por `tenant_id`.
 
@@ -371,31 +447,8 @@ Búsqueda por texto sobre pacientes del tenant (nombre, teléfono, email, etc.).
 
 Devuelve información de cobertura/obra social del paciente.
 
-### Contexto Clínico del Paciente
-`GET /admin/patients/phone/{phone}/context`
-
-Retorna información consolidada para la vista de chat (Última cita, próxima cita, plan de tratamiento). Aislado por `tenant_id`.
-
-**Response:**
-```json
-{
-  "patient": { "id": 1, "first_name": "Juan", ... },
-  "last_appointment": {
-    "date": "2026-02-01T10:00:00",
-    "type": "Limpieza",
-    "duration_minutes": 30,
-    "professional_name": "Dr. Smith"
-  },
-  "upcoming_appointment": {
-    "date": "2026-02-15T15:00:00",
-    "type": "Control",
-    "duration_minutes": 20,
-    "professional_name": "Dra. Gomez"
-  },
-  "treatment_plan": "Blanqueamiento dental en 3 sesiones",
-  "is_guest": false
-}
-```
+### Contexto Clínico del Paciente (legacy)
+`GET /admin/patients/phone/{phone}/context` — En CRM Ventas no se usa; en su lugar usar **`GET /admin/core/crm/leads/phone/{phone}/context`** (ver [Contexto de lead por teléfono](#contexto-de-lead-por-teléfono)).
 
 ---
 
@@ -454,50 +507,22 @@ Borra el turno; si hay evento en Google Calendar, se sincroniza la cancelación.
 
 ## Analítica y Estadísticas
 
-### Resumen de Estadísticas
-`GET /admin/stats/summary`
+### Resumen de Estadísticas (admin core)
+`GET /admin/core/stats/summary`
 
-Retorna métricas clave del sistema (IA, Ingresos, Urgencias).
+Retorna métricas clave del sistema CRM (conversaciones IA, eventos/reuniones, urgencias, ingresos). Usado por el Dashboard.
 
-**Query Params:**
-- `range`: Período de tiempo (`weekly` para 7 días, `monthly` para 30 días). Default: `weekly`.
+**Query Params:** `range` (opcional): `weekly` | `monthly`. Default: `weekly`.
 
-**Response:**
-```json
-{
-  "ia_conversations": 150,
-  "ia_appointments": 12,
-  "active_urgencies": 3,
-  "total_revenue": 45000.0,
-  "growth_data": [
-    { "date": "2026-02-01", "ia_referrals": 5, "completed_appointments": 3 }
-  ]
-}
-```
+**Response:** `ia_conversations`, `ia_appointments`, `active_urgencies`, `total_revenue`, `growth_data` (array por día).
+
+### Urgencias Recientes (admin core)
+`GET /admin/core/chat/urgencies`
+
+Lista de urgencias/leads recientes para el panel del Dashboard. Response: array de objetos con `lead_name`, `phone`, `urgency_level`, `reason`, `timestamp`.
 
 ### Resumen de profesionales (analytics)
-`GET /admin/analytics/professionals/summary`
-
-Métricas por profesional para el dashboard CEO (citas, ingresos, etc.). **Query params:** `start_date`, `end_date` (opcional; por defecto mes actual).
-
-### Urgencias Recientes
-`GET /admin/chat/urgencies`
-
-Lista los últimos casos de urgencia detectados por el sistema de triaje IA.
-
-**Response:**
-```json
-[
-  {
-    "id": "123",
-    "patient_name": "Juan Perez",
-    "phone": "+54911...",
-    "urgency_level": "CRITICAL",
-    "reason": "Dolor agudo...",
-    "timestamp": "2026-02-08T10:30:00"
-  }
-]
-```
+`GET /admin/core/crm/sellers/{id}/analytics` — Métricas por vendedor (agenda, conversiones). Para listado de vendedores: `GET /admin/core/crm/sellers`.
 
 ---
 
@@ -506,7 +531,7 @@ Lista los últimos casos de urgencia detectados por el sistema de triaje IA.
 ### Health
 `GET /health`
 
-**Público.** Respuesta: `{ "status": "ok", "service": "dental-orchestrator" }`. Usado por orquestadores y monitoreo.
+**Público.** Respuesta: `{ "status": "ok", "service": "orchestrator" }` (o similar). Usado por orquestadores y monitoreo.
 
 ### Chat (IA / WhatsApp)
 `POST /chat`

@@ -105,6 +105,51 @@ async def create_lead(
     return dict(row)
 
 
+@router.get("/leads/phone/{phone}/context")
+async def get_lead_context_by_phone(
+    phone: str,
+    tenant_id_override: Optional[int] = Query(None),
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """
+    Returns lead context for Chats panel: lead data and upcoming event.
+    If tenant_id_override is provided and allowed, use it; else use context tenant_id.
+    """
+    from core.utils import normalize_phone
+    tenant_id = tenant_id_override if (tenant_id_override is not None and tenant_id_override in allowed_ids) else context["tenant_id"]
+    norm_phone = normalize_phone(phone)
+    lead_row = await db.pool.fetchrow("""
+        SELECT id, first_name, last_name, phone_number, status, email
+        FROM leads WHERE tenant_id = $1 AND (phone_number = $2 OR phone_number = $3) AND (status IS NULL OR status != 'deleted')
+    """, tenant_id, norm_phone, phone)
+    if not lead_row:
+        return {"lead": None, "upcoming_event": None, "last_event": None, "is_guest": True}
+    lead_id = lead_row["id"]
+    upcoming = await db.pool.fetchrow("""
+        SELECT id, title, start_datetime AS date, end_datetime, status
+        FROM seller_agenda_events WHERE tenant_id = $1 AND lead_id = $2 AND start_datetime >= NOW() AND status != 'cancelled'
+        ORDER BY start_datetime ASC LIMIT 1
+    """, tenant_id, lead_id)
+    last_ev = await db.pool.fetchrow("""
+        SELECT id, title, start_datetime AS date, status
+        FROM seller_agenda_events WHERE tenant_id = $1 AND lead_id = $2 AND start_datetime < NOW()
+        ORDER BY start_datetime DESC LIMIT 1
+    """, tenant_id, lead_id)
+    def _serialize(d):
+        if not d: return None
+        r = dict(d)
+        if r.get("date") and hasattr(r["date"], "isoformat"): r["date"] = r["date"].isoformat()
+        if r.get("end_datetime") and hasattr(r["end_datetime"], "isoformat"): r["end_datetime"] = r["end_datetime"].isoformat()
+        return r
+    return {
+        "lead": dict(lead_row),
+        "upcoming_event": _serialize(upcoming),
+        "last_event": _serialize(last_ev),
+        "is_guest": False,
+    }
+
+
 @router.get("/leads/{lead_id}", response_model=LeadResponse)
 async def get_lead(
     lead_id: UUID,
@@ -633,7 +678,7 @@ async def list_sellers(
     Solo tenants con niche_type = 'crm_sales'.
     """
     crm_ids = await db.pool.fetch(
-        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'dental') = 'crm_sales'",
+        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'crm_sales') = 'crm_sales'",
         allowed_ids
     )
     crm_tenant_ids = [int(r["id"]) for r in crm_ids]
@@ -661,7 +706,7 @@ async def get_sellers_by_user(
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id inválido")
     crm_ids = await db.pool.fetch(
-        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'dental') = 'crm_sales'",
+        "SELECT id FROM tenants WHERE id = ANY($1::int[]) AND COALESCE(niche_type, 'crm_sales') = 'crm_sales'",
         allowed_ids
     )
     crm_tenant_ids = [int(r["id"]) for r in crm_ids]
@@ -801,7 +846,7 @@ async def create_seller(
     tenant_id = int(payload.tenant_id) if payload.tenant_id is not None else resolved_tenant_id
     if tenant_id not in allowed_ids:
         raise HTTPException(status_code=403, detail="Sin acceso a este tenant")
-    niche = await db.pool.fetchval("SELECT COALESCE(niche_type, 'dental') FROM tenants WHERE id = $1", tenant_id)
+    niche = await db.pool.fetchval("SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id)
     if niche != "crm_sales":
         raise HTTPException(status_code=400, detail="El tenant no es de tipo CRM ventas")
     existing_user = await db.pool.fetchrow("SELECT id FROM users WHERE email = $1", payload.email)

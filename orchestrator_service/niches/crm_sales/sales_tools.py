@@ -153,7 +153,7 @@ async def book_sales_meeting(
 
         # Verificar que el tenant sea CRM
         niche = await db.pool.fetchval(
-            "SELECT COALESCE(niche_type, 'dental') FROM tenants WHERE id = $1",
+            "SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1",
             tenant_id,
         )
         if niche != "crm_sales":
@@ -204,7 +204,7 @@ async def book_sales_meeting(
             SELECT p.id, p.first_name, p.last_name
             FROM professionals p
             JOIN users u ON p.user_id = u.id AND u.role IN ('setter', 'closer')
-            JOIN tenants t ON t.id = p.tenant_id AND COALESCE(t.niche_type, 'dental') = 'crm_sales'
+            JOIN tenants t ON t.id = p.tenant_id AND COALESCE(t.niche_type, 'crm_sales') = 'crm_sales'
             WHERE p.tenant_id = $1 AND p.is_active = true
         """
         sellers_params: list = [tenant_id]

@@ -1,12 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import DashboardView from './views/DashboardView';
-import AgendaView from './modules/dental/views/AgendaView';
-import PatientsView from './modules/dental/views/PatientsView';
-import PatientDetail from './modules/dental/views/PatientDetail';
-import ProfessionalAnalyticsView from './modules/dental/views/ProfessionalAnalyticsView';
 import ChatsView from './views/ChatsView';
-import TreatmentsView from './modules/dental/views/TreatmentsView';
 import LoginView from './views/LoginView';
 import LandingView from './views/LandingView';
 import UserApprovalView from './views/UserApprovalView';
@@ -37,18 +32,10 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route index element={<DashboardView />} />
-                    <Route path="agenda" element={<AgendaView />} />
-                    <Route path="pacientes" element={<PatientsView />} />
-                    <Route path="pacientes/:id" element={<PatientDetail />} />
+                    <Route path="agenda" element={<Navigate to="/crm/agenda" replace />} />
+                    <Route path="pacientes" element={<Navigate to="/crm/clientes" replace />} />
+                    <Route path="pacientes/:id" element={<Navigate to="/crm/clientes" replace />} />
                     <Route path="chats" element={<ChatsView />} />
-                    <Route path="profesionales" element={<Navigate to="/aprobaciones" replace />} />
-                    <Route path="analytics/professionals" element={
-                      <ProtectedRoute allowedRoles={['ceo']}>
-                        <ProfessionalAnalyticsView />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="tratamientos" element={<TreatmentsView />} />
-                    <Route path="perfil" element={<ProfileView />} />
                     <Route path="aprobaciones" element={
                       <ProtectedRoute allowedRoles={['ceo']}>
                         <UserApprovalView />
@@ -74,6 +61,7 @@ function App() {
                         <SellersView />
                       </ProtectedRoute>
                     } />
+                    <Route path="perfil" element={<ProfileView />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Layout>

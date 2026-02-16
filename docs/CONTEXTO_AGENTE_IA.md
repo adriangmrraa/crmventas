@@ -1,18 +1,18 @@
 # Contexto completo del proyecto para agentes IA
 
-**Propósito:** Este documento permite que otra IA (en otra conversación) tome contexto completo del proyecto Dentalogic: qué es, cómo está construido, cómo trabajar en él y dónde está cada cosa. Úsalo como punto de entrada único antes de tocar código.
+**Propósito:** Este documento permite que otra IA (en otra conversación) tome contexto completo del proyecto **CRM Ventas**: qué es, cómo está construido, cómo trabajar en él y dónde está cada cosa. Úsalo como punto de entrada único antes de tocar código.
 
 **Para comenzar una nueva conversación con una IA de código (ej. Cursor):** Usá el **prompt listo para copiar/pegar** en [docs/PROMPT_CONTEXTO_IA_COMPLETO.md](PROMPT_CONTEXTO_IA_COMPLETO.md). Copiá el bloque de ese archivo y pegarlo como **primer mensaje** del chat nuevo; así la IA carga reglas, workflows y checklist desde el inicio.
 
-**Última actualización:** 2026-02 (landing demo, agente tratamientos estrictos, agenda fixes, patient_id en turnos, buffer WhatsApp 11s, prompt nuevo chat)
+**Última actualización:** 2026-02 (documentación CRM Ventas single-niche, prefijos /admin/core, contexto lead, paridad con Clínicas)
 
 ---
 
 ## 1. Qué es el proyecto
 
-- **Nombre:** Dentalogic (Nexus v7.6 / Platinum).
-- **Tipo:** Plataforma de gestión clínica dental **multi-tenant** (multi-sede), con asistente IA por WhatsApp para turnos, triaje y derivación a humano.
-- **Usuarios:** Clínicas (una o varias sedes), CEOs, secretarias, profesionales. Pacientes interactúan por WhatsApp con el agente.
+- **Nombre:** CRM Ventas (Nexus Core).
+- **Tipo:** Plataforma **multi-tenant** de CRM de ventas (leads, pipeline, vendedores, agenda, chats) con asistente IA por WhatsApp para calificación de leads, reserva de reuniones y derivación a humano. **Un solo nicho:** solo CRM de ventas (no dental, no multi-nicho).
+- **Usuarios:** Entidades/sedes (tenants), CEOs, secretarias, vendedores (setters/closers). Los leads interactúan por WhatsApp con el agente.
 - **Pilares:** Backend (Orchestrator FastAPI + LangChain), Frontend (React + Vite + Tailwind), WhatsApp Service (YCloud + Whisper), PostgreSQL, Redis.
 
 ---
@@ -37,11 +37,12 @@
 ```
 orchestrator_service/
   main.py              # App FastAPI, POST /chat, LangChain agent, tools, Socket.IO
-  admin_routes.py      # Todas las rutas /admin/* (pacientes, turnos, chat, tenants, settings, analytics, etc.)
+  admin_routes.py      # Rutas /admin/core/* (usuarios, chat, tenants, settings, stats/summary, chat/urgencies, human-intervention, remove-silence)
   auth_routes.py       # /auth/login, /auth/register, /auth/me, /auth/clinics, /auth/profile
   db.py                # Pool PostgreSQL + Maintenance Robot (parches idempotentes en arranque)
   gcal_service.py      # Google Calendar (disponibilidad, eventos, bloques)
-  analytics_service.py # Métricas por profesional (CEO)
+  analytics_service.py # Métricas por vendedor (CEO)
+  modules/crm_sales/   # Módulo CRM: routes.py → /admin/core/crm (leads, clients, sellers, agenda/events, leads/phone/context)
 
 frontend_react/src/
   App.tsx              # Rutas; LanguageProvider y AuthProvider envuelven todo
@@ -79,9 +80,10 @@ frontend_react/src/
 ## 6. Backend – Resumen de API
 
 - **Auth:** `POST /auth/login`, `POST /auth/register` (con `tenant_id`, specialty, phone_number, registration_id para professional/secretary), `GET /auth/clinics`, `GET /auth/me`, `GET/PATCH /auth/profile`.
-- **Admin – Configuración:** `GET /admin/settings/clinic` (devuelve `ui_language` es|en|fr), `PATCH /admin/settings/clinic` (body `{ "ui_language": "es"|"en"|"fr" }` → `tenants.config.ui_language`).
-- **Admin – Pacientes, turnos, profesionales, chat, tenants, tratamientos, analíticas, calendario:** Ver `docs/AUDIT_ESTADO_PROYECTO.md` sección 2 (tablas de endpoints) o `docs/API_REFERENCE.md`.
-- **Chat IA:** `POST /chat` (mensaje entrante; contexto `current_customer_phone`, `current_tenant_id`; tools con filtro por tenant).
+- **Admin – Configuración:** `GET /admin/core/settings/clinic`, `PATCH /admin/core/settings/clinic` (body `{ "ui_language": "es"|"en"|"fr" }`).
+- **Admin – Chat (core):** `GET /admin/core/chat/tenants`, `GET /admin/core/chat/sessions`, `GET /admin/core/chat/messages/{phone}`, `PUT /admin/core/chat/sessions/{phone}/read`, `POST /admin/core/chat/human-intervention`, `POST /admin/core/chat/remove-silence`, `POST /admin/core/chat/send`. Estadísticas: `GET /admin/core/stats/summary`, `GET /admin/core/chat/urgencies`.
+- **Admin – CRM:** Leads, clients, sellers, agenda/events, contexto lead: `GET /admin/core/crm/leads/phone/{phone}/context`. Todo bajo `GET/POST/PUT/DELETE /admin/core/crm/*`. Ver `docs/API_REFERENCE.md`.
+- **Chat IA:** `POST /chat` (mensaje entrante; contexto por tenant; tools con filtro por tenant).
 
 **Tools del agente (nombres exactos):** `check_availability`, `book_appointment`, `triage_urgency`, `derivhumano`, `cancel_appointment`, `reschedule_appointment`, `list_services`. Todos reciben/respetan `tenant_id`.
 
@@ -95,19 +97,19 @@ frontend_react/src/
 
 | Ruta | Vista | Notas |
 |------|--------|--------|
-| `/login` | LoginView | Registro con sede, especialidad, teléfono, matrícula para pro/secretary. Con `?demo=1`: prellenado y botón "Entrar a la demo" (login automático). |
-| `/demo` | LandingView | Landing pública: Probar app (→ /login?demo=1), Probar Agente IA (WhatsApp), Iniciar sesión (→ /login). Móvil-first, conversión. |
-| `/` | DashboardView | KPIs, urgencias, gráficos |
-| `/agenda` | AgendaView | FullCalendar, Socket.IO, leyenda origen (IA/Manual/GCal) traducida |
-| `/pacientes`, `/pacientes/:id` | PatientsView, PatientDetail | Listado y ficha clínica |
-| `/chats` | ChatsView | Por tenant_id; human intervention, remove-silence, send manual |
-| `/profesionales` | Redirect | → `/aprobaciones` |
-| `/analytics/professionals` | ProfessionalAnalyticsView | Solo CEO; filtros y tabla con t() |
-| `/tratamientos` | TreatmentsView | CRUD treatment-types |
+| `/login` | LoginView | Registro con sede, rol, teléfono para vendedor/secretary. Con `?demo=1`: prellenado y botón "Entrar a la demo". |
+| `/demo` | LandingView | Landing pública: Probar app, Probar Agente IA (WhatsApp), Iniciar sesión. |
+| `/` | DashboardView | KPIs (stats/summary), urgencias (chat/urgencies), gráficos |
+| `/agenda` | CrmAgendaView | Agenda CRM (eventos por vendedor/lead); FullCalendar, Socket.IO |
+| `/leads`, `/leads/:id` | LeadsView, LeadDetail | Listado y ficha de leads; pipeline |
+| `/clientes`, `/clientes/:id` | ClientsView, ClientDetail | Listado y ficha de clientes (convertidos desde leads) |
+| `/chats` | ChatsView | Por tenant_id; contexto lead (GET leads/phone/context); human intervention, remove-silence, send manual |
+| `/vendedores` | SellersView / UserApprovalView | Personal/vendedores; aprobaciones CEO |
+| `/analytics/professionals` | ProfessionalAnalyticsView | Solo CEO; métricas por vendedor |
 | `/perfil` | ProfileView | Perfil usuario |
-| `/aprobaciones` | UserApprovalView | Pendientes + Personal Activo; modal detalle, Vincular a sede, Editar Perfil |
-| `/sedes` | ClinicsView | CRUD tenants (solo CEO) |
-| `/configuracion` | ConfigView | Selector idioma (es/en/fr); GET/PATCH settings/clinic |
+| `/aprobaciones` | UserApprovalView | Pendientes + Personal Activo; Vincular a sede, Editar Perfil |
+| `/sedes` | ClinicsView | CRUD tenants/entidades (solo CEO) |
+| `/configuracion` | ConfigView | Selector idioma (es/en/fr); GET/PATCH /admin/core/settings/clinic |
 
 Todas las vistas anteriores usan `useTranslation()` y `t()` para respetar el selector de idioma.
 
@@ -115,9 +117,9 @@ Todas las vistas anteriores usan `useTranslation()` y `t()` para respetar el sel
 
 ## 8. Base de datos (PostgreSQL)
 
-- **Esquema base:** `db/init/dentalogic_schema.sql` (tenants, users, professionals, patients, appointments, clinical_records, chat_messages, treatment_types, credentials, etc.).
-- **Evolución:** `orchestrator_service/db.py` – Maintenance Robot aplica parches en cada arranque (tenant_id en tablas, columnas source, google_calendar_event_id, phone_number, specialty en professionals, etc.). Siempre idempotente (`DO $$ ... IF NOT EXISTS ... END $$`).
-- **Multi-tenant:** Tablas con `tenant_id`: tenants, professionals, patients, appointments, clinical_records, treatment_types, chat_messages, google_calendar_blocks, etc. Toda consulta debe filtrar por `tenant_id` del usuario/sesión.
+- **Esquema base:** `db/init/` y parches en `orchestrator_service/db.py` (tenants, users, professionals, leads, clients, seller_agenda_events, chat_messages, credentials, etc.).
+- **Evolución:** Maintenance Robot en `db.py` aplica parches idempotentes en cada arranque (p. ej. Parche 25: `human_handoff_requested`, `human_override_until` en `leads`). Siempre `DO $$ ... IF NOT EXISTS ... END $$`.
+- **Multi-tenant:** Tablas con `tenant_id`: tenants, professionals, leads, clients, seller_agenda_events, chat_messages, etc. Toda consulta debe filtrar por `tenant_id` del usuario/sesión.
 - **Config por sede:** `tenants.config` (JSONB): `ui_language`, `calendar_provider` ('local' | 'google'), etc.
 
 ---
@@ -181,4 +183,4 @@ Todas las vistas anteriores usan `useTranslation()` y `t()` para respetar el sel
 
 ---
 
-*Documento pensado para que un agente de IA en otra conversación pueda tomar contexto completo del proyecto Dentalogic y trabajar de forma coherente con las reglas y la estructura existente.*
+*Documento pensado para que un agente de IA en otra conversación pueda tomar contexto completo del proyecto CRM Ventas y trabajar de forma coherente con las reglas y la estructura existente.*

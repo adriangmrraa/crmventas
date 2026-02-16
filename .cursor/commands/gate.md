@@ -1,3 +1,3 @@
-Ejecuta el **workflow Gate** (umbral de confianza).
+Ejecuta el **workflow Gate** (umbral antes de implementar).
 
-**Instrucción:** Sigue `.agent/workflows/gate.md`. Evalúa el plan y la spec; calcula confianza (Alta 90-100%, Media 70-89%, Baja <70%). Si Baja: sugerir `/clarify`. Si Media/Alta: presentar riesgos y pedir "Go" explícito antes de `/implement`.
+**Instrucción:** Sigue `CRM VENTAS/.agent/workflows/gate.md`. Evalúa confianza en spec + plan. Si < 70%, sugiere /clarify o ajustes. Si ≥ 70%, pide confirmación explícita ("Go") al usuario antes de ejecutar /implement. Todo dentro de CRM VENTAS.

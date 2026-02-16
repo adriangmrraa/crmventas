@@ -1,45 +1,37 @@
 ---
-description: Usar workflows y skills de .agent cuando el usuario invoque comandos o cuando la tarea coincida con los triggers definidos.
-globs: 
+description: Usar workflows y skills de CRM VENTAS (.agent) al invocar comandos o cuando la tarea coincida con los triggers definidos.
 alwaysApply: true
 ---
 
-# Comandos de Workflows y Skills (.agent)
+# Comandos de Workflows y Skills – CRM VENTAS
 
-Este proyecto usa **workflows** y **skills** en `.agent/` para trabajar en coordinación con el usuario. Debes comportarte según estas reglas.
+El proyecto **CRM VENTAS** usa workflows y skills en `CRM VENTAS/.agent/`. Cuando trabajes con comandos o triggers, todo debe resolverse desde esa carpeta.
 
 ## 1. Comandos con slash (/)
 
-Los comandos están en **`.cursor/commands/`**: cada archivo (ej. `autonomy.md`, `specify.md`) es un comando que el usuario puede elegir al escribir `/` en el chat. Al seleccionar uno, recibes el contenido de ese .md como instrucción.
+Los comandos están en **`CRM VENTAS/.cursor/commands/`** (o `.cursor/commands/` si el workspace es CRM VENTAS). Al escribir **`/`** en el chat debes ver: autonomy, fusion_stable, new_feature, specify, clarify, plan, gate, implement, verify, bug_fix, update-docs, newproject, advisor, tasks, audit, review, push, finish, mobile-adapt.
 
-Cuando el usuario invoque un comando (por lista al escribir `/` o escribiendo "/autonomy", "ejecuta specify", etc.):
+Cuando el usuario invoque un comando (por lista al escribir `/` o escribiendo "ejecuta specify", etc.):
 
-1. **Resolver el comando**: si el mensaje o la instrucción recibida pide un workflow, usa `.agent/COMMANDS.md` para mapear al archivo correcto.
-2. **Cargar el workflow** leyendo `.agent/workflows/<nombre>.md` (ej. `specify.md`, `plan.md`, `autonomy.md`). Para comandos con guión bajo usa el mismo nombre (bug_fix → bug_fix.md; new_feature → new_feature.md).
-3. **Ejecutar los pasos** del workflow tal como están descritos, sin saltarte fases.
-4. Para **autonomy**: leer `.agent/workflows/autonomy.md` y seguir las fases del Motor de Autonomía (scaffolding → advisor → specify → plan → gate → implement → verify → audit → review → push → finish), deteniéndote si confianza < 70%, drift crítico o tests fallan 3 veces.
+1. **Resolver el comando**: usa `CRM VENTAS/.agent/COMMANDS.md` para mapear al workflow correcto.
+2. **Cargar el workflow** leyendo `CRM VENTAS/.agent/workflows/<nombre>.md` (autonomy, fusion_stable, new_feature, specify, plan, bug_fix, update-docs, newproject, advisor, tasks, audit, review, push, finish, mobile-adapt, clarify, gate, implement, verify).
+3. **Ejecutar los pasos** del workflow tal como están descritos. Todo el trabajo (código, specs, planes, docs) debe realizarse **dentro de CRM VENTAS**.
 
 ## 2. Skills (activación por trigger)
 
-Cuando la **tarea o el mensaje del usuario** coincida con los triggers listados en `.agent/COMMANDS.md` (sección "Skills") o en `.agent/agents.md`:
+Cuando la tarea o el mensaje del usuario coincida con los triggers listados en `CRM VENTAS/.agent/COMMANDS.md` o en `CRM VENTAS/.agent/agents.md`:
 
-1. **Identificar la skill** cuyo trigger coincida (backend, frontend, spec, credentials, tests, etc.).
-2. **Cargar la skill** leyendo `.agent/skills/<NombreSkill>/SKILL.md` (ej. `Backend_Sovereign/SKILL.md`, `Spec_Architect/SKILL.md`).
-3. **Aplicar** las reglas, protocolos y convenciones de esa skill mientras realizas la tarea.
+1. **Identificar la skill** (Backend_Sovereign, Frontend_Nexus, DB_Evolution, CRM_Sales_Module, Platform_AI_Fusion, Omnichannel_Chat_Operator, Fusion_Architect, y el resto listadas en agents.md).
+2. **Cargar la skill** leyendo `CRM VENTAS/.agent/skills/<NombreSkill>/SKILL.md`.
+3. **Aplicar** las reglas de esa skill durante la tarea.
 
-Puedes combinar varias skills si la tarea es transversal (por ejemplo Backend_Sovereign + DB_Evolution). La matriz en `docs/MATRIZ_DECISION_SKILLS.md` ayuda a elegir combinaciones.
+## 3. Referencias
 
-## 3. Referencias obligatorias
+- **Comandos y triggers:** `CRM VENTAS/.agent/COMMANDS.md`
+- **Índice de skills y workflows:** `CRM VENTAS/.agent/agents.md`
+- **Orden SDD (secuencia):** `CRM VENTAS/.agent/workflows/secuency.md`
 
-- **Índice de capacidades:** `.agent/agents.md` (lista de skills y workflows con triggers y descripciones).
-- **Lista de comandos y triggers:** `.agent/COMMANDS.md` (mapeo comando → workflow y trigger → skill).
-- **Orden SDD:** `.agent/workflows/secuency.md` (secuencia recomendada de comandos).
-- **Reglas de oro del proyecto:** `AGENTS.md` (soberanía de datos, aislamiento de scroll, etc.).
+## 4. Coordinación
 
-## 4. Reglas de coordinación
-
-- **No ejecutar SQL directo** (`psql` u otros): proponer el comando al usuario y esperar que lo ejecute y pegue el resultado.
-- Si un workflow pide un **"Go" explícito** del usuario (p. ej. después de `/gate`), **preguntar** antes de continuar con `/implement`.
-- Al **actualizar o crear** una skill, sugerir ejecutar **Skill_Sync** (o "sincronizar skills") para actualizar el índice en AGENTS.md.
-
-Sigue siempre los workflows y skills aplicables para mantener consistencia con el ecosistema Antigravity/SDD v2.0 del proyecto.
+- No ejecutar SQL directo: proponer el comando al usuario.
+- Todo el código y documentación nuevos van **dentro de CRM VENTAS**.

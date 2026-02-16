@@ -50,7 +50,7 @@ def _default_working_hours():
 @router.get("/clinics")
 async def list_clinics_public():
     """
-    Lista de clínicas/sedes para el selector del formulario de registro.
+    Lista de sedes/entidades para el selector del formulario de registro.
     Público (sin autenticación). Solo id y nombre.
     """
     try:
@@ -77,7 +77,7 @@ async def register(payload: UserRegister):
         if payload.tenant_id is None:
             raise HTTPException(
                 status_code=400,
-                detail="Debés elegir una sede/clínica o entidad para registrarte.",
+                detail="Debés elegir una sede o entidad para registrarte.",
             )
         tenant_exists = await db.pool.fetchval("SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id)
         if not tenant_exists:
@@ -207,14 +207,11 @@ async def login(payload: UserLogin):
         user['id']
     )
     if tenant_id is None:
-        # CEO/secretary: no tienen fila en professionals, usar primera clínica
+        # CEO/secretary: no tienen fila en professionals, usar primera sede
         tenant_id = await db.fetchval("SELECT id FROM tenants ORDER BY id ASC LIMIT 1") or 1
     tenant_id = int(tenant_id)
 
-    # Fetch niche_type from tenants
-    niche_type = await db.fetchval("SELECT niche_type FROM tenants WHERE id = $1", tenant_id)
-    if not niche_type:
-        niche_type = 'dental' # Default fallback
+    niche_type = await db.fetchval("SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id) or "crm_sales"
 
     token_data = {
         "user_id": str(user['id']),

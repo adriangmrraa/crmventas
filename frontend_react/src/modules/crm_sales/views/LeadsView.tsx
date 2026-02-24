@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus,
   Star, Mail, MapPin, Building2, Globe, Instagram, Facebook, Linkedin, ExternalLink,
-  History, MessageCircle, CheckCircle2, Send, X
+  History, MessageCircle, CheckCircle2, Send
 } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
@@ -111,24 +111,19 @@ export default function LeadsView() {
     }
   };
 
-  const filteredLeads = (leads || []).filter((lead) => {
-    if (!lead) return false;
+  const filteredLeads = leads.filter((lead) => {
     // Filter by Tab
+    if (activeTab === 'all') return true;
     if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
     if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
 
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
-    const fName = String(lead.first_name || '').toLowerCase();
-    const lName = String(lead.last_name || '').toLowerCase();
-    const pNumber = String(lead.phone_number || '').toLowerCase();
-    const email = String(lead.email || '').toLowerCase();
-
+    const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ').toLowerCase();
     return (
-      fName.includes(term) ||
-      lName.includes(term) ||
-      pNumber.includes(term) ||
-      email.includes(term)
+      name.includes(term) ||
+      (lead.phone_number || '').includes(term) ||
+      (lead.email || '').toLowerCase().includes(term)
     );
   });
 
@@ -253,27 +248,21 @@ export default function LeadsView() {
             <div className="flex overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all'
-                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setActiveTab('messages')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages'
-                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Mensajes
               </button>
               <button
                 onClick={() => setActiveTab('prospecting')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting'
-                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Prospección
@@ -317,11 +306,7 @@ export default function LeadsView() {
             ) : (
               <ul className="space-y-3">
                 {filteredLeads.map((lead) => {
-                  if (!lead) return null;
-                  const firstName = String(lead.first_name || '');
-                  const lastName = String(lead.last_name || '');
-                  const phone = String(lead.phone_number || '');
-                  const name = [firstName, lastName].filter(Boolean).join(' ') || phone || '—';
+                  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number || '—';
                   const businessName = lead.apify_title || (lead.source === 'apify_scrape' ? 'Negocio Desconocido' : null);
 
                   return (
@@ -333,7 +318,7 @@ export default function LeadsView() {
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center shrink-0 border border-medical-100">
                           <span className="text-medical-700 font-bold text-base">
-                            {String(businessName || name).charAt(0).toUpperCase()}
+                            {(businessName || name).charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="min-w-0">
@@ -342,10 +327,10 @@ export default function LeadsView() {
                           </p>
                           {businessName && (
                             <p className="text-xs text-medical-600 font-medium truncate mb-0.5">
-                              {name !== businessName ? name : phone}
+                              {name !== businessName ? name : lead.phone_number}
                             </p>
                           )}
-                          <p className="text-sm text-gray-500 truncate">{phone}</p>
+                          <p className="text-sm text-gray-500 truncate">{lead.phone_number}</p>
                         </div>
                       </div>
 
@@ -356,7 +341,7 @@ export default function LeadsView() {
                             lead.status === 'closed_won' ? 'bg-emerald-50 text-emerald-700' :
                               'bg-gray-100 text-gray-600'
                             }`}>
-                            {String(lead.status || 'new').replace('_', ' ')}
+                            {lead.status.replace('_', ' ')}
                           </span>
                         </div>
 
@@ -398,9 +383,9 @@ export default function LeadsView() {
                     {editingLead ? <Edit className="text-medical-600" size={22} /> : <Plus className="text-medical-600" size={22} />}
                     {editingLead ? (editingLead.source === 'apify_scrape' ? 'Business Detail' : 'Edit lead') : 'New lead'}
                   </h2>
-                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full">
+                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                     <span className="sr-only">Close</span>
-                    <X size={24} />
+                    <History size={20} className="rotate-90" />
                   </button>
                 </div>
 

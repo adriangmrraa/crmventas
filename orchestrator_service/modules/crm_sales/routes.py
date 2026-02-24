@@ -992,6 +992,9 @@ async def run_prospecting_scrape(
             payload.niche,
             payload.location,
             json.dumps(social_links),
+            item.get("email"),
+            item.get("totalScore"),
+            item.get("reviewsCount")
         )
         if result == "INSERT 0 1":
             imported += 1

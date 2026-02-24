@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus,
   Star, Mail, MapPin, Building2, Globe, Instagram, Facebook, Linkedin, ExternalLink,
-  History, MessageCircle, CheckCircle2, Send
+  History, MessageCircle, CheckCircle2
 } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
@@ -47,7 +47,39 @@ const defaultForm = {
   status: 'new' as const,
 };
 
+// ─── Error Boundary ───────────────────────────────────────────────
+class LeadsErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
+          <h2 className="text-lg font-bold text-gray-800 mb-2">Error al cargar Leads</h2>
+          <p className="text-sm text-gray-500 max-w-md font-mono bg-red-50 p-3 rounded-lg border border-red-100">{this.state.error}</p>
+          <button
+            className="mt-4 px-4 py-2 bg-medical-600 text-white rounded-lg text-sm font-bold hover:bg-medical-700"
+            onClick={() => window.location.reload()}
+          >Recargar página</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+// ──────────────────────────────────────────────────────────────────
+
 export default function LeadsView() {
+  return <LeadsErrorBoundary><LeadsViewInner /></LeadsErrorBoundary>;
+}
+
+function LeadsViewInner() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -306,8 +338,11 @@ export default function LeadsView() {
             ) : (
               <ul className="space-y-3">
                 {filteredLeads.map((lead) => {
-                  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number || '—';
+                  if (!lead || !lead.id) return null;
+                  const safeName = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || String(lead.phone_number || '—');
                   const businessName = lead.apify_title || (lead.source === 'apify_scrape' ? 'Negocio Desconocido' : null);
+                  const displayName = businessName || safeName;
+                  const firstChar = String(displayName).charAt(0).toUpperCase() || '?';
 
                   return (
                     <li
@@ -318,19 +353,19 @@ export default function LeadsView() {
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center shrink-0 border border-medical-100">
                           <span className="text-medical-700 font-bold text-base">
-                            {(businessName || name).charAt(0).toUpperCase()}
+                            {firstChar}
                           </span>
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-gray-900 truncate text-base">
-                            {businessName || name}
+                            {displayName}
                           </p>
                           {businessName && (
                             <p className="text-xs text-medical-600 font-medium truncate mb-0.5">
-                              {name !== businessName ? name : lead.phone_number}
+                              {safeName !== businessName ? safeName : String(lead.phone_number || '')}
                             </p>
                           )}
-                          <p className="text-sm text-gray-500 truncate">{lead.phone_number}</p>
+                          <p className="text-sm text-gray-500 truncate">{String(lead.phone_number || '')}</p>
                         </div>
                       </div>
 

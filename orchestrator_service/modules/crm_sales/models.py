@@ -44,6 +44,26 @@ class LeadResponse(LeadBase):
     tenant_id: int
     assigned_seller_id: Optional[UUID] = None
     stage_id: Optional[UUID] = None
+    
+    # Apify / Prospecting fields
+    apify_title: Optional[str] = None
+    apify_category_name: Optional[str] = None
+    apify_address: Optional[str] = None
+    apify_city: Optional[str] = None
+    apify_state: Optional[str] = None
+    apify_country_code: Optional[str] = None
+    apify_website: Optional[str] = None
+    apify_place_id: Optional[str] = None
+    apify_total_score: Optional[float] = None
+    apify_reviews_count: Optional[int] = None
+    apify_scraped_at: Optional[datetime] = None
+    prospecting_niche: Optional[str] = None
+    prospecting_location_query: Optional[str] = None
+    outreach_message_sent: bool = False
+    outreach_send_requested: bool = False
+    outreach_last_requested_at: Optional[datetime] = None
+    outreach_last_sent_at: Optional[datetime] = None
+
     created_at: datetime
     updated_at: datetime
 

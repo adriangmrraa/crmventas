@@ -53,6 +53,10 @@ async def list_leads(
     query = """
         SELECT id, tenant_id, phone_number, first_name, last_name, email,
                status, stage_id, assigned_seller_id, source, meta_lead_id, tags,
+               apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
+               apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at,
+               prospecting_niche, prospecting_location_query,
+               outreach_message_sent, outreach_send_requested, outreach_last_requested_at, outreach_last_sent_at,
                created_at, updated_at
         FROM leads
         WHERE tenant_id = $1 AND (status IS NULL OR status != 'deleted')

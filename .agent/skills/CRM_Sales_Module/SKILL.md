@@ -13,16 +13,18 @@ Módulo de ventas (leads, pipeline, vendedores, agenda) dentro de **CRM VENTAS**
 
 ## Entidades
 
-- **Leads:** phone_number, first_name, last_name, email, status (new → contacted → interested → negotiation → closed_won → closed_lost), assigned_seller_id, source, tags. Siempre `tenant_id`.
+- **Leads:** phone_number, first_name, last_name, email, status (new → contacted → interested → negotiation → closed_won → closed_lost), assigned_seller_id, source, tags, **social_links** (JSONB), apify_* (fields enriquecidos).
 - **Pipeline / stages:** Etapas configurables por tenant (o fijas según spec).
 - **Sellers (vendedores):** Usuarios con rol seller; asignación a leads.
 - **Appointments:** Agenda híbrida (local BD o Google Calendar por tenant); campos source, google_calendar_event_id cuando aplique.
+- **Prospecting:** Workflow de extracción masiva vía Apify con filtrado por nicho y locación.
 
 ---
 
 ## API (rutas)
 
 - CRUD leads: list, get, create, update, delete; asignación a seller; cambio de stage. Prefijo coherente (p. ej. `/niche/crm_sales/leads` o `/admin/core/crm/...`).
+- **Prospecting:** Scrape de Google Places (`/prospecting/scrape`) y gestión de leads de prospección.
 - Agenda: slots, crear/actualizar/cancelar citas; integración con gcal_service si `tenants.config.calendar_provider == 'google'`.
 
 ---
@@ -35,6 +37,7 @@ Registrar en el provider del nicho `crm_sales` las tools que el agente pueda usa
 
 ## Frontend
 
-Vistas: Leads (lista), Lead detail, Pipeline, Sellers, Agenda (calendario con Socket.IO para eventos en tiempo real). Sidebar con ítems para nicho crm_sales. Referencia: **CRM VENTAS/frontend_react/src/modules/crm_sales/**.
+Vistas: Leads (lista con pestañas Mensajes/Prospección), Lead detail, Pipeline, Sellers, Agenda (calendario con Socket.IO para eventos en tiempo real), **Prospecting (scraping tool)**.
+Sidebar con ítems para nicho crm_sales. Referencia: **CRM VENTAS/frontend_react/src/modules/crm_sales/**.
 
 Todo el código en **CRM VENTAS**.

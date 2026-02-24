@@ -61,8 +61,11 @@ class LeadResponse(LeadBase):
     prospecting_location_query: Optional[str] = None
     outreach_message_sent: bool = False
     outreach_send_requested: bool = False
+    outreach_message_content: Optional[str] = None
     outreach_last_requested_at: Optional[datetime] = None
     outreach_last_sent_at: Optional[datetime] = None
+    apify_rating: Optional[float] = None
+    apify_reviews: Optional[int] = None
     social_links: Optional[dict] = {}
 
     created_at: datetime
@@ -117,8 +120,11 @@ class ProspectingLeadResponse(BaseModel):
     prospecting_location_query: Optional[str] = None
     outreach_message_sent: bool = False
     outreach_send_requested: bool = False
+    outreach_message_content: Optional[str] = None
     outreach_last_requested_at: Optional[datetime] = None
     outreach_last_sent_at: Optional[datetime] = None
+    apify_rating: Optional[float] = None
+    apify_reviews: Optional[int] = None
     tags: List[str] = []
     social_links: Optional[dict] = {}
     created_at: datetime

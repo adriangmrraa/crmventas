@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus } from 'lucide-react';
+import {
+  Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus,
+  Star, Mail, MapPin, Building2, Globe, Instagram, Facebook, Linkedin, ExternalLink,
+  History, MessageCircle, CheckCircle2, Send
+} from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
@@ -18,6 +22,19 @@ export interface Lead {
   source?: string;
   assigned_seller_id?: string;
   tags?: string[];
+  // Prospecting fields
+  apify_title?: string;
+  apify_category_name?: string;
+  apify_address?: string;
+  apify_city?: string;
+  apify_state?: string;
+  apify_website?: string;
+  apify_rating?: number;
+  apify_reviews?: number;
+  social_links?: Record<string, string>;
+  outreach_message_content?: string;
+  outreach_last_sent_at?: string;
+  outreach_message_sent?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -318,88 +335,236 @@ export default function LeadsView() {
         )}
 
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-              <div className="p-6 border-b border-gray-200">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className={`bg-white rounded-xl shadow-2xl w-full ${editingLead?.source === 'apify_scrape' ? 'max-w-4xl' : 'max-w-md'} max-h-[90vh] flex flex-col`}>
+              <div className="p-6 border-b border-gray-200 shrink-0 flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
                   {editingLead ? <Edit className="text-medical-600" size={22} /> : <Plus className="text-medical-600" size={22} />}
-                  {editingLead ? 'Edit lead' : 'New lead'}
+                  {editingLead ? (editingLead.source === 'apify_scrape' ? 'Business Detail' : 'Edit lead') : 'New lead'}
                 </h2>
+                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <span className="sr-only">Close</span>
+                  <History size={20} className="rotate-90" />
+                </button>
               </div>
-              <form onSubmit={handleModalSubmit} className="p-6 space-y-4">
-                {modalError && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
-                    <AlertCircle size={16} /> {modalError}
+
+              <div className="flex-1 overflow-y-auto min-h-0">
+                <div className={`p-6 ${editingLead?.source === 'apify_scrape' ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'space-y-4'}`}>
+                  {/* LEFT COLUMN: Basic Form */}
+                  <div className="space-y-4">
+                    {modalError && (
+                      <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
+                        <AlertCircle size={16} /> {modalError}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center text-medical-700 font-bold text-lg">
+                        {(formData.first_name || editingLead?.apify_title || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">
+                          {editingLead?.apify_title || (formData.first_name ? `${formData.first_name} ${formData.last_name}` : editingLead?.phone_number)}
+                        </h3>
+                        {editingLead?.source === 'apify_scrape' && (
+                          <span className="text-xs bg-medical-50 text-medical-700 px-2 py-0.5 rounded-full font-medium">Prospección</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <form id="lead-form" onSubmit={handleModalSubmit} className="space-y-4">
+                      {!editingLead && (
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone number *</label>
+                          <input
+                            required
+                            type="tel"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none transition-all"
+                            value={formData.phone_number}
+                            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">First name</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            value={formData.first_name}
+                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Last name</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            value={formData.last_name}
+                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="email"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Status</label>
+                        <select
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-white font-medium"
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof defaultForm.status })}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </form>
                   </div>
-                )}
-                {!editingLead && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Phone number *</label>
-                    <input
-                      required
-                      type="tel"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">First name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  />
+
+                  {/* RIGHT COLUMN: Business Intelligence (Only for apify_scrape) */}
+                  {editingLead?.source === 'apify_scrape' && (
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-4">
+                        <h4 className="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
+                          <Building2 size={18} className="text-medical-600" />
+                          Business Insights
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Rating</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Star size={16} className="text-amber-500 fill-current" />
+                              <span className="text-lg font-bold text-gray-800">{editingLead.apify_rating?.toFixed(1) || '—'}</span>
+                              <span className="text-xs text-gray-400">({editingLead.apify_reviews || 0} reviews)</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Categoría</p>
+                            <p className="text-sm font-medium text-gray-700 mt-1">{editingLead.apify_category_name || '—'}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Dirección</p>
+                            <div className="flex items-start gap-2">
+                              <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                              <p className="text-sm text-gray-600 leading-tight">
+                                {editingLead.apify_address || `${editingLead.apify_city || '—'}, ${editingLead.apify_state || ''}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {editingLead.apify_website && (
+                            <div>
+                              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Sitio Web</p>
+                              <a
+                                href={editingLead.apify_website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-medical-600 font-medium flex items-center gap-1.5 hover:underline"
+                              >
+                                <Globe size={16} />
+                                {editingLead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                                <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Redes Sociales</p>
+                            <div className="flex gap-3 text-gray-400">
+                              {editingLead.social_links?.instagram ? (
+                                <a href={editingLead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600">
+                                  <Instagram size={20} />
+                                </a>
+                              ) : <Instagram size={20} className="opacity-25" />}
+                              {editingLead.social_links?.facebook ? (
+                                <a href={editingLead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+                                  <Facebook size={20} />
+                                </a>
+                              ) : <Facebook size={20} className="opacity-25" />}
+                              {editingLead.social_links?.linkedin ? (
+                                <a href={editingLead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700">
+                                  <Linkedin size={20} />
+                                </a>
+                              ) : <Linkedin size={20} className="opacity-25" />}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Outreach History Section */}
+                      <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-100 space-y-3">
+                        <h4 className="text-sm font-bold text-emerald-900 border-b border-emerald-200 pb-2 flex items-center gap-2">
+                          <History size={18} className="text-emerald-600" />
+                          Auditoría de Outreach
+                        </h4>
+
+                        {editingLead.outreach_message_sent ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+                              <CheckCircle2 size={16} />
+                              Mensaje Enviado
+                            </div>
+                            <div className="bg-white/60 p-3 rounded-lg border border-emerald-200">
+                              <p className="text-[10px] text-emerald-600 font-bold uppercase mb-1">Contenido / Plantilla</p>
+                              <p className="text-sm text-emerald-900 italic">
+                                "{editingLead.outreach_message_content || 'First Contact Template'}"
+                              </p>
+                            </div>
+                            <div className="flex justify-between items-center text-xs text-emerald-700">
+                              <span>Fecha de envío:</span>
+                              <span className="font-bold">
+                                {editingLead.outreach_last_sent_at ? new Date(editingLead.outreach_last_sent_at).toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="py-4 text-center">
+                            <MessageCircle size={32} className="mx-auto text-emerald-200 mb-2" />
+                            <p className="text-sm text-emerald-700 italic">No se ha enviado ningún mensaje aún.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Last name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Status</label>
-                  <select
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof defaultForm.status })}
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-all"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 py-2 bg-medical-600 text-white font-bold rounded-lg hover:bg-medical-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {saving ? <Loader2 className="animate-spin" size={20} /> : t('common.save')}
-                  </button>
-                </div>
-              </form>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 bg-gray-50 shrink-0 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3 text-gray-700 font-bold hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  // Link with form tag via id
+                  form="lead-form"
+                  type="submit"
+                  disabled={saving}
+                  className="flex-[2] py-3 bg-medical-600 text-white font-bold rounded-xl hover:bg-medical-700 shadow-md shadow-medical-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving ? <Loader2 className="animate-spin" size={20} /> : (editingLead ? 'Update Lead' : t('common.save'))}
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -349,6 +349,20 @@ Todas las rutas CRM están bajo **`/admin/core/crm/*`**. Requieren autenticació
 - **Vendedores:** `GET /admin/core/crm/sellers`, `GET /admin/core/crm/sellers/by-user/{user_id}`, `PUT /admin/core/crm/sellers/{id}`, `POST /admin/core/crm/sellers`, `GET /admin/core/crm/sellers/{id}/analytics`.
 - **Agenda:** `GET/POST /admin/core/crm/agenda/events`, `PUT/DELETE /admin/core/crm/agenda/events/{event_id}`.
 - **WhatsApp/Templates/Campaigns:** `GET/POST /admin/core/crm/whatsapp/connections`, `GET /admin/core/crm/templates`, `POST /admin/core/crm/templates/sync`, `GET/POST /admin/core/crm/campaigns`, `POST /admin/core/crm/campaigns/{id}/launch`.
+- **Prospección (Apify):** 
+  - `POST /admin/core/crm/prospecting/scrape`: Inicia scrape de Google Places. Payload: `{ "tenant_id", "niche", "location", "max_places" }`.
+  - `GET /admin/core/crm/prospecting/leads`: Lista leads obtenidos por prospección (`source = 'apify_scrape'`).
+  - `POST /admin/core/crm/prospecting/request-send`: Placeholder para envío masivo (Fase 2). Marca `outreach_send_requested = true`.
+
+---
+
+## Enriquecimiento de Leads (Upsert)
+
+Al importar leads desde prospección o mensajes entrantes, el sistema usa una lógica de enriquecimiento no destructiva basada en `ON CONFLICT (tenant_id, phone_number) DO UPDATE SET ... COALESCE(leads.field, EXCLUDED.field)`:
+
+1. **Preservación**: Si un lead ya tiene un nombre (ej. de WhatsApp), se mantiene.
+2. **Enriquecimiento**: Se agregan links sociales (`social_links`), websites, direcciones y scores de Apify que falten.
+3. **Diferenciación de Origen**: Se usa la columna `source` (`whatsapp_inbound` para mensajes, `apify_scrape` para prospección) para filtrar en las pestañas del frontend.
 
 ---
 

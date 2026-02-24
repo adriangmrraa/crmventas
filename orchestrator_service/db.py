@@ -719,6 +719,13 @@ class Database:
                     ALTER TABLE leads ADD COLUMN social_links JSONB DEFAULT '{}'::jsonb;
                 END IF;
             END $$;
+            """,
+            # Parche 29: Prospecting Phase 2 columns
+            """
+            ALTER TABLE leads
+            ADD COLUMN IF NOT EXISTS outreach_message_content TEXT,
+            ADD COLUMN IF NOT EXISTS apify_rating FLOAT,
+            ADD COLUMN IF NOT EXISTS apify_reviews INTEGER;
             """
         ]
 

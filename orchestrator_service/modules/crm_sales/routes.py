@@ -844,25 +844,31 @@ async def run_prospecting_scrape(
         result = await db.pool.execute(
             """
             INSERT INTO leads (
-                tenant_id, phone_number, first_name, status, source, tags, social_links,
+                tenant_id, phone_number, first_name, email, status, source, tags, social_links,
                 apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
                 apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at, apify_raw,
+                apify_rating, apify_reviews,
                 prospecting_niche, prospecting_location_query,
                 outreach_message_sent, outreach_send_requested,
                 created_at, updated_at
             )
             VALUES (
-                $1, $2, $3, 'new', 'apify_scrape', '[]'::jsonb, $18::jsonb,
+                $1, $2, $3, $19, 'new', 'apify_scrape', '[]'::jsonb, $18::jsonb,
                 $4, $5, $6, $7, $8, $9,
                 $10, $11, $12, $13, $14, $15::jsonb,
+                $20, $21,
                 $16, $17,
                 FALSE, FALSE,
                 NOW(), NOW()
             )
-            ON CONFLICT (tenant_id, phone_number) 
+            ON CONFLICT (tenant_id, phone_number)
             DO UPDATE SET
                 -- Enriquecimiento: Solo actualizamos si el campo actual está vacío o es de prospección
-                social_links = COALESCE(leads.social_links, EXCLUDED.social_links),
+                social_links = CASE 
+                    WHEN leads.social_links IS NULL OR leads.social_links = '{}'::jsonb THEN EXCLUDED.social_links 
+                    ELSE leads.social_links || EXCLUDED.social_links 
+                END,
+                email = COALESCE(leads.email, EXCLUDED.email),
                 apify_title = COALESCE(leads.apify_title, EXCLUDED.apify_title),
                 apify_category_name = COALESCE(leads.apify_category_name, EXCLUDED.apify_category_name),
                 apify_address = COALESCE(leads.apify_address, EXCLUDED.apify_address),
@@ -871,8 +877,10 @@ async def run_prospecting_scrape(
                 apify_country_code = COALESCE(leads.apify_country_code, EXCLUDED.apify_country_code),
                 apify_website = COALESCE(leads.apify_website, EXCLUDED.apify_website),
                 apify_place_id = COALESCE(leads.apify_place_id, EXCLUDED.apify_place_id),
-                apify_total_score = COALESCE(leads.apify_total_score, EXCLUDED.apify_total_score),
-                apify_reviews_count = COALESCE(leads.apify_reviews_count, EXCLUDED.apify_reviews_count),
+                apify_total_score = EXCLUDED.apify_total_score,
+                apify_reviews_count = EXCLUDED.apify_reviews_count,
+                apify_rating = EXCLUDED.apify_rating,
+                apify_reviews = EXCLUDED.apify_reviews,
                 apify_scraped_at = EXCLUDED.apify_scraped_at,
                 apify_raw = EXCLUDED.apify_raw,
                 prospecting_niche = COALESCE(leads.prospecting_niche, EXCLUDED.prospecting_niche),

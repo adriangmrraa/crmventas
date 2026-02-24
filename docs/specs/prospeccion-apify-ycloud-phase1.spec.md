@@ -9,6 +9,10 @@ Crear una nueva pagina de prospeccion en CRM Ventas para:
 - Marcar estado de outreach (`enviado`, `solicitado`, `pendiente`).
 - Dejar preparado el boton de envio de plantilla, sin integrar YCloud en esta fase.
 
+> [!NOTE]
+> **ESTADO: IMPLEMENTADO (Fase 1 completada - 2026-02-24)**
+> Se han implementado los endpoints de scrape, listado y solicitud. La UI soporta pestañas y enriquecimiento de datos sociales.
+
 ## Requisitos funcionales
 
 1. **UI de prospeccion**

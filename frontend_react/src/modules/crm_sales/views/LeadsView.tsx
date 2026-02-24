@@ -44,6 +44,7 @@ export default function LeadsView() {
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'messages' | 'prospecting'>('messages');
 
   useEffect(() => {
     fetchLeads();
@@ -94,6 +95,10 @@ export default function LeadsView() {
   };
 
   const filteredLeads = leads.filter((lead) => {
+    // Filter by Tab
+    if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
+    if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
+
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
     const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ').toLowerCase();
@@ -206,6 +211,36 @@ export default function LeadsView() {
         </div>
       </div>
 
+      {/* TABS */}
+      <div className="bg-white px-4 border-b border-gray-200 shrink-0">
+        <div className="flex gap-8">
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Mensajes
+          </button>
+          <button
+            onClick={() => setActiveTab('prospecting')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Prospección
+          </button>
+          {activeTab === 'prospecting' && (
+            <div className="ml-auto flex items-center">
+              <button
+                onClick={() => navigate('/crm/prospeccion')}
+                className="text-xs font-semibold text-medical-600 hover:text-medical-700 bg-medical-50 px-3 py-1.5 rounded-full border border-medical-100 transition-all hover:shadow-sm"
+              >
+                Envía mensajes masivos →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -246,6 +281,12 @@ export default function LeadsView() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    <div className="hidden md:flex flex-col items-end mr-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Origen</span>
+                      <span className="text-xs text-gray-600">
+                        {lead.source === 'apify_scrape' ? 'Prospección' : 'Mensaje'}
+                      </span>
+                    </div>
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">
                       {lead.status.replace('_', ' ')}
                     </span>

@@ -33,6 +33,7 @@ Crear una nueva pagina de prospeccion en CRM Ventas para:
 
 ## Esquema de datos (nuevas columnas en `leads`)
 
+- `source`: Ahora se usará para diferenciar el origen (`apify_scrape`, `whatsapp_inbound`).
 - `apify_title`, `apify_category_name`, `apify_address`, `apify_city`, `apify_state`, `apify_country_code`
 - `apify_website`, `apify_place_id`, `apify_total_score`, `apify_reviews_count`, `apify_scraped_at`
 - `apify_raw` (JSONB)
@@ -40,28 +41,17 @@ Crear una nueva pagina de prospeccion en CRM Ventas para:
 - `outreach_message_sent` (bool, default false)
 - `outreach_send_requested` (bool, default false)
 - `outreach_last_requested_at`, `outreach_last_sent_at`
-
-## Variables de entorno
-
-- `APIFY_API_TOKEN` (obligatoria para scrape).
-
-## Soberania multi-tenant
-
-- Todas las operaciones usan `tenant_id` validado contra `get_allowed_tenant_ids`.
-- No se permite escribir/leer sobre entidades fuera del alcance del usuario.
-
-## Criterios de aceptacion
-
-- Al scrapear, se guardan/actualizan leads por entidad + telefono.
-- La tabla muestra leads de prospeccion y su estado de outreach.
-- El boton de solicitar envio actualiza los flags sin enviar mensajes reales.
-- Sin SQL manual; migracion idempotente via `db.py`.
+- **Nuevas sugeridas**: `social_links` (JSONB para IG, FB, LinkedIn extraídos).
 
 ## Clarificaciones (Workflow /clarify)
 
-1. **Unicidad e Identidad**: Se mantiene **un lead por negocio**. Si Apify no devuelve teléfono pero sí una URL web, el sistema debe intentar scrapear la web (siguiendo la lógica del workflow de n8n) para extraer el número. Si se encuentra en la web, se usa ese.
-2. **Preservación de Datos**: Si un número de teléfono ya existe en la base de datos de `leads`, **se preservan los datos existentes** y se salta la actualización de ese registro con datos del scrape actual.
-3. **Normalización y Ubicación**: La normalización del país (CC) se infiere de la ubicación elegida en la UI. Si se busca "Medellín, Colombia", se asume el prefijo de Colombia para la normalización E.164.
-4. **Validación de Outreach**: El sistema validará el formato del teléfono antes de permitir activar el flag `outreach_send_requested`.
-5. **Visibilidad**: Los nuevos prospectos son visibles para **todos los vendedores** inmediatamente después del scrape.
+1. **Origen y Diferenciación**: Se usará la columna `source`. Los leads de mensajes entrantes se marcarán como `whatsapp_inbound`. Los de Apify como `apify_scrape`.
+2. **UI en Página de Leads**: Se implementarán dos pestañas:
+   - **Mensajes**: Muestra leads con `source = 'whatsapp_inbound'`.
+   - **Prospección**: Muestra leads con `source = 'apify_scrape'`. Incluye un botón "Enviar mensajes masivos" que redirige a `/crm/prospeccion`.
+3. **Columnas en Prospección**: Se mostrarán `Website`, `Outreach Status`, y enlaces sociales si están disponibles.
+4. **Enriquecimiento de Datos**: 
+   - Si un lead ya existe por WhatsApp (inbound), el scrape de Apify **actualizará** los campos faltantes (dirección, website, etc.) pero preservará el nombre y teléfono original de WhatsApp.
+   - Si ya existe por otra prospección, se ignora el duplicado.
+5. **Normalización y Ubicación**: La normalización del país (CC) se infiere de la ubicación elegida en la UI.
 

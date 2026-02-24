@@ -241,7 +241,8 @@ export default function ProspectingView() {
                   <th className="text-left px-3 py-2 w-10"></th>
                   <th className="text-left px-3 py-2">{t('prospecting.colBusiness')}</th>
                   <th className="text-left px-3 py-2">{t('prospecting.colPhone')}</th>
-                  <th className="text-left px-3 py-2">{t('prospecting.colNiche')}</th>
+                  <th className="text-left px-3 py-2">Website</th>
+                  <th className="text-left px-3 py-2">Social</th>
                   <th className="text-left px-3 py-2">{t('prospecting.colLocation')}</th>
                   <th className="text-left px-3 py-2">{t('prospecting.colStatus')}</th>
                 </tr>
@@ -261,7 +262,19 @@ export default function ProspectingView() {
                       <div className="text-xs text-gray-500">{lead.apify_category_name || '—'}</div>
                     </td>
                     <td className="px-3 py-2">{lead.phone_number}</td>
-                    <td className="px-3 py-2">{lead.apify_category_name || '—'}</td>
+                    <td className="px-3 py-2 text-xs truncate max-w-[150px]">
+                      {lead.apify_website ? (
+                        <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="text-medical-600 hover:underline">
+                          {lead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                        </a>
+                      ) : '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-2">
+                        {/* Placeholder for social links icons if extracted in future */}
+                        <span className="text-gray-400">—</span>
+                      </div>
+                    </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1 text-gray-700">
                         <Building2 className="w-3 h-3" />

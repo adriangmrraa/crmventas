@@ -683,6 +683,27 @@ class Database:
                     ALTER TABLE leads ADD COLUMN outreach_last_sent_at TIMESTAMPTZ;
                 END IF;
             END $$;
+            """,
+            # Parche 27: Asegurar constraint unique (tenant_id, phone_number) en leads
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'leads_tenant_phone_unique'
+                ) THEN
+                    ALTER TABLE leads ADD CONSTRAINT leads_tenant_phone_unique UNIQUE (tenant_id, phone_number);
+                END IF;
+            END $$;
+            """,
+            # Parche 28: Columna social_links para IG, FB, LinkedIn
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'social_links') THEN
+                    ALTER TABLE leads ADD COLUMN social_links JSONB DEFAULT '{}'::jsonb;
+                END IF;
+            END $$;
             """
         ]
 
@@ -761,7 +782,7 @@ class Database:
         tenant_id: int,
         phone_number: str,
         customer_name: Optional[str] = None,
-        source: str = "whatsapp",
+        source: str = "whatsapp_inbound",
     ):
         """
         Ensures a lead record exists for this tenant + phone (CRM Sales).

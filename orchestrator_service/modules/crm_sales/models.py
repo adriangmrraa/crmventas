@@ -63,6 +63,7 @@ class LeadResponse(LeadBase):
     outreach_send_requested: bool = False
     outreach_last_requested_at: Optional[datetime] = None
     outreach_last_sent_at: Optional[datetime] = None
+    social_links: Optional[dict] = {}
 
     created_at: datetime
     updated_at: datetime
@@ -118,6 +119,7 @@ class ProspectingLeadResponse(BaseModel):
     outreach_send_requested: bool = False
     outreach_last_requested_at: Optional[datetime] = None
     outreach_last_sent_at: Optional[datetime] = None
+    social_links: Optional[dict] = {}
     created_at: datetime
     updated_at: datetime
 

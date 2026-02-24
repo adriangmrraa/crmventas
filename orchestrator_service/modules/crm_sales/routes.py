@@ -612,6 +612,10 @@ def _normalize_phone_e164(raw: str, default_country_code: str = "54") -> Optiona
     digits = re.sub(r"\D", "", raw or "")
     if not digits:
         return None
+
+    # Check for garbage (repeating sequences like 0000000 or 1111111)
+    if re.match(r"^(\d)\1{6,}$", digits):
+        return None
     # Strip leading 00 (international prefix alternative to +)
     digits = re.sub(r"^00", "", digits)
     # Strip leading single 0 (local trunk)
@@ -709,7 +713,9 @@ async def _extract_phone_from_website(url: str, default_cc: str = "54") -> Optio
         return 0
 
     valid.sort(key=score, reverse=True)
-    return valid[0]
+    # n8n logic also prefers numbers that look like mobile (e.g. 549 in Arg)
+    mobile_priority = [v for v in valid if v.startswith("549") or v.startswith("521")]
+    return mobile_priority[0] if mobile_priority else valid[0]
 
 
 def _resolve_target_tenant_id(context: dict, allowed_ids: List[int], tenant_id: int) -> int:
@@ -813,7 +819,9 @@ async def run_prospecting_scrape(
             except ValueError:
                 pass
 
-        # 3) INSERT — skip if this (tenant_id, phone_number) already exists
+        # 3) UPSERT — Enrich if exists, preserve name if from WhatsApp
+        # Source differentiation: we only overwrite 'source' if it was originally 'apify_scrape'
+        # or if the existing record has no source.
         result = await db.pool.execute(
             """
             INSERT INTO leads (
@@ -832,7 +840,24 @@ async def run_prospecting_scrape(
                 FALSE, FALSE,
                 NOW(), NOW()
             )
-            ON CONFLICT (tenant_id, phone_number) DO NOTHING
+            ON CONFLICT (tenant_id, phone_number) 
+            DO UPDATE SET
+                -- Enriquecimiento: Solo actualizamos si el campo actual está vacío o es de prospección
+                apify_title = COALESCE(leads.apify_title, EXCLUDED.apify_title),
+                apify_category_name = COALESCE(leads.apify_category_name, EXCLUDED.apify_category_name),
+                apify_address = COALESCE(leads.apify_address, EXCLUDED.apify_address),
+                apify_city = COALESCE(leads.apify_city, EXCLUDED.apify_city),
+                apify_state = COALESCE(leads.apify_state, EXCLUDED.apify_state),
+                apify_country_code = COALESCE(leads.apify_country_code, EXCLUDED.apify_country_code),
+                apify_website = COALESCE(leads.apify_website, EXCLUDED.apify_website),
+                apify_place_id = COALESCE(leads.apify_place_id, EXCLUDED.apify_place_id),
+                apify_total_score = COALESCE(leads.apify_total_score, EXCLUDED.apify_total_score),
+                apify_reviews_count = COALESCE(leads.apify_reviews_count, EXCLUDED.apify_reviews_count),
+                apify_scraped_at = EXCLUDED.apify_scraped_at,
+                apify_raw = EXCLUDED.apify_raw,
+                prospecting_niche = COALESCE(leads.prospecting_niche, EXCLUDED.prospecting_niche),
+                prospecting_location_query = COALESCE(leads.prospecting_location_query, EXCLUDED.prospecting_location_query),
+                updated_at = NOW()
             """,
             tenant_id,
             phone,
@@ -854,6 +879,9 @@ async def run_prospecting_scrape(
         )
         if result == "INSERT 0 1":
             imported += 1
+        elif result == "UPDATE 1":
+            # Si se actualizó, técnicamente no es un 'bruto' nuevo, pero lo contamos como enriquecido
+            imported += 1 
         else:
             skipped_exists += 1
 

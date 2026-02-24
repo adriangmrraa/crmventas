@@ -9,6 +9,7 @@ import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
 const CRM_LEADS_BASE = '/admin/core/crm/prospecting/leads';
+const CRM_LEADS_WRITE = '/admin/core/crm/leads'; // for create/update/delete/convert actions
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
 
 export interface Lead {
@@ -94,17 +95,29 @@ function LeadsViewInner() {
   const [modalError, setModalError] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'messages' | 'prospecting'>('all');
+  const [tenantId, setTenantId] = useState<number | null>(null);
+
+  // Load the current tenant on mount
+  useEffect(() => {
+    api.get<{ id: number; clinic_name: string }[]>('/admin/core/chat/tenants')
+      .then((res) => {
+        const rows = Array.isArray(res.data) ? res.data : [];
+        if (rows.length > 0) setTenantId(rows[0].id);
+      })
+      .catch(() => { /* tenantId stays null, fetchLeads will show error */ });
+  }, []);
 
   useEffect(() => {
-    fetchLeads();
-  }, [statusFilter]);
+    if (tenantId !== null) fetchLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, tenantId]);
 
   const handleConvertToClient = async (e: React.MouseEvent, lead: Lead) => {
     e.stopPropagation();
     if (!window.confirm(t('leads.confirm_convert_to_client'))) return;
     setConvertingId(lead.id);
     try {
-      await api.post(`${CRM_LEADS_BASE}/${lead.id}/convert-to-client`);
+      await api.post(`${CRM_LEADS_WRITE}/${lead.id}/convert-to-client`);
       await fetchLeads();
       navigate('/crm/clientes');
     } catch (err: unknown) {
@@ -118,10 +131,16 @@ function LeadsViewInner() {
   };
 
   const fetchLeads = async () => {
+    if (tenantId === null) return;
     try {
       setLoading(true);
       setError(null);
-      const params: Record<string, string | number | boolean> = { limit: 1000, offset: 0, only_pending: false };
+      const params: Record<string, string | number | boolean> = {
+        tenant_id_override: tenantId,
+        limit: 500,
+        offset: 0,
+        only_pending: false,
+      };
       if (statusFilter) params.status = statusFilter;
       const response = await api.get<Lead[]>(CRM_LEADS_BASE, { params });
       setLeads(Array.isArray(response.data) ? response.data : []);

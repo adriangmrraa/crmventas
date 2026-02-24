@@ -341,7 +341,7 @@ export default function LeadsView() {
                             lead.status === 'closed_won' ? 'bg-emerald-50 text-emerald-700' :
                               'bg-gray-100 text-gray-600'
                             }`}>
-                            {lead.status.replace('_', ' ')}
+                            {(lead.status || 'new').replace('_', ' ')}
                           </span>
                         </div>
 

@@ -605,10 +605,7 @@ class Database:
                     ALTER TABLE leads ADD COLUMN human_override_until TIMESTAMPTZ DEFAULT NULL;
                 END IF;
             END $$;
-<<<<<<< HEAD
-=======
-            """
-            ,
+            """,
             # Parche 26: Campos de prospección Apify + estado de outreach en leads (CRM Sales)
             """
             DO $$
@@ -686,7 +683,6 @@ class Database:
                     ALTER TABLE leads ADD COLUMN outreach_last_sent_at TIMESTAMPTZ;
                 END IF;
             END $$;
->>>>>>> 3a9dfd4 (fix leads page prospeccion)
             """
         ]
 

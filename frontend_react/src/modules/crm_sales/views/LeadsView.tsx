@@ -8,7 +8,7 @@ import {
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
-const CRM_LEADS_BASE = '/admin/core/crm/leads';
+const CRM_LEADS_BASE = '/admin/core/crm/prospecting/leads';
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
 
 export interface Lead {
@@ -121,7 +121,7 @@ function LeadsViewInner() {
     try {
       setLoading(true);
       setError(null);
-      const params: Record<string, string | number> = { limit: 1000, offset: 0 };
+      const params: Record<string, string | number | boolean> = { limit: 1000, offset: 0, only_pending: false };
       if (statusFilter) params.status = statusFilter;
       const response = await api.get<Lead[]>(CRM_LEADS_BASE, { params });
       setLeads(Array.isArray(response.data) ? response.data : []);
@@ -129,8 +129,12 @@ function LeadsViewInner() {
       const ax = err as { response?: { status?: number; data?: { detail?: string } }; message?: string };
       let message = 'Failed to load leads.';
       if (ax.response) {
-        const detail = ax.response.data?.detail;
+        const rawDetail = ax.response.data?.detail;
+        const detail = Array.isArray(rawDetail)
+          ? rawDetail.map((d: { msg?: string; loc?: string[] }) => `${d.loc?.join('.') ?? ''}: ${d.msg ?? JSON.stringify(d)}`).join(' | ')
+          : (typeof rawDetail === 'string' ? rawDetail : rawDetail ? JSON.stringify(rawDetail) : '');
         message = detail || (ax.response.status === 401 ? 'Session expired. Please log in again.' : ax.response.status === 403 ? 'You do not have access.' : `Error ${ax.response.status}.`);
+
       } else if (ax.message) {
         message = ax.message.includes('Network') || ax.message.includes('CORS') || ax.message.includes('Failed to fetch')
           ? 'Cannot reach the server. Ensure the backend is running and CORS allows this origin (redeploy if needed).'

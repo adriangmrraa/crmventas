@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus,
-  Star, Mail, MapPin, Building2, Globe, Instagram, Facebook, Linkedin, ExternalLink,
-  History, MessageCircle, CheckCircle2, Send
+  History, MessageCircle, CheckCircle2, Send, X
 } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
@@ -113,7 +111,6 @@ export default function LeadsView() {
 
   const filteredLeads = leads.filter((lead) => {
     // Filter by Tab
-    if (activeTab === 'all') return true;
     if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
     if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
 
@@ -248,21 +245,27 @@ export default function LeadsView() {
             <div className="flex overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all'
+                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setActiveTab('messages')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages'
+                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Mensajes
               </button>
               <button
                 onClick={() => setActiveTab('prospecting')}
-                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting'
+                  ? 'border-medical-600 text-medical-700 bg-medical-50/30'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
                   }`}
               >
                 Prospección
@@ -383,9 +386,9 @@ export default function LeadsView() {
                     {editingLead ? <Edit className="text-medical-600" size={22} /> : <Plus className="text-medical-600" size={22} />}
                     {editingLead ? (editingLead.source === 'apify_scrape' ? 'Business Detail' : 'Edit lead') : 'New lead'}
                   </h2>
-                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full">
                     <span className="sr-only">Close</span>
-                    <History size={20} className="rotate-90" />
+                    <X size={24} />
                   </button>
                 </div>
 

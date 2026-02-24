@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Building2, Search, Send, Play, CheckCircle2, AlertCircle, Loader2,
-  Globe, Instagram, Facebook, Linkedin, Filter, X,
+  Search, Send, Play, CheckCircle2, AlertCircle, Loader2,
+  Globe, Instagram, Facebook, Filter, X,
   Mail, Star, MapPin
 } from 'lucide-react';
 import api from '../../../api/axios';
@@ -198,220 +198,234 @@ export default function ProspectingView() {
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <div className="p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-medical-100 flex items-center justify-center">
-            <Search className="w-5 h-5 text-medical-700" />
+      {/* FIXED TITLE BAR */}
+      <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <Search className="w-5 h-5 text-emerald-700" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">{t('nav.prospecting')}</h1>
-            <p className="text-sm text-gray-500">{t('prospecting.subtitle')}</p>
+            <p className="text-sm text-gray-500">
+              {leads.length} {t('prospecting.subtitle')}
+            </p>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label className="text-xs font-medium text-gray-600">{t('prospecting.entity')}</label>
-            <select
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-              value={tenantId ?? ''}
-              disabled={loadingTenants}
-              onChange={(e) => setTenantId(Number(e.target.value))}
-            >
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.clinic_name} (ID: {tenant.id})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">{t('prospecting.niche')}</label>
-            <input
-              value={niche}
-              onChange={(e) => setNiche(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-medical-500"
-              placeholder={t('prospecting.nichePlaceholder')}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">{t('prospecting.location')}</label>
-            <input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-medical-500"
-              placeholder={t('prospecting.locationPlaceholder')}
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={handleScrape}
-              disabled={scraping || loadingTenants}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 disabled:opacity-50 font-medium transition-all"
-            >
-              {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              {t('prospecting.runScrape')}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-          <div className="sm:col-span-2">
-            <label className="text-xs font-medium text-gray-600">{t('prospecting.template')}</label>
-            <div className="relative mt-1">
+      {/* SCROLLABLE CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 bg-gray-50/30 min-h-0">
+        {/* FILTERS & ACTIONS BAR (Scrolls with content) */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">Entidad</label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white pr-10 outline-none focus:ring-1 focus:ring-medical-500"
-                value={selectedTemplate}
-                disabled={loadingTemplates || templates.length === 0}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                value={tenantId ?? ''}
+                disabled={loadingTenants}
+                onChange={(e) => setTenantId(Number(e.target.value))}
               >
-                {templates.length === 0 ? (
-                  <option value="">{loadingTemplates ? t('common.loading') : t('prospecting.noTemplates')}</option>
-                ) : (
-                  <>
-                    <option value="">{t('prospecting.selectTemplate')}</option>
-                    {templates.map((tpl) => (
-                      <option key={tpl.name} value={tpl.name}>
-                        {tpl.name} ({tpl.category})
-                      </option>
-                    ))}
-                  </>
-                )}
+                {tenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.clinic_name}
+                  </option>
+                ))}
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                {loadingTemplates ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4" />}
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.niche')}</label>
+              <input
+                type="text"
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
+                placeholder={t('prospecting.nichePlaceholder')}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.location')}</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
+                placeholder={t('prospecting.locationPlaceholder')}
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleScrape}
+                disabled={scraping || !niche || !location}
+                className="w-full flex items-center justify-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all font-bold shadow-md shadow-emerald-100 active:scale-[0.98]"
+              >
+                {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                {scraping ? 'Buscando...' : t('prospecting.runScrape')}
+              </button>
+            </div>
+          </div>
+
+          {/* Template & Send Mass Support */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <span className="text-sm font-bold text-emerald-800 whitespace-nowrap">Plan de Mensajes:</span>
+              <div className="relative">
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  className="w-full sm:w-auto pl-4 pr-10 py-2 border border-emerald-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none font-medium text-emerald-900"
+                >
+                  {templates.length === 0 ? (
+                    <option value="">{loadingTemplates ? t('common.loading') : t('prospecting.noTemplates')}</option>
+                  ) : (
+                    <>
+                      <option value="">{t('prospecting.selectTemplate')}</option>
+                      {templates.map((tpl) => (
+                        <option key={tpl.name} value={tpl.name}>
+                          {tpl.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
               </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleRequestSend('selected')}
+                disabled={requestingSend || selectedIds.length === 0 || !selectedTemplate}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all font-bold text-sm shadow-sm"
+              >
+                {requestingSend ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {t('prospecting.sendSelected', { count: selectedIds.length })}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const toSelect: Record<string, boolean> = {};
+                  leads.filter(l => !l.outreach_message_sent).forEach(l => toSelect[l.id] = true);
+                  setSelected(toSelect);
+                }}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-all text-sm font-bold shadow-sm"
+              >
+                Auto-selección
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-3">
-          <button
-            type="button"
-            onClick={() => handleRequestSend('pending_all')}
-            disabled={requestingSend || leads.filter(l => !l.outreach_send_requested).length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-medical-50 text-medical-700 rounded-lg hover:bg-medical-100 disabled:opacity-50 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            {t('prospecting.sendAllPending')}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleRequestSend('selected')}
-            disabled={requestingSend || selectedIds.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            {t('prospecting.sendSelected', { count: selectedIds.length })}
-          </button>
-        </div>
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{success}</p>
+          </div>
+        )}
 
-        {error && <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
-        {success && <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">{success}</div>}
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
         {loadingLeads ? (
-          <div className="py-8 text-center text-gray-500 flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {t('prospecting.loadingLeads')}
+          <div className="py-12 text-center text-gray-500 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <p className="font-medium">{t('prospecting.loadingLeads')}</p>
           </div>
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden lg:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="hidden lg:block bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="text-left px-3 py-2 w-10"></th>
-                    <th className="text-left px-3 py-2">{t('prospecting.colBusiness')}</th>
-                    <th className="text-left px-3 py-2">{t('prospecting.colPhone')}</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviews</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Social</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                    <th className="text-left px-3 py-2">{t('prospecting.colStatus')}</th>
+                    <th className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={leads.length > 0 && selectedIds.length === leads.length}
+                        onChange={(e) => {
+                          const next: Record<string, boolean> = {};
+                          if (e.target.checked) {
+                            leads.forEach(l => next[l.id] = true);
+                          }
+                          setSelected(next);
+                        }}
+                        className="rounded text-emerald-600 focus:ring-emerald-500"
+                      />
+                    </th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colBusiness')}</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colPhone')}</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">Email</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">Rating</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">Website</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">Social</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colStatus')}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {leads.map((lead) => (
-                    <tr key={lead.id} className="border-t border-gray-100">
-                      <td className="px-3 py-2">
+                    <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={Boolean(selected[lead.id])}
-                          onChange={(e) => setSelected((prev) => ({ ...prev, [lead.id]: e.target.checked }))}
+                          onChange={(e) => setSelected(prev => ({ ...prev, [lead.id]: e.target.checked }))}
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
                         />
                       </td>
-                      <td className="px-3 py-2">
-                        <div className="font-medium text-gray-800">{lead.apify_title || lead.first_name || '—'}</div>
-                        <div className="text-xs text-gray-500">{lead.apify_category_name || '—'}</div>
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-gray-900">{lead.apify_title || '—'}</div>
+                        <div className="text-xs text-emerald-600 font-medium">{lead.apify_category_name || '—'}</div>
                       </td>
-                      <td className="px-3 py-2">{lead.phone_number}</td>
-                      <td className="px-3 py-2 text-sm text-gray-600">
+                      <td className="px-4 py-3 font-medium text-gray-600">{lead.phone_number}</td>
+                      <td className="px-4 py-3">
                         {lead.email ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 text-gray-600">
                             <Mail className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="truncate max-w-[150px]" title={lead.email}>{lead.email}</span>
+                            <span className="truncate max-w-[120px]" title={lead.email}>{lead.email}</span>
                           </div>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-3 py-2 text-sm">
+                      <td className="px-4 py-3">
                         {lead.apify_rating ? (
                           <div className="flex items-center gap-1 text-amber-500">
                             <Star className="w-3.5 h-3.5 fill-current" />
-                            <span className="font-medium">{lead.apify_rating.toFixed(1)}</span>
+                            <span className="font-bold">{lead.apify_rating.toFixed(1)}</span>
                           </div>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
-                        {lead.apify_reviews || 0}
-                      </td>
-                      <td className="px-3 py-2 text-sm">
+                      <td className="px-4 py-3">
                         {lead.apify_website ? (
-                          <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="text-medical-600 hover:underline">
-                            {lead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                          <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 text-gray-500 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors inline-block">
+                            <Globe className="w-4 h-4" />
                           </a>
                         ) : '—'}
                       </td>
-                      <td className="px-3 py-2">
-                        <div className="flex gap-2 text-gray-400">
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
                           {lead.social_links?.instagram && (
-                            <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 transition-colors">
+                            <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="p-1.5 text-pink-500 hover:bg-pink-50 rounded-lg transition-colors">
                               <Instagram className="w-4 h-4" />
                             </a>
                           )}
                           {lead.social_links?.facebook && (
-                            <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                            <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                               <Facebook className="w-4 h-4" />
                             </a>
                           )}
-                          {lead.social_links?.linkedin && (
-                            <a href={lead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 transition-colors">
-                              <Linkedin className="w-4 h-4" />
-                            </a>
-                          )}
-                          {(!lead.social_links || Object.keys(lead.social_links).length === 0) && (
-                            <span>—</span>
-                          )}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
-                        <div className="flex items-center gap-1 truncate max-w-[200px]" title={lead.apify_address || `${lead.apify_city || ''}, ${lead.apify_state || ''}`}>
-                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                          <span>{lead.apify_address || `${lead.apify_city || ''} (${lead.apify_state || ''})`}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-3">
                         {lead.outreach_message_sent ? (
-                          <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs">{t('prospecting.statusSent')}</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusSent')}</span>
                         ) : lead.outreach_send_requested ? (
-                          <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs">{t('prospecting.statusRequested')}</span>
+                          <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
                         ) : (
-                          <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{t('prospecting.statusPending')}</span>
+                          <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
                         )}
                       </td>
                     </tr>
@@ -425,76 +439,74 @@ export default function ProspectingView() {
               {leads.map((lead) => (
                 <div
                   key={lead.id}
-                  className={`bg-white border border-gray-200 rounded-xl p-4 shadow-sm active:bg-gray-50 transition-colors ${selected[lead.id] ? 'ring-2 ring-medical-500' : ''}`}
+                  className={`bg-white border border-gray-200 rounded-2xl p-4 shadow-sm active:bg-gray-50 transition-colors ${selected[lead.id] ? 'ring-2 ring-emerald-500' : ''}`}
                   onClick={() => setSelected((prev) => ({ ...prev, [lead.id]: !prev[lead.id] }))}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(selected[lead.id])}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          setSelected((prev) => ({ ...prev, [lead.id]: e.target.checked }));
-                        }}
-                        className="w-4 h-4 rounded text-medical-600 focus:ring-medical-500"
-                      />
-                      <div className="font-bold text-gray-900 leading-tight">
-                        {lead.apify_title || lead.first_name || '—'}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100 mt-0.5">
+                        <span className="text-emerald-700 font-bold">{(lead.apify_title || '—').charAt(0)}</span>
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-900 leading-tight mb-0.5">
+                          {lead.apify_title || '—'}
+                        </div>
+                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                          {lead.apify_category_name || '—'}
+                        </div>
                       </div>
                     </div>
                     {lead.apify_rating && (
-                      <div className="flex items-center gap-1 text-amber-500 shrink-0 bg-amber-50 px-2 py-0.5 rounded-lg">
+                      <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
                         <Star className="w-3 h-3 fill-current" />
                         <span className="text-xs font-bold">{lead.apify_rating.toFixed(1)}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-3 flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="flex items-center gap-1">
-                      <Building2 className="w-3 h-3" />
-                      {lead.apify_category_name || '—'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {lead.apify_city || '—'}
-                    </span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      {lead.apify_city || lead.apify_address || '—'}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                      <span className="w-4 h-4 flex items-center justify-center text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">P</span>
+                      {lead.phone_number}
+                    </div>
                   </div>
 
-                  <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
-                    <div className="flex gap-3">
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                    <div className="flex gap-2">
                       {lead.apify_website && (
                         <a
                           href={lead.apify_website}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-2 bg-gray-50 text-gray-500 rounded-lg"
+                          className="p-2.5 bg-gray-50 text-gray-500 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                         >
-                          <Globe className="w-4 h-4" />
+                          <Globe className="w-5 h-5" />
                         </a>
                       )}
-                      <div className="flex gap-2">
-                        {lead.social_links?.instagram && (
-                          <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 text-pink-500">
-                            <Instagram className="w-4 h-4" />
-                          </a>
-                        )}
-                        {lead.social_links?.facebook && (
-                          <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 text-blue-600">
-                            <Facebook className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
+                      {lead.social_links?.instagram && (
+                        <a
+                          href={lead.social_links.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-2.5 bg-gray-50 text-pink-500 rounded-xl hover:bg-pink-50 transition-colors"
+                        >
+                          <Instagram className="w-5 h-5" />
+                        </a>
+                      )}
                     </div>
-                    <div className="shrink-0">
+                    <div>
                       {lead.outreach_message_sent ? (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusSent')}</span>
+                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusSent')}</span>
                       ) : lead.outreach_send_requested ? (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
                       ) : (
-                        <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
+                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
                       )}
                     </div>
                   </div>
@@ -503,9 +515,9 @@ export default function ProspectingView() {
             </div>
 
             {leads.length === 0 && (
-              <div className="py-12 text-center text-gray-500">
-                <Search className="w-12 h-12 mx-auto text-gray-200 mb-3" />
-                <p>{t('prospecting.noLeads')}</p>
+              <div className="py-20 text-center text-gray-500">
+                <Search className="w-16 h-16 mx-auto text-gray-200 mb-4" />
+                <p className="text-lg font-medium text-gray-400">{t('prospecting.noLeads')}</p>
               </div>
             )}
           </>

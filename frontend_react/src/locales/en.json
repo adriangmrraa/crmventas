@@ -661,5 +661,33 @@
     "error_save_professional": "Error saving professional",
     "url_copied": "URL copied!",
     "setup_complete": "Setup complete!"
+  },
+  "prospecting": {
+    "subtitle": "Lead scraping with Apify by entity",
+    "entity": "Entity",
+    "niche": "Niche",
+    "nichePlaceholder": "e.g. real estate",
+    "location": "Location",
+    "locationPlaceholder": "e.g. Medellin, Colombia",
+    "runScrape": "Run scrape",
+    "sendAllPending": "Request send to all pending",
+    "sendSelected": "Request send to selected ({{count}})",
+    "loadingLeads": "Loading leads...",
+    "noLeads": "No prospecting leads found for this entity.",
+    "colBusiness": "Business",
+    "colPhone": "Phone",
+    "colNiche": "Niche",
+    "colLocation": "Location",
+    "colStatus": "Send status",
+    "statusSent": "Sent",
+    "statusRequested": "Requested",
+    "statusPending": "Pending",
+    "scrapeSuccess": "Scrape complete. Total: {{total}} | Imported: {{imported}} | Already existed: {{skipped}} | Fetched from web: {{fromWeb}}",
+    "sendQueued": "Action registered for {{count}} leads. Actual send is pending Phase 2.",
+    "errorLoadingEntities": "Could not load entities.",
+    "errorLoadingLeads": "Could not load prospecting leads.",
+    "errorMissingFields": "Please select an entity, niche and location.",
+    "errorScraping": "Scraping process failed.",
+    "errorSendRequest": "Could not register the send request."
   }
 }

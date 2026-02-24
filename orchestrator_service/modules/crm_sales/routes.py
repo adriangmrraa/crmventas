@@ -540,6 +540,170 @@ async def create_whatsapp_connection(
 # PROSPECTING ENDPOINTS (APIFY)
 # ============================================
 
+# Country prefix table (longest prefix first for correct matching)
+_COUNTRY_PREFIXES = [
+    # NANP specifics
+    ("1787", "PR"), ("1939", "PR"), ("1809", "DO"), ("1829", "DO"), ("1849", "DO"),
+    # Hispanoamérica
+    ("549", "AR"), ("54", "AR"), ("591", "BO"), ("56", "CL"), ("57", "CO"),
+    ("506", "CR"), ("53", "CU"), ("593", "EC"), ("503", "SV"), ("502", "GT"),
+    ("504", "HN"), ("521", "MX"), ("52", "MX"), ("505", "NI"), ("507", "PA"),
+    ("595", "PY"), ("51", "PE"), ("598", "UY"), ("58", "VE"), ("34", "ES"),
+    ("240", "GQ"),
+    # LatAm no hispana
+    ("55", "BR"), ("501", "BZ"), ("509", "HT"), ("592", "GY"), ("597", "SR"), ("594", "GF"),
+    # NANP genérico
+    ("1", "US"),
+]
+
+# Map country names / keywords to dial codes (for location inference)
+_LOCATION_COUNTRY_MAP = {
+    "argentina": "54", "ar": "54",
+    "argentina": "54",
+    "colombia": "57", "co": "57",
+    "chile": "56", "cl": "56",
+    "mexico": "52", "méxico": "52", "mx": "52",
+    "peru": "51", "perú": "51", "pe": "51",
+    "uruguay": "598", "uy": "598",
+    "paraguay": "595", "py": "595",
+    "bolivia": "591", "bo": "591",
+    "ecuador": "593", "ec": "593",
+    "venezuela": "58", "ve": "58",
+    "brasil": "55", "brazil": "55", "br": "55",
+    "españa": "34", "spain": "34", "es": "34",
+    "costa rica": "506", "cr": "506",
+    "panamá": "507", "panama": "507", "pa": "507",
+    "guatemala": "502", "gt": "502",
+    "honduras": "504", "hn": "504",
+    "el salvador": "503", "sv": "503",
+    "nicaragua": "505", "ni": "505",
+    "cuba": "53",
+    "united states": "1", "usa": "1", "us": "1",
+    "estados unidos": "1",
+    "puerto rico": "1787",
+    "dominican republic": "1809", "república dominicana": "1809",
+}
+
+
+def _infer_country_code(location: str) -> str:
+    """Infer dial code from a location query string (e.g. 'Medellín, Colombia' -> '57')."""
+    location_lower = location.lower().strip()
+    # Try multi-word matches first (e.g. "costa rica", "el salvador")
+    for keyword in sorted(_LOCATION_COUNTRY_MAP.keys(), key=len, reverse=True):
+        if keyword in location_lower:
+            return _LOCATION_COUNTRY_MAP[keyword]
+    return "54"  # Default: Argentina
+
+
+def _normalize_phone_e164(raw: str, default_country_code: str = "54") -> Optional[str]:
+    """
+    Ports the phone normalization logic from the n8n workflow (Scrap Phones.json).
+    Returns E.164 digits (without +) or None if invalid.
+    """
+    import re
+    digits = re.sub(r"\D", "", raw or "")
+    if not digits:
+        return None
+    # Strip leading 00 (international prefix alternative to +)
+    digits = re.sub(r"^00", "", digits)
+    # Strip leading single 0 (local trunk)
+    digits = re.sub(r"^0+", "", digits)
+
+    # Already has a known country code?
+    has_cc = False
+    for cc, _ in sorted(_COUNTRY_PREFIXES, key=lambda x: len(x[0]), reverse=True):
+        if digits.startswith(cc):
+            has_cc = True
+            break
+
+    if not has_cc:
+        # 10-digit NANP
+        if len(digits) == 10:
+            digits = "1" + digits
+        else:
+            digits = default_country_code + digits
+
+    # Arg-specific: ensure 549 prefix for mobile
+    if digits.startswith("54") and not digits.startswith("549"):
+        digits = "54" + "9" + digits[2:]
+    # Arg-specific: remove "15" after area code (e.g. 5492215... -> 5492 ...)
+    import re as _re
+    if digits.startswith("549"):
+        digits = _re.sub(r"^(549\d{2,5})15", r"\1", digits)
+
+    # Mex: ensure 521
+    if digits.startswith("52") and not digits.startswith("521"):
+        digits = "52" + "1" + digits[2:]
+
+    # Validate E.164 length (8-15 digits)
+    if len(digits) < 8 or len(digits) > 15:
+        return None
+    return digits
+
+
+async def _extract_phone_from_website(url: str, default_cc: str = "54") -> Optional[str]:
+    """
+    Secondary scrape: visit the website and extract the best phone number.
+    Ports the phone extraction regex logic from n8n Scrap Phones workflow.
+    """
+    import re
+    if not url:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=False) as client:
+            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; PhoneScraper/1.0)"})
+            html = resp.text
+    except Exception:
+        return None
+
+    # 1) Extract tel: and wa.me links (highest quality)
+    link_phones = []
+    for href in re.findall(r'href=["\']([^"\']+)["\']', html):
+        tel_match = re.match(r'^tel:([\d\s\-\+\(\)]+)', href, re.IGNORECASE)
+        if tel_match:
+            link_phones.append(tel_match.group(1))
+        wa_match = re.search(r'wa\.me/(\d{7,15})', href, re.IGNORECASE)
+        if wa_match:
+            link_phones.append(wa_match.group(1))
+
+    # 2) Strip tags, extract text near phone-related keywords
+    cleaned = re.sub(r'<script[\s\S]*?</script>', '', html, flags=re.IGNORECASE)
+    cleaned = re.sub(r'<style[\s\S]*?</style>', '', cleaned, flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', ' ', cleaned)
+    text = re.sub(r'\s+', ' ', text)
+
+    keyword_frags = [
+        frag for frag in re.split(r'(?<=[.!?])\s+', text)
+        if re.search(r'tel|teléfono|telefono|whatsapp|contacto|celular|llamanos', frag, re.IGNORECASE)
+    ]
+    raw_candidates = []
+    for frag in keyword_frags:
+        raw_candidates.extend(re.findall(r'(?:\+?\d[\d()\s\-]{6,}\d)', frag))
+    raw_candidates.extend(link_phones)
+
+    # 3) Normalize and validate candidates
+    valid = []
+    seen = set()
+    for raw in raw_candidates:
+        norm = _normalize_phone_e164(raw, default_cc)
+        if norm and norm not in seen:
+            seen.add(norm)
+            valid.append(norm)
+
+    if not valid:
+        return None
+
+    # 4) Prioritize by country prefix (same priority as n8n)
+    def score(num: str) -> int:
+        for i, (cc, _) in enumerate(sorted(_COUNTRY_PREFIXES, key=lambda x: len(x[0]), reverse=True)):
+            if num.startswith(cc):
+                return len(_COUNTRY_PREFIXES) - i
+        return 0
+
+    valid.sort(key=score, reverse=True)
+    return valid[0]
+
+
 def _resolve_target_tenant_id(context: dict, allowed_ids: List[int], tenant_id: int) -> int:
     if tenant_id not in allowed_ids:
         raise HTTPException(status_code=403, detail="Sin acceso al tenant seleccionado")
@@ -553,15 +717,23 @@ async def run_prospecting_scrape(
     allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
 ):
     """
-    Runs Apify Google Places scrape and upserts leads by (tenant_id, phone_number).
-    Uses APIFY_API_TOKEN from environment.
+    Runs Apify Google Places scrape and inserts leads by (tenant_id, phone_number).
+    - Skips / preserves existing leads (ON CONFLICT DO NOTHING).
+    - If Apify has no phone but has a website, scrapes the site for the phone.
+    - Infers country dial code from the location query.
+    CEO only.
     """
-    _ = context  # context required for auth scope
+    role = context.get("role") or context.get("user_role") or ""
+    if role != "ceo":
+        raise HTTPException(status_code=403, detail="Solo el rol CEO puede ejecutar prospeccion")
+
     tenant_id = _resolve_target_tenant_id(context, allowed_ids, payload.tenant_id)
 
     apify_token = os.getenv("APIFY_API_TOKEN")
     if not apify_token:
         raise HTTPException(status_code=500, detail="Missing APIFY_API_TOKEN in environment")
+
+    default_cc = _infer_country_code(payload.location)
 
     apify_body = {
         "includeWebResults": True,
@@ -593,25 +765,42 @@ async def run_prospecting_scrape(
         raise HTTPException(status_code=502, detail=f"Apify request failed: {e}")
 
     imported = 0
-    skipped_without_phone = 0
+    skipped_no_phone = 0
+    skipped_exists = 0
+    fetched_from_web = 0
+
     for item in items:
+        # 1) Get phone from Apify directly
         raw_phone = item.get("phoneUnformatted") or item.get("phone")
-        phone = normalize_phone(raw_phone) if raw_phone else ""
+        phone = _normalize_phone_e164(raw_phone, default_cc) if raw_phone else None
+
+        # 2) Website fallback
         if not phone:
-            skipped_without_phone += 1
+            website = item.get("website") or ""
+            if not website and item.get("webResults"):
+                website = (item["webResults"][0] or {}).get("url", "")
+            if website:
+                phone = await _extract_phone_from_website(website, default_cc)
+                if phone:
+                    fetched_from_web += 1
+
+        if not phone:
+            skipped_no_phone += 1
             continue
 
         title = (item.get("title") or "").strip() or None
         first_name = title[:100] if title else None
+
         scraped_at_iso = item.get("scrapedAt")
         scraped_at = None
         if isinstance(scraped_at_iso, str) and scraped_at_iso:
             try:
                 scraped_at = datetime.fromisoformat(scraped_at_iso.replace("Z", "+00:00"))
             except ValueError:
-                scraped_at = None
+                pass
 
-        await db.pool.execute(
+        # 3) INSERT — skip if this (tenant_id, phone_number) already exists
+        result = await db.pool.execute(
             """
             INSERT INTO leads (
                 tenant_id, phone_number, first_name, status, source, tags,
@@ -629,24 +818,7 @@ async def run_prospecting_scrape(
                 FALSE, FALSE,
                 NOW(), NOW()
             )
-            ON CONFLICT (tenant_id, phone_number) DO UPDATE SET
-                first_name = COALESCE(EXCLUDED.first_name, leads.first_name),
-                source = 'apify_scrape',
-                apify_title = EXCLUDED.apify_title,
-                apify_category_name = EXCLUDED.apify_category_name,
-                apify_address = EXCLUDED.apify_address,
-                apify_city = EXCLUDED.apify_city,
-                apify_state = EXCLUDED.apify_state,
-                apify_country_code = EXCLUDED.apify_country_code,
-                apify_website = EXCLUDED.apify_website,
-                apify_place_id = EXCLUDED.apify_place_id,
-                apify_total_score = EXCLUDED.apify_total_score,
-                apify_reviews_count = EXCLUDED.apify_reviews_count,
-                apify_scraped_at = EXCLUDED.apify_scraped_at,
-                apify_raw = EXCLUDED.apify_raw,
-                prospecting_niche = EXCLUDED.prospecting_niche,
-                prospecting_location_query = EXCLUDED.prospecting_location_query,
-                updated_at = NOW()
+            ON CONFLICT (tenant_id, phone_number) DO NOTHING
             """,
             tenant_id,
             phone,
@@ -666,15 +838,21 @@ async def run_prospecting_scrape(
             payload.niche,
             payload.location,
         )
-        imported += 1
+        if result == "INSERT 0 1":
+            imported += 1
+        else:
+            skipped_exists += 1
 
     return {
         "tenant_id": tenant_id,
         "niche": payload.niche,
         "location": payload.location,
+        "country_code_inferred": default_cc,
         "total_results": len(items),
-        "imported_or_updated": imported,
-        "skipped_without_phone": skipped_without_phone,
+        "imported": imported,
+        "skipped_no_phone": skipped_no_phone,
+        "skipped_already_exists": skipped_exists,
+        "fetched_from_web": fetched_from_web,
     }
 
 
@@ -704,7 +882,7 @@ async def list_prospecting_leads(
     params: List[object] = [tenant_id]
     idx = 2
     if only_pending:
-        query += f" AND outreach_message_sent = FALSE"
+        query += " AND outreach_message_sent = FALSE"
     query += f" ORDER BY updated_at DESC LIMIT ${idx} OFFSET ${idx + 1}"
     params.extend([limit, offset])
     rows = await db.pool.fetch(query, *params)
@@ -719,10 +897,19 @@ async def request_prospecting_send(
 ):
     """
     Marks leads as requested for template outreach.
-    NOTE: This is a placeholder; it does not send WhatsApp yet.
+    Validates phone format before flagging.
+    NOTE: Does not send WhatsApp yet (Phase 1 placeholder).
     """
+    import re
+    role = context.get("role") or context.get("user_role") or ""
+    if role != "ceo":
+        raise HTTPException(status_code=403, detail="Solo el rol CEO puede solicitar envios de prospeccion")
+
     _ = context
     tenant_id = _resolve_target_tenant_id(context, allowed_ids, payload.tenant_id)
+
+    # Phone validation predicate added to SQL for safety
+    phone_e164_pattern = r"^\d{8,15}$"
 
     if payload.lead_ids:
         ids = [str(x) for x in payload.lead_ids]
@@ -736,6 +923,7 @@ async def request_prospecting_send(
               AND id = ANY($2::uuid[])
               AND (status IS NULL OR status != 'deleted')
               AND ($3::bool = FALSE OR outreach_message_sent = FALSE)
+              AND phone_number ~ '^\d{8,15}$'
             """,
             tenant_id,
             ids,
@@ -752,6 +940,7 @@ async def request_prospecting_send(
               AND source = 'apify_scrape'
               AND (status IS NULL OR status != 'deleted')
               AND ($2::bool = FALSE OR outreach_message_sent = FALSE)
+              AND phone_number ~ '^\d{8,15}$'
             """,
             tenant_id,
             payload.only_pending,

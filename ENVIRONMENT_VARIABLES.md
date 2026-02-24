@@ -51,6 +51,10 @@ SMTP_USER=tu-email@gmail.com
 SMTP_PASS=tu-app-password
 SMTP_SENDER=tu-email@gmail.com
 NOTIFICATIONS_EMAIL=doctor@clinica.com
+
+# Prospección Apify (Módulo CRM Ventas)
+# Obtenerlo en: https://console.apify.com/account/integrations
+APIFY_API_TOKEN=apify_api_...
 ```
 
 ## whatsapp (8002)

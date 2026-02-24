@@ -12,6 +12,7 @@ type ProspectLead = {
   id: string;
   tenant_id: number;
   phone_number: string;
+  first_name?: string;
   apify_title?: string;
   apify_category_name?: string;
   apify_city?: string;
@@ -52,7 +53,7 @@ export default function ProspectingView() {
         setTenantId((prev) => prev ?? rows[0].id);
       }
     } catch {
-      setError('No se pudieron cargar las entidades.');
+      setError(t('prospecting.errorLoadingEntities'));
     } finally {
       setLoadingTenants(false);
     }
@@ -75,7 +76,7 @@ export default function ProspectingView() {
       setLeads(rows);
       setSelected({});
     } catch {
-      setError('No se pudieron cargar los leads de prospección.');
+      setError(t('prospecting.errorLoadingLeads'));
     } finally {
       setLoadingLeads(false);
     }
@@ -93,7 +94,7 @@ export default function ProspectingView() {
 
   const handleScrape = async () => {
     if (!tenantId || !niche.trim() || !location.trim()) {
-      setError('Debes elegir entidad, nicho y ubicación.');
+      setError(t('prospecting.errorMissingFields'));
       return;
     }
     try {
@@ -106,12 +107,16 @@ export default function ProspectingView() {
         location: location.trim(),
       });
       await loadLeads(tenantId);
+      const total = res.data?.total_results ?? 0;
+      const imported = res.data?.imported ?? res.data?.imported_or_updated ?? 0;
+      const skipped = res.data?.skipped_already_exists ?? 0;
+      const fromWeb = res.data?.fetched_from_web ?? 0;
       setSuccess(
-        `Scrape finalizado. Resultados: ${res.data?.total_results ?? 0}. Importados/actualizados: ${res.data?.imported_or_updated ?? 0}.`,
+        t('prospecting.scrapeSuccess', { total, imported, skipped, fromWeb }),
       );
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(detail || 'Falló el proceso de scraping.');
+      setError(detail || t('prospecting.errorScraping'));
     } finally {
       setScraping(false);
     }
@@ -129,11 +134,9 @@ export default function ProspectingView() {
           : { tenant_id: tenantId, only_pending: true };
       const res = await api.post('/admin/core/crm/prospecting/request-send', payload);
       await loadLeads(tenantId);
-      setSuccess(
-        `Acción registrada (${res.data?.updated ?? 0} leads). El envío real por plantilla YCloud queda para el siguiente paso.`,
-      );
+      setSuccess(t('prospecting.sendQueued', { count: res.data?.updated ?? 0 }));
     } catch {
-      setError('No se pudo registrar la solicitud de envío.');
+      setError(t('prospecting.errorSendRequest'));
     } finally {
       setRequestingSend(false);
     }
@@ -148,13 +151,13 @@ export default function ProspectingView() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">{t('nav.prospecting')}</h1>
-            <p className="text-sm text-gray-500">Scrape de leads con Apify por entidad</p>
+            <p className="text-sm text-gray-500">{t('prospecting.subtitle')}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-600">Entidad</label>
+            <label className="text-xs font-medium text-gray-600">{t('prospecting.entity')}</label>
             <select
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
               value={tenantId ?? ''}
@@ -169,21 +172,21 @@ export default function ProspectingView() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">Nicho</label>
+            <label className="text-xs font-medium text-gray-600">{t('prospecting.niche')}</label>
             <input
               value={niche}
               onChange={(e) => setNiche(e.target.value)}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="Ej: inmobiliarias"
+              placeholder={t('prospecting.nichePlaceholder')}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">Ubicación</label>
+            <label className="text-xs font-medium text-gray-600">{t('prospecting.location')}</label>
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="Ej: Comodoro Rivadavia"
+              placeholder={t('prospecting.locationPlaceholder')}
             />
           </div>
           <div className="flex items-end">
@@ -194,7 +197,7 @@ export default function ProspectingView() {
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 disabled:opacity-50"
             >
               {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              Ejecutar scrape
+              {t('prospecting.runScrape')}
             </button>
           </div>
         </div>
@@ -207,7 +210,7 @@ export default function ProspectingView() {
             className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
           >
             <SendHorizontal className="w-4 h-4" />
-            Solicitar envío a pendientes (msj_enviado=false)
+            {t('prospecting.sendAllPending')}
           </button>
           <button
             type="button"
@@ -216,7 +219,7 @@ export default function ProspectingView() {
             className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
           >
             <SendHorizontal className="w-4 h-4" />
-            Solicitar envío a seleccionados ({selectedIds.length})
+            {t('prospecting.sendSelected', { count: selectedIds.length })}
           </button>
         </div>
 
@@ -228,7 +231,7 @@ export default function ProspectingView() {
         {loadingLeads ? (
           <div className="py-8 text-center text-gray-500 flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Cargando leads...
+            {t('prospecting.loadingLeads')}
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -236,11 +239,11 @@ export default function ProspectingView() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left px-3 py-2 w-10"></th>
-                  <th className="text-left px-3 py-2">Negocio</th>
-                  <th className="text-left px-3 py-2">Teléfono</th>
-                  <th className="text-left px-3 py-2">Nicho</th>
-                  <th className="text-left px-3 py-2">Ubicación</th>
-                  <th className="text-left px-3 py-2">Estado envío</th>
+                  <th className="text-left px-3 py-2">{t('prospecting.colBusiness')}</th>
+                  <th className="text-left px-3 py-2">{t('prospecting.colPhone')}</th>
+                  <th className="text-left px-3 py-2">{t('prospecting.colNiche')}</th>
+                  <th className="text-left px-3 py-2">{t('prospecting.colLocation')}</th>
+                  <th className="text-left px-3 py-2">{t('prospecting.colStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,11 +270,11 @@ export default function ProspectingView() {
                     </td>
                     <td className="px-3 py-2">
                       {lead.outreach_message_sent ? (
-                        <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs">Enviado</span>
+                        <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs">{t('prospecting.statusSent')}</span>
                       ) : lead.outreach_send_requested ? (
-                        <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs">Solicitado</span>
+                        <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs">{t('prospecting.statusRequested')}</span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">Pendiente</span>
+                        <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{t('prospecting.statusPending')}</span>
                       )}
                     </td>
                   </tr>
@@ -279,7 +282,7 @@ export default function ProspectingView() {
                 {leads.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                      Sin leads de prospección para esta entidad.
+                      {t('prospecting.noLeads')}
                     </td>
                   </tr>
                 )}
@@ -291,4 +294,3 @@ export default function ProspectingView() {
     </div>
   );
 }
-

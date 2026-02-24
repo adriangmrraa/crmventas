@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# n8n workflow files (sensitive / local)
+Scrap Phones.json
+
 *.so
 .Python
 env/

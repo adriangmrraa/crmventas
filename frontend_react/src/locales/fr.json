@@ -660,5 +660,33 @@
     "error_save_professional": "Erreur lors de l'enregistrement du professionnel",
     "url_copied": "URL copiée !",
     "setup_complete": "Configuration terminée !"
+  },
+  "prospecting": {
+    "subtitle": "Scraping de prospects avec Apify par entité",
+    "entity": "Entité",
+    "niche": "Niche",
+    "nichePlaceholder": "ex : immobilier",
+    "location": "Lieu",
+    "locationPlaceholder": "ex : Bogotá, Colombie",
+    "runScrape": "Lancer le scraping",
+    "sendAllPending": "Demander l'envoi à tous les en attente",
+    "sendSelected": "Demander l'envoi aux sélectionnés ({{count}})",
+    "loadingLeads": "Chargement des prospects...",
+    "noLeads": "Aucun prospect trouvé pour cette entité.",
+    "colBusiness": "Entreprise",
+    "colPhone": "Téléphone",
+    "colNiche": "Niche",
+    "colLocation": "Lieu",
+    "colStatus": "Statut d'envoi",
+    "statusSent": "Envoyé",
+    "statusRequested": "Demandé",
+    "statusPending": "En attente",
+    "scrapeSuccess": "Scraping terminé. Total : {{total}} | Importés : {{imported}} | Déjà existants : {{skipped}} | Obtenus du site web : {{fromWeb}}",
+    "sendQueued": "Action enregistrée pour {{count}} prospects. L'envoi réel est en attente pour la Phase 2.",
+    "errorLoadingEntities": "Impossible de charger les entités.",
+    "errorLoadingLeads": "Impossible de charger les prospects.",
+    "errorMissingFields": "Veuillez sélectionner une entité, une niche et un lieu.",
+    "errorScraping": "Le processus de scraping a échoué.",
+    "errorSendRequest": "Impossible d'enregistrer la demande d'envoi."
   }
 }

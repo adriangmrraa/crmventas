@@ -661,5 +661,33 @@
     "error_save_professional": "Error al guardar profesional",
     "url_copied": "URL copiada!",
     "setup_complete": "Setup Completo!"
+  },
+  "prospecting": {
+    "subtitle": "Scrape de leads con Apify por entidad",
+    "entity": "Entidad",
+    "niche": "Nicho",
+    "nichePlaceholder": "Ej: inmobiliarias",
+    "location": "Ubicación",
+    "locationPlaceholder": "Ej: Medellín, Colombia",
+    "runScrape": "Ejecutar scrape",
+    "sendAllPending": "Solicitar envío a pendientes",
+    "sendSelected": "Solicitar envío a seleccionados ({{count}})",
+    "loadingLeads": "Cargando leads...",
+    "noLeads": "Sin leads de prospección para esta entidad.",
+    "colBusiness": "Negocio",
+    "colPhone": "Teléfono",
+    "colNiche": "Nicho",
+    "colLocation": "Ubicación",
+    "colStatus": "Estado envío",
+    "statusSent": "Enviado",
+    "statusRequested": "Solicitado",
+    "statusPending": "Pendiente",
+    "scrapeSuccess": "Scrape finalizado. Total: {{total}} | Importados: {{imported}} | Ya existían: {{skipped}} | Obtenidos de web: {{fromWeb}}",
+    "sendQueued": "Acción registrada para {{count}} leads. El envío real queda pendiente para Phase 2.",
+    "errorLoadingEntities": "No se pudieron cargar las entidades.",
+    "errorLoadingLeads": "No se pudieron cargar los leads de prospección.",
+    "errorMissingFields": "Debes elegir entidad, nicho y ubicación.",
+    "errorScraping": "Falló el proceso de scraping.",
+    "errorSendRequest": "No se pudo registrar la solicitud de envío."
   }
 }

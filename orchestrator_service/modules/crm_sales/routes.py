@@ -4,6 +4,7 @@ Endpoints for managing leads, WhatsApp connections, templates, campaigns, and se
 """
 import uuid as uuid_lib
 import os
+import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
@@ -834,7 +835,7 @@ async def run_prospecting_scrape(
             item.get("totalScore"),
             item.get("reviewsCount"),
             scraped_at,
-            item,
+            json.dumps(item),
             payload.niche,
             payload.location,
         )

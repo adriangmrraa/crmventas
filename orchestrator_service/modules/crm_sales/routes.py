@@ -10,6 +10,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from uuid import UUID
 import httpx
+import logging
+
+logger = logging.getLogger("orchestrator")
 
 from .models import (
     LeadCreate, LeadUpdate, LeadResponse, LeadAssignRequest, LeadStageUpdateRequest,
@@ -729,12 +732,15 @@ async def run_prospecting_scrape(
         raise HTTPException(status_code=403, detail="Solo el rol CEO puede ejecutar prospeccion")
 
     tenant_id = _resolve_target_tenant_id(context, allowed_ids, payload.tenant_id)
+    logger.info(f"🚀 Iniciando prospección Apify: niche={payload.niche}, location={payload.location}, tenant={tenant_id}")
 
     apify_token = os.getenv("APIFY_API_TOKEN")
     if not apify_token:
+        logger.error("❌ APIFY_API_TOKEN no encontrado en el entorno")
         raise HTTPException(status_code=500, detail="Missing APIFY_API_TOKEN in environment")
 
     default_cc = _infer_country_code(payload.location)
+    logger.info(f"📍 Country code inferido: {default_cc}")
 
     apify_body = {
         "includeWebResults": True,
@@ -754,7 +760,8 @@ async def run_prospecting_scrape(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        logger.info(f"📡 Llamando a Apify Actor: {APIFY_ACTOR_URL}")
+        async with httpx.AsyncClient(timeout=300.0) as client:
             resp = await client.post(
                 APIFY_ACTOR_URL,
                 params={"token": apify_token},
@@ -762,7 +769,9 @@ async def run_prospecting_scrape(
             )
             resp.raise_for_status()
             items = resp.json() if isinstance(resp.json(), list) else []
+            logger.info(f"✅ Apify respondió con {len(items)} items")
     except httpx.HTTPError as e:
+        logger.error(f"❌ Error en llamada a Apify: {e}")
         raise HTTPException(status_code=502, detail=f"Apify request failed: {e}")
 
     imported = 0
@@ -843,6 +852,8 @@ async def run_prospecting_scrape(
             imported += 1
         else:
             skipped_exists += 1
+
+    logger.info(f"🏁 Scraping finalizado: total={len(items)}, importados={imported}, sin_tel={skipped_no_phone}, duplicados={skipped_exists}")
 
     return {
         "tenant_id": tenant_id,

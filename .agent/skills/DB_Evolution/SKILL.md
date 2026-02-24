@@ -8,15 +8,14 @@ auto-invoke: true
 
 # DB Schema Surgeon - Dentalogic
 
-# DB Schema Surgeon - Dentalogic
-
-# Database & Persistence Master - Dentalogic v8.0
+# Database & Persistence Master - CRM VENTAS v8.0
 
 ## 1. Evolución Segura e Idempotente (Maintenance Robot)
 **REGLA DE ORO**: Se prohíbe la ejecución de SQL directo fuera del Evolution Pipeline.
 - **Protocolo de Parches**: Todo cambio estructural debe realizarse mediante un parche asíncrono en `orchestrator_service/db.py`.
+- **CRM Persistence**: La tabla `leads` se gestiona vía el pipeline de evolución (Patch 16+). No buscarla en el schema base inicial.
 - **Bloques DO $$**: Uso mandatorio de bloques `DO $$` con lógica de verificación (`IF NOT EXISTS`, `IF EXISTS`) para garantizar la estabilidad tras múltiples reinicios.
-- **Sincronización de Base**: Tras evolucionar el pipeline, se debe actualizar el archivo de cimiento `db/init/dentalogic_schema.sql` (o `001_schema.sql`) para nuevas instalaciones.
+- **Sincronización de Base**: Tras evolucionar el pipeline, se debe actualizar el archivo de cimiento `db/init/dentalogic_schema.sql` para nuevas instalaciones.
 
 ## 2. Multi-tenancy & Aislamiento Legal
 - **Filtro tenant_id**: Todas las tablas core (`patients`, `professionals`, `appointments`, etc.) **DEBEN** incluir y filtrar por `tenant_id` en cada consulta de lectura o escritura.

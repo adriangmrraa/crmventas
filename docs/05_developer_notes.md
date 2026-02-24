@@ -59,7 +59,15 @@ patch_sql = """
         END IF;
     END $$;
 """
-```
+
+    **Nota sobre el Esquema CRM**: La tabla `leads` se crea y mantiene dinámicamente vía patches en `db.py` (Patch 16+). Para ver los leads en SQL local, conectar a la base `crmventas` (`psql -d crmventas`).
+
+## 11. Scraper & Prospección (Apify)
+
+Para tareas de larga duración como el scraping de Google Places:
+- **Backend**: No user `run_sync` directamente si hay riesgo de timeout (>60s). Usar el patrón de **polling asíncrono** implementado en `run_prospecting_scrape`.
+- **Frontend**: Incrementar el timeout de Axios (e.g., `300000ms`) en llamadas específicas.
+- **Límites**: Por defecto el scraper trae 30 resultados, configurable hasta 100.
 
 ## 12. Gestión de Usuarios y Seguridad (Auth Layer)
 

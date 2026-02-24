@@ -350,9 +350,8 @@ Todas las rutas CRM están bajo **`/admin/core/crm/*`**. Requieren autenticació
 - **Agenda:** `GET/POST /admin/core/crm/agenda/events`, `PUT/DELETE /admin/core/crm/agenda/events/{event_id}`.
 - **WhatsApp/Templates/Campaigns:** `GET/POST /admin/core/crm/whatsapp/connections`, `GET /admin/core/crm/templates`, `POST /admin/core/crm/templates/sync`, `GET/POST /admin/core/crm/campaigns`, `POST /admin/core/crm/campaigns/{id}/launch`.
 - **Prospección (Apify):** 
-  - `POST /admin/core/crm/prospecting/scrape`: Inicia scrape de Google Places. Payload: `{ "tenant_id", "niche", "location", "max_places" }`.
-  - `GET /admin/core/crm/prospecting/leads`: Lista leads obtenidos por prospección (`source = 'apify_scrape'`).
-  - `POST /admin/core/crm/prospecting/request-send`: Placeholder para envío masivo (Fase 2). Marca `outreach_send_requested = true`.
+  - `POST /admin/core/crm/prospecting/scrape`: Inicia scrape de Google Places. Payload: `{ "tenant_id", "niche", "location", "max_places" }`. Por defecto `max_places=30`. El backend utiliza polling asíncrono (timeout 300s).
+  - `GET /admin/core/crm/prospecting/leads`: Lista leads obtenidos por prospección (`source = 'apify_scrape'`). Incluye métricas de `email`, `rating` y `reviews`.
 
 ---
 

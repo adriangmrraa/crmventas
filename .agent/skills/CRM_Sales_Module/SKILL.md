@@ -17,14 +17,14 @@ Módulo de ventas (leads, pipeline, vendedores, agenda) dentro de **CRM VENTAS**
 - **Pipeline / stages:** Etapas configurables por tenant (o fijas según spec).
 - **Sellers (vendedores):** Usuarios con rol seller; asignación a leads.
 - **Appointments:** Agenda híbrida (local BD o Google Calendar por tenant); campos source, google_calendar_event_id cuando aplique.
-- **Prospecting:** Workflow de extracción masiva vía Apify con filtrado por nicho y locación.
+- **Prospecting:** Workflow de extracción masiva vía Apify con filtrado por nicho y locación. Utiliza ** polling asíncrono** en el backend para manejar ejecuciones largas (>60s).
 
 ---
 
 ## API (rutas)
 
 - CRUD leads: list, get, create, update, delete; asignación a seller; cambio de stage. Prefijo coherente (p. ej. `/niche/crm_sales/leads` o `/admin/core/crm/...`).
-- **Prospecting:** Scrape de Google Places (`/prospecting/scrape`) y gestión de leads de prospección.
+- **Prospecting:** Scrape de Google Places (`/prospecting/scrape`) y gestión de leads de prospección. Soporta `max_places` configurable (default 30) y polling de estado hasta 300s.
 - Agenda: slots, crear/actualizar/cancelar citas; integración con gcal_service si `tenants.config.calendar_provider == 'google'`.
 
 ---

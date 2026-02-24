@@ -61,7 +61,7 @@ export default function LeadsView() {
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'messages' | 'prospecting'>('messages');
+  const [activeTab, setActiveTab] = useState<'all' | 'messages' | 'prospecting'>('all');
 
   useEffect(() => {
     fetchLeads();
@@ -89,7 +89,7 @@ export default function LeadsView() {
     try {
       setLoading(true);
       setError(null);
-      const params: Record<string, string | number> = { limit: 50, offset: 0 };
+      const params: Record<string, string | number> = { limit: 1000, offset: 0 };
       if (statusFilter) params.status = statusFilter;
       const response = await api.get<Lead[]>(CRM_LEADS_BASE, { params });
       setLeads(Array.isArray(response.data) ? response.data : []);
@@ -113,6 +113,7 @@ export default function LeadsView() {
 
   const filteredLeads = leads.filter((lead) => {
     // Filter by Tab
+    if (activeTab === 'all') return true;
     if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
     if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
 
@@ -245,6 +246,13 @@ export default function LeadsView() {
           {/* TABS (integrated into scroll) */}
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             <div className="flex overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+                  }`}
+              >
+                Todos
+              </button>
               <button
                 onClick={() => setActiveTab('messages')}
                 className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'

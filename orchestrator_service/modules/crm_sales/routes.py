@@ -900,7 +900,7 @@ async def run_prospecting_scrape(
             logger.info(f"⏳ Esperando finalización de Apify Run {run_id} (status={run_status})...")
             
             while run_status not in ["SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"]:
-                await asyncio.sleep(10)
+                await asyncio.sleep(5) # Reduced from 10s to 5s for better responsiveness
                 status_resp = await client.get(
                     f"https://api.apify.com/v2/actor-runs/{run_id}",
                     params={"token": apify_token}
@@ -914,7 +914,8 @@ async def run_prospecting_scrape(
                     logger.warning(f"⏰ Timeout alcanzado esperando Apify run {run_id} ({int(elapsed)}s)")
                     break
                 
-                logger.info(f"🔄 Polling Apify run {run_id}: status={run_status} ({int(elapsed)}s)")
+                # Log progress every 10s or on status change
+                logger.info(f"🔄 Check Apify {run_id}: {run_status} ({int(elapsed)}s)")
 
             if run_status != "SUCCEEDED":
                 logger.warning(f"⚠️ Apify run finalizó con estado: {run_status}. Intentando obtener items parciales...")

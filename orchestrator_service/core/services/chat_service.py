@@ -28,7 +28,7 @@ class ChatService:
                 l.human_override_until,
                 $1::int as tenant_id
             FROM leads l
-            LEFT JOIN chat_messages cm ON cm.from_number = l.phone_number AND cm.tenant_id = $1
+            JOIN chat_messages cm ON cm.from_number = l.phone_number AND cm.tenant_id = $1
             WHERE l.tenant_id = $1
             ORDER BY l.phone_number, cm.created_at DESC NULLS LAST
         """, tenant_id)

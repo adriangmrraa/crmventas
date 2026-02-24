@@ -94,7 +94,7 @@ class ProspectingScrapeRequest(BaseModel):
     tenant_id: int
     niche: str = Field(..., min_length=2)
     location: str = Field(..., min_length=2)
-    max_places: int = Field(default=25, ge=1, le=100)
+    max_places: int = Field(default=30, ge=1, le=100)
 
 
 class ProspectingLeadResponse(BaseModel):

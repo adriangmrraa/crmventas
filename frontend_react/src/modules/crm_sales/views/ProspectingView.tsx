@@ -49,6 +49,7 @@ export default function ProspectingView() {
   const [location, setLocation] = useState('');
   const [loadingTenants, setLoadingTenants] = useState(true);
   const [scraping, setScraping] = useState(false);
+  const [maxPlaces, setMaxPlaces] = useState(30);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [requestingSend, setRequestingSend] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,6 +147,7 @@ export default function ProspectingView() {
         tenant_id: tenantId,
         niche: niche.trim(),
         location: location.trim(),
+        max_places: maxPlaces,
       });
       await loadLeads(tenantId);
       const total = res.data?.total_results ?? 0;
@@ -274,6 +276,19 @@ export default function ProspectingView() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
                   placeholder={t('prospecting.locationPlaceholder')}
                 />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">Cant. Resultados</label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  value={maxPlaces}
+                  onChange={(e) => setMaxPlaces(Number(e.target.value))}
+                >
+                  <option value={10}>10 resultados</option>
+                  <option value={30}>30 resultados</option>
+                  <option value={60}>60 resultados</option>
+                  <option value={100}>100 resultados</option>
+                </select>
               </div>
               <div className="flex items-end">
                 <button

@@ -43,7 +43,7 @@ async def list_leads(
     status: Optional[str] = None,
     assigned_seller_id: Optional[UUID] = None,
     search: Optional[str] = Query(None, description="Search by name, phone, email"),
-    limit: int = Query(50, le=100),
+    limit: int = Query(50, le=500),
     offset: int = Query(0, ge=0),
     context: dict = Depends(get_current_user_context)
 ):

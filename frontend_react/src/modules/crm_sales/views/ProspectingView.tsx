@@ -209,11 +209,11 @@ export default function ProspectingView() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label className="text-xs font-medium text-gray-600">{t('prospecting.entity')}</label>
             <select
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
               value={tenantId ?? ''}
               disabled={loadingTenants}
               onChange={(e) => setTenantId(Number(e.target.value))}
@@ -230,7 +230,7 @@ export default function ProspectingView() {
             <input
               value={niche}
               onChange={(e) => setNiche(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-medical-500"
               placeholder={t('prospecting.nichePlaceholder')}
             />
           </div>
@@ -239,7 +239,7 @@ export default function ProspectingView() {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-medical-500"
               placeholder={t('prospecting.locationPlaceholder')}
             />
           </div>
@@ -248,20 +248,20 @@ export default function ProspectingView() {
               type="button"
               onClick={handleScrape}
               disabled={scraping || loadingTenants}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 disabled:opacity-50 font-medium transition-all"
             >
-              {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
               {t('prospecting.runScrape')}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+          <div className="sm:col-span-2">
             <label className="text-xs font-medium text-gray-600">{t('prospecting.template')}</label>
             <div className="relative mt-1">
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white pr-10"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white pr-10 outline-none focus:ring-1 focus:ring-medical-500"
                 value={selectedTemplate}
                 disabled={loadingTemplates || templates.length === 0}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
@@ -318,112 +318,197 @@ export default function ProspectingView() {
             {t('prospecting.loadingLeads')}
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-3 py-2 w-10"></th>
-                  <th className="text-left px-3 py-2">{t('prospecting.colBusiness')}</th>
-                  <th className="text-left px-3 py-2">{t('prospecting.colPhone')}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviews</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Social</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="text-left px-3 py-2">{t('prospecting.colStatus')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-3 py-2 w-10"></th>
+                    <th className="text-left px-3 py-2">{t('prospecting.colBusiness')}</th>
+                    <th className="text-left px-3 py-2">{t('prospecting.colPhone')}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviews</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Social</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="text-left px-3 py-2">{t('prospecting.colStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.map((lead) => (
+                    <tr key={lead.id} className="border-t border-gray-100">
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selected[lead.id])}
+                          onChange={(e) => setSelected((prev) => ({ ...prev, [lead.id]: e.target.checked }))}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="font-medium text-gray-800">{lead.apify_title || lead.first_name || '—'}</div>
+                        <div className="text-xs text-gray-500">{lead.apify_category_name || '—'}</div>
+                      </td>
+                      <td className="px-3 py-2">{lead.phone_number}</td>
+                      <td className="px-3 py-2 text-sm text-gray-600">
+                        {lead.email ? (
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="truncate max-w-[150px]" title={lead.email}>{lead.email}</span>
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-3 py-2 text-sm">
+                        {lead.apify_rating ? (
+                          <div className="flex items-center gap-1 text-amber-500">
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                            <span className="font-medium">{lead.apify_rating.toFixed(1)}</span>
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-500">
+                        {lead.apify_reviews || 0}
+                      </td>
+                      <td className="px-3 py-2 text-sm">
+                        {lead.apify_website ? (
+                          <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="text-medical-600 hover:underline">
+                            {lead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex gap-2 text-gray-400">
+                          {lead.social_links?.instagram && (
+                            <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 transition-colors">
+                              <Instagram className="w-4 h-4" />
+                            </a>
+                          )}
+                          {lead.social_links?.facebook && (
+                            <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                              <Facebook className="w-4 h-4" />
+                            </a>
+                          )}
+                          {lead.social_links?.linkedin && (
+                            <a href={lead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 transition-colors">
+                              <Linkedin className="w-4 h-4" />
+                            </a>
+                          )}
+                          {(!lead.social_links || Object.keys(lead.social_links).length === 0) && (
+                            <span>—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-1 truncate max-w-[200px]" title={lead.apify_address || `${lead.apify_city || ''}, ${lead.apify_state || ''}`}>
+                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span>{lead.apify_address || `${lead.apify_city || ''} (${lead.apify_state || ''})`}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {lead.outreach_message_sent ? (
+                          <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs">{t('prospecting.statusSent')}</span>
+                        ) : lead.outreach_send_requested ? (
+                          <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs">{t('prospecting.statusRequested')}</span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{t('prospecting.statusPending')}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card Layout */}
+            <div className="lg:hidden space-y-4">
+              {leads.map((lead) => (
+                <div
+                  key={lead.id}
+                  className={`bg-white border border-gray-200 rounded-xl p-4 shadow-sm active:bg-gray-50 transition-colors ${selected[lead.id] ? 'ring-2 ring-medical-500' : ''}`}
+                  onClick={() => setSelected((prev) => ({ ...prev, [lead.id]: !prev[lead.id] }))}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={Boolean(selected[lead.id])}
-                        onChange={(e) => setSelected((prev) => ({ ...prev, [lead.id]: e.target.checked }))}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelected((prev) => ({ ...prev, [lead.id]: e.target.checked }));
+                        }}
+                        className="w-4 h-4 rounded text-medical-600 focus:ring-medical-500"
                       />
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="font-medium text-gray-800">{lead.apify_title || lead.first_name || '—'}</div>
-                      <div className="text-xs text-gray-500">{lead.apify_category_name || '—'}</div>
-                    </td>
-                    <td className="px-3 py-2">{lead.phone_number}</td>
-                    <td className="px-3 py-2 text-sm text-gray-600">
-                      {lead.email ? (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="truncate max-w-[150px]" title={lead.email}>{lead.email}</span>
-                        </div>
-                      ) : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-3 py-2 text-sm">
-                      {lead.apify_rating ? (
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="w-3.5 h-3.5 fill-current" />
-                          <span className="font-medium">{lead.apify_rating.toFixed(1)}</span>
-                        </div>
-                      ) : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-500">
-                      {lead.apify_reviews || 0}
-                    </td>
-                    <td className="px-3 py-2 text-sm">
-                      {lead.apify_website ? (
-                        <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="text-medical-600 hover:underline">
-                          {lead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                      <div className="font-bold text-gray-900 leading-tight">
+                        {lead.apify_title || lead.first_name || '—'}
+                      </div>
+                    </div>
+                    {lead.apify_rating && (
+                      <div className="flex items-center gap-1 text-amber-500 shrink-0 bg-amber-50 px-2 py-0.5 rounded-lg">
+                        <Star className="w-3 h-3 fill-current" />
+                        <span className="text-xs font-bold">{lead.apify_rating.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-gray-500 mb-3 flex flex-wrap gap-x-3 gap-y-1">
+                    <span className="flex items-center gap-1">
+                      <Building2 className="w-3 h-3" />
+                      {lead.apify_category_name || '—'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {lead.apify_city || '—'}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex gap-3">
+                      {lead.apify_website && (
+                        <a
+                          href={lead.apify_website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-2 bg-gray-50 text-gray-500 rounded-lg"
+                        >
+                          <Globe className="w-4 h-4" />
                         </a>
-                      ) : '—'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex gap-2 text-gray-400">
+                      )}
+                      <div className="flex gap-2">
                         {lead.social_links?.instagram && (
-                          <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 transition-colors">
+                          <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 text-pink-500">
                             <Instagram className="w-4 h-4" />
                           </a>
                         )}
                         {lead.social_links?.facebook && (
-                          <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                          <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 text-blue-600">
                             <Facebook className="w-4 h-4" />
                           </a>
                         )}
-                        {lead.social_links?.linkedin && (
-                          <a href={lead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 transition-colors">
-                            <Linkedin className="w-4 h-4" />
-                          </a>
-                        )}
-                        {!lead.social_links || Object.keys(lead.social_links).length === 0 && (
-                          <span>—</span>
-                        )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-500">
-                      <div className="flex items-center gap-1 truncate max-w-[200px]" title={lead.apify_address || `${lead.apify_city || ''}, ${lead.apify_state || ''}`}>
-                        <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span>{lead.apify_address || `${lead.apify_city || ''} (${lead.apify_state || ''})`}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
+                    </div>
+                    <div className="shrink-0">
                       {lead.outreach_message_sent ? (
-                        <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs">{t('prospecting.statusSent')}</span>
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusSent')}</span>
                       ) : lead.outreach_send_requested ? (
-                        <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs">{t('prospecting.statusRequested')}</span>
+                        <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{t('prospecting.statusPending')}</span>
+                        <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-                {leads.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                      {t('prospecting.noLeads')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {leads.length === 0 && (
+              <div className="py-12 text-center text-gray-500">
+                <Search className="w-12 h-12 mx-auto text-gray-200 mb-3" />
+                <p>{t('prospecting.noLeads')}</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -183,73 +183,82 @@ export default function LeadsView() {
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-medical-100 flex items-center justify-center">
-            <Users className="w-5 h-5 text-medical-700" />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center justify-between lg:justify-start gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-medical-100 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 text-medical-700" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">{t('nav.leads')}</h1>
+              <p className="text-sm text-gray-500">{filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('nav.leads')}</h1>
-            <p className="text-sm text-gray-500">{filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleOpenModal(null)}
+            className="lg:hidden inline-flex items-center p-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700"
+          >
+            <Plus size={20} />
+          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 sm:flex-initial min-w-[180px]">
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative flex-1 lg:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder={t('common.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-medical-500"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500"
-          >
-            <option value="">All statuses</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="interested">Interested</option>
-            <option value="negotiation">Negotiation</option>
-            <option value="closed_won">Closed Won</option>
-            <option value="closed_lost">Closed Lost</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => handleOpenModal(null)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 text-sm font-medium"
-          >
-            <Plus size={18} />
-            Add lead
-          </button>
+          <div className="flex gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white outline-none focus:ring-1 focus:ring-medical-500"
+            >
+              <option value="">All statuses</option>
+              {STATUS_OPTIONS.map(s => (
+                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => handleOpenModal(null)}
+              className="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 text-sm font-medium transition-colors"
+            >
+              <Plus size={18} />
+              Add lead
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="bg-white px-4 border-b border-gray-200 shrink-0">
-        <div className="flex gap-8">
+      {/* TABS (Responsive) */}
+      <div className="bg-white border-b border-gray-200 shrink-0 overflow-x-auto no-scrollbar">
+        <div className="flex px-4 min-w-max">
           <button
             onClick={() => setActiveTab('messages')}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}
           >
             Mensajes
           </button>
           <button
             onClick={() => setActiveTab('prospecting')}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}
           >
             Prospección
           </button>
           {activeTab === 'prospecting' && (
-            <div className="ml-auto flex items-center">
+            <div className="flex items-center ml-4">
               <button
                 onClick={() => navigate('/crm/prospeccion')}
-                className="text-xs font-semibold text-medical-600 hover:text-medical-700 bg-medical-50 px-3 py-1.5 rounded-full border border-medical-100 transition-all hover:shadow-sm"
+                className="text-[10px] font-bold uppercase tracking-wider text-medical-600 hover:bg-medical-50 px-3 py-1.5 rounded-full border border-medical-100 transition-all"
               >
                 Envía mensajes masivos →
               </button>
@@ -279,54 +288,69 @@ export default function LeadsView() {
             </button>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {filteredLeads.map((lead) => {
               const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number || '—';
+              const businessName = lead.apify_title || (lead.source === 'apify_scrape' ? 'Negocio Desconocido' : null);
+
               return (
                 <li
                   key={lead.id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:border-medical-300 hover:shadow-sm transition-all cursor-pointer flex items-center justify-between gap-4"
+                  className="bg-white border border-gray-200 rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-gray-50"
                   onClick={() => handleOpenModal(lead)}
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-medical-100 flex items-center justify-center shrink-0">
-                      <span className="text-medical-700 font-semibold text-sm">{name.charAt(0).toUpperCase()}</span>
+                    <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center shrink-0 border border-medical-100">
+                      <span className="text-medical-700 font-bold text-base">
+                        {(businessName || name).charAt(0).toUpperCase()}
+                      </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{name}</p>
+                      <p className="font-bold text-gray-900 truncate text-base">
+                        {businessName || name}
+                      </p>
+                      {businessName && (
+                        <p className="text-xs text-medical-600 font-medium truncate mb-0.5">
+                          {name !== businessName ? name : lead.phone_number}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-500 truncate">{lead.phone_number}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="hidden md:flex flex-col items-end mr-2">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Origen</span>
-                      <span className="text-xs text-gray-600">
-                        {lead.source === 'apify_scrape' ? 'Prospección' : 'Mensaje'}
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                    <div className="flex flex-col items-start sm:items-end mr-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Status</span>
+                      <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md ${lead.status === 'new' ? 'bg-blue-50 text-blue-700' :
+                          lead.status === 'closed_won' ? 'bg-emerald-50 text-emerald-700' :
+                            'bg-gray-100 text-gray-600'
+                        }`}>
+                        {lead.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">
-                      {lead.status.replace('_', ' ')}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => handleConvertToClient(e, lead)}
-                      disabled={convertingId === lead.id}
-                      className="p-2 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50"
-                      title={t('leads.convert_to_client')}
-                    >
-                      {convertingId === lead.id ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/chats');
-                      }}
-                      className="p-2 text-gray-400 hover:text-medical-600 rounded-lg hover:bg-medical-50"
-                      title="Open chat"
-                    >
-                      <MessageSquare size={18} />
-                    </button>
+
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleConvertToClient(e, lead)}
+                        disabled={convertingId === lead.id}
+                        className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors"
+                        title={t('leads.convert_to_client')}
+                      >
+                        {convertingId === lead.id ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/chats');
+                        }}
+                        className="p-3 bg-medical-50 text-medical-600 rounded-xl hover:bg-medical-100 transition-colors"
+                        title="Open chat"
+                      >
+                        <MessageSquare size={20} />
+                      </button>
+                    </div>
                   </div>
                 </li>
               );
@@ -547,11 +571,11 @@ export default function LeadsView() {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 bg-gray-50 shrink-0 flex gap-3">
+              <div className="p-6 border-t border-gray-200 bg-gray-50 shrink-0 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 text-gray-700 font-bold hover:bg-gray-100 rounded-xl transition-all"
+                  className="w-full sm:flex-1 py-3 text-gray-700 font-bold hover:bg-gray-100 rounded-xl transition-all border border-gray-200"
                 >
                   {t('common.cancel')}
                 </button>
@@ -560,7 +584,7 @@ export default function LeadsView() {
                   form="lead-form"
                   type="submit"
                   disabled={saving}
-                  className="flex-[2] py-3 bg-medical-600 text-white font-bold rounded-xl hover:bg-medical-700 shadow-md shadow-medical-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-[2] py-3 bg-medical-600 text-white font-bold rounded-xl hover:bg-medical-700 shadow-md shadow-medical-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saving ? <Loader2 className="animate-spin" size={20} /> : (editingLead ? 'Update Lead' : t('common.save'))}
                 </button>

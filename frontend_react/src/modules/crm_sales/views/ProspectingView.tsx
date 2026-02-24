@@ -548,5 +548,6 @@ export default function ProspectingView() {
           )}
         </div>
       </div>
-      );
+    </div>
+  );
 }

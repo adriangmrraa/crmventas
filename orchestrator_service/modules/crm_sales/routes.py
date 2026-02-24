@@ -874,16 +874,33 @@ async def run_prospecting_scrape(
     }
 
     try:
-        logger.info(f"📡 Llamando a Apify Actor: {APIFY_ACTOR_URL}")
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        logger.info(f"📡 Iniciando Apify Run: {APIFY_ACTOR_URL.replace('/run-sync-get-dataset-items', '')}")
+        # 1. Start Actor Run and wait up to 300s
+        run_url = APIFY_ACTOR_URL.replace("/run-sync-get-dataset-items", "/runs")
+        async with httpx.AsyncClient(timeout=310.0) as client:
             resp = await client.post(
-                APIFY_ACTOR_URL,
-                params={"token": apify_token},
+                run_url,
+                params={"token": apify_token, "wait": 300},
                 json=apify_body,
             )
             resp.raise_for_status()
-            items = resp.json() if isinstance(resp.json(), list) else []
-            logger.info(f"✅ Apify respondió con {len(items)} items")
+            run_data = resp.json().get("data", {})
+            run_status = run_data.get("status")
+            dataset_id = run_data.get("defaultDatasetId")
+
+            if run_status != "SUCCEEDED":
+                logger.warning(f"⚠️ Apify run finalizó con estado: {run_status}. Intentando obtener items parciales...")
+            
+            if not dataset_id:
+                raise HTTPException(status_code=502, detail="Apify run did not provide a dataset ID")
+
+            # 2. Get Dataset Items
+            items_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
+            items_resp = await client.get(items_url, params={"token": apify_token})
+            items_resp.raise_for_status()
+            items = items_resp.json() if isinstance(items_resp.json(), list) else []
+            logger.info(f"✅ Apify respondió con {len(items)} items del dataset {dataset_id}")
+
     except httpx.HTTPError as e:
         logger.error(f"❌ Error en llamada a Apify: {e}")
         raise HTTPException(status_code=502, detail=f"Apify request failed: {e}")

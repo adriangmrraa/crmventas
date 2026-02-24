@@ -148,7 +148,7 @@ export default function ProspectingView() {
         niche: niche.trim(),
         location: location.trim(),
         max_places: maxPlaces,
-      });
+      }, { timeout: 300000 }); // 5 minutes timeout for scraping
       await loadLeads(tenantId);
       const total = res.data?.total_results ?? 0;
       const imported = res.data?.imported ?? res.data?.imported_or_updated ?? 0;

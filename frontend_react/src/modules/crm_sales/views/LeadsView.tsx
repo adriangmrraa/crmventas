@@ -111,18 +111,24 @@ export default function LeadsView() {
     }
   };
 
-  const filteredLeads = leads.filter((lead) => {
+  const filteredLeads = (leads || []).filter((lead) => {
+    if (!lead) return false;
     // Filter by Tab
     if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
     if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
 
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
-    const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ').toLowerCase();
+    const fName = String(lead.first_name || '').toLowerCase();
+    const lName = String(lead.last_name || '').toLowerCase();
+    const pNumber = String(lead.phone_number || '').toLowerCase();
+    const email = String(lead.email || '').toLowerCase();
+
     return (
-      name.includes(term) ||
-      (lead.phone_number || '').includes(term) ||
-      (lead.email || '').toLowerCase().includes(term)
+      fName.includes(term) ||
+      lName.includes(term) ||
+      pNumber.includes(term) ||
+      email.includes(term)
     );
   });
 
@@ -311,7 +317,11 @@ export default function LeadsView() {
             ) : (
               <ul className="space-y-3">
                 {filteredLeads.map((lead) => {
-                  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number || '—';
+                  if (!lead) return null;
+                  const firstName = String(lead.first_name || '');
+                  const lastName = String(lead.last_name || '');
+                  const phone = String(lead.phone_number || '');
+                  const name = [firstName, lastName].filter(Boolean).join(' ') || phone || '—';
                   const businessName = lead.apify_title || (lead.source === 'apify_scrape' ? 'Negocio Desconocido' : null);
 
                   return (
@@ -323,7 +333,7 @@ export default function LeadsView() {
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center shrink-0 border border-medical-100">
                           <span className="text-medical-700 font-bold text-base">
-                            {(businessName || name).charAt(0).toUpperCase()}
+                            {String(businessName || name).charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="min-w-0">
@@ -332,10 +342,10 @@ export default function LeadsView() {
                           </p>
                           {businessName && (
                             <p className="text-xs text-medical-600 font-medium truncate mb-0.5">
-                              {name !== businessName ? name : lead.phone_number}
+                              {name !== businessName ? name : phone}
                             </p>
                           )}
-                          <p className="text-sm text-gray-500 truncate">{lead.phone_number}</p>
+                          <p className="text-sm text-gray-500 truncate">{phone}</p>
                         </div>
                       </div>
 
@@ -346,7 +356,7 @@ export default function LeadsView() {
                             lead.status === 'closed_won' ? 'bg-emerald-50 text-emerald-700' :
                               'bg-gray-100 text-gray-600'
                             }`}>
-                            {(lead.status || 'new').replace('_', ' ')}
+                            {String(lead.status || 'new').replace('_', ' ')}
                           </span>
                         </div>
 

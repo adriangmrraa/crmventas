@@ -135,10 +135,12 @@ class ProspectingLeadResponse(BaseModel):
 
 
 class ProspectingSendRequest(BaseModel):
-    """Request to queue/send template outreach (placeholder)."""
+    """Request to queue/send template outreach (Phase 3)."""
     tenant_id: int
     lead_ids: Optional[List[UUID]] = None
     only_pending: bool = True
+    template_name: Optional[str] = None
+    language: str = "es_AR"
 
 
 # ============================================

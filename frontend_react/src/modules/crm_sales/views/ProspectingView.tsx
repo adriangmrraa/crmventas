@@ -34,6 +34,13 @@ type ProspectLead = {
   updated_at: string;
 };
 
+type WhatsAppTemplate = {
+  name: string;
+  status: string;
+  language: string;
+  category: string;
+};
+
 export default function ProspectingView() {
   const { t } = useTranslation();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
@@ -48,6 +55,9 @@ export default function ProspectingView() {
   const [success, setSuccess] = useState<string | null>(null);
   const [leads, setLeads] = useState<ProspectLead[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const selectedIds = useMemo(
     () => Object.entries(selected).filter(([, value]) => value).map(([id]) => id),
@@ -93,6 +103,24 @@ export default function ProspectingView() {
     }
   };
 
+  const loadTemplates = async () => {
+    if (!tenantId) return;
+    try {
+      setLoadingTemplates(true);
+      const res = await api.get<{ items: WhatsAppTemplate[] }>('/admin/core/crm/prospecting/templates');
+      setTemplates(res.data.items || []);
+      if (res.data.items?.length > 0) {
+        setSelectedTemplate(res.data.items[0].name);
+      } else {
+        setSelectedTemplate('');
+      }
+    } catch {
+      console.error('Error loading templates');
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
   useEffect(() => {
     loadTenants();
   }, []);
@@ -100,6 +128,7 @@ export default function ProspectingView() {
   useEffect(() => {
     if (tenantId) {
       loadLeads(tenantId);
+      loadTemplates();
     }
   }, [tenantId]);
 
@@ -141,11 +170,25 @@ export default function ProspectingView() {
       setRequestingSend(true);
       const payload =
         mode === 'selected'
-          ? { tenant_id: tenantId, lead_ids: selectedIds, only_pending: true }
-          : { tenant_id: tenantId, only_pending: true };
+          ? {
+            tenant_id: tenantId,
+            lead_ids: selectedIds,
+            only_pending: true,
+            template_name: selectedTemplate || undefined
+          }
+          : {
+            tenant_id: tenantId,
+            only_pending: true,
+            template_name: selectedTemplate || undefined
+          };
       const res = await api.post('/admin/core/crm/prospecting/request-send', payload);
       await loadLeads(tenantId);
-      setSuccess(t('prospecting.sendQueued', { count: res.data?.updated ?? 0 }));
+      const count = res.data?.updated ?? 0;
+      if (selectedTemplate) {
+        setSuccess(t('prospecting.statusSending') + ` (${count} leads)`);
+      } else {
+        setSuccess(t('prospecting.sendQueued', { count }));
+      }
     } catch {
       setError(t('prospecting.errorSendRequest'));
     } finally {
@@ -210,6 +253,36 @@ export default function ProspectingView() {
               {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               {t('prospecting.runScrape')}
             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
+          <div className="md:col-span-2">
+            <label className="text-xs font-medium text-gray-600">{t('prospecting.template')}</label>
+            <div className="relative mt-1">
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white pr-10"
+                value={selectedTemplate}
+                disabled={loadingTemplates || templates.length === 0}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+              >
+                {templates.length === 0 ? (
+                  <option value="">{loadingTemplates ? t('common.loading') : t('prospecting.noTemplates')}</option>
+                ) : (
+                  <>
+                    <option value="">{t('prospecting.selectTemplate')}</option>
+                    {templates.map((tpl) => (
+                      <option key={tpl.name} value={tpl.name}>
+                        {tpl.name} ({tpl.category})
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                {loadingTemplates ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4" />}
+              </div>
+            </div>
           </div>
         </div>
 

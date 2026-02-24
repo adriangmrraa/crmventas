@@ -688,6 +688,10 @@
     "errorLoadingLeads": "No se pudieron cargar los leads de prospección.",
     "errorMissingFields": "Debes elegir entidad, nicho y ubicación.",
     "errorScraping": "Falló el proceso de scraping.",
-    "errorSendRequest": "No se pudo registrar la solicitud de envío."
+    "errorSendRequest": "No se pudo registrar la solicitud de envío.",
+    "template": "Plantilla",
+    "selectTemplate": "Seleccionar plantilla...",
+    "noTemplates": "No se encontraron plantillas aprobadas.",
+    "statusSending": "Enviando..."
   }
 }

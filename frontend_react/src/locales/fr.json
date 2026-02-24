@@ -687,6 +687,10 @@
     "errorLoadingLeads": "Impossible de charger les prospects.",
     "errorMissingFields": "Veuillez sélectionner une entité, une niche et un lieu.",
     "errorScraping": "Le processus de scraping a échoué.",
-    "errorSendRequest": "Impossible d'enregistrer la demande d'envoi."
+    "errorSendRequest": "Impossible d'enregistrer la demande d'envoi.",
+    "template": "Modèle",
+    "selectTemplate": "Sélectionner un modèle...",
+    "noTemplates": "Aucun modèle approuvé trouvé.",
+    "statusSending": "Envoi en cours..."
   }
 }

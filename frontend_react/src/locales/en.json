@@ -686,8 +686,12 @@
     "sendQueued": "Action registered for {{count}} leads. Actual send is pending Phase 2.",
     "errorLoadingEntities": "Could not load entities.",
     "errorLoadingLeads": "Could not load prospecting leads.",
-    "errorMissingFields": "Please select an entity, niche and location.",
+    "errorMissingFields": "You must choose an entity, niche and location.",
     "errorScraping": "Scraping process failed.",
-    "errorSendRequest": "Could not register the send request."
+    "errorSendRequest": "Could not register send request.",
+    "template": "Template",
+    "selectTemplate": "Select template...",
+    "noTemplates": "No approved templates found.",
+    "statusSending": "Sending..."
   }
 }

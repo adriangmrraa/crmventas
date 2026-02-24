@@ -98,6 +98,10 @@ class SendMessage(BaseModel):
     to: str
     text: Optional[str] = None
     message: Optional[str] = None # Support both
+    type: str = "text" # "text" or "template"
+    template_name: Optional[str] = None
+    language: Optional[str] = "es_AR"
+    components: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
 
 # FastAPI App
 app = FastAPI(
@@ -512,70 +516,64 @@ async def ycloud_webhook(request: Request):
                  
     return {"status": "ignored_event_type", "type": event_type}
 
-@app.post("/send")
-async def send_message(message: SendMessage, request: Request):
-    """Internal endpoint for sending manual messages from orchestrator."""
+@app.get("/templates")
+async def get_templates(request: Request):
+    """Proxy for YCloud templates."""
     correlation_id = request.headers.get("X-Correlation-Id") or str(uuid.uuid4())
-    logger.info("manual_send_request", to=message.to, correlation_id=correlation_id)
     token = request.headers.get("X-Internal-Token")
     if token != INTERNAL_API_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    correlation_id = request.headers.get("X-Correlation-Id") or str(uuid.uuid4())
-    # Retrieve config
     v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY)
-    # We need to know which business number to use - for now assume default or pass in body if model updated
-    # To keep it simple for now, we use the default env var logic inside YCloudClient via send_sequence or re-instantiate
-    # Ideally SendMessage model should include 'from_number' (business number)
-    
-    # Since SendMessage is simple (to, text), we try to get a business number from config or context
-    # But YCloudClient needs it.
-    # Hack: We initialize YCloudClient with a dummy if needed, but it really needs the sender ID.
-    # Let's check send_sequence usage: client = YCloudClient(v_ycloud, business_number)
-    
-    # IMPROVEMENT: The request should probably provide the separate business number/ID
-    # For this MVP, let's assume global YCloud config unless passed
+    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID") or "default"
     
     try:
-        # Re-use send_sequence logic but for a single message
-        # We need to wrap it as OrchestratorMessage
-        orch_msg = OrchestratorMessage(text=message.text)
-        
-        # We need the 'from' number (the bot's number). 
-        # Since we don't have it in the simple body, we might need to assume it's the one in ENV or context.
-        # However, for multi-tenant, orchestrator MUST tell us.
-        # Let's inspect headers or just rely on YCloudClient to default if allowed.
-        # Actually YCloudClient requires `from_phone_number`. 
-        
-        # Updated Logic: We will parse `from_number` from query param or header if available, or fetch from config
-        business_number = request.query_params.get("from_number")
-        if not business_number:
-            # Fallback to env or fetch
-             business_number = await get_config("YCLOUD_Phone_Number_ID") # Placeholder
-        
-        if not business_number:
-             # Basic fallback
-             business_number = "default"
-        
-        logger.info("manual_send_config", 
-                    has_api_key=bool(v_ycloud), 
-                    business_number=business_number, 
-                    correlation_id=correlation_id)
+        client = YCloudClient(v_ycloud, business_number)
+        res = await client.list_templates(correlation_id)
+        # Filter for approved ones for the UI
+        items = res.get("items", [])
+        approved = [t for t in items if t.get("status") == "APPROVED"]
+        return {"items": approved, "raw": items}
+    except Exception as e:
+        logger.error("get_templates_failed", error=str(e), correlation_id=correlation_id)
+        raise HTTPException(status_code=500, detail=str(e))
 
-        # Initialize Client
+@app.post("/send")
+async def send_message(message: SendMessage, request: Request):
+    """Internal endpoint for sending messages (text or template)."""
+    correlation_id = request.headers.get("X-Correlation-Id") or str(uuid.uuid4())
+    logger.info("send_request", to=message.to, type=message.type, correlation_id=correlation_id)
+    token = request.headers.get("X-Internal-Token")
+    if token != INTERNAL_API_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY)
+    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID") or "default"
+    
+    try:
         client = YCloudClient(v_ycloud, business_number)
         
-        # Use either text or message field
-        content = message.text or message.message
-        if not content:
-            raise HTTPException(status_code=400, detail="Missing message content")
-            
-        # Send
-        await client.send_text(message.to, content, correlation_id)
-        return {"status": "sent", "correlation_id": correlation_id}
+        if message.type == "template":
+            if not message.template_name:
+                raise HTTPException(status_code=400, detail="template_name is required for type='template'")
+            res = await client.send_template(
+                to=message.to,
+                template_name=message.template_name,
+                language=message.language or "es_AR",
+                components=message.components or [],
+                correlation_id=correlation_id
+            )
+            return {"status": "sent", "type": "template", "ycloud_id": res.get("id"), "correlation_id": correlation_id}
+        else:
+            # Traditional text send
+            content = message.text or message.message
+            if not content:
+                raise HTTPException(status_code=400, detail="Missing message content")
+            await client.send_text(message.to, content, correlation_id)
+            return {"status": "sent", "type": "text", "correlation_id": correlation_id}
         
     except Exception as e:
-        logger.error("manual_send_failed", error=str(e), correlation_id=correlation_id)
+        logger.error("send_failed", error=str(e), correlation_id=correlation_id)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

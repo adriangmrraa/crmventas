@@ -5,9 +5,10 @@ Endpoints for managing leads, WhatsApp connections, templates, campaigns, and se
 import uuid as uuid_lib
 import os
 import json
+import asyncio
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from typing import List, Optional, Any
 from uuid import UUID
 import httpx
 import logging
@@ -30,6 +31,8 @@ from db import db
 
 router = APIRouter(prefix="", tags=["CRM Sales"])
 APIFY_ACTOR_URL = "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items"
+INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "internal-secret-token")
+WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_service:8002")
 
 # ============================================
 # LEADS ENDPOINTS
@@ -740,6 +743,90 @@ def _resolve_target_tenant_id(context: dict, allowed_ids: List[int], tenant_id: 
         raise HTTPException(status_code=403, detail="Sin acceso al tenant seleccionado")
     return tenant_id
 
+async def _send_prospecting_outreach_background(
+    tenant_id: int, 
+    template_name: str, 
+    language: str, 
+    lead_ids: Optional[List[str]] = None,
+    only_pending: bool = True
+):
+    """Background task to send bulk WhatsApp templates to leads."""
+    logger.info(f"outreach_background_start: tenant_id={tenant_id}, template={template_name}")
+    
+    # 1. Fetch leads
+    query = """
+        SELECT id, phone_number, first_name, apify_city
+        FROM leads
+        WHERE tenant_id = $1 AND (status IS NULL OR status != 'deleted')
+          AND ($2::bool = FALSE OR outreach_message_sent = FALSE)
+          AND phone_number ~ '^\d{8,15}$'
+    """
+    params: List[Any] = [tenant_id, only_pending]
+    if lead_ids:
+        query += " AND id = ANY($3::uuid[])"
+        params.append([uuid_lib.UUID(x) for x in lead_ids])
+    
+    leads = await db.pool.fetch(query, *params)
+    logger.info(f"outreach_leads_found: count={len(leads)}, tenant_id={tenant_id}")
+
+    # 2. Get business number
+    bot_phone = await db.pool.fetchval("SELECT bot_phone_number FROM tenants WHERE id = $1", tenant_id)
+    if not bot_phone:
+        logger.error(f"outreach_failed_no_bot_phone: tenant_id={tenant_id}")
+        return
+
+    # 3. Send to each lead
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        for lead in leads:
+            phone = normalize_phone(lead["phone_number"])
+            first_name = lead["first_name"] or " "
+            city = lead["apify_city"] or " "
+            
+            # Map components: {{1}} = name, {{2}} = city
+            components = [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": first_name},
+                        {"type": "text", "text": city}
+                    ]
+                }
+            ]
+            
+            try:
+                payload = {
+                    "to": phone,
+                    "type": "template",
+                    "template_name": template_name,
+                    "language": language,
+                    "components": components
+                }
+                
+                resp = await client.post(
+                    f"{WHATSAPP_SERVICE_URL}/send",
+                    json=payload,
+                    headers={"X-Internal-Token": INTERNAL_API_TOKEN, "X-Correlation-Id": str(uuid_lib.uuid4())},
+                    params={"from_number": bot_phone}
+                )
+                
+                if resp.status_code == 200:
+                    # Mark as sent
+                    await db.pool.execute(
+                        "UPDATE leads SET outreach_message_sent = TRUE, outreach_last_sent_at = NOW(), outreach_message_content = $1 WHERE id = $2",
+                        f"Template: {template_name}", lead["id"]
+                    )
+                    logger.info(f"outreach_sent_success: phone={phone}, lead_id={str(lead['id'])}")
+                else:
+                    logger.error(f"outreach_sent_failed: phone={phone}, status={resp.status_code}, body={resp.text[:200]}")
+                    
+            except Exception as e:
+                logger.error(f"outreach_error: phone={phone}, error={str(e)}")
+            
+            # Rate limiting / Sleep to avoid spam blocks
+            await asyncio.sleep(1.5)
+
+    logger.info(f"outreach_background_complete: tenant_id={tenant_id}")
+
 
 @router.post("/prospecting/scrape")
 async def run_prospecting_scrape(
@@ -962,16 +1049,42 @@ async def list_prospecting_leads(
     return [dict(r) for r in rows]
 
 
+@router.get("/prospecting/templates")
+async def get_prospecting_templates(
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids)
+):
+    """Proxy approved templates from whatsapp_service."""
+    tenant_id = context["tenant_id"]
+    # For multi-tenant, we should check if they can access another tenant via query param if needed
+    # But for now use context
+    bot_phone = await db.pool.fetchval("SELECT bot_phone_number FROM tenants WHERE id = $1", tenant_id)
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{WHATSAPP_SERVICE_URL}/templates",
+                params={"from_number": bot_phone},
+                headers={"X-Internal-Token": INTERNAL_API_TOKEN, "X-Correlation-Id": str(uuid_lib.uuid4())}
+            )
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return {"items": [], "detail": f"WhatsApp service error: {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"Error fetching prospecting templates: {e}")
+        return {"items": [], "detail": str(e)}
+
 @router.post("/prospecting/request-send")
 async def request_prospecting_send(
     payload: ProspectingSendRequest,
+    from_fastapi_bg: BackgroundTasks,
     context: dict = Depends(get_current_user_context),
     allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
 ):
     """
-    Marks leads as requested for template outreach.
-    Validates phone format before flagging.
-    NOTE: Does not send WhatsApp yet (Phase 1 placeholder).
+    Marks leads as requested for template outreach and TRIGGERS the send if template_name is provided.
+    CEO only.
     """
     import re
     role = context.get("role") or context.get("user_role") or ""
@@ -1020,6 +1133,19 @@ async def request_prospecting_send(
         )
 
     updated_count = int(result.split(" ")[1]) if isinstance(result, str) and " " in result else 0
+    
+    # PHASE 3: If template_name is provided, trigger the background task
+    if payload.template_name:
+        from_fastapi_bg.add_task(
+            _send_prospecting_outreach_background,
+            tenant_id=tenant_id,
+            template_name=payload.template_name,
+            language=payload.language or "es_AR",
+            lead_ids=[str(x) for x in payload.lead_ids] if payload.lead_ids else None,
+            only_pending=payload.only_pending
+        )
+        return {"status": "sending", "tenant_id": tenant_id, "updated": updated_count, "template": payload.template_name}
+
     return {"status": "queued_placeholder", "tenant_id": tenant_id, "updated": updated_count}
 
 

@@ -56,3 +56,28 @@ class YCloudClient:
         # The node "marcar_leido" in n8n calls typingIndicator
         logger.info("ycloud_typing_indicator", inbound_id=inbound_id, correlation_id=correlation_id)
         return await self._post(f"/whatsapp/inboundMessages/{inbound_id}/typingIndicator", {}, correlation_id)
+
+    async def list_templates(self, correlation_id: str):
+        """Fetches approved WhatsApp templates."""
+        logger.info("ycloud_list_templates", business_number=self.business_number, correlation_id=correlation_id)
+        # Endpoint: GET /whatsapp/templates
+        async with httpx.AsyncClient(timeout=httpx.Timeout(20.0)) as client:
+            url = f"{self.BASE_URL}/whatsapp/templates"
+            response = await client.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+
+    async def send_template(self, to: str, template_name: str, language: str, components: list, correlation_id: str):
+        """Sends a WhatsApp message using a template."""
+        payload = {
+            "from": self.business_number,
+            "to": to,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": language},
+                "components": components
+            }
+        }
+        logger.info("ycloud_send_template", to=to, template=template_name, correlation_id=correlation_id)
+        return await self._post("/whatsapp/messages/sendDirectly", payload, correlation_id)

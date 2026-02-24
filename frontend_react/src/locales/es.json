@@ -19,7 +19,8 @@
     "app_name_crm": "CRM Ventas",
     "entities": "Entidades",
     "sellers": "Vendedores",
-    "clients": "Clientes"
+    "clients": "Clientes",
+    "prospecting": "Prospección"
   },
   "common": {
     "save": "Guardar",

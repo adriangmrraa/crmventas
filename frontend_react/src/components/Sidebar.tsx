@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   LogOut,
   User,
-  X
+  X,
+  Search
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={20} />, path: '/crm/prospeccion', roles: ['ceo'] },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'] },
     { id: 'tenants', labelKey: 'nav.entities' as const, icon: <ShieldCheck size={20} />, path: '/sedes', roles: ['ceo'] },
@@ -52,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/vendedores') return location.pathname === path;
     if (path === '/crm/clientes') return location.pathname === path || location.pathname.startsWith('/crm/clientes/');
     if (path === '/crm/agenda') return location.pathname === path;
+    if (path === '/crm/prospeccion') return location.pathname === path;
     return location.pathname === path;
   };
 

@@ -3,10 +3,12 @@ CRM Sales Module - FastAPI Routes
 Endpoints for managing leads, WhatsApp connections, templates, campaigns, and sellers
 """
 import uuid as uuid_lib
+import os
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from uuid import UUID
+import httpx
 
 from .models import (
     LeadCreate, LeadUpdate, LeadResponse, LeadAssignRequest, LeadStageUpdateRequest,
@@ -16,11 +18,14 @@ from .models import (
     CampaignCreate, CampaignUpdate, CampaignResponse, CampaignLaunchRequest,
     SellerCreate, SellerUpdate,
     AgendaEventCreate, AgendaEventUpdate,
+    ProspectingScrapeRequest, ProspectingLeadResponse, ProspectingSendRequest,
 )
 from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
+from core.utils import normalize_phone
 from db import db
 
 router = APIRouter(prefix="", tags=["CRM Sales"])
+APIFY_ACTOR_URL = "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items"
 
 # ============================================
 # LEADS ENDPOINTS
@@ -529,6 +534,231 @@ async def create_whatsapp_connection(
         connection.access_token_vault_id, connection.friendly_name)
     
     return dict(row)
+
+
+# ============================================
+# PROSPECTING ENDPOINTS (APIFY)
+# ============================================
+
+def _resolve_target_tenant_id(context: dict, allowed_ids: List[int], tenant_id: int) -> int:
+    if tenant_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Sin acceso al tenant seleccionado")
+    return tenant_id
+
+
+@router.post("/prospecting/scrape")
+async def run_prospecting_scrape(
+    payload: ProspectingScrapeRequest,
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """
+    Runs Apify Google Places scrape and upserts leads by (tenant_id, phone_number).
+    Uses APIFY_API_TOKEN from environment.
+    """
+    _ = context  # context required for auth scope
+    tenant_id = _resolve_target_tenant_id(context, allowed_ids, payload.tenant_id)
+
+    apify_token = os.getenv("APIFY_API_TOKEN")
+    if not apify_token:
+        raise HTTPException(status_code=500, detail="Missing APIFY_API_TOKEN in environment")
+
+    apify_body = {
+        "includeWebResults": True,
+        "language": "en",
+        "locationQuery": payload.location,
+        "maxCrawledPlacesPerSearch": payload.max_places,
+        "maxImages": 0,
+        "maximumLeadsEnrichmentRecords": 0,
+        "scrapeContacts": False,
+        "scrapeDirectories": False,
+        "scrapeImageAuthors": False,
+        "scrapePlaceDetailPage": False,
+        "scrapeReviewsPersonalData": True,
+        "scrapeTableReservationProvider": False,
+        "searchStringsArray": [payload.niche.lower().strip()],
+        "skipClosedPlaces": False,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            resp = await client.post(
+                APIFY_ACTOR_URL,
+                params={"token": apify_token},
+                json=apify_body,
+            )
+            resp.raise_for_status()
+            items = resp.json() if isinstance(resp.json(), list) else []
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Apify request failed: {e}")
+
+    imported = 0
+    skipped_without_phone = 0
+    for item in items:
+        raw_phone = item.get("phoneUnformatted") or item.get("phone")
+        phone = normalize_phone(raw_phone) if raw_phone else ""
+        if not phone:
+            skipped_without_phone += 1
+            continue
+
+        title = (item.get("title") or "").strip() or None
+        first_name = title[:100] if title else None
+        scraped_at_iso = item.get("scrapedAt")
+        scraped_at = None
+        if isinstance(scraped_at_iso, str) and scraped_at_iso:
+            try:
+                scraped_at = datetime.fromisoformat(scraped_at_iso.replace("Z", "+00:00"))
+            except ValueError:
+                scraped_at = None
+
+        await db.pool.execute(
+            """
+            INSERT INTO leads (
+                tenant_id, phone_number, first_name, status, source, tags,
+                apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
+                apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at, apify_raw,
+                prospecting_niche, prospecting_location_query,
+                outreach_message_sent, outreach_send_requested,
+                created_at, updated_at
+            )
+            VALUES (
+                $1, $2, $3, 'new', 'apify_scrape', '[]'::jsonb,
+                $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15::jsonb,
+                $16, $17,
+                FALSE, FALSE,
+                NOW(), NOW()
+            )
+            ON CONFLICT (tenant_id, phone_number) DO UPDATE SET
+                first_name = COALESCE(EXCLUDED.first_name, leads.first_name),
+                source = 'apify_scrape',
+                apify_title = EXCLUDED.apify_title,
+                apify_category_name = EXCLUDED.apify_category_name,
+                apify_address = EXCLUDED.apify_address,
+                apify_city = EXCLUDED.apify_city,
+                apify_state = EXCLUDED.apify_state,
+                apify_country_code = EXCLUDED.apify_country_code,
+                apify_website = EXCLUDED.apify_website,
+                apify_place_id = EXCLUDED.apify_place_id,
+                apify_total_score = EXCLUDED.apify_total_score,
+                apify_reviews_count = EXCLUDED.apify_reviews_count,
+                apify_scraped_at = EXCLUDED.apify_scraped_at,
+                apify_raw = EXCLUDED.apify_raw,
+                prospecting_niche = EXCLUDED.prospecting_niche,
+                prospecting_location_query = EXCLUDED.prospecting_location_query,
+                updated_at = NOW()
+            """,
+            tenant_id,
+            phone,
+            first_name,
+            title,
+            item.get("categoryName"),
+            item.get("address"),
+            item.get("city"),
+            item.get("state"),
+            item.get("countryCode"),
+            item.get("website"),
+            item.get("placeId"),
+            item.get("totalScore"),
+            item.get("reviewsCount"),
+            scraped_at,
+            item,
+            payload.niche,
+            payload.location,
+        )
+        imported += 1
+
+    return {
+        "tenant_id": tenant_id,
+        "niche": payload.niche,
+        "location": payload.location,
+        "total_results": len(items),
+        "imported_or_updated": imported,
+        "skipped_without_phone": skipped_without_phone,
+    }
+
+
+@router.get("/prospecting/leads", response_model=List[ProspectingLeadResponse])
+async def list_prospecting_leads(
+    tenant_id_override: int = Query(..., description="Tenant to query"),
+    only_pending: bool = Query(True, description="Only leads with outreach_message_sent = false"),
+    limit: int = Query(200, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    _ = context
+    tenant_id = _resolve_target_tenant_id(context, allowed_ids, tenant_id_override)
+    query = """
+        SELECT id, tenant_id, phone_number, first_name, status, source,
+               apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
+               apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at,
+               prospecting_niche, prospecting_location_query,
+               outreach_message_sent, outreach_send_requested, outreach_last_requested_at, outreach_last_sent_at,
+               created_at, updated_at
+        FROM leads
+        WHERE tenant_id = $1
+          AND source = 'apify_scrape'
+          AND (status IS NULL OR status != 'deleted')
+    """
+    params: List[object] = [tenant_id]
+    idx = 2
+    if only_pending:
+        query += f" AND outreach_message_sent = FALSE"
+    query += f" ORDER BY updated_at DESC LIMIT ${idx} OFFSET ${idx + 1}"
+    params.extend([limit, offset])
+    rows = await db.pool.fetch(query, *params)
+    return [dict(r) for r in rows]
+
+
+@router.post("/prospecting/request-send")
+async def request_prospecting_send(
+    payload: ProspectingSendRequest,
+    context: dict = Depends(get_current_user_context),
+    allowed_ids: List[int] = Depends(get_allowed_tenant_ids),
+):
+    """
+    Marks leads as requested for template outreach.
+    NOTE: This is a placeholder; it does not send WhatsApp yet.
+    """
+    _ = context
+    tenant_id = _resolve_target_tenant_id(context, allowed_ids, payload.tenant_id)
+
+    if payload.lead_ids:
+        ids = [str(x) for x in payload.lead_ids]
+        result = await db.pool.execute(
+            """
+            UPDATE leads
+            SET outreach_send_requested = TRUE,
+                outreach_last_requested_at = NOW(),
+                updated_at = NOW()
+            WHERE tenant_id = $1
+              AND id = ANY($2::uuid[])
+              AND (status IS NULL OR status != 'deleted')
+              AND ($3::bool = FALSE OR outreach_message_sent = FALSE)
+            """,
+            tenant_id,
+            ids,
+            payload.only_pending,
+        )
+    else:
+        result = await db.pool.execute(
+            """
+            UPDATE leads
+            SET outreach_send_requested = TRUE,
+                outreach_last_requested_at = NOW(),
+                updated_at = NOW()
+            WHERE tenant_id = $1
+              AND source = 'apify_scrape'
+              AND (status IS NULL OR status != 'deleted')
+              AND ($2::bool = FALSE OR outreach_message_sent = FALSE)
+            """,
+            tenant_id,
+            payload.only_pending,
+        )
+
+    updated_count = int(result.split(" ")[1]) if isinstance(result, str) and " " in result else 0
+    return {"status": "queued_placeholder", "tenant_id": tenant_id, "updated": updated_count}
 
 
 # ============================================

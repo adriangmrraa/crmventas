@@ -62,6 +62,57 @@ class LeadStageUpdateRequest(BaseModel):
 
 
 # ============================================
+# PROSPECTING (APIFY SCRAP PHONES)
+# ============================================
+
+class ProspectingScrapeRequest(BaseModel):
+    """Request to scrape prospects from Apify."""
+    tenant_id: int
+    niche: str = Field(..., min_length=2)
+    location: str = Field(..., min_length=2)
+    max_places: int = Field(default=25, ge=1, le=100)
+
+
+class ProspectingLeadResponse(BaseModel):
+    """Response model for prospecting leads list."""
+    id: UUID
+    tenant_id: int
+    phone_number: str
+    first_name: Optional[str] = None
+    status: Optional[str] = None
+    source: Optional[str] = None
+    apify_title: Optional[str] = None
+    apify_category_name: Optional[str] = None
+    apify_address: Optional[str] = None
+    apify_city: Optional[str] = None
+    apify_state: Optional[str] = None
+    apify_country_code: Optional[str] = None
+    apify_website: Optional[str] = None
+    apify_place_id: Optional[str] = None
+    apify_total_score: Optional[float] = None
+    apify_reviews_count: Optional[int] = None
+    apify_scraped_at: Optional[datetime] = None
+    prospecting_niche: Optional[str] = None
+    prospecting_location_query: Optional[str] = None
+    outreach_message_sent: bool = False
+    outreach_send_requested: bool = False
+    outreach_last_requested_at: Optional[datetime] = None
+    outreach_last_sent_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ProspectingSendRequest(BaseModel):
+    """Request to queue/send template outreach (placeholder)."""
+    tenant_id: int
+    lead_ids: Optional[List[UUID]] = None
+    only_pending: bool = True
+
+
+# ============================================
 # CLIENTS (página Clientes CRM - tabla propia, análoga a patients)
 # ============================================
 

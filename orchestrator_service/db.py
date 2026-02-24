@@ -605,6 +605,88 @@ class Database:
                     ALTER TABLE leads ADD COLUMN human_override_until TIMESTAMPTZ DEFAULT NULL;
                 END IF;
             END $$;
+<<<<<<< HEAD
+=======
+            """
+            ,
+            # Parche 26: Campos de prospección Apify + estado de outreach en leads (CRM Sales)
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_title') THEN
+                    ALTER TABLE leads ADD COLUMN apify_title TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_category_name') THEN
+                    ALTER TABLE leads ADD COLUMN apify_category_name TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_address') THEN
+                    ALTER TABLE leads ADD COLUMN apify_address TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_city') THEN
+                    ALTER TABLE leads ADD COLUMN apify_city TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_state') THEN
+                    ALTER TABLE leads ADD COLUMN apify_state TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_country_code') THEN
+                    ALTER TABLE leads ADD COLUMN apify_country_code TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_website') THEN
+                    ALTER TABLE leads ADD COLUMN apify_website TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_place_id') THEN
+                    ALTER TABLE leads ADD COLUMN apify_place_id TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_total_score') THEN
+                    ALTER TABLE leads ADD COLUMN apify_total_score DOUBLE PRECISION;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_reviews_count') THEN
+                    ALTER TABLE leads ADD COLUMN apify_reviews_count INTEGER;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_scraped_at') THEN
+                    ALTER TABLE leads ADD COLUMN apify_scraped_at TIMESTAMPTZ;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'apify_raw') THEN
+                    ALTER TABLE leads ADD COLUMN apify_raw JSONB DEFAULT '{}'::jsonb;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'prospecting_niche') THEN
+                    ALTER TABLE leads ADD COLUMN prospecting_niche TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'prospecting_location_query') THEN
+                    ALTER TABLE leads ADD COLUMN prospecting_location_query TEXT;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'outreach_message_sent') THEN
+                    ALTER TABLE leads ADD COLUMN outreach_message_sent BOOLEAN DEFAULT FALSE;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'outreach_send_requested') THEN
+                    ALTER TABLE leads ADD COLUMN outreach_send_requested BOOLEAN DEFAULT FALSE;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'outreach_last_requested_at') THEN
+                    ALTER TABLE leads ADD COLUMN outreach_last_requested_at TIMESTAMPTZ;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads')
+                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'outreach_last_sent_at') THEN
+                    ALTER TABLE leads ADD COLUMN outreach_last_sent_at TIMESTAMPTZ;
+                END IF;
+            END $$;
+>>>>>>> 3a9dfd4 (fix leads page prospeccion)
             """
         ]
 

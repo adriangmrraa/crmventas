@@ -9,6 +9,21 @@ class Database:
     def __init__(self):
         self.pool: Optional[asyncpg.Pool] = None
 
+    async def _init_connection(self, conn):
+        """Registra codecs para JSON/JSONB en cada conexión del pool para soporte nativo de tipos Python."""
+        await conn.set_type_codec(
+            'json',
+            encoder=json.dumps,
+            decoder=json.loads,
+            schema='pg_catalog'
+        )
+        await conn.set_type_codec(
+            'jsonb',
+            encoder=json.dumps,
+            decoder=json.loads,
+            schema='pg_catalog'
+        )
+
     async def connect(self):
         """Conecta al pool de PostgreSQL y ejecuta auto-migraciones."""
         if not self.pool:
@@ -20,7 +35,7 @@ class Database:
             dsn = POSTGRES_DSN.replace("postgresql+asyncpg://", "postgresql://")
             
             try:
-                self.pool = await asyncpg.create_pool(dsn)
+                self.pool = await asyncpg.create_pool(dsn, init=self._init_connection)
             except Exception as e:
                 print(f"❌ ERROR: Failed to create database pool: {e}")
                 return

@@ -718,6 +718,23 @@ async def _extract_phone_from_website(url: str, default_cc: str = "54") -> Optio
     return mobile_priority[0] if mobile_priority else valid[0]
 
 
+def _extract_social_links(apify_item: dict) -> dict:
+    """
+    Extracts social media profile URLs (IG, FB, LI) from Apify's webResults.
+    """
+    socials = {}
+    web_results = apify_item.get("webResults") or []
+    for res in web_results:
+        url = (res.get("url") or "").lower()
+        if "instagram.com/" in url and not socials.get("instagram"):
+            socials["instagram"] = res.get("url")
+        elif "facebook.com/" in url and not socials.get("facebook"):
+            socials["facebook"] = res.get("url")
+        elif "linkedin.com/" in url and not socials.get("linkedin"):
+            socials["linkedin"] = res.get("url")
+    return socials
+
+
 def _resolve_target_tenant_id(context: dict, allowed_ids: List[int], tenant_id: int) -> int:
     if tenant_id not in allowed_ids:
         raise HTTPException(status_code=403, detail="Sin acceso al tenant seleccionado")
@@ -811,6 +828,8 @@ async def run_prospecting_scrape(
         title = (item.get("title") or "").strip() or None
         first_name = title[:100] if title else None
 
+        social_links = _extract_social_links(item)
+
         scraped_at_iso = item.get("scrapedAt")
         scraped_at = None
         if isinstance(scraped_at_iso, str) and scraped_at_iso:
@@ -825,7 +844,7 @@ async def run_prospecting_scrape(
         result = await db.pool.execute(
             """
             INSERT INTO leads (
-                tenant_id, phone_number, first_name, status, source, tags,
+                tenant_id, phone_number, first_name, status, source, tags, social_links,
                 apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
                 apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at, apify_raw,
                 prospecting_niche, prospecting_location_query,
@@ -833,7 +852,7 @@ async def run_prospecting_scrape(
                 created_at, updated_at
             )
             VALUES (
-                $1, $2, $3, 'new', 'apify_scrape', '[]'::jsonb,
+                $1, $2, $3, 'new', 'apify_scrape', '[]'::jsonb, $18::jsonb,
                 $4, $5, $6, $7, $8, $9,
                 $10, $11, $12, $13, $14, $15::jsonb,
                 $16, $17,
@@ -843,6 +862,7 @@ async def run_prospecting_scrape(
             ON CONFLICT (tenant_id, phone_number) 
             DO UPDATE SET
                 -- Enriquecimiento: Solo actualizamos si el campo actual está vacío o es de prospección
+                social_links = COALESCE(leads.social_links, EXCLUDED.social_links),
                 apify_title = COALESCE(leads.apify_title, EXCLUDED.apify_title),
                 apify_category_name = COALESCE(leads.apify_category_name, EXCLUDED.apify_category_name),
                 apify_address = COALESCE(leads.apify_address, EXCLUDED.apify_address),
@@ -876,6 +896,7 @@ async def run_prospecting_scrape(
             json.dumps(item),
             payload.niche,
             payload.location,
+            json.dumps(social_links),
         )
         if result == "INSERT 0 1":
             imported += 1

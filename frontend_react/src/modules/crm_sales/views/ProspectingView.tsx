@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Search, SendHorizontal, Building2 } from 'lucide-react';
+import { Loader2, Search, SendHorizontal, Building2, Instagram, Facebook, Linkedin } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 
@@ -18,6 +18,7 @@ type ProspectLead = {
   apify_city?: string;
   apify_state?: string;
   apify_website?: string;
+  social_links?: Record<string, string>;
   outreach_message_sent: boolean;
   outreach_send_requested: boolean;
   updated_at: string;
@@ -270,9 +271,25 @@ export default function ProspectingView() {
                       ) : '—'}
                     </td>
                     <td className="px-3 py-2">
-                      <div className="flex gap-2">
-                        {/* Placeholder for social links icons if extracted in future */}
-                        <span className="text-gray-400">—</span>
+                      <div className="flex gap-2 text-gray-400">
+                        {lead.social_links?.instagram && (
+                          <a href={lead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 transition-colors">
+                            <Instagram className="w-4 h-4" />
+                          </a>
+                        )}
+                        {lead.social_links?.facebook && (
+                          <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                            <Facebook className="w-4 h-4" />
+                          </a>
+                        )}
+                        {lead.social_links?.linkedin && (
+                          <a href={lead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 transition-colors">
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        )}
+                        {!lead.social_links || Object.keys(lead.social_links).length === 0 && (
+                          <span>—</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-3 py-2">

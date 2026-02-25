@@ -9,6 +9,7 @@ import logging
 from db import db
 from auth_service import auth_service
 from core.security import audit_access
+from main import limiter
 
 router = APIRouter(prefix="/auth", tags=["Nexus Auth"])
 logger = logging.getLogger("auth_routes")

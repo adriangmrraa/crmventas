@@ -20,6 +20,9 @@ from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
+# --- APP SETUP ---
+limiter = Limiter(key_func=get_remote_address)
+
 from db import db
 from admin_routes import router as admin_router
 from auth_routes import router as auth_router
@@ -42,8 +45,7 @@ POSTGRES_DSN = os.getenv("POSTGRES_DSN", "")
 engine = create_async_engine(POSTGRES_DSN, echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# --- APP SETUP ---
-limiter = Limiter(key_func=get_remote_address)
+# --- APP CONFIG ---
 app = FastAPI(title="Nexus Orchestrator", version="7.7.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

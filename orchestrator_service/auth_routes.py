@@ -150,16 +150,27 @@ async def login(payload: UserLogin):
         )
 
     # Resolver tenant_id: sellers (CRM) → professionals (legacy) → primer tenant
-    tenant_id = await db.fetchval(
-        "SELECT tenant_id FROM sellers WHERE user_id = $1", user['id']
-    )
-    if tenant_id is None:
+    # Try/except porque sellers puede no existir en DB sin parche aplicado aún
+    tenant_id = None
+    try:
         tenant_id = await db.fetchval(
-            "SELECT tenant_id FROM professionals WHERE user_id = $1", user['id']
+            "SELECT tenant_id FROM sellers WHERE user_id = $1", user['id']
         )
+    except Exception:
+        pass  # Tabla sellers no existe aún, continuar con fallback
+
+    if tenant_id is None:
+        try:
+            tenant_id = await db.fetchval(
+                "SELECT tenant_id FROM professionals WHERE user_id = $1", user['id']
+            )
+        except Exception:
+            pass
+
     if tenant_id is None:
         tenant_id = await db.fetchval("SELECT id FROM tenants ORDER BY id ASC LIMIT 1") or 1
     tenant_id = int(tenant_id)
+
 
     niche_type = await db.fetchval(
         "SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id

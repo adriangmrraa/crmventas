@@ -772,23 +772,39 @@ class Database:
                 END IF;
             END $$;
             """,
-            # Parche 32 (Nexus Security v7.6): Tabla sellers para CRM (si no existe)
+            # Parche 32 (Nexus Security v7.6): Tabla sellers para CRM (idempotente)
             """
             DO $$
             BEGIN
+                -- Crear tabla sellers si no existe
                 CREATE TABLE IF NOT EXISTS sellers (
                     id BIGSERIAL PRIMARY KEY,
                     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                    tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
                     first_name VARCHAR(100),
                     last_name VARCHAR(100),
                     email VARCHAR(255),
                     phone VARCHAR(50),
                     role VARCHAR(50) DEFAULT 'setter',
                     is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMPTZ DEFAULT NOW(),
-                    UNIQUE(user_id)
+                    created_at TIMESTAMPTZ DEFAULT NOW()
                 );
+                -- Agregar tenant_id si no existe (para tablas sellers ya creadas sin esta columna)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'sellers' AND column_name = 'tenant_id') THEN
+                    ALTER TABLE sellers ADD COLUMN tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE;
+                END IF;
+                -- Agregar UNIQUE(user_id) si no existe
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints tc
+                    JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
+                    WHERE tc.table_name = 'sellers' AND tc.constraint_type = 'UNIQUE' AND ccu.column_name = 'user_id'
+                ) THEN
+                    BEGIN
+                        ALTER TABLE sellers ADD CONSTRAINT sellers_user_id_key UNIQUE (user_id);
+                    EXCEPTION WHEN duplicate_object THEN NULL;
+                    END;
+                END IF;
+                -- Índices (idempotentes con IF NOT EXISTS)
                 CREATE INDEX IF NOT EXISTS idx_sellers_tenant ON sellers(tenant_id);
                 CREATE INDEX IF NOT EXISTS idx_sellers_user ON sellers(user_id);
             END $$;

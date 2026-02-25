@@ -61,7 +61,7 @@ Garantizar que el Frontend esté siempre al día:
     - Endpoints de listado (`leads`, `clients`, `patients`): 100/min.
 - **Auditoría Multi-tenant (Parche 35)**: La tabla `system_events` DEBE incluir `tenant_id` para garantizar el aislamiento de logs.
 - **Decorador `@audit_access`**: Uso obligatorio en rutas administrativas y de acceso a datos sensibles (PII) para trazabilidad en `system_events`.
-- **Security Logging**: Todo fallo crítico o acceso a PII debe registrarse mediante `log_security_event` (asegurando pasar el `tenant_id`).
+- **Security Logging**: Todo fallo crítico o acceso a PII debe registrarse mediante `log_security_event` (asegurando pasar el `tenant_id`). Los logs se consultan en `/admin/core/audit/logs`.
 
 ---
 *Nexus v8.0 - Senior Backend Architect & Python Expert Protocol*

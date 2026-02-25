@@ -37,7 +37,7 @@ Registrar en el provider del nicho `crm_sales` las tools que el agente pueda usa
 
 ## Frontend
 
-Vistas: Leads (lista con pestañas Mensajes/Prospección), Lead detail, Pipeline, Sellers, Agenda (calendario con Socket.IO para eventos en tiempo real), **Prospecting (scraping tool)**.
+Vistas: Leads (lista con pestañas Mensajes/Prospección), Lead detail (con guardia 404), Pipeline, Sellers, Agenda (calendario con Socket.IO para eventos en tiempo real), **Prospecting (scraping tool)**, **Dashboard (con métricas reales de conversión y tendencias)**.
 Sidebar con ítems para nicho crm_sales. Referencia: **CRM VENTAS/frontend_react/src/modules/crm_sales/**.
 
 Todo el código en **CRM VENTAS**.

@@ -574,13 +574,14 @@ Borra el turno; si hay evento en Google Calendar, se sincroniza la cancelación.
 ## Analítica y Estadísticas
 
 ### Resumen de Estadísticas (admin core)
-`GET /admin/core/stats/summary`
-
-Retorna métricas clave del sistema CRM (conversaciones IA, eventos/reuniones, urgencias, ingresos). Usado por el Dashboard.
+Retorna métricas clave del sistema CRM (conversaciones IA, eventos/reuniones, urgencias, ingresos). Usado por el Dashboard. El endpoint `/admin/core/crm/stats/summary` (específico de CRM Sales) devuelve campos adicionales para gráficos.
 
 **Query Params:** `range` (opcional): `weekly` | `monthly`. Default: `weekly`.
 
-**Response:** `ia_conversations`, `ia_appointments`, `active_urgencies`, `total_revenue`, `growth_data` (array por día).
+**Response (CRM Sales Stats):**
+- `status_distribution`: Array de `{ status, count, color }`.
+- `revenue_leads_trend`: Array de `{ month, revenue, leads }` (últimos 6 meses).
+- `total_leads`, `total_clients`, `active_leads`, `conversion_rate`, `total_revenue`.
 
 ### Urgencias Recientes (admin core)
 `GET /admin/core/chat/urgencies`
@@ -637,9 +638,7 @@ En rutas de listado administrativas suelen soportarse:
 > Todos los endpoints bajo `/admin/core/crm/*` requieren `Authorization: Bearer <JWT>` + `X-Admin-Token`.
 
 ### Listar Leads (Generic — todas las fuentes)
-`GET /admin/core/crm/leads`
-
-Retorna todos los leads del tenant autenticado (extraído del JWT). **No filtra por `source`** — incluye WhatsApp inbound, Apify scrape y leads manuales.
+Retorna todos los leads del tenant autenticado (extraído del JWT). **No filtra por `source`** — incluye WhatsApp inbound, Apify scrape y leads manuales. El frontend aplica un guardia de 404 si el lead no existe o ha sido borrado.
 
 **Query params:**
 

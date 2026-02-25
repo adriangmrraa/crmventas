@@ -121,6 +121,23 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 
 **Estado:** ✅ Comportamiento de diseño Nexus v7.7.
 
+## Error de Build Frontend: Tags JSX Mal Cerrados (2026-02-25)
+
+**Problema:**
+- La aplicación fallaba al compilar en producción con errores de sintaxis en `CrmDashboardView.tsx`.
+- Síntomas: `Unterminated regular expression literal` o `Expected corresponding JSX closing tag for 'main'`.
+
+**Causa Raíz:**
+- Un tag `<ResponsiveContainer>` de apertura faltaba en el gráfico `PieChart`.
+- Desequilibrio en el cierre de tags `div` y `main` tras un refactor de layout.
+
+**Solución Aplicada:**
+- Se restauró la simetría de tags en `CrmDashboardView.tsx`.
+- Se eliminaron imports no utilizados que generaban warnings de build.
+- Se agregó tipado `any` y guards de nulidad en los formateadores de `recharts` para prevenir fallos de `tsc`.
+
+**Estado:** ✅ Resuelto y verificado en commit `7750617`.
+
 ---
 
 *Histórico de Problemas y Soluciones Nexus v7.7 © 2026*

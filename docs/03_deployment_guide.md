@@ -6,7 +6,7 @@ Este proyecto está optimizado para EasyPanel, un orquestador de contenedores ba
 
 ### 1.1 Crear un Nuevo Proyecto
 
-```
+``` 
 EasyPanel Dashboard
   → New Project
   → Select Source: GitHub (o Git Repo)

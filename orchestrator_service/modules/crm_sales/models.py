@@ -335,3 +335,21 @@ class AgendaEventUpdate(BaseModel):
     client_id: Optional[int] = None
     notes: Optional[str] = None
     status: Optional[str] = None  # scheduled | completed | cancelled
+
+
+# ============================================
+# CRM DASHBOARD STATS
+# ============================================
+
+class CrmDashboardStats(BaseModel):
+    """Response model for CRM dashboard statistics"""
+    total_leads: int
+    total_clients: int
+    active_leads: int
+    converted_leads: int
+    total_revenue: float
+    conversion_rate: float
+    recent_leads: List[dict] = Field(default_factory=list)
+    
+    class Config:
+        from_attributes = True

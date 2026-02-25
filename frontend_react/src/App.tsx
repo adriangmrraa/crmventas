@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import DashboardView from './views/DashboardView';
+import CrmDashboardView from './views/CrmDashboardView';
 import ChatsView from './views/ChatsView';
 import LoginView from './views/LoginView';
 import LandingView from './views/LandingView';
@@ -32,7 +32,7 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Routes>
-                    <Route index element={<DashboardView />} />
+                    <Route index element={<CrmDashboardView />} />
                     <Route path="agenda" element={<Navigate to="/crm/agenda" replace />} />
                     <Route path="pacientes" element={<Navigate to="/crm/clientes" replace />} />
                     <Route path="pacientes/:id" element={<Navigate to="/crm/clientes" replace />} />

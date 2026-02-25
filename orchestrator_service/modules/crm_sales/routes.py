@@ -24,6 +24,7 @@ from .models import (
     SellerCreate, SellerUpdate,
     AgendaEventCreate, AgendaEventUpdate,
     ProspectingScrapeRequest, ProspectingLeadResponse, ProspectingSendRequest,
+    CrmDashboardStats,
 )
 from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
 from core.utils import normalize_phone
@@ -500,6 +501,135 @@ async def delete_client(
     if result == "UPDATE 0":
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return {"status": "deleted", "id": client_id}
+
+
+# ============================================
+# CRM DASHBOARD STATS ENDPOINTS
+# ============================================
+
+@router.get("/stats/summary", response_model=CrmDashboardStats)
+async def get_crm_dashboard_stats(
+    range: str = Query("weekly", description="Time range: weekly, monthly"),
+    context: dict = Depends(get_current_user_context)
+):
+    """
+    Get CRM dashboard statistics for the current tenant.
+    Returns metrics specific to CRM sales (leads, clients, revenue).
+    """
+    tenant_id = context["tenant_id"]
+    
+    try:
+        # Determine days based on range
+        days = 7 if range == "weekly" else 30
+        
+        # 1. Total leads (all time)
+        total_leads = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM leads 
+            WHERE tenant_id = $1 AND status != 'deleted'
+        """, tenant_id) or 0
+        
+        # 2. Total clients (all time)
+        total_clients = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM clients 
+            WHERE tenant_id = $1
+        """, tenant_id) or 0
+        
+        # 3. Active leads (recent, not converted)
+        active_leads = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM leads 
+            WHERE tenant_id = $1 
+            AND status NOT IN ('closed_won', 'closed_lost', 'deleted')
+            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
+        """, tenant_id, days) or 0
+        
+        # 4. Converted leads (closed won in period)
+        converted_leads = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM leads 
+            WHERE tenant_id = $1 
+            AND status = 'closed_won'
+            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
+        """, tenant_id, days) or 0
+        
+        # 5. Total revenue (estimated from converted leads)
+        # En un sistema real, tendríamos una tabla 'deals' o 'sales'
+        # Por ahora, estimamos $1000 por lead convertido
+        total_revenue = converted_leads * 1000.0
+        
+        # 6. Conversion rate (based on period)
+        conversion_rate = 0.0
+        period_leads = await db.pool.fetchval("""
+            SELECT COUNT(*) FROM leads 
+            WHERE tenant_id = $1 
+            AND status != 'deleted'
+            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
+        """, tenant_id, days) or 0
+        
+        if period_leads > 0:
+            conversion_rate = (converted_leads / period_leads) * 100
+        
+        # 7. Recent leads for "Recent Leads" section
+        recent_leads = await db.pool.fetch("""
+            SELECT id, first_name, last_name, phone_number, status, 
+                   created_at, source, prospecting_niche
+            FROM leads 
+            WHERE tenant_id = $1 
+            AND status != 'deleted'
+            ORDER BY created_at DESC 
+            LIMIT 5
+        """, tenant_id)
+        
+        # Format recent leads
+        formatted_recent_leads = []
+        for lead in recent_leads:
+            # Formatear nombre
+            first_name = lead["first_name"] or ""
+            last_name = lead["last_name"] or ""
+            name = f"{first_name} {last_name}".strip()
+            if not name:
+                name = "Lead sin nombre"
+            
+            # Formatear teléfono
+            phone = lead["phone_number"] or "Sin teléfono"
+            
+            # Formatear fecha
+            created_at = lead["created_at"]
+            if created_at:
+                created_at_iso = created_at.isoformat()
+            else:
+                created_at_iso = None
+            
+            formatted_recent_leads.append({
+                "id": str(lead["id"]),
+                "name": name,
+                "phone": phone,
+                "status": lead["status"] or "new",
+                "source": lead["source"] or "manual",
+                "niche": lead["prospecting_niche"] or "General",
+                "created_at": created_at_iso
+            })
+        
+        return CrmDashboardStats(
+            total_leads=total_leads,
+            total_clients=total_clients,
+            active_leads=active_leads,
+            converted_leads=converted_leads,
+            total_revenue=total_revenue,
+            conversion_rate=round(conversion_rate, 1),
+            recent_leads=formatted_recent_leads
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting CRM dashboard stats: {e}")
+        # En caso de error, devolver datos básicos
+        return CrmDashboardStats(
+            total_leads=0,
+            total_clients=0,
+            active_leads=0,
+            converted_leads=0,
+            total_revenue=0.0,
+            conversion_rate=0.0,
+            recent_leads=[]
+        )
 
 
 # ============================================

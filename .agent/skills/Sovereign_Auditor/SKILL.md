@@ -25,10 +25,14 @@ auto-invoke: false
 - [ ] Verificar que NO existan credenciales en texto plano en la DB (tabla `credentials`).
 - [ ] Validar que se use `CREDENTIALS_FERNET_KEY` y no claves estáticas en el código.
 
-### 5. Auditoría y Límites (Nexus v7.7)
-- [ ] **Rate Limiting**: Verificar bloqueo por IP (429) tras ráfagas en login.
-- [ ] **Auto-Audit**: Comprobar que las rutas admin tengan el decorador `@audit_access`.
-- [ ] **Audit Logs**: Validar que los eventos se graben en `system_events` y sean consultables por el CEO.
+### 5. Auditoría y Límites (Nexus v7.7.1)
+- [ ] **Rate Limiting**: 
+    - [ ] `/auth/login`: 5/min (Brute Force).
+    - [ ] `/auth/register`: 3/min (Spam/Account creation).
+    - [ ] `/clients`, `/leads`, `/patients`: 100/min (Scraping protection).
+- [ ] **Auto-Audit**: Comprobar que las rutas admin, CRM y Dental tengan el decorador `@audit_access`.
+- [ ] **Audit Isolation (Parche 35)**: Validar que los eventos grabados en `system_events` incluyan la columna `tenant_id` vinculada al inquilino correspondiente.
+- [ ] **Audit Logs**: Validar que los eventos sean consultables por el CEO filtrados por su `allowed_tenant_ids`.
 
 ## Auditoría de Soberanía Nexus
 

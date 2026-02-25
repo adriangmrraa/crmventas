@@ -82,7 +82,11 @@ Rutas **públicas** (sin JWT/X-Admin-Token): `GET /auth/clinics`, `POST /auth/re
 ### Registro
 `POST /auth/register`
 
-Crea usuario con `status = 'pending'`. Para roles `professional` y `secretary` es **obligatorio** enviar `tenant_id`; se crea una fila en `professionals` con `is_active = FALSE` y los datos indicados.
+Crea usuario con `status = 'pending'`. 
+
+**Nexus Security v7.7.1 (Hardening):** Rate limited a **3 peticiones por minuto por IP** para evitar spam de cuentas.
+
+Para roles `professional` y `secretary` es **obligatorio** enviar `tenant_id`; se crea una fila en `professionals` con `is_active = FALSE` y los datos indicados.
 
 **Payload (campos ampliados):**
 - `email`, `password`, `role` (`professional` | `secretary` | `ceo`)
@@ -610,6 +614,8 @@ En rutas de listado administrativas suelen soportarse:
 - **`limit`**: Cantidad de registros (default típico: 50).
 - **`offset`**: Desplazamiento para paginación.
 - **`search`**: Filtro por texto libre cuando aplique.
+
+**Nexus Security v7.7.1:** Endpoints de alta carga como `/leads`, `/clients` y `/patients` tienen un **Rate Limit de 100/min** para prevenir el raspado masivo de datos (PII). Todas estas rutas están protegidas con el decorador `@audit_access`.
 
 ---
 

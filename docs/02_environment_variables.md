@@ -60,7 +60,12 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 | **`LOG_LEVEL`** | Nivel de logs (afecta visibilidad de eventos de seguridad) | `INFO`, `DEBUG`, `ERROR` | `INFO` |
 | **`GOOGLE_CREDENTIALS`** | JSON completo de credenciales de Google | (JSON string) | ❌ |
 
-**Generar clave Fernet:** En la raíz del proyecto, con Python en el PATH: `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows). En Linux/macOS: `python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Guardar la salida en `CREDENTIALS_FERNET_KEY`.
+**Generar claves de seguridad (v7.7.1):** Se ha incluido un script helper para generar automáticamente valores seguros para estas variables.
+Ejecuta: `python orchestrator_service/core/generate_env_vars.py`
+
+Alternativamente, de forma manual:
+- **Fernet:** `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows).
+- **JWT Secret:** `python -c "import secrets; print(secrets.token_hex(64))"`.
 
 ## 3. WhatsApp Service (8002)
 

@@ -141,14 +141,17 @@ La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** c
 
 ## Estado por categoría (Dentalogic)
 
-### 1. Sesión y Autenticación (Nexus v7.6/v7.7)
+### 1. Sesión y Autenticación (Nexus v7.7.1)
 - **Cookies HttpOnly**: El JWT no es accesible vía JS.
-- **Rate Limiting**: El endpoint `/auth/login` está protegido contra ataques de fuerza bruta (5 peticiones/min/IP).
+- **Rate Limiting**: 
+    - `/auth/login`: 5/min (Brute Force).
+    - `/auth/register`: 3/min (Account Spam).
+    - Endpoints PII (`leads`, `clients`, `patients`): 100/min.
 
-### 2. Auditoría Persistente (Nexus v7.7)
-- **Tabla `system_events`**: Registro detallado de accesos administrativos, fallos de login y accesos a PII.
-- **Decorador `@audit_access`**: Automatización de la auditoría en rutas críticas del backend.
-- **Panel CEO**: Los eventos se pueden consultar en `/admin/core/audit/logs`.
+### 2. Auditoría Persistente (Nexus v7.7.1)
+- **Tabla `system_events` (Parche 35)**: Registro detallado que incluye `tenant_id` para garantizar el aislamiento estricto de los logs de auditoría entre sedes.
+- **Decorador `@audit_access`**: Automatización de la auditoría en rutas críticas (Admin, CRM y Dental).
+- **Panel CEO**: Los eventos se pueden consultar en `/admin/core/audit/logs`, filtrados automáticamente por los inquilinos permitidos de la sesión.
 
 ### 3. Middlewares de Seguridad (OWASP A02)
 

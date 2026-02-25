@@ -3,8 +3,8 @@ import { Megaphone, RefreshCw, ExternalLink } from 'lucide-react';
 import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
 import { useTranslation } from '../../context/LanguageContext';
-import MarketingPerformanceCard from '../../components/MarketingPerformanceCard';
-import MetaConnectionWizard from '../../components/integrations/MetaConnectionWizard';
+import MarketingPerformanceCard from '../../components/marketing/MarketingPerformanceCard';
+import MetaConnectionWizard from '../../components/marketing/MetaConnectionWizard';
 import { getCurrentTenantId } from '../../api/axios';
 import { useSearchParams } from 'react-router-dom';
 

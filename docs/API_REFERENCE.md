@@ -408,6 +408,85 @@ Todas las rutas CRM están bajo **`/admin/core/crm/*`**. Requieren autenticació
 
 ---
 
+
+## Marketing Hub y Meta Ads
+
+Nuevo módulo implementado (Febrero 2026) que integra Meta Ads (Facebook/Instagram) y WhatsApp HSM Automation.
+
+### Prefijos de Marketing
+
+| Prefijo | Contenido |
+|---------|-----------|
+| **`/crm/marketing`** | Dashboard marketing, campañas Meta Ads, HSM Automation, plantillas WhatsApp |
+| **`/crm/auth/meta`** | OAuth Meta/Facebook, gestión tokens, conexión cuentas |
+
+### Endpoints de Marketing Hub
+
+#### Dashboard y Métricas
+- `GET /crm/marketing/stats` - Métricas generales (ROI, leads, conversiones)
+- `GET /crm/marketing/campaigns` - Lista campañas Meta Ads activas
+- `GET /crm/marketing/campaigns/{campaign_id}/insights` - Métricas específicas campaña
+
+#### HSM Automation (WhatsApp Business)
+- `GET /crm/marketing/hsm` - Lista plantillas HSM aprobadas
+- `POST /crm/marketing/hsm` - Crear nueva plantilla HSM
+- `PUT /crm/marketing/hsm/{template_id}` - Actualizar plantilla
+- `DELETE /crm/marketing/hsm/{template_id}` - Eliminar plantilla
+
+#### Automatización de Marketing
+- `GET /crm/marketing/automation/rules` - Reglas automatización
+- `POST /crm/marketing/automation/rules` - Crear regla automatización
+- `PUT /crm/marketing/automation/rules/{rule_id}` - Actualizar regla
+- `DELETE /crm/marketing/automation/rules/{rule_id}` - Eliminar regla
+
+#### Gestión de Cuentas Meta
+- `GET /crm/marketing/meta-portfolios` - Portafolios Meta Ads
+- `GET /crm/marketing/meta-accounts` - Cuentas publicitarias
+- `GET /crm/marketing/meta-tokens` - Tokens OAuth almacenados
+
+### Endpoints de OAuth Meta
+
+#### Flujo de Autorización
+- `GET /crm/auth/meta/url` - Generar URL de autorización OAuth
+- `GET /crm/auth/meta/callback` - Callback OAuth (intercambia code por token)
+- `POST /crm/auth/meta/disconnect` - Desconectar cuenta Meta
+- `GET /crm/auth/meta/test-connection` - Probar conexión con Meta API
+
+#### Seguridad
+Todos los endpoints de marketing incluyen:
+- **Rate limiting**: `@limiter.limit("20/minute")`
+- **Audit logging**: `@audit_access("action_name")`
+- **Multi-tenant**: Filtrado automático por `tenant_id`
+- **Token validation**: Verificación JWT + X-Admin-Token
+
+### Ejemplo de Uso
+
+```bash
+# Obtener métricas marketing
+curl -X GET "http://localhost:8000/crm/marketing/stats" \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Admin-Token: <ADMIN_TOKEN>"
+
+# Conectar cuenta Meta
+curl -X GET "http://localhost:8000/crm/auth/meta/url" \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Admin-Token: <ADMIN_TOKEN>"
+```
+
+### Configuración Requerida
+
+Variables de entorno para Meta OAuth:
+```bash
+META_APP_ID=tu_app_id_facebook
+META_APP_SECRET=tu_app_secret_facebook
+META_REDIRECT_URI=https://tu-crm.com/crm/auth/meta/callback
+```
+
+### Documentación Adicional
+- Ver `FINAL_IMPLEMENTATION_SUMMARY.md` para detalles técnicos
+- Ver `ENV_EXAMPLE.md` para configuración completa
+- Ver `SPRINT3_OAUTH_CONFIGURATION.md` para guía paso a paso
+
 ## Enriquecimiento de Leads (Upsert)
 
 Al importar leads desde prospección o mensajes entrantes, el sistema usa una lógica de enriquecimiento no destructiva basada en `ON CONFLICT (tenant_id, phone_number) DO UPDATE SET ... COALESCE(leads.field, EXCLUDED.field)`:

@@ -431,3 +431,144 @@ docker-compose up --build
 ---
 
 *Guía de Despliegue Nexus v3 © 2025*
+
+
+## Marketing Hub Deployment
+
+Nuevo módulo implementado en Febrero 2026 que requiere configuración adicional para Meta (Facebook/Instagram) Ads y WhatsApp HSM Automation.
+
+### Prerrequisitos
+
+1. **Meta Developers Account**
+   - Cuenta en [developers.facebook.com](https://developers.facebook.com/)
+   - App tipo "Business" creada
+   - App ID y App Secret obtenidos
+
+2. **Business Verification** (Recomendado)
+   - Verificación de negocio en Meta Business Manager
+   - Permisos para `ads_management` y `business_management`
+
+3. **WhatsApp Business Account** (Para HSM)
+   - Número WhatsApp Business verificado
+   - Aprobación para plantillas HSM
+
+### Pasos de Configuración
+
+#### Paso 1: Configurar Meta Developers App
+
+```bash
+# 1. Ir a https://developers.facebook.com/
+# 2. Crear nueva App → Business → Nombre: "CRM Ventas Marketing Hub"
+# 3. Agregar producto "Facebook Login" → Configurar OAuth
+# 4. Agregar producto "Marketing API" → Solicitar permisos
+# 5. Agregar producto "WhatsApp Business Platform" (para HSM)
+```
+
+**Configuración OAuth:**
+- **Valid OAuth Redirect URIs**: `https://tu-crm.com/crm/auth/meta/callback`
+- **App Domains**: `tu-crm.com`
+- **Privacy Policy URL**: `https://tu-crm.com/privacy`
+
+**Permisos API Requeridos:**
+- `ads_management` - Gestión campañas publicitarias
+- `business_management` - Gestión Business Manager
+- `whatsapp_business_management` - HSM templates (opcional)
+- `whatsapp_business_messaging` - Envío mensajes (opcional)
+
+#### Paso 2: Configurar Variables de Entorno
+
+```bash
+# Archivo: .env.production
+META_APP_ID=tu_app_id_facebook
+META_APP_SECRET=tu_app_secret_facebook
+META_REDIRECT_URI=https://tu-crm.com/crm/auth/meta/callback
+META_API_VERSION=v20.0
+```
+
+#### Paso 3: Ejecutar Migraciones Database
+
+```bash
+cd /home/node/.openclaw/workspace/projects/crmventas/orchestrator_service
+python3 run_meta_ads_migrations.py
+```
+
+**Script incluye:**
+- Creación 8 tablas marketing
+- Columnas adicionales en tabla `leads`
+- Rollback automático en caso de error
+- Verificación de éxito
+
+#### Paso 4: Verificar Implementación
+
+```bash
+# 1. Iniciar servicios
+docker-compose up -d  # o sistema equivalente
+
+# 2. Verificar endpoints
+curl -X GET "http://localhost:8000/crm/marketing/stats" \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Admin-Token: <ADMIN_TOKEN>"
+
+# 3. Probar OAuth flow
+# Navegar a: http://localhost:3000/crm/marketing
+# Click "Connect Meta Account"
+```
+
+### Configuración EasyPanel
+
+Si usas EasyPanel para deployment:
+
+1. **Agregar Variables Entorno:**
+   - `META_APP_ID`, `META_APP_SECRET`, `META_REDIRECT_URI`
+   - Reiniciar servicio después de agregar
+
+2. **Database Permissions:**
+   - Usuario DB necesita permisos CREATE TABLE
+   - Ejecutar migraciones manualmente o via script
+
+3. **SSL/HTTPS:**
+   - Certificado SSL válido para OAuth callback
+   - `META_REDIRECT_URI` debe usar HTTPS
+
+### Troubleshooting
+
+#### Error: "Invalid OAuth redirect_uri"
+- Verificar que `META_REDIRECT_URI` coincida exactamente con Meta Developers
+- Incluir protocolo HTTPS en producción
+
+#### Error: "App not approved for permissions"
+- Solicitar revisión de permisos en Meta Developers
+- Proporcionar caso de uso claro (marketing automation)
+
+#### Error: "Database migration failed"
+- Verificar permisos usuario PostgreSQL
+- Ejecutar script con usuario admin temporalmente
+- Ver logs: `python3 run_meta_ads_migrations.py --verbose`
+
+#### Error: "Rate limit exceeded"
+- Meta API tiene límite 200 calls/hour
+- Implementar caching en `MarketingService`
+- Considerar batch processing para datos históricos
+
+### Monitoreo Post-Deployment
+
+1. **Logs OAuth:** `meta_oauth.log` (si configurado)
+2. **API Errors:** Errores Meta Graph API
+3. **ROI Tracking:** Conversiones atribuidas a campañas
+4. **Token Expiry:** Notificar 7 días antes de expiración
+
+### Rollback Procedure
+
+Si necesitas deshabilitar Marketing Hub:
+
+1. **Remover Variables Entorno:** `META_APP_ID`, `META_APP_SECRET`
+2. **Deshabilitar Endpoints:** Comentar rutas en `main.py`
+3. **Mantener Data:** Las tablas marketing pueden permanecer
+4. **Frontend:** Ocultar menú Marketing en `Sidebar.tsx`
+
+### Documentación Adicional
+
+- `FINAL_IMPLEMENTATION_SUMMARY.md` - Resumen técnico completo
+- `ENV_EXAMPLE.md` - Template variables entorno
+- `SPRINT3_OAUTH_CONFIGURATION.md` - Guía paso a paso OAuth
+- `AUDITORIA_FINAL_CONCLUSION.md` - Resultados auditoría

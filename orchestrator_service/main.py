@@ -82,7 +82,7 @@ sio_app = socketio.ASGIApp(sio, app)
 app.include_router(auth_router)
 app.include_router(admin_router)
 
-# Single-niche: CRM Sales only (no dental)
+# Single-niche: CRM Sales only (no sales)
 SUPPORTED_NICHES = ["crm_sales"]
 for niche in SUPPORTED_NICHES:
     NicheManager.load_niche_router(app, niche)
@@ -95,12 +95,23 @@ try:
 except Exception as e:
     logger.warning(f"Could not mount CRM under /admin/core/crm: {e}")
 
+# Meta Ads Marketing Routes
+try:
+    from routes.marketing import router as marketing_router
+    from routes.meta_auth import router as meta_auth_router
+    
+    app.include_router(marketing_router, prefix="/crm/marketing", tags=["Marketing"])
+    app.include_router(meta_auth_router, prefix="/crm/auth/meta", tags=["Meta OAuth"])
+    logger.info("✅ Meta Ads Marketing API mounted at /crm/marketing and /crm/auth/meta")
+except Exception as e:
+    logger.warning(f"Could not mount Meta Ads Marketing routes: {e}")
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 
 async def get_agent_executor(tenant_id: int):
     """
-    Creates an AgentExecutor with CRM Sales tools and prompt (single-niche: no dental).
+    Creates an AgentExecutor with CRM Sales tools and prompt (single-niche: no sales).
     """
     niche_type = await db.fetchval("SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id) or "crm_sales"
     tools = tool_registry.get_tools(niche_type, tenant_id)

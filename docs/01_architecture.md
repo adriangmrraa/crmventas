@@ -188,3 +188,99 @@ Dentalogic implementa una arquitectura de **Seguridad de Triple Capa**:
 
 *Documentación Dentalogic © 2026*
 泛
+
+## Marketing Hub & Meta Ads Integration
+
+Nueva capa de marketing implementada en Febrero 2026 que extiende el CRM con capacidades de publicidad digital y automatización.
+
+### Arquitectura del Módulo
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Marketing Hub Layer                      │
+├─────────────────────────────────────────────────────────────┤
+│  Frontend React Components:                                 │
+│  • MarketingHubView.tsx     - Dashboard principal           │
+│  • MetaTemplatesView.tsx    - Gestión HSM WhatsApp          │
+│  • MetaConnectionWizard.tsx - Wizard conexión OAuth         │
+│  • MarketingPerformanceCard.tsx - Card métricas             │
+│  • MetaTokenBanner.tsx      - Banner estado conexión        │
+└─────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend Services Layer                   │
+├─────────────────────────────────────────────────────────────┤
+│  MetaOAuthService:                                          │
+│  • exchange_code_for_token() - OAuth flow                   │
+│  • get_long_lived_token()    - Token de 60 días             │
+│  • get_business_managers()   - Gestión cuentas              │
+│  • store_meta_token()        - Almacenamiento seguro        │
+│  • validate_token()          - Validación tokens            │
+│                                                             │
+│  MarketingService:                                          │
+│  • get_marketing_stats()     - Métricas ROI                 │
+│  • get_campaigns()           - Campañas Meta Ads            │
+│  • get_hsm_templates()       - Plantillas WhatsApp          │
+│  • get_automation_rules()    - Reglas automatización        │
+└─────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────┐
+│                    Database Layer                           │
+├─────────────────────────────────────────────────────────────┤
+│  Marketing Tables:                                          │
+│  • meta_tokens              - Tokens OAuth por tenant       │
+│  • meta_ads_campaigns       - Campañas publicitarias        │
+│  • meta_ads_insights        - Métricas campañas            │
+│  • meta_templates           - Plantillas HSM WhatsApp       │
+│  • automation_rules         - Reglas automatización         │
+│  • automation_logs          - Logs ejecución                │
+│  • opportunities            - Oportunidades de venta        │
+│  • sales_transactions       - Transacciones completadas     │
+└─────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────┐
+│                    External APIs                            │
+├─────────────────────────────────────────────────────────────┤
+│  • Meta Graph API (Facebook) - OAuth, Ads, HSM             │
+│  • WhatsApp Business API     - Envío mensajes HSM          │
+│  • YCloud API               - WhatsApp Service integration │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Flujo de Datos
+
+1. **OAuth Flow**: Usuario → Meta Login → Callback → Token almacenado
+2. **Campañas Ads**: Meta API → Sincronización periódica → DB → Dashboard
+3. **HSM Automation**: Plantilla creada → Aprobación Meta → Envío automático
+4. **ROI Tracking**: Leads → Opportunities → Sales → Métricas ROI
+
+### Seguridad Implementada
+
+- **State Validation**: Previene CSRF attacks en OAuth flow
+- **Token Encryption**: Almacenamiento seguro en PostgreSQL
+- **Rate Limiting**: 20 requests/minute por endpoint
+- **Audit Logging**: Todas las acciones registradas
+- **Multi-tenant Isolation**: Filtrado automático por `tenant_id`
+
+### Integración con CRM Existente
+
+- **Leads**: Fuente para tracking ROI de campañas
+- **Opportunities**: Conversiones atribuidas a campañas
+- **Sales Transactions**: Revenue tracking por campaña
+- **Chat Integration**: HSM templates para follow-up automático
+
+### Stack Tecnológico
+
+- **Backend**: FastAPI + async/await + PostgreSQL
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind
+- **OAuth**: Meta Graph API (Facebook Login)
+- **Database**: 8 nuevas tablas marketing
+- **Security**: Nexus v7.7.1 (audit, rate limiting, multi-tenant)
+
+### Deployment Considerations
+
+- **Environment Variables**: `META_APP_ID`, `META_APP_SECRET`, `META_REDIRECT_URI`
+- **Database Migrations**: Script `run_meta_ads_migrations.py`
+- **API Rate Limits**: Considerar límites Meta API (200 calls/hour)
+- **Monitoring**: Logs OAuth, errores API, métricas ROI
+

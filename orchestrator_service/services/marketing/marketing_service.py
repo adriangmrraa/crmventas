@@ -1,0 +1,346 @@
+import logging
+import json
+from datetime import datetime, timedelta
+from typing import List, Dict, Any
+from db import db
+
+logger = logging.getLogger(__name__)
+
+class MarketingService:
+    @staticmethod
+    async def get_roi_stats(tenant_id: int, time_range: str = "last_30d") -> Dict[str, Any]:
+        """
+        Calcula el ROI real cruzando datos de atribución con transacciones contables.
+        """
+        from core.credentials import get_tenant_credential
+        token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
+        is_connected = bool(token)
+        
+        logger.info(f"🔍 ROI Debug: Tenant={tenant_id}, TokenFound={is_connected}, Range={time_range}")
+        
+        # Mapeo de time_range a intervalos compatibles con asyncpg (timedelta)
+        interval_map = {
+            "last_30d": timedelta(days=30),
+            "last_90d": timedelta(days=90),
+            "this_year": timedelta(days=365),
+            "yearly": timedelta(days=365),
+            "lifetime": timedelta(days=36500), # 100 years
+            "all": timedelta(days=36500)
+        }
+        interval = interval_map.get(time_range, timedelta(days=30))
+
+        try:
+            # 1. Obtener leads atribuidos a Meta Ads en el periodo
+            meta_leads = await db.pool.fetchval("""
+                SELECT COUNT(*) FROM leads 
+                WHERE tenant_id = $1 AND lead_source = 'META_ADS'
+                AND created_at >= NOW() - $2::interval
+            """, tenant_id, interval) or 0
+
+            # 2. Obtener leads convertidos en oportunidades en el periodo
+            converted_leads = await db.pool.fetchval("""
+                SELECT COUNT(DISTINCT l.id) 
+                FROM leads l
+                JOIN opportunities o ON l.id = o.lead_id
+                WHERE l.tenant_id = $1 AND l.lead_source = 'META_ADS'
+                AND o.status IN ('won', 'closed')
+                AND o.created_at >= NOW() - $2::interval
+            """, tenant_id, interval) or 0
+
+            # 3. Calcular Ingresos Reales en el periodo
+            total_revenue = await db.pool.fetchval("""
+                SELECT SUM(amount) 
+                FROM accounting_transactions t
+                JOIN leads p ON t.lead_id = p.id
+                WHERE p.tenant_id = $1 AND p.lead_source = 'META_ADS'
+                AND t.status = 'completed'
+                AND t.created_at >= NOW() - $2::interval
+            """, tenant_id, interval) or 0
+
+            # 4. Inversión (Spend) - Sincronizada con Meta si hay conexión
+            from services.meta_ads_service import MetaAdsClient
+            ad_account_id = await get_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID")
+            
+            total_spend = 0.0
+            currency = "ARS"
+            
+            if is_connected and ad_account_id:
+                try:
+                    meta_client = MetaAdsClient(token)
+                    meta_preset_map = {
+                        "last_30d": "last_30d",
+                        "last_90d": "last_90d",
+                        "this_year": "this_year",
+                        "lifetime": "maximum",
+                        "all": "maximum"
+                    }
+                    meta_preset = meta_preset_map.get(time_range, "last_30d")
+                    
+                    # Usar level="account" para asegurar que obtenemos el gasto total histórico
+                    # incluso si los anuncios individuales han sido borrados o archivados.
+                    insights = await meta_client.get_ads_insights(ad_account_id, date_preset=meta_preset, level="account")
+                    
+                    total_spend = sum(float(item.get('spend', 0)) for item in insights)
+                    if insights:
+                        currency = insights[0].get('account_currency', 'ARS')
+                except Exception as e:
+                    logger.warning(f"⚠️ No se pudo sincronizar spend real de Meta: {e}")
+            
+            cpa = total_spend / meta_leads if meta_leads > 0 else 0
+
+            return {
+                "total_spend": total_spend,
+                "total_revenue": float(total_revenue or 0),
+                "leads": meta_leads,
+                "leads_converted": converted_leads,
+                "cpa": cpa,
+                "is_connected": is_connected,
+                "ad_account_id": ad_account_id,
+                "currency": currency,
+                "time_range": time_range
+            }
+        except Exception as e:
+            logger.error(f"❌ Error calculating ROI stats for tenant {tenant_id}: {e}")
+            return {
+                "total_spend": 0, "total_revenue": 0, "leads": 0, "leads_converted": 0,
+                "cpa": 0, "is_connected": is_connected, "error": str(e)
+            }
+
+    @staticmethod
+    async def get_token_status(tenant_id: int) -> Dict[str, Any]:
+        """Verifica la salud del token de Meta y devuelve días para expirar."""
+        from core.credentials import get_tenant_credential
+        expires_at_str = await get_tenant_credential(tenant_id, "META_TOKEN_EXPIRES_AT")
+        token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
+        
+        if not token:
+            return {"needs_reconnect": True, "days_left": None}
+            
+        if not expires_at_str:
+            return {"needs_reconnect": False, "days_left": None}
+            
+        try:
+            from datetime import datetime
+            expires_at = datetime.fromisoformat(expires_at_str)
+            now = datetime.now()
+            
+            delta = expires_at - now
+            days_left = delta.days
+            
+            return {
+                "needs_reconnect": days_left <= 0,
+                "days_left": max(0, days_left),
+                "expires_at": expires_at_str
+            }
+        except Exception as e:
+            logger.error(f"Error parsing token expiration: {e}")
+            return {"needs_reconnect": True, "days_left": 0}
+
+    @staticmethod
+    async def get_campaign_stats(tenant_id: int, time_range: str = "last_30d") -> Dict[str, Any]:
+        """
+        Retorna el rendimiento por campaña/anuncio, sincronizando con Meta si hay conexión.
+        """
+        try:
+            from core.credentials import get_tenant_credential
+            from services.meta_ads_service import MetaAdsClient
+            
+            token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
+            ad_account_id = await get_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID")
+            
+            logger.info(f"🔍 Campaigns Debug: Tenant={tenant_id}, TokenFound={bool(token)}, AdAccount={ad_account_id}, Range={time_range}")
+            
+            # Mapeo de time_range a intervalos compatibles con asyncpg (timedelta)
+            interval_map = {
+                "last_30d": timedelta(days=30),
+                "last_90d": timedelta(days=90),
+                "this_year": timedelta(days=365),
+                "yearly": timedelta(days=365),
+                "lifetime": timedelta(days=36500), # 100 years
+                "all": timedelta(days=36500)
+            }
+            interval = interval_map.get(time_range, timedelta(days=30))
+
+            # 1. Obtener datos de Meta (Campaign-First + Ads Strategy)
+            meta_campaigns = []
+            meta_ads_raw = []
+            account_total_spend = 0.0
+            if token and ad_account_id:
+                try:
+                    meta_client = MetaAdsClient(token)
+                    meta_preset = {
+                        "last_30d": "last_30d",
+                        "last_90d": "last_90d",
+                        "this_year": "this_year",
+                        "lifetime": "maximum",
+                        "all": "maximum"
+                    }.get(time_range, "last_30d")
+                    
+                    # 1.1 Obtener total cuenta para reconciliación (ROI Real)
+                    acc_ins = await meta_client.get_ads_insights(ad_account_id, date_preset=meta_preset, level="account")
+                    if acc_ins:
+                         account_total_spend = float(acc_ins[0].get('spend', 0))
+
+                    # 1. Recuperar Datos desde Meta (Campañas y Maestro de Anuncios)
+                    # Estrategia: Pedimos el maestro de anuncios sin insights para asegurar que NADA se filtre por gasto=0
+                    meta_campaigns = await meta_client.get_campaigns_with_insights(ad_account_id, date_preset=meta_preset)
+                    
+                    # Maestro de anuncios (Lista completa de 16+ anuncios)
+                    meta_ads_master = await meta_client.get_ads_with_insights(ad_account_id, include_insights=False)
+                    
+                    # Datos de rendimiento (Solo anuncios con gasto en el periodo)
+                    meta_ads_with_spend = await meta_client.get_ads_with_insights(ad_account_id, date_preset=meta_preset, include_insights=True)
+                    
+                    # Mapear gasto por ID de anuncio
+                    spend_map = {}
+                    for ad in meta_ads_with_spend:
+                        insights_data = ad.get('insights', {}).get('data', [])
+                        if insights_data:
+                            spend_map[ad.get('id')] = insights_data[0]
+                    
+                    # Re-construir meta_ads_raw inyectando gasto al maestro
+                    meta_ads_raw = []
+                    for ad in meta_ads_master:
+                        ad_id = ad.get('id')
+                        # Si tiene gasto, se lo inyectamos
+                        if ad_id in spend_map:
+                            ad['insights'] = {'data': [spend_map[ad_id]]}
+                        else:
+                            ad['insights'] = {'data': []}
+                        meta_ads_raw.append(ad)
+
+                except Exception as e:
+                    logger.warning(f"⚠️ No se pudo obtener ads de Meta: {e}")
+
+            # 2. Obtener atribución local (Leads y Citas)
+            local_stats = await db.pool.fetch("""
+                SELECT meta_ad_id,
+                       COUNT(id) as leads,
+                       COUNT(id) FILTER (WHERE EXISTS (
+                           SELECT 1 FROM opportunities a 
+                           WHERE a.lead_id = leads.id AND a.status IN ('confirmed', 'completed')
+                           AND a.opportunity_datetime >= NOW() - $2::interval
+                       )) as opportunities,
+                       (SELECT SUM(t.amount) 
+                        FROM accounting_transactions t 
+                        JOIN leads p2 ON t.lead_id = p2.id 
+                        WHERE p2.meta_ad_id = leads.meta_ad_id AND t.status = 'completed'
+                        AND t.created_at >= NOW() - $2::interval
+                       ) as revenue
+                FROM leads
+                WHERE tenant_id = $1 AND lead_source = 'META_ADS' AND meta_ad_id IS NOT NULL
+                AND created_at >= NOW() - $2::interval
+                GROUP BY meta_ad_id
+            """, tenant_id, interval)
+            
+            attribution_map = {row['meta_ad_id']: row for row in local_stats}
+
+            campaign_results = []
+            creative_results = []
+            reported_camp_spend = 0.0
+            reported_ad_spend = 0.0
+            
+            # 3. Procesar Campañas
+            if meta_campaigns:
+                for camp in meta_campaigns:
+                    insights_data = camp.get('insights', {}).get('data', [])
+                    ins = insights_data[0] if insights_data else {}
+                    camp_id = camp.get('id')
+                    spend = float(ins.get('spend', 0))
+                    reported_camp_spend += spend
+                    
+                    local = attribution_map.get(camp_id, {})
+                    rev = float(local.get('revenue') or 0)
+                    roi = (rev - spend) / spend if spend > 0 else 0
+                    
+                    campaign_results.append({
+                        "ad_id": camp_id,
+                        "ad_name": camp.get('name', 'Campaña sin nombre'),
+                        "campaign_name": "Agrupado por Campaña",
+                        "spend": spend,
+                        "leads": local.get('leads', 0),
+                        "opportunities": local.get('opportunities', 0),
+                        "roi": roi,
+                        "status": camp.get('effective_status', 'active').lower()
+                    })
+            
+            # 4. Procesar Creativos (Anuncios)
+            if meta_ads_raw:
+                for ad in meta_ads_raw:
+                    insights_data = ad.get('insights', {}).get('data', [])
+                    ins = insights_data[0] if insights_data else {}
+                    ad_id = ad.get('id')
+                    spend = float(ins.get('spend', 0))
+                    reported_ad_spend += spend
+                    
+                    local = attribution_map.get(ad_id, {})
+                    rev = float(local.get('revenue') or 0)
+                    roi = (rev - spend) / spend if spend > 0 else 0
+                    
+                    creative_results.append({
+                        "ad_id": ad_id,
+                        "ad_name": ad.get('name', 'Anuncio sin nombre'),
+                        "campaign_name": ad.get('campaign', {}).get('name', 'Sin campaña'),
+                        "spend": spend,
+                        "leads": local.get('leads', 0),
+                        "opportunities": local.get('opportunities', 0),
+                        "roi": roi,
+                        "status": ad.get('effective_status', 'active').replace('_', ' ').lower()
+                    })
+
+            # 5. Reconciliación (Gasto Histórico/Otros)
+            diff_camp = account_total_spend - reported_camp_spend
+            if diff_camp > 1.0:
+                campaign_results.append({
+                    "ad_id": "historical_other",
+                    "ad_name": "Gasto Histórico / Otros",
+                    "campaign_name": "Acumulado sin desglose",
+                    "spend": diff_camp,
+                    "leads": 0, "opportunities": 0, "roi": 0.0, "status": "archived"
+                })
+
+            diff_ad = account_total_spend - reported_ad_spend
+            if diff_ad > 1.0:
+                creative_results.append({
+                    "ad_id": "historical_other",
+                    "ad_name": "Gasto Histórico / Otros",
+                    "campaign_name": "Acumulado sin desglose",
+                    "spend": diff_ad,
+                    "leads": 0, "opportunities": 0, "roi": 0.0, "status": "archived"
+                })
+
+            # 6. Incluir atribución local huérfana
+            meta_camp_ids = {c.get('id') for c in meta_campaigns}
+            meta_ad_ids = {a.get('id') for a in meta_ads_raw}
+            
+            for ad_id, local in attribution_map.items():
+                if ad_id != "historical_other":
+                    if ad_id not in meta_camp_ids:
+                        campaign_results.append({
+                            "ad_id": ad_id,
+                            "ad_name": "Anuncio con Atribución",
+                            "campaign_name": "Atribución Directa",
+                            "spend": 0.0,
+                            "leads": local.get('leads', 0), "opportunities": local.get('opportunities', 0),
+                            "roi": 0.0, "status": "inactive"
+                        })
+                    if ad_id not in meta_ad_ids:
+                        creative_results.append({
+                            "ad_id": ad_id,
+                            "ad_name": "Anuncio Histórico",
+                            "campaign_name": "Atribución Directa",
+                            "spend": 0.0,
+                            "leads": local.get('leads', 0), "opportunities": local.get('opportunities', 0),
+                            "roi": 0.0, "status": "inactive"
+                        })
+
+            logger.info(f"[Marketing Sync] Tenant={tenant_id}, Range={time_range}, Campaigns={len(campaign_results)}, Creatives={len(creative_results)}")
+
+            return {
+                "campaigns": campaign_results,
+                "creatives": creative_results,
+                "account_total_spend": account_total_spend
+            }
+        except Exception as e:
+            logger.error(f"❌ Error fetching marketing detail for tenant {tenant_id}: {e}")
+            return {"campaigns": [], "creatives": [], "account_total_spend": 0}

@@ -20,7 +20,9 @@
     "entities": "Entidades",
     "sellers": "Vendedores",
     "clients": "Clientes",
-    "prospecting": "Prospección"
+    "prospecting": "Prospección",
+    "marketing": "Marketing Hub",
+    "hsm_automation": "HSM Automation"
   },
   "common": {
     "save": "Guardar",

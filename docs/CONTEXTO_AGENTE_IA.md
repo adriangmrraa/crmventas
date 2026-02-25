@@ -8,6 +8,7 @@
 
 ---
 
+- **Marketing Hub & Meta Ads** (Nuevo - Feb 2026): Dashboard marketing, campañas Meta Ads (Facebook/Instagram), HSM Automation WhatsApp, OAuth Meta integration, ROI tracking, plantillas aprobadas.
 ## 1. Qué es el proyecto
 
 - **Nombre:** CRM Ventas (Nexus Core).

@@ -15,6 +15,9 @@ import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
 import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
 import ProspectingView from './modules/crm_sales/views/ProspectingView';
+// Marketing Views
+import MarketingHubView from './views/marketing/MarketingHubView';
+import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -65,6 +68,17 @@ function App() {
                     <Route path="crm/vendedores" element={
                       <ProtectedRoute allowedRoles={['ceo']}>
                         <SellersView />
+                      </ProtectedRoute>
+                    } />
+                    {/* Marketing Routes */}
+                    <Route path="crm/marketing" element={
+                      <ProtectedRoute allowedRoles={['ceo', 'admin', 'marketing']}>
+                        <MarketingHubView />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="crm/hsm" element={
+                      <ProtectedRoute allowedRoles={['ceo', 'admin']}>
+                        <MetaTemplatesView />
                       </ProtectedRoute>
                     } />
                     <Route path="perfil" element={<ProfileView />} />

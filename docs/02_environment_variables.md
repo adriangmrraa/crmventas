@@ -67,7 +67,33 @@ Alternativamente, de forma manual:
 - **Fernet:** `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows).
 - **JWT Secret:** `python -c "import secrets; print(secrets.token_hex(64))"`.
 
-## 3. WhatsApp Service (8002)
+## 3. Meta Ads Marketing Hub (Nuevo - Febrero 2026)
+
+Variables para integración con Meta (Facebook/Instagram) Ads y WhatsApp HSM Automation:
+
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `META_APP_ID` | App ID de Meta Developers (Facebook) | `123456789012345` | ✅ (para Marketing Hub) |
+| `META_APP_SECRET` | App Secret de Meta Developers | `abcdef1234567890abcdef1234567890` | ✅ (para Marketing Hub) |
+| `META_REDIRECT_URI` | URL callback OAuth (debe coincidir con Meta Developers) | `https://tu-crm.com/crm/auth/meta/callback` | ✅ (para Marketing Hub) |
+| `META_API_VERSION` | Versión Graph API de Meta | `v20.0` | ❌ (default: v20.0) |
+| `META_BASE_URL` | URL base Graph API | `https://graph.facebook.com` | ❌ (default: https://graph.facebook.com) |
+| `META_OAUTH_URL` | URL login OAuth | `https://www.facebook.com/v20.0/dialog/oauth` | ❌ (default: https://www.facebook.com/v20.0/dialog/oauth) |
+| `META_TOKEN_EXPIRY_DAYS` | Días expiración tokens Meta (60 días máximo) | `60` | ❌ (default: 60) |
+| `META_REFRESH_THRESHOLD_DAYS` | Días antes de expiración para refrescar token | `7` | ❌ (default: 7) |
+| `MARKETING_DATA_RETENTION_DAYS` | Días retención datos marketing en DB | `365` | ❌ (default: 365) |
+| `HSM_TEMPLATE_APPROVAL_TIMEOUT_HOURS` | Timeout aprobación plantillas HSM | `72` | ❌ (default: 72) |
+| `META_API_RATE_LIMIT_PER_HOUR` | Límite calls Meta API por hora | `200` | ❌ (default: 200) |
+| `MARKETING_CACHE_TTL_MINUTES` | TTL cache métricas marketing (minutos) | `15` | ❌ (default: 15) |
+
+**Notas de configuración Meta OAuth:**
+1. **META_APP_ID / META_APP_SECRET**: Obtener de [Meta Developers](https://developers.facebook.com/)
+2. **META_REDIRECT_URI**: Debe coincidir EXACTAMENTE con URI configurada en Meta Developers
+3. **App Review**: Requiere aprobación Meta para permisos `ads_management`, `business_management`
+4. **HSM Templates**: Requiere aprobación separada para plantillas WhatsApp Business
+5. **Production**: En producción, `META_REDIRECT_URI` debe usar HTTPS
+
+## 4. WhatsApp Service (8002)
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
@@ -76,7 +102,7 @@ Alternativamente, de forma manual:
 | `ORCHESTRATOR_SERVICE_URL` | URL del Orchestrator (interna) | `http://orchestrator_service:8000` | ✅ |
 | `INTERNAL_API_TOKEN` | Token para comunicarse con Orchestrator | (mismo que global) | ✅ |
 
-## 4. Platform UI (80)
+## 5. Platform UI (80)
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
@@ -84,7 +110,7 @@ Alternativamente, de forma manual:
 | `VITE_ADMIN_TOKEN` | Token de administrador (inyectado en build) | `admin-secret-token` | ✅ |
 | `VITE_API_BASE_URL` | URL base para la API del orquestador | (auto-detecta) | ❌ |
 
-## 5. Ejemplo de .env (Desarrollo Local)
+## 6. Ejemplo de .env (Desarrollo Local)
 
 ```bash
 # --- Globales ---

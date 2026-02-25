@@ -20,7 +20,9 @@
     "entities": "Entities",
     "sellers": "Sellers",
     "clients": "Clients",
-    "prospecting": "Prospecting"
+    "prospecting": "Prospecting",
+    "marketing": "Marketing Hub",
+    "hsm_automation": "HSM Automation"
   },
   "common": {
     "save": "Save",

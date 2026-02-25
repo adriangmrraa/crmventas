@@ -28,4 +28,8 @@ pyjwt
 email-validator
 sqlalchemy
 cryptography
-slowapi
+slowapi-e 
+# Meta Ads Dependencies
+facebook-business==19.0.0
+cryptography==42.0.5
+redis==5.0.1

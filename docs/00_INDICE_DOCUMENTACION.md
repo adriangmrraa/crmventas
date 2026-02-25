@@ -65,6 +65,12 @@ Este documento lista **todos** los archivos de la carpeta `docs/` con una breve 
 | **AGENTS.md** (raíz) | Guía suprema del proyecto: arquitectura, soberanía de datos, aislamiento de scroll, tools, Maintenance Robot, i18n, connect-sovereign. **Leer antes de modificar.** |
 | **README.md** (raíz) | Visión, tecnología, características, estructura del proyecto, despliegue, documentación hub. |
 
+| **FINAL_IMPLEMENTATION_SUMMARY.md** (raíz) | Resumen técnico completo implementación Meta Ads Marketing Hub: arquitectura, endpoints, database, security, testing. |
+| **ENV_EXAMPLE.md** (raíz) | Template variables entorno para configuración Meta OAuth y Marketing Hub. |
+| **SPRINT3_OAUTH_CONFIGURATION.md** (raíz) | Guía paso a paso configuración Meta Developers App y OAuth flow. |
+| **AUDITORIA_FINAL_CONCLUSION.md** (raíz) | Resultados auditoría ClinicForge vs CRM Ventas - verificación implementación completa. |
+| **SPEC_SPRINTS_1_2_META_ADS.md** (raíz) | Especificación técnica original Sprints 1-2 (backend + frontend). |
+| **META_ADS_SPRINTS_3_4_IMPLEMENTATION.md** (raíz) | Especificación técnica Sprints 3-4 (OAuth + deployment). |
 ---
 
 ## Total

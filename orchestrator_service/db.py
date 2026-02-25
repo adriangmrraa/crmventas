@@ -188,6 +188,37 @@ class Database:
                 END IF;
             END $$;
             """,
+            # Parche 37: Add page_id to meta_tokens
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='meta_tokens' AND column_name='page_id') THEN
+                    ALTER TABLE meta_tokens ADD COLUMN page_id VARCHAR(255);
+                    CREATE INDEX IF NOT EXISTS idx_meta_tokens_page_id ON meta_tokens(page_id);
+                END IF;
+            END $$;
+            """,
+            # Parche 38: Columnas de Atribución Extendida para Meta Ads
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_adset_id') THEN
+                    ALTER TABLE leads ADD COLUMN meta_adset_id VARCHAR(255);
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_campaign_name') THEN
+                    ALTER TABLE leads ADD COLUMN meta_campaign_name TEXT;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_adset_name') THEN
+                    ALTER TABLE leads ADD COLUMN meta_adset_name TEXT;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_ad_name') THEN
+                    ALTER TABLE leads ADD COLUMN meta_ad_name TEXT;
+                END IF;
+            END $$;
+            """,
             # Parche 6: Evolucionar treatment_plan a JSONB en clinical_records
             """
             DO $$ 
@@ -1112,6 +1143,11 @@ class Database:
                     attribution_update = {
                         "lead_source": "META_ADS",
                         "meta_ad_id": ad_id,
+                        "meta_ad_name": referral.get("ad_name"),
+                        "meta_adset_id": referral.get("adset_id"),
+                        "meta_adset_name": referral.get("adset_name"),
+                        "meta_campaign_id": referral.get("campaign_id"),
+                        "meta_campaign_name": referral.get("campaign_name"),
                         "meta_ad_headline": referral.get("headline"),
                         "meta_ad_body": referral.get("body"),
                         "updated_at": datetime.now()

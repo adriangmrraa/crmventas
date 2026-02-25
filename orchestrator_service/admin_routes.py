@@ -336,9 +336,23 @@ async def get_internal_credential(name: str, x_internal_token: str = Header(None
 
 @router.get("/config/deployment", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_deployment_config(request: Request):
-    host = request.headers.get("host", "localhost:8000")
-    base_url = f"https://{host}"
-    return {"orchestrator_url": base_url, "environment": os.getenv("ENVIRONMENT", "development")}
+    """
+    Retorna la configuración de despliegue, incluyendo URLs de webhooks para integración externa.
+    """
+    # 1. Resolver Base URL del orquestador
+    api_base = os.getenv("BASE_URL", "").rstrip("/")
+    if not api_base:
+        # Fallback usando los headers del request
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+        host = request.headers.get("host", request.url.netloc)
+        api_base = f"{scheme}://{host}"
+    
+    return {
+        "orchestrator_url": api_base,
+        "webhook_ycloud_url": f"{api_base}/chat", # Chat inbound es el webhook para YCloud
+        "webhook_meta_url": f"{api_base}/webhooks/meta", # Endpoint para Meta Lead Forms
+        "environment": os.getenv("ENVIRONMENT", "development")
+    }
 
 
 @router.get("/audit/logs", tags=["Seguridad"])

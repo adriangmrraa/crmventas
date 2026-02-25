@@ -269,6 +269,9 @@ async def process_user_buffer(from_number: str, business_number: str, customer_n
                     parsed_items.append({"text": item, "wamid": provider_message_id, "event_id": event_id})
             
             joined_text = "\n".join([i["text"] for i in parsed_items])
+            # Extract referral from any message in the batch (usually the first one has it)
+            referral = next((i.get("referral") for i in parsed_items if i.get("referral")), None)
+            
             # We use the LAST message IDs to identify this batch in the orchestrator (deduplication)
             current_event_id = parsed_items[-1].get("event_id") or event_id
             current_wamid = parsed_items[-1].get("wamid") or provider_message_id
@@ -278,7 +281,8 @@ async def process_user_buffer(from_number: str, business_number: str, customer_n
                 "event_id": current_event_id, 
                 "provider_message_id": current_wamid,
                 "from_number": from_number, "to_number": business_number, "text": joined_text, "customer_name": customer_name,
-                "event_type": "whatsapp.inbound_message.received", "correlation_id": correlation_id
+                "event_type": "whatsapp.inbound_message.received", "correlation_id": correlation_id,
+                "referral": referral
             }
             headers = {"X-Correlation-Id": correlation_id}
             if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN

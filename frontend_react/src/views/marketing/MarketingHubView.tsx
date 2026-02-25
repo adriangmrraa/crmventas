@@ -16,9 +16,11 @@ export default function MarketingHubView() {
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [timeRange, setTimeRange] = useState('all');
     const [activeTab, setActiveTab] = useState<'campaigns' | 'ads'>('campaigns');
+    const [deploymentConfig, setDeploymentConfig] = useState<any>(null);
 
     useEffect(() => {
         loadStats();
+        loadDeploymentConfig();
 
         // Manejo de errores de Meta OAuth
         const error = searchParams.get('error');
@@ -60,6 +62,15 @@ export default function MarketingHubView() {
             setIsMetaConnected(data?.is_connected || false);
         } catch (error) {
             console.error("Error loading marketing stats:", error);
+        }
+    };
+
+    const loadDeploymentConfig = async () => {
+        try {
+            const { data } = await api.get('/admin/config/deployment');
+            setDeploymentConfig(data);
+        } catch (error) {
+            console.error("Error loading deployment config:", error);
         }
     };
 
@@ -140,6 +151,39 @@ export default function MarketingHubView() {
                             }`}
                     >
                         <ExternalLink size={18} /> {isMetaConnected ? t('marketing.reconnect') : t('marketing.connect')}
+                    </button>
+                </div>
+            </div>
+
+            {/* Webhook Configuration Section */}
+            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-2xl">
+                        <RefreshCw size={22} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-gray-900">{t('marketing.webhook_title')}</h3>
+                        <p className="text-sm text-gray-500">{t('marketing.webhook_desc')}</p>
+                    </div>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="bg-white px-4 py-3 rounded-xl border border-gray-100 flex-1 w-full overflow-hidden">
+                        <code className="text-xs sm:text-sm text-blue-600 font-mono break-all leading-relaxed">
+                            {deploymentConfig?.webhook_meta_url || "..."}
+                        </code>
+                    </div>
+                    <button
+                        onClick={() => {
+                            if (deploymentConfig?.webhook_meta_url) {
+                                navigator.clipboard.writeText(deploymentConfig.webhook_meta_url);
+                                // Using a simple alert for now as per project pattern
+                                alert(t('alerts.url_copied'));
+                            }
+                        }}
+                        className="w-full sm:w-auto px-6 py-3.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-md shrink-0 flex items-center justify-center gap-2"
+                    >
+                        {t('marketing.copy_url')}
                     </button>
                 </div>
             </div>

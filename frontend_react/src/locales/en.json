@@ -725,7 +725,10 @@
       "missing_tenant": "Error: Missing Tenant ID",
       "auth_failed": "Meta authentication failed",
       "token_exchange_failed": "Token exchange failed"
-    }
+    },
+    "webhook_title": "Webhook Configuration",
+    "webhook_desc": "Copy this URL and paste it into the Meta for Developers panel (Webhook > Leadgen) to receive real-time leads.",
+    "copy_url": "Copy Webhook URL"
   },
   "hsm": {
     "title": "HSM Automation",

@@ -12,7 +12,8 @@ from db import db
 from gcal_service import gcal_service
 from analytics_service import analytics_service
 
-from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
+from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, audit_access
+from main import limiter
 from core.utils import normalize_phone, encrypt_credential, ARG_TZ
 
 logger = logging.getLogger(__name__)
@@ -275,7 +276,9 @@ async def create_patient(p: PatientCreate, tenant_id: int = Depends(get_resolved
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/patients", dependencies=[Depends(verify_admin_token)], tags=["Pacientes"])
-async def list_patients(search: str = None, limit: int = 50, tenant_id: int = Depends(get_resolved_tenant_id)):
+@audit_access("list_patients")
+@limiter.limit("100/minute")
+async def list_patients(request: Request, search: str = None, limit: int = 50, tenant_id: int = Depends(get_resolved_tenant_id)):
     query = """
         SELECT p.id, p.first_name, p.last_name, p.phone_number, p.email, p.insurance_provider as obra_social, p.dni, p.created_at, p.status
         FROM patients p
@@ -316,6 +319,7 @@ async def delete_patient(id: int, tenant_id: int = Depends(get_resolved_tenant_i
     return {"status": "deleted", "id": id}
 
 @router.get("/patients/{id}/records", dependencies=[Depends(verify_admin_token)], tags=["Pacientes"])
+@audit_access("view_clinical_records", resource_param="id")
 async def get_clinical_records(id: int, tenant_id: int = Depends(get_resolved_tenant_id)):
     rows = await db.pool.fetch("""
         SELECT cr.id, cr.appointment_id, cr.diagnosis, cr.treatment_plan, cr.created_at 

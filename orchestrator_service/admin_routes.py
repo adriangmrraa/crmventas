@@ -80,6 +80,7 @@ async def get_pending_users(user_data = Depends(verify_admin_token)):
     return [dict(u) for u in users]
 
 @router.get("/users", tags=["Usuarios"])
+@audit_access("list_users")
 async def get_all_users(user_data = Depends(verify_admin_token)):
     if user_data.role not in ['ceo', 'secretary']: raise HTTPException(status_code=403, detail="Forbidden")
     users = await db.fetch("SELECT id, email, role, status, created_at, updated_at, first_name, last_name FROM users ORDER BY status ASC, created_at DESC")
@@ -234,6 +235,7 @@ async def get_recent_urgencies(limit: int = 10, tenant_id: int = Depends(get_res
 
 # --- RUTAS DE CONFIGURACIÓN / TENANTS ---
 @router.get("/tenants", tags=["Sedes"])
+@audit_access("list_tenants")
 async def get_tenants(user_data=Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403)
     rows = await db.pool.fetch("SELECT id, clinic_name, bot_phone_number, config FROM tenants ORDER BY id ASC")
@@ -261,6 +263,7 @@ async def update_tenant(tenant_id: int, payload: TenantUpdate, user_data=Depends
     return {"status": "ok"}
 
 @router.post("/tenants", tags=["Sedes"])
+@audit_access("create_tenant")
 async def create_tenant(payload: TenantCreate, user_data=Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403)
     cp = payload.calendar_provider if payload.calendar_provider in ("local", "google") else "local"
@@ -277,6 +280,7 @@ async def create_tenant(payload: TenantCreate, user_data=Depends(verify_admin_to
     return {"status": "created"}
 
 @router.delete("/tenants/{tenant_id}", tags=["Sedes"])
+@audit_access("delete_tenant", resource_param="tenant_id")
 async def delete_tenant(tenant_id: int, user_data=Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403)
     existing = await db.pool.fetchrow("SELECT id FROM tenants WHERE id = $1", tenant_id)
@@ -300,6 +304,7 @@ def _config_as_dict(config):  # config from DB can be dict (JSONB) or str
 
 
 @router.get("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+@audit_access("view_settings")
 async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     row = await db.pool.fetchrow(
         "SELECT clinic_name, config, COALESCE(niche_type, 'crm_sales') AS niche_type FROM tenants WHERE id = $1",
@@ -314,6 +319,7 @@ async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_ten
     }
 
 @router.patch("/settings/clinic", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+@audit_access("update_settings")
 async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     if payload.ui_language:
         await db.pool.execute("UPDATE tenants SET config = jsonb_set(COALESCE(config, '{}'), '{ui_language}', to_jsonb($1::text)) WHERE id = $2", payload.ui_language, resolved_tenant_id)

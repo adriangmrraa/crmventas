@@ -846,6 +846,19 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_credentials_category ON credentials(category);
             END $$;
             """
+            # Parche 35: tenant_id en system_events para filtrado multi-tenant nativo (v7.7.1)
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                             WHERE table_name='system_events' AND column_name='tenant_id') THEN
+                    ALTER TABLE system_events ADD COLUMN tenant_id INTEGER REFERENCES tenants(id);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_system_events_tenant_v2') THEN
+                    CREATE INDEX idx_system_events_tenant_v2 ON system_events(tenant_id);
+                END IF;
+            END $$;
+            """
         ]
 
         async with self.pool.acquire() as conn:

@@ -7,11 +7,12 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from typing import List, Optional, Any
 from uuid import UUID
 import httpx
 import logging
+from main import limiter
 
 logger = logging.getLogger("orchestrator")
 
@@ -26,7 +27,7 @@ from .models import (
     ProspectingScrapeRequest, ProspectingLeadResponse, ProspectingSendRequest,
     CrmDashboardStats,
 )
-from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids
+from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, audit_access
 from core.utils import normalize_phone
 from db import db
 
@@ -40,7 +41,10 @@ WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_servic
 # ============================================
 
 @router.get("/leads", response_model=List[LeadResponse])
+@audit_access("list_leads")
+@limiter.limit("100/minute")
 async def list_leads(
+    request: Request,
     status: Optional[str] = None,
     assigned_seller_id: Optional[UUID] = None,
     search: Optional[str] = Query(None, description="Search by name, phone, email"),
@@ -348,7 +352,10 @@ async def convert_lead_to_client(
 # ============================================
 
 @router.get("/clients", response_model=List[ClientResponse])
+@audit_access("list_clients")
+@limiter.limit("100/minute")
 async def list_clients(
+    request: Request,
     search: Optional[str] = Query(None, description="Search by name, phone, email"),
     status: Optional[str] = None,
     limit: int = Query(100, le=200),

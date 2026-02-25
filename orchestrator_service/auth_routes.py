@@ -70,7 +70,8 @@ async def list_clinics_public():
 
 
 @router.post("/register")
-async def register(payload: UserRegister):
+@limiter.limit("3/minute")
+async def register(request: Request, payload: UserRegister):
     """
     Registers a new user in 'pending' status.
     CRM mode: roles válidos son seller, closer, setter, secretary, admin, ceo.

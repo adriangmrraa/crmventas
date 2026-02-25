@@ -21,7 +21,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 # --- APP SETUP ---
-limiter = Limiter(key_func=get_remote_address)
+from core.rate_limiter import limiter
 
 from db import db
 from admin_routes import router as admin_router

@@ -13,7 +13,7 @@ from gcal_service import gcal_service
 from analytics_service import analytics_service
 
 from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, audit_access
-from main import limiter
+from core.rate_limiter import limiter
 from core.utils import normalize_phone, encrypt_credential, ARG_TZ
 
 logger = logging.getLogger(__name__)

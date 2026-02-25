@@ -12,7 +12,7 @@ from typing import List, Optional, Any
 from uuid import UUID
 import httpx
 import logging
-from main import limiter
+from core.rate_limiter import limiter
 
 logger = logging.getLogger("orchestrator")
 

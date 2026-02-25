@@ -9,7 +9,7 @@ import logging
 from db import db
 from auth_service import auth_service
 from core.security import audit_access
-from main import limiter
+from core.rate_limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["Nexus Auth"])
 logger = logging.getLogger("auth_routes")
@@ -137,17 +137,12 @@ async def login(request: Request, payload: UserLogin):
     Autentica usuario y retorna JWT.
     Nexus Security v7.7: Rate limited (5/min) + HttpOnly Cookie.
     """
-    # Rate limiting dinámico desde app state
-    limiter = request.app.state.limiter
-    async def _dummy_handler(): pass # slowapi decorates actual functions
-    
-    # Aplicar límite manualmente o vía decorador si se tiene acceso al objeto limiter
-    # Como el router se incluye en app, usamos el decorador con el limiter global
-    from main import limiter
-    
+    # Rate limiting dinámico
     @limiter.limit("5/minute")
-    async def _processed_login(request, payload):
-        user = await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
+    async def _processed_login(q_request: Request):
+        return await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
+
+    user = await _processed_login(request)
 
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")

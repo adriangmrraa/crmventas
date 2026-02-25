@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Users, Award, Target } from 'lucide-react';
-import api from '../api/axios';
-import { useTranslation } from '../context/LanguageContext';
+import api from '../../api/axios';
+import { useTranslation } from '../../context/LanguageContext';
 
 interface MarketingPerformanceCardProps {
     stats?: any;

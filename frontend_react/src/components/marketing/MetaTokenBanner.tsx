@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
-import { useAuth } from '../context/AuthContext';
+import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MetaTokenBanner() {
     const [status, setStatus] = useState<{ days_left: number; needs_reconnect: boolean } | null>(null);

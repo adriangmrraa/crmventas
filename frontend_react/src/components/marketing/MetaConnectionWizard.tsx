@@ -14,12 +14,12 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
     const [error, setError] = useState<string | null>(null);
 
     // Data for steps
-    const [accounts, setClinics] = useState<any[]>([]);
+    const [clinics, setClinics] = useState<any[]>([]);
     const [portfolios, setPortfolios] = useState<any[]>([]);
     const [accounts, setAccounts] = useState<any[]>([]);
 
     // Selection
-    const [selectedAccount, setSelectedClinic] = useState<any>(null);
+    const [selectedClinic, setSelectedClinic] = useState<any>(null);
     const [selectedPortfolio, setSelectedPortfolio] = useState<any>(null);
     const [selectedAccount, setSelectedAccount] = useState<any>(null);
 
@@ -79,7 +79,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
         setError(null);
         try {
             await api.post('/admin/marketing/connect', {
-                tenant_id: selectedAccount.id,
+                tenant_id: selectedClinic.id,
                 ad_account_id: selectedAccount.id,
                 ad_account_name: selectedAccount.name
             });
@@ -147,7 +147,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                 <>
                                     <h3 className="font-bold text-gray-900 mb-2">Paso 1: ¿A qué clínica conectamos?</h3>
                                     <div className="grid gap-3">
-                                        {accounts.map(c => (
+                                        {clinics.map(c => (
                                             <button
                                                 key={c.id}
                                                 onClick={() => {

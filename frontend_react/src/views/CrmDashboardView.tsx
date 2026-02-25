@@ -8,7 +8,6 @@ import {
   Clock,
   ArrowUpRight,
   Phone,
-  Mail,
   Building,
   MapPin,
   Filter
@@ -20,8 +19,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   PieChart,
@@ -29,7 +26,6 @@ import {
   Cell
 } from 'recharts';
 import api from '../api/axios';
-import { useTranslation } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
 
 // ============================================
@@ -64,17 +60,7 @@ interface CrmDashboardStats {
   }>;
 }
 
-interface LeadStatusDistribution {
-  status: string;
-  count: number;
-  color: string;
-}
-
-interface RevenueTrend {
-  month: string;
-  revenue: number;
-  leads: number;
-}
+// interfaces for dashboard data mapping are managed in CrmDashboardStats
 
 // ============================================
 // COMPONENTS
@@ -120,7 +106,6 @@ const StatusBadge = ({ status }: { status: string }) => {
 // ============================================
 
 export default function CrmDashboardView() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState<CrmDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -226,168 +211,169 @@ export default function CrmDashboardView() {
               <Filter size={18} className="text-slate-400" />
             </div>
             <div className="h-[300px] min-h-[300px] w-full min-w-0">
-              <PieChart>
-                <Pie
-                  data={stats?.status_distribution || []}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ status, percent }) => `${status}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {(stats?.status_distribution || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value, name) => [`${value} leads`, name]}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Revenue Trend */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-slate-800">Revenue & Leads Trend</h2>
-            <div className="hidden sm:flex gap-4 text-xs font-medium text-slate-500">
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Revenue</span>
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Leads</span>
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <PieChart>
+                  <Pie
+                    data={stats?.status_distribution || []}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ status, percent }: any) => `${status}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {(stats?.status_distribution || []).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any, name) => [`${value} leads`, name]}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
-          <div className="h-[300px] min-h-[300px] w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-              <BarChart data={stats?.revenue_leads_trend || []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value, name) => {
-                    if (name === 'revenue') return [`$${value.toLocaleString()}`, 'Revenue'];
-                    return [value, 'Leads'];
-                  }}
-                />
-                <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+
+          {/* Revenue Trend */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-slate-800">Revenue & Leads Trend</h2>
+              <div className="hidden sm:flex gap-4 text-xs font-medium text-slate-500">
+                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Revenue</span>
+                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Leads</span>
+              </div>
+            </div>
+            <div className="h-[300px] min-h-[300px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <BarChart data={stats?.revenue_leads_trend || []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: any, name) => {
+                      if (name === 'revenue' && value != null) return [`$${value.toLocaleString()}`, 'Revenue'];
+                      return [value, 'Leads'];
+                    }}
+                  />
+                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="leads" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-    </div>
 
-        {/* BOTTOM ROW: RECENT LEADS */ }
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-4">
-    <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-      <h2 className="text-lg font-semibold text-slate-800">Recent Leads</h2>
-      <button
-        onClick={() => navigate('/crm/leads')}
-        className="text-blue-600 text-sm font-semibold hover:underline px-3 py-2"
-      >
-        See All Leads
-      </button>
+        {/* BOTTOM ROW: RECENT LEADS */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-4">
+          <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-slate-800">Recent Leads</h2>
+            <button
+              onClick={() => navigate('/crm/leads')}
+              className="text-blue-600 text-sm font-semibold hover:underline px-3 py-2"
+            >
+              See All Leads
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Lead</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Niche</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {(stats?.recent_leads || []).map((lead) => (
+                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                          <Users size={18} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{lead.name}</p>
+                          <p className="text-[11px] text-slate-500">ID: {lead.id.substring(0, 8)}...</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <Phone size={14} className="text-slate-400" />
+                          {lead.phone}
+                        </div>
+                        {lead.source === 'website' && (
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <Building size={12} className="text-slate-400" />
+                            Website Lead
+                          </div>
+                        )}
+                        {lead.source === 'meta_ads' && (
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <TrendingUp size={12} className="text-slate-400" />
+                            Meta Ads
+                          </div>
+                        )}
+                        {lead.source === 'referral' && (
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <UserCheck size={12} className="text-slate-400" />
+                            Referral
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={lead.status} />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <span className="capitalize">{lead.source}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={14} className="text-slate-400" />
+                        {lead.niche}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} className="text-slate-400" />
+                        {new Date(lead.created_at).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => navigate(`/crm/leads/${lead.id}`)}
+                        className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {(stats?.recent_leads || []).length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                      <div className="flex flex-col items-center gap-2">
+                        <Users size={48} className="text-slate-300" />
+                        <p className="text-lg font-medium">No recent leads found</p>
+                        <p className="text-sm">Start prospecting to see leads here</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse min-w-[600px]">
-        <thead>
-          <tr className="bg-slate-50/50">
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Lead</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Niche</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
-            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50">
-          {(stats?.recent_leads || []).map((lead) => (
-            <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
-                    <Users size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{lead.name}</p>
-                    <p className="text-[11px] text-slate-500">ID: {lead.id.substring(0, 8)}...</p>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Phone size={14} className="text-slate-400" />
-                    {lead.phone}
-                  </div>
-                  {lead.source === 'website' && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Building size={12} className="text-slate-400" />
-                      Website Lead
-                    </div>
-                  )}
-                  {lead.source === 'meta_ads' && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <TrendingUp size={12} className="text-slate-400" />
-                      Meta Ads
-                    </div>
-                  )}
-                  {lead.source === 'referral' && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <UserCheck size={12} className="text-slate-400" />
-                      Referral
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <StatusBadge status={lead.status} />
-              </td>
-              <td className="px-6 py-4 text-sm text-slate-600">
-                <span className="capitalize">{lead.source}</span>
-              </td>
-              <td className="px-6 py-4 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <MapPin size={14} className="text-slate-400" />
-                  {lead.niche}
-                </div>
-              </td>
-              <td className="px-6 py-4 text-sm text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <Clock size={14} className="text-slate-400" />
-                  {new Date(lead.created_at).toLocaleDateString()}
-                </div>
-              </td>
-              <td className="px-6 py-4 text-right">
-                <button
-                  onClick={() => navigate(`/crm/leads/${lead.id}`)}
-                  className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  <ArrowUpRight size={20} />
-                </button>
-              </td>
-            </tr>
-          ))}
-          {(stats?.recent_leads || []).length === 0 && (
-            <tr>
-              <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
-                <div className="flex flex-col items-center gap-2">
-                  <Users size={48} className="text-slate-300" />
-                  <p className="text-lg font-medium">No recent leads found</p>
-                  <p className="text-sm">Start prospecting to see leads here</p>
-                </div>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-      </main >
-    </div >
   );
 }

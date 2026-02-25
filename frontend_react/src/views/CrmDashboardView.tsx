@@ -96,7 +96,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     'closed_lost': 'bg-red-100 text-red-700 border-red-200',
     'default': 'bg-gray-100 text-gray-700 border-gray-200'
   };
-  
+
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.default}`}>
       {status.replace('_', ' ').toUpperCase()}
@@ -113,7 +113,7 @@ export default function CrmDashboardView() {
   const [stats, setStats] = useState<CrmDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'weekly' | 'monthly'>('weekly');
-  
+
   // Datos de ejemplo para gráficos (en producción vendrían del backend)
   const [statusDistribution, setStatusDistribution] = useState<LeadStatusDistribution[]>([
     { status: 'new', count: 45, color: '#3b82f6' },
@@ -123,7 +123,7 @@ export default function CrmDashboardView() {
     { status: 'closed_won', count: 8, color: '#10b981' },
     { status: 'closed_lost', count: 4, color: '#ef4444' }
   ]);
-  
+
   const [revenueTrend, setRevenueTrend] = useState<RevenueTrend[]>([
     { month: 'Jan', revenue: 12500, leads: 45 },
     { month: 'Feb', revenue: 18900, leads: 52 },
@@ -137,19 +137,19 @@ export default function CrmDashboardView() {
     const loadDashboardData = async (range: string) => {
       try {
         setLoading(true);
-        
+
         // Cargar estadísticas del CRM
-        const statsRes = await api.get(`/admin/core/crm/stats/summary?range=${range}`);
-        
+        const statsRes = await api.get('/admin/core/crm/stats/summary', { params: { range } });
+
         setStats(statsRes.data);
-        
+
         // En una implementación real, también cargaríamos:
         // - Distribución de status desde endpoint específico
         // - Tendencias de revenue desde endpoint específico
-        
+
       } catch (error) {
         console.error('Error loading CRM dashboard data:', error);
-        
+
         // Datos de ejemplo para desarrollo
         setStats({
           total_leads: 156,
@@ -206,7 +206,7 @@ export default function CrmDashboardView() {
             }
           ]
         });
-        
+
       } finally {
         setLoading(false);
       }

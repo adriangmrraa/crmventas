@@ -726,6 +726,72 @@ class Database:
             ADD COLUMN IF NOT EXISTS outreach_message_content TEXT,
             ADD COLUMN IF NOT EXISTS apify_rating FLOAT,
             ADD COLUMN IF NOT EXISTS apify_reviews INTEGER;
+            """,
+            # Parche 30 (Nexus Security v7.6): Tabla de auditoría system_events
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS system_events (
+                    id BIGSERIAL PRIMARY KEY,
+                    tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+                    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                    event_type VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    metadata JSONB DEFAULT '{}',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_system_events_tenant ON system_events(tenant_id);
+                CREATE INDEX IF NOT EXISTS idx_system_events_user ON system_events(user_id);
+                CREATE INDEX IF NOT EXISTS idx_system_events_type ON system_events(event_type);
+                CREATE INDEX IF NOT EXISTS idx_system_events_created ON system_events(created_at DESC);
+            END $$;
+            """,
+            # Parche 31 (Nexus Security v7.6): Columna category en credentials para clasificación
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'credentials') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                                   WHERE table_name = 'credentials' AND column_name = 'category') THEN
+                        ALTER TABLE credentials ADD COLUMN category VARCHAR(50) DEFAULT 'general';
+                    END IF;
+                ELSE
+                    -- Crear tabla credentials si no existe (multi-tenant)
+                    CREATE TABLE IF NOT EXISTS credentials (
+                        id BIGSERIAL PRIMARY KEY,
+                        tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+                        name VARCHAR(255) NOT NULL,
+                        value TEXT,
+                        category VARCHAR(50) DEFAULT 'general',
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW(),
+                        UNIQUE(tenant_id, name)
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_credentials_tenant ON credentials(tenant_id);
+                    CREATE INDEX IF NOT EXISTS idx_credentials_name ON credentials(name);
+                END IF;
+            END $$;
+            """,
+            # Parche 32 (Nexus Security v7.6): Tabla sellers para CRM (si no existe)
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS sellers (
+                    id BIGSERIAL PRIMARY KEY,
+                    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                    tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+                    first_name VARCHAR(100),
+                    last_name VARCHAR(100),
+                    email VARCHAR(255),
+                    phone VARCHAR(50),
+                    role VARCHAR(50) DEFAULT 'setter',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE(user_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_sellers_tenant ON sellers(tenant_id);
+                CREATE INDEX IF NOT EXISTS idx_sellers_user ON sellers(user_id);
+            END $$;
             """
         ]
 

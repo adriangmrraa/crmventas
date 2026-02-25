@@ -62,6 +62,11 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Nexus Security Middleware: CSP, HSTS, X-Frame-Options (se aplica DESPUÉS de CORS)
+from core.security_middleware import SecurityHeadersMiddleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+
 # --- SOCKET.IO ---
 sio_app = socketio.ASGIApp(sio, app)
 
@@ -167,7 +172,7 @@ async def chat_inbound(
     await db.mark_inbound_processing(provider, provider_message_id)
     try:
         await db.ensure_lead_exists(
-            tenant_id, from_number, customer_name=customer_name, source="whatsapp"
+            tenant_id, from_number, customer_name=customer_name, source="whatsapp_inbound"
         )
 
         await db.append_chat_message(

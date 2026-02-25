@@ -114,13 +114,29 @@ async def send_chat_message(payload: ChatSendMessage, request: Request, backgrou
     if payload.tenant_id not in allowed_ids: raise HTTPException(status_code=403)
     correlation_id = str(uuid.uuid4())
     await db.append_chat_message(from_number=payload.phone, role="assistant", content=payload.message, correlation_id=correlation_id, tenant_id=payload.tenant_id)
-    business_number = os.getenv("YCLOUD_Phone_Number_ID") or "default"
+    # B-03: Obtener bot_phone_number del tenant (multi-tenant)
+    tenant_row = await db.pool.fetchrow(
+        "SELECT bot_phone_number FROM tenants WHERE id = $1", payload.tenant_id
+    )
+    business_number = (
+        tenant_row["bot_phone_number"]
+        if tenant_row and tenant_row["bot_phone_number"]
+        else os.getenv("YCLOUD_Phone_Number_ID") or ""
+    )
+    if not business_number:
+        raise HTTPException(status_code=400, detail="No hay número de WhatsApp configurado para este tenant.")
     background_tasks.add_task(send_to_whatsapp_task, payload.phone, payload.message, business_number)
     return {"status": "sent", "correlation_id": correlation_id}
 
 @router.put("/chat/sessions/{phone}/read", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
 async def mark_chat_session_read(phone: str, tenant_id: int, allowed_ids: List[int] = Depends(get_allowed_tenant_ids)):
     if tenant_id not in allowed_ids: raise HTTPException(status_code=403)
+    # C-02: Persistir lectura en DB — actualiza updated_at del lead
+    norm_phone = normalize_phone(phone)
+    await db.pool.execute("""
+        UPDATE leads SET updated_at = NOW()
+        WHERE tenant_id = $1 AND (phone_number = $2 OR phone_number = $3)
+    """, tenant_id, norm_phone, phone)
     return {"status": "ok", "phone": phone, "tenant_id": tenant_id}
 
 @router.post("/chat/human-intervention", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
@@ -197,14 +213,17 @@ async def get_dashboard_stats(
 
 @router.get("/chat/urgencies", dependencies=[Depends(verify_admin_token)], tags=["Chat"])
 async def get_recent_urgencies(limit: int = 10, tenant_id: int = Depends(get_resolved_tenant_id)):
+    # C-01: Solo retorna leads con human_handoff_requested = TRUE (intervención humana activa)
     try:
         rows = await db.pool.fetch("""
             SELECT l.id, TRIM(COALESCE(l.first_name,'') || ' ' || COALESCE(l.last_name,'')) as lead_name, l.phone_number as phone,
-                   'NORMAL' as urgency_level, 'Lead reciente' as reason, l.updated_at as timestamp
-            FROM leads l WHERE l.tenant_id = $1 ORDER BY l.updated_at DESC NULLS LAST LIMIT $2
+                   'URGENT' as urgency_level, 'Intervención humana activa' as reason, l.updated_at as timestamp
+            FROM leads l
+            WHERE l.tenant_id = $1 AND l.human_handoff_requested = TRUE
+            ORDER BY l.updated_at DESC NULLS LAST LIMIT $2
         """, tenant_id, limit)
         return [
-            {"id": str(r["id"]), "patient_name": r["lead_name"], "phone": r["phone"], "urgency_level": r["urgency_level"], "reason": r["reason"], "timestamp": r["timestamp"].strftime("%d/%m %H:%M") if r.get("timestamp") and hasattr(r["timestamp"], "strftime") else str(r.get("timestamp") or "")}
+            {"id": str(r["id"]), "lead_name": r["lead_name"], "phone": r["phone"], "urgency_level": r["urgency_level"], "reason": r["reason"], "timestamp": r["timestamp"].strftime("%d/%m %H:%M") if r.get("timestamp") and hasattr(r["timestamp"], "strftime") else str(r.get("timestamp") or "")}
             for r in rows
         ]
     except Exception as e:

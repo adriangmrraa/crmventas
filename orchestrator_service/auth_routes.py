@@ -1,15 +1,20 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+import os
 import uuid
 import json
 import logging
-import asyncpg
 from db import db
 from auth_service import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Nexus Auth"])
 logger = logging.getLogger("auth_routes")
+
+# Detectar entorno para configurar cookie.secure
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() != "development"
+ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 7  # 1 semana (igual que ACCESS_TOKEN_EXPIRE_MINUTES)
 
 # --- MODELS ---
 
@@ -67,21 +72,24 @@ async def list_clinics_public():
 async def register(payload: UserRegister):
     """
     Registers a new user in 'pending' status.
-    Para professional/secretary/setter/closer exige tenant_id (sede o entidad). Crea fila en professionals con is_active=FALSE.
+    CRM mode: roles válidos son seller, closer, setter, secretary, admin, ceo.
+    Para seller/closer/setter/secretary exige tenant_id. Crea fila en sellers con is_active=FALSE.
     """
     existing = await db.fetchval("SELECT id FROM users WHERE email = $1", payload.email)
     if existing:
         raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado.")
 
-    if payload.role in ("professional", "secretary", "setter", "closer"):
+    CRM_TENANT_ROLES = ("seller", "closer", "setter", "secretary")
+
+    if payload.role in CRM_TENANT_ROLES:
         if payload.tenant_id is None:
             raise HTTPException(
                 status_code=400,
-                detail="Debés elegir una sede o entidad para registrarte.",
+                detail="Debés elegir una sede o empresa para registrarte.",
             )
         tenant_exists = await db.pool.fetchval("SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id)
         if not tenant_exists:
-            raise HTTPException(status_code=400, detail="La sede elegida no existe.")
+            raise HTTPException(status_code=400, detail="La empresa elegida no existe.")
 
     password_hash = auth_service.get_password_hash(payload.password)
     user_id = str(uuid.uuid4())
@@ -94,88 +102,23 @@ async def register(payload: UserRegister):
             VALUES ($1, $2, $3, $4, 'pending', $5, $6)
         """, user_id, payload.email, password_hash, payload.role, first_name, last_name)
 
-        if payload.role in ("professional", "secretary", "setter", "closer"):
+        # CRM: Crear fila en sellers para roles que requieren tenant
+        if payload.role in CRM_TENANT_ROLES:
             tenant_id = int(payload.tenant_id)
             uid = uuid.UUID(user_id)
-            wh_json = json.dumps(_default_working_hours())
             phone_val = (payload.phone_number or "").strip() or None
-            specialty_val = (payload.specialty or "").strip() or None
-            reg_id = (payload.registration_id or "").strip() or None
-            gcal_id = (payload.google_calendar_id or "").strip() or None
-            try:
-                await db.pool.execute("""
-                    INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                    specialty, registration_id, is_active, working_hours, google_calendar_id, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, $9::jsonb, $10, NOW(), NOW())
-                """, tenant_id, uid, first_name, last_name, payload.email, phone_val, specialty_val, reg_id, wh_json, gcal_id)
-            except asyncpg.UndefinedColumnError as e:
-                err_str = str(e).lower()
-                if "google_calendar_id" in err_str:
-                    await db.pool.execute("""
-                        INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                        specialty, registration_id, is_active, working_hours, created_at, updated_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, $9::jsonb, NOW(), NOW())
-                    """, tenant_id, uid, first_name, last_name, payload.email, phone_val, specialty_val, reg_id, wh_json)
-                elif "phone_number" in err_str:
-                    await db.pool.execute("""
-                        INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email,
-                        specialty, registration_id, is_active, working_hours, created_at, updated_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, $8::jsonb, NOW(), NOW())
-                    """, tenant_id, uid, first_name, last_name, payload.email, specialty_val, reg_id, wh_json)
-                elif "updated_at" in err_str:
-                    await db.pool.execute("""
-                        INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                        specialty, registration_id, is_active, working_hours, created_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, $9::jsonb, NOW())
-                    """, tenant_id, uid, first_name, last_name, payload.email, phone_val, specialty_val, reg_id, wh_json)
-                elif "working_hours" in err_str:
-                    try:
-                        await db.pool.execute("""
-                            INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                            specialty, registration_id, is_active, created_at, updated_at)
-                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, NOW(), NOW())
-                        """, tenant_id, uid, first_name, last_name, payload.email, phone_val, specialty_val, reg_id)
-                    except asyncpg.UndefinedColumnError as e2:
-                        if "phone_number" in str(e2).lower():
-                            await db.pool.execute("""
-                                INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email,
-                                specialty, registration_id, is_active, created_at, updated_at)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, NOW(), NOW())
-                            """, tenant_id, uid, first_name, last_name, payload.email, specialty_val, reg_id)
-                        else:
-                            raise
-                elif "specialty" in err_str:
-                    try:
-                        await db.pool.execute("""
-                            INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                            registration_id, is_active, working_hours, created_at, updated_at)
-                            VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, $8::jsonb, NOW(), NOW())
-                        """, tenant_id, uid, first_name, last_name, payload.email, phone_val, reg_id, wh_json)
-                    except asyncpg.UndefinedColumnError as e2:
-                        err2 = str(e2).lower()
-                        if "phone_number" in err2:
-                            await db.pool.execute("""
-                                INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email,
-                                registration_id, is_active, working_hours, created_at, updated_at)
-                                VALUES ($1, $2, $3, $4, $5, $6, FALSE, $7::jsonb, NOW(), NOW())
-                            """, tenant_id, uid, first_name, last_name, payload.email, reg_id, wh_json)
-                        elif "working_hours" in err2:
-                            await db.pool.execute("""
-                                INSERT INTO professionals (tenant_id, user_id, first_name, last_name, email, phone_number,
-                                registration_id, is_active, created_at, updated_at)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, NOW(), NOW())
-                            """, tenant_id, uid, first_name, last_name, payload.email, phone_val, reg_id)
-                        else:
-                            raise
-                else:
-                    raise
+            await db.pool.execute("""
+                INSERT INTO sellers (user_id, tenant_id, first_name, last_name, email, phone_number, is_active, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW(), NOW())
+                ON CONFLICT (user_id) DO NOTHING
+            """, uid, tenant_id, first_name, last_name, payload.email, phone_val)
 
         activation_token = str(uuid.uuid4())
         auth_service.log_protocol_omega_activation(payload.email, activation_token)
 
         return {
             "status": "pending",
-            "message": "Registro exitoso. Tu cuenta está pendiente de aprobación por el CEO.",
+            "message": "Registro exitoso. Tu cuenta está pendiente de aprobación.",
             "user_id": user_id,
         }
     except HTTPException:
@@ -184,34 +127,43 @@ async def register(payload: UserRegister):
         logger.error(f"Error registering user: {e}")
         raise HTTPException(status_code=500, detail="Error interno durante el registro.")
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLogin):
-    """ Authenticates user and returns JWT. Checks for 'active' status. """
+    """
+    Autentica usuario y retorna JWT.
+    Nexus Security v7.6: emite Set-Cookie HttpOnly para mitigación XSS.
+    El token también se retorna en body para compatibilidad durante transición.
+    """
     user = await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
-    
+
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
-    
+
     if not auth_service.verify_password(payload.password, user['password_hash']):
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
-    
+
     if user['status'] != 'active':
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail=f"Tu cuenta está en estado '{user['status']}'. Contactá al administrador."
         )
 
-    # Regla de Oro: resolver tenant_id desde professionals por user_id (aislamiento total)
+    # Resolver tenant_id: sellers (CRM) → professionals (legacy) → primer tenant
     tenant_id = await db.fetchval(
-        "SELECT tenant_id FROM professionals WHERE user_id = $1",
-        user['id']
+        "SELECT tenant_id FROM sellers WHERE user_id = $1", user['id']
     )
     if tenant_id is None:
-        # CEO/secretary: no tienen fila en professionals, usar primera sede
+        tenant_id = await db.fetchval(
+            "SELECT tenant_id FROM professionals WHERE user_id = $1", user['id']
+        )
+    if tenant_id is None:
         tenant_id = await db.fetchval("SELECT id FROM tenants ORDER BY id ASC LIMIT 1") or 1
     tenant_id = int(tenant_id)
 
-    niche_type = await db.fetchval("SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id) or "crm_sales"
+    niche_type = await db.fetchval(
+        "SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id
+    ) or "crm_sales"
 
     token_data = {
         "user_id": str(user['id']),
@@ -221,33 +173,78 @@ async def login(payload: UserLogin):
         "niche_type": niche_type,
     }
     token = auth_service.create_access_token(token_data)
-    
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user['id']),
-            "email": user['email'],
-            "role": user['role'],
-            "tenant_id": tenant_id,
-            "niche_type": niche_type,
-        }
+
+    user_profile = {
+        "id": str(user['id']),
+        "email": user['email'],
+        "role": user['role'],
+        "tenant_id": tenant_id,
+        "niche_type": niche_type,
     }
+
+    # Nexus Security v7.6: emitir Set-Cookie HttpOnly (mitigación XSS)
+    response = JSONResponse(content={
+        "access_token": token,   # Mantenido para compatibilidad durante transición
+        "token_type": "bearer",
+        "user": user_profile,
+    })
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,         # No accesible via JavaScript
+        secure=IS_PRODUCTION,  # Solo HTTPS en producción
+        samesite="lax",        # Permite OAuth redirects (Meta, Google)
+        max_age=ACCESS_TOKEN_MAX_AGE,
+    )
+    logger.info(f"✅ Login exitoso: {user['email']} (tenant_id={tenant_id}, role={user['role']})")
+    return response
+
 
 @router.get("/me")
 async def get_me(request: Request):
-    """ Returns the current authenticated user data. """
+    """
+    Retorna el perfil del usuario autenticado.
+    Nexus Security v7.6: acepta Bearer Token O Cookie HttpOnly.
+    """
+    # Capa 1: Bearer Token (legacy + clientes que no soporten cookies)
+    token = None
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
-    token = auth_header.split(" ")[1]
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        # Capa 2: Cookie HttpOnly (Nexus Security v7.6)
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autenticado. Se requiere Bearer Token o Cookie de sesión."
+        )
+
     token_data = auth_service.decode_token(token)
-    
     if not token_data:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expirado o inválido."
+        )
+
     return token_data
+
+
+@router.post("/logout")
+async def logout():
+    """
+    Cierra sesión del usuario limpiando la Cookie HttpOnly del servidor.
+    El cliente debe también limpiar localStorage si almacena tokens.
+    """
+    response = JSONResponse(content={"status": "ok", "message": "Sesión cerrada exitosamente."})
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=IS_PRODUCTION,
+        samesite="lax",
+    )
+    return response
 
 class ProfileUpdate(BaseModel):
     first_name: Optional[str] = None

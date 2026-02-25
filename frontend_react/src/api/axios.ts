@@ -61,39 +61,38 @@ interface CustomAxiosConfig extends AxiosRequestConfig {
   _retryCount?: number;
 }
 
-// Crear instancia de axios
+// Crear instancia de axios con withCredentials para envío automático de cookies HttpOnly
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 30000,
+  withCredentials: true, // Nexus Security v7.6: permite Set-Cookie HttpOnly desde el backend
 });
 
 // Request interceptor: agregar token y X-Tenant-ID
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 1. Get tokens from localStorage
-    let adminToken = localStorage.getItem('ADMIN_TOKEN');
-    const jwtToken = localStorage.getItem('JWT_TOKEN');
+    // === Nexus Security v7.6: X-Admin-Token desde env (inmutable, no localStorage) ===
+    const adminToken =
+      import.meta.env.VITE_ADMIN_TOKEN ||
+      localStorage.getItem('ADMIN_TOKEN');  // fallback de compatibilidad
 
-    // Auto-init for Admin Token (Compatibility)
-    if (!adminToken) {
-      const envToken = import.meta.env.VITE_ADMIN_TOKEN;
-      if (envToken) {
-        localStorage.setItem('ADMIN_TOKEN', envToken);
-        adminToken = envToken;
-      }
-    }
+    // JWT Bearer: el backend también acepta la cookie httpOnly automáticamente.
+    // Usar Bearer solo si está disponible (compatibilidad durante transición).
+    const jwtToken = localStorage.getItem('JWT_TOKEN');
 
     if (config.headers) {
       // Layer 1: Infrastructure Security
       if (adminToken) config.headers['X-Admin-Token'] = adminToken;
 
-      // Layer 2: Identity Security (Nexus v7.6)
+      // Layer 2: Identity Security (Nexus v7.6) — Bearer como fallback si no hay cookie
       if (jwtToken) {
         config.headers['Authorization'] = `Bearer ${jwtToken}`;
       }
+      // Si no hay JWT en localStorage, la cookie httpOnly se envía automáticamente
+      // por withCredentials: true sin necesidad de configuración extra.
     }
 
     // 2. Get and set X-Tenant-ID header

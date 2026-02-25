@@ -9,7 +9,17 @@ from pydantic import BaseModel
 logger = logging.getLogger("auth_service")
 
 # --- SETTINGS ---
-SECRET_KEY = os.getenv("INTERNAL_SECRET_KEY", "nexus-super-secret-key-v7.6")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("INTERNAL_SECRET_KEY")
+if not SECRET_KEY:
+    logger.critical(
+        "🛑 SECURITY CRITICAL: JWT_SECRET_KEY no está definida en variables de entorno. "
+        "Define JWT_SECRET_KEY con mínimo 64 caracteres aleatorios. "
+        "Generación: openssl rand -hex 64"
+    )
+    raise RuntimeError(
+        "JWT_SECRET_KEY must be set in environment variables. "
+        "Refusing to start with an insecure default."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 

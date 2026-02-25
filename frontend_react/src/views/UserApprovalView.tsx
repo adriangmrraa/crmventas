@@ -2,44 +2,10 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
 import {
-    UserCheck, UserX, Clock, ShieldCheck, Mail,
-    AlertTriangle, User, Users, Lock, Unlock, X, Building2, Stethoscope, BarChart3, MessageSquare, Plus, Phone, Save, Settings, ChevronDown, ChevronUp, Edit
+    UserCheck, UserX, ShieldCheck, Mail,
+    AlertTriangle, User, Users, Lock, Unlock, X, Building2, MessageSquare, Plus, Phone, Save, ChevronDown, ChevronUp, Edit
 } from 'lucide-react';
 
-interface DayConfig { enabled: boolean; slots: { start: string; end: string }[]; }
-interface WorkingHours {
-    monday: DayConfig; tuesday: DayConfig; wednesday: DayConfig; thursday: DayConfig;
-    friday: DayConfig; saturday: DayConfig; sunday: DayConfig;
-}
-const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
-const DAYS_HORARIOS = DAY_KEYS.map((key) => ({ key }));
-function createDefaultWorkingHours(): WorkingHours {
-    const wh = {} as WorkingHours;
-    DAY_KEYS.forEach((key) => {
-        wh[key] = {
-            enabled: key !== 'sunday',
-            slots: key !== 'sunday' ? [{ start: '09:00', end: '18:00' }] : [],
-        };
-    });
-    return wh;
-}
-function parseWorkingHours(raw: unknown): WorkingHours {
-    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-        const o = raw as Record<string, unknown>;
-        const base = createDefaultWorkingHours();
-        (Object.keys(base) as (keyof WorkingHours)[]).forEach(k => {
-            if (o[k] && typeof o[k] === 'object' && !Array.isArray(o[k])) {
-                const d = o[k] as { enabled?: boolean; slots?: { start?: string; end?: string }[] };
-                base[k] = {
-                    enabled: d.enabled ?? base[k].enabled,
-                    slots: Array.isArray(d.slots) ? d.slots.map(s => ({ start: s?.start ?? '09:00', end: s?.end ?? '18:00' })) : base[k].slots,
-                };
-            }
-        });
-        return base;
-    }
-    return createDefaultWorkingHours();
-}
 
 interface StaffUser {
     id: string;
@@ -51,30 +17,15 @@ interface StaffUser {
     last_name?: string;
 }
 
-const SPECIALTIES: { value: string; key: string }[] = [
-    { value: 'Odontología General', key: 'specialty_general' },
-    { value: 'Ortodoncia', key: 'specialty_orthodontics' },
-    { value: 'Endodoncia', key: 'specialty_endodontics' },
-    { value: 'Periodoncia', key: 'specialty_periodontics' },
-    { value: 'Cirugía Oral', key: 'specialty_oral_surgery' },
-    { value: 'Prótesis Dental', key: 'specialty_prosthodontics' },
-    { value: 'Odontopediatría', key: 'specialty_pediatric' },
-    { value: 'Implantología', key: 'specialty_implantology' },
-    { value: 'Estética Dental', key: 'specialty_aesthetic' },
-];
-
-interface ProfessionalRow {
+interface SellerRow {
     id: number;
     tenant_id?: number;
     first_name?: string;
     last_name?: string;
     email?: string;
-    specialty?: string;
     is_active?: boolean;
-    working_hours?: unknown;
     phone_number?: string;
-    registration_id?: string;
-    google_calendar_id?: string;
+    user_id?: string;
 }
 
 const UserApprovalView: React.FC = () => {
@@ -85,25 +36,22 @@ const UserApprovalView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'requests' | 'staff'>('requests');
     const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
     const [staffDetailLoading, setStaffDetailLoading] = useState(false);
-    const [professionalRows, setProfessionalRows] = useState<ProfessionalRow[]>([]);
+    const [sellerRows, setSellerRows] = useState<SellerRow[]>([]);
     const [clinics, setClinics] = useState<{ id: number; clinic_name: string }[]>([]);
     const [showLinkForm, setShowLinkForm] = useState(false);
-    const [linkFormData, setLinkFormData] = useState({ tenant_id: null as number | null, phone: '', specialty: '', license_number: '' });
+    const [linkFormData, setLinkFormData] = useState({ tenant_id: null as number | null, phone: '' });
     const [linkFormSubmitting, setLinkFormSubmitting] = useState(false);
-    const [editingProfessionalRow, setEditingProfessionalRow] = useState<ProfessionalRow | null>(null);
+    const [editingSellerRow, setEditingSellerRow] = useState<SellerRow | null>(null);
     const [staffForEditModal, setStaffForEditModal] = useState<StaffUser | null>(null);
     const [editFormData, setEditFormData] = useState<{
-        name: string; email: string; phone: string; specialty: string; license_number: string;
-        google_calendar_id: string; is_active: boolean; working_hours: WorkingHours;
-    }>({ name: '', email: '', phone: '', specialty: '', license_number: '', google_calendar_id: '', is_active: true, working_hours: createDefaultWorkingHours() });
+        name: string; email: string; phone: string; is_active: boolean;
+    }>({ name: '', email: '', phone: '', is_active: true });
     const [editFormSubmitting, setEditFormSubmitting] = useState(false);
-    const [expandedEditDays, setExpandedEditDays] = useState<string[]>([]);
-    const [expandedAccordion, setExpandedAccordion] = useState<'pacientes' | 'uso' | 'mensajes' | null>(null);
+    const [expandedAccordion, setExpandedAccordion] = useState<'mensajes' | null>(null);
     const [accordionData, setAccordionData] = useState<{
-        analytics: Record<string, { metrics: { total_appointments: number; unique_patients: number; completion_rate: number; cancellation_rate: number; revenue: number; retention_rate: number }; tags: string[] }>;
         chatCountByTenant: Record<string, number>;
-    }>({ analytics: {}, chatCountByTenant: {} });
-    const [accordionLoading, setAccordionLoading] = useState<'pacientes' | 'uso' | 'mensajes' | null>(null);
+    }>({ chatCountByTenant: {} });
+    const [accordionLoading, setAccordionLoading] = useState<'mensajes' | null>(null);
 
     useEffect(() => {
         fetchAllUsers();
@@ -117,13 +65,14 @@ const UserApprovalView: React.FC = () => {
 
     useEffect(() => {
         if (!selectedStaff) {
-            setProfessionalRows([]);
+            setSellerRows([]);
             return;
         }
         setStaffDetailLoading(true);
-        api.get<ProfessionalRow[]>(`/admin/professionals/by-user/${selectedStaff.id}`)
-            .then((res) => setProfessionalRows(res.data || []))
-            .catch(() => setProfessionalRows([]))
+        // B-01: CRM puro — usa GET /sellers/by-user/{user_id}
+        api.get<SellerRow[]>(`/admin/core/crm/sellers/by-user/${selectedStaff.id}`)
+            .then((res) => setSellerRows(res.data || []))
+            .catch(() => setSellerRows([]))
             .finally(() => setStaffDetailLoading(false));
     }, [selectedStaff?.id]);
 
@@ -153,9 +102,9 @@ const UserApprovalView: React.FC = () => {
     const closeStaffModal = () => {
         setSelectedStaff(null);
         setShowLinkForm(false);
-        setLinkFormData({ tenant_id: null, phone: '', specialty: '', license_number: '' });
+        setLinkFormData({ tenant_id: null, phone: '' });
         setExpandedAccordion(null);
-        setAccordionData({ analytics: {}, chatCountByTenant: {} });
+        setAccordionData({ chatCountByTenant: {} });
     };
 
     const getMonthRange = () => {
@@ -165,51 +114,32 @@ const UserApprovalView: React.FC = () => {
         return { start_date: start.toISOString().slice(0, 10), end_date: end.toISOString().slice(0, 10) };
     };
 
-    const handleAccordionToggle = async (section: 'pacientes' | 'uso' | 'mensajes') => {
+    const handleAccordionToggle = async (section: 'mensajes') => {
         const next = expandedAccordion === section ? null : section;
         setExpandedAccordion(next);
         if (!next) return;
-        if (section === 'pacientes' || section === 'uso') {
-            const alreadyLoaded = professionalRows.length > 0 && accordionData.analytics[`${professionalRows[0].id}-${professionalRows[0].tenant_id}`];
-            if (alreadyLoaded) return;
-            setAccordionLoading(section);
-            const { start_date, end_date } = getMonthRange();
-            const results: Record<string, { metrics: any; tags: string[] }> = {};
-            for (const row of professionalRows) {
+        if (accordionData.chatCountByTenant['loaded']) return;
+        setAccordionLoading('mensajes');
+        const counts: Record<string, number> = { loaded: 1 };
+        for (const row of sellerRows) {
+            const tid = row.tenant_id ?? 0;
+            if (tid) {
                 try {
-                    const res = await api.get(`/admin/professionals/${row.id}/analytics`, {
-                        params: { tenant_id: row.tenant_id, start_date, end_date },
-                    });
-                    results[`${row.id}-${row.tenant_id}`] = { metrics: res.data.metrics, tags: res.data.tags || [] };
+                    const res = await api.get('/admin/core/chat/sessions', { params: { tenant_id: tid } });
+                    counts[String(tid)] = Array.isArray(res.data) ? res.data.length : 0;
                 } catch {
-                    results[`${row.id}-${row.tenant_id}`] = { metrics: null, tags: [] };
+                    counts[String(tid)] = 0;
                 }
             }
-            setAccordionData((prev) => ({ ...prev, analytics: { ...prev.analytics, ...results } }));
-            setAccordionLoading(null);
-        } else {
-            if (accordionData.chatCountByTenant['loaded']) return;
-            setAccordionLoading('mensajes');
-            const counts: Record<string, number> = { loaded: 1 };
-            for (const row of professionalRows) {
-                const tid = row.tenant_id ?? 0;
-                if (tid) {
-                    try {
-                        const res = await api.get('/admin/core/chat/sessions', { params: { tenant_id: tid } });
-                        counts[String(tid)] = Array.isArray(res.data) ? res.data.length : 0;
-                    } catch {
-                        counts[String(tid)] = 0;
-                    }
-                }
-            }
-            setAccordionData((prev) => ({ ...prev, chatCountByTenant: { ...prev.chatCountByTenant, ...counts } }));
-            setAccordionLoading(null);
         }
+        setAccordionData((prev) => ({ ...prev, chatCountByTenant: { ...prev.chatCountByTenant, ...counts } }));
+        setAccordionLoading(null);
     };
 
     const handleConfigClick = async (user: StaffUser) => {
         try {
-            const res = await api.get<ProfessionalRow[]>(`/admin/professionals/by-user/${user.id}`);
+            // B-01: CRM puro — sellers, no professionals
+            const res = await api.get<SellerRow[]>(`/admin/core/crm/sellers/by-user/${user.id}`);
             const rows = res.data || [];
             if (rows.length === 0) {
                 setSelectedStaff(user);
@@ -218,102 +148,43 @@ const UserApprovalView: React.FC = () => {
             }
             const row = rows[0];
             setStaffForEditModal(user);
-            setEditingProfessionalRow(row);
+            setEditingSellerRow(row);
             const name = `${row.first_name || ''} ${row.last_name || ''}`.trim() || (user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email);
             setEditFormData({
                 name,
                 email: row.email || user.email || '',
                 phone: row.phone_number || '',
-                specialty: row.specialty || '',
-                license_number: row.registration_id || '',
-                google_calendar_id: row.google_calendar_id ?? '',
                 is_active: row.is_active ?? true,
-                working_hours: parseWorkingHours(row.working_hours),
             });
-            setExpandedEditDays([]);
         } catch {
             alert(t('alerts.error_load_pro'));
         }
     };
 
     const closeEditProfileModal = () => {
-        setEditingProfessionalRow(null);
+        setEditingSellerRow(null);
         setStaffForEditModal(null);
     };
 
-    const toggleEditDayEnabled = (dayKey: keyof WorkingHours) => {
-        setEditFormData(prev => ({
-            ...prev,
-            working_hours: {
-                ...prev.working_hours,
-                [dayKey]: {
-                    ...prev.working_hours[dayKey],
-                    enabled: !prev.working_hours[dayKey].enabled,
-                    slots: !prev.working_hours[dayKey].enabled && prev.working_hours[dayKey].slots.length === 0
-                        ? [{ start: '09:00', end: '18:00' }] : prev.working_hours[dayKey].slots,
-                },
-            },
-        }));
-    };
-    const addEditTimeSlot = (dayKey: keyof WorkingHours) => {
-        setEditFormData(prev => ({
-            ...prev,
-            working_hours: {
-                ...prev.working_hours,
-                [dayKey]: {
-                    ...prev.working_hours[dayKey],
-                    slots: [...prev.working_hours[dayKey].slots, { start: '09:00', end: '18:00' }],
-                },
-            },
-        }));
-    };
-    const removeEditTimeSlot = (dayKey: keyof WorkingHours, index: number) => {
-        setEditFormData(prev => ({
-            ...prev,
-            working_hours: {
-                ...prev.working_hours,
-                [dayKey]: {
-                    ...prev.working_hours[dayKey],
-                    slots: prev.working_hours[dayKey].slots.filter((_, i) => i !== index),
-                },
-            },
-        }));
-    };
-    const updateEditTimeSlot = (dayKey: keyof WorkingHours, index: number, field: 'start' | 'end', value: string) => {
-        setEditFormData(prev => ({
-            ...prev,
-            working_hours: {
-                ...prev.working_hours,
-                [dayKey]: {
-                    ...prev.working_hours[dayKey],
-                    slots: prev.working_hours[dayKey].slots.map((slot, i) =>
-                        i === index ? { ...slot, [field]: value } : slot
-                    ),
-                },
-            },
-        }));
-    };
 
     const handleEditProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingProfessionalRow) return;
+        if (!editingSellerRow) return;
         setEditFormSubmitting(true);
         try {
-            await api.put(`/admin/professionals/${editingProfessionalRow.id}`, {
-                name: editFormData.name,
+            // B-01: CRM puro — actualiza seller, no professional
+            await api.put(`/admin/core/crm/sellers/${editingSellerRow.id}`, {
+                first_name: editFormData.name.split(' ')[0] || editFormData.name,
+                last_name: editFormData.name.split(' ').slice(1).join(' ') || undefined,
                 email: editFormData.email,
-                phone: editFormData.phone,
-                specialty: editFormData.specialty || undefined,
-                license_number: editFormData.license_number || undefined,
-                google_calendar_id: editFormData.google_calendar_id?.trim() || undefined,
+                phone_number: editFormData.phone || undefined,
                 is_active: editFormData.is_active,
-                availability: {},
-                working_hours: editFormData.working_hours,
             });
             closeEditProfileModal();
             if (selectedStaff && selectedStaff.id === staffForEditModal?.id) {
-                const res = await api.get<ProfessionalRow[]>(`/admin/professionals/by-user/${selectedStaff.id}`);
-                setProfessionalRows(res.data || []);
+                // B-01: CRM puro — sellers, no professionals
+                const res = await api.get<SellerRow[]>(`/admin/core/crm/sellers/by-user/${selectedStaff.id}`);
+                setSellerRows(res.data || []);
             }
         } catch (err: any) {
             alert(err?.response?.data?.detail || t('alerts.error_save'));
@@ -332,20 +203,22 @@ const UserApprovalView: React.FC = () => {
         e.preventDefault();
         setLinkFormSubmitting(true);
         try {
-            const name = `${selectedStaff.first_name || ''} ${selectedStaff.last_name || ''}`.trim() || 'Profesional';
-            await api.post('/admin/professionals', {
+            const firstName = (selectedStaff.first_name || '').trim() || 'Seller';
+            const lastName = (selectedStaff.last_name || '').trim() || '';
+            // B-01: CRM puro — crea seller, no professional
+            await api.post('/admin/core/crm/sellers', {
                 email: selectedStaff.email,
                 tenant_id,
-                name,
-                phone: linkFormData.phone || undefined,
-                specialty: linkFormData.specialty || undefined,
-                license_number: linkFormData.license_number || undefined,
+                first_name: firstName,
+                last_name: lastName,
+                phone_number: linkFormData.phone || undefined,
+                role: 'setter',
                 is_active: true,
             });
-            const res = await api.get<ProfessionalRow[]>(`/admin/professionals/by-user/${selectedStaff.id}`);
-            setProfessionalRows(res.data || []);
+            const res = await api.get<SellerRow[]>(`/admin/core/crm/sellers/by-user/${selectedStaff.id}`);
+            setSellerRows(res.data || []);
             setShowLinkForm(false);
-            setLinkFormData({ tenant_id: null, phone: '', specialty: '', license_number: '' });
+            setLinkFormData({ tenant_id: null, phone: '' });
         } catch (err: any) {
             const msg = err?.response?.data?.detail || err?.message || t('alerts.error_link_sede');
             alert(msg);
@@ -427,7 +300,7 @@ const UserApprovalView: React.FC = () => {
                         {activeTab === 'requests' ? (
                             requests.length === 0 ? (
                                 <div className="glass p-12 text-center">
-                                    <Clock size={48} className="mx-auto mb-4 opacity-50" />
+                                    <ShieldCheck size={48} className="mx-auto mb-4 opacity-50" />
                                     <h3 className="text-xl font-medium mb-2">{t('approvals.no_requests')}</h3>
                                     <p className="text-secondary">{t('approvals.no_requests_processed')}</p>
                                 </div>
@@ -499,7 +372,7 @@ const UserApprovalView: React.FC = () => {
                                     className="btn-vincular-sede min-h-[44px] touch-manipulation shrink-0"
                                 >
                                     <Plus size={18} />
-                                    {professionalRows.length > 0 ? t('approvals.link_to_another_sede') : t('approvals.link_to_sede')}
+                                    {sellerRows.length > 0 ? t('approvals.link_to_another_sede') : t('approvals.link_to_sede')}
                                 </button>
                             </div>
 
@@ -531,36 +404,13 @@ const UserApprovalView: React.FC = () => {
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">{t('approvals.specialty')}</label>
-                                            <select
-                                                value={linkFormData.specialty}
-                                                onChange={(e) => setLinkFormData((p) => ({ ...p, specialty: e.target.value }))}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                            >
-                                                <option value="">{t('approvals.select_optional')}</option>
-                                                {SPECIALTIES.map((s) => (
-                                                    <option key={s.value} value={s.value}>{t('approvals.' + s.key)}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">{t('approvals.license_number')}</label>
-                                            <input
-                                                type="text"
-                                                value={linkFormData.license_number}
-                                                onChange={(e) => setLinkFormData((p) => ({ ...p, license_number: e.target.value }))}
-                                                placeholder={t('approvals.optional')}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                            />
-                                        </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <button type="submit" disabled={linkFormSubmitting} className="btn-icon-labeled success">
                                             <Save size={18} />
                                             {linkFormSubmitting ? t('common.saving') : t('approvals.save_and_link')}
                                         </button>
-                                        <button type="button" onClick={() => { setShowLinkForm(false); setLinkFormData({ tenant_id: null, phone: '', specialty: '', license_number: '' }); }} className="btn-icon-labeled">
+                                        <button type="button" onClick={() => { setShowLinkForm(false); setLinkFormData({ tenant_id: null, phone: '' }); }} className="btn-icon-labeled">
                                             {t('common.cancel')}
                                         </button>
                                     </div>
@@ -569,7 +419,7 @@ const UserApprovalView: React.FC = () => {
 
                             {staffDetailLoading ? (
                                 <p className="text-gray-500">{t('approvals.loading_clinics')}</p>
-                            ) : professionalRows.length > 0 ? (
+                            ) : sellerRows.length > 0 ? (
                                 <>
                                     <div>
                                         <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -577,103 +427,12 @@ const UserApprovalView: React.FC = () => {
                                             {t('approvals.assigned_locations')}
                                         </h3>
                                         <ul className="list-disc list-inside text-sm text-gray-600">
-                                            {professionalRows.map((p) => (
+                                            {sellerRows.map((p) => (
                                                 <li key={p.id}>
                                                     {clinics.find((c) => c.id === p.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(p.tenant_id))}
-                                                    {p.specialty && ` · ${p.specialty}`}
                                                 </li>
                                             ))}
                                         </ul>
-                                    </div>
-
-                                    <div className="border border-gray-200 rounded-xl overflow-hidden">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAccordionToggle('pacientes')}
-                                            className="w-full flex items-center justify-between gap-2 p-4 min-h-[48px] text-left bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
-                                        >
-                                            <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                                <Stethoscope size={16} />
-                                                {t('approvals.their_patients')}
-                                            </span>
-                                            {expandedAccordion === 'pacientes' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                        </button>
-                                        {expandedAccordion === 'pacientes' && (
-                                            <div className="p-4 border-t border-gray-200 bg-white">
-                                                {accordionLoading === 'pacientes' ? (
-                                                    <p className="text-sm text-gray-500">{t('approvals.loading_metrics')}</p>
-                                                ) : (
-                                                    <div className="space-y-4">
-                                                        {professionalRows.map((row) => {
-                                                            const key = `${row.id}-${row.tenant_id}`;
-                                                            const d = accordionData.analytics[key];
-                                                            const m = d?.metrics;
-                                                            const clinicName = clinics.find((c) => c.id === row.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(row.tenant_id));
-                                                            return (
-                                                                <div key={key} className="text-sm">
-                                                                    <p className="font-medium text-gray-700 mb-1">{clinicName}</p>
-                                                                    {m ? (
-                                                                        <ul className="text-gray-600 space-y-0.5">
-                                                                            <li>{t('approvals.metrics_unique_patients')}: <strong>{m.unique_patients}</strong></li>
-                                                                            <li>{t('approvals.metrics_total_appointments')}: <strong>{m.total_appointments}</strong></li>
-                                                                            <li>{t('approvals.metrics_completion_rate')}: <strong>{m.completion_rate}%</strong></li>
-                                                                            <li>{t('approvals.metrics_retention')}: <strong>{m.retention_rate}%</strong></li>
-                                                                        </ul>
-                                                                    ) : (
-                                                                        <p className="text-gray-500">{t('approvals.no_data_period')}</p>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="border border-gray-200 rounded-xl overflow-hidden">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAccordionToggle('uso')}
-                                            className="w-full flex items-center justify-between gap-2 p-4 min-h-[48px] text-left bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
-                                        >
-                                            <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                                <BarChart3 size={16} />
-                                                {t('approvals.platform_usage')}
-                                            </span>
-                                            {expandedAccordion === 'uso' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                        </button>
-                                        {expandedAccordion === 'uso' && (
-                                            <div className="p-4 border-t border-gray-200 bg-white">
-                                                {accordionLoading === 'uso' ? (
-                                                    <p className="text-sm text-gray-500">{t('approvals.loading_metrics')}</p>
-                                                ) : (
-                                                    <div className="space-y-4">
-                                                        {professionalRows.map((row) => {
-                                                            const key = `${row.id}-${row.tenant_id}`;
-                                                            const d = accordionData.analytics[key];
-                                                            const m = d?.metrics;
-                                                            const clinicName = clinics.find((c) => c.id === row.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(row.tenant_id));
-                                                            return (
-                                                                <div key={key} className="text-sm">
-                                                                    <p className="font-medium text-gray-700 mb-1">{clinicName}</p>
-                                                                    {m ? (
-                                                                        <ul className="text-gray-600 space-y-0.5">
-                                                                            <li>{t('approvals.completed_appointments')}: <strong>{m.total_appointments}</strong> ({t('approvals.completion')} {m.completion_rate}%)</li>
-                                                                            <li>{t('approvals.cancellations')}: <strong>{m.cancellation_rate}%</strong></li>
-                                                                            <li>{t('approvals.estimated_revenue')}: <strong>${typeof m.revenue === 'number' ? m.revenue.toLocaleString() : m.revenue}</strong></li>
-                                                                            {d?.tags?.length ? <li>Tags: {d.tags.join(', ')}</li> : null}
-                                                                        </ul>
-                                                                    ) : (
-                                                                        <p className="text-gray-500">{t('approvals.no_data_period')}</p>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
                                     </div>
 
                                     <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -694,7 +453,7 @@ const UserApprovalView: React.FC = () => {
                                                     <p className="text-sm text-gray-500">{t('approvals.loading_short')}</p>
                                                 ) : (
                                                     <div className="space-y-2 text-sm text-gray-600">
-                                                        {professionalRows.map((row) => {
+                                                        {sellerRows.map((row) => {
                                                             const tid = row.tenant_id ?? 0;
                                                             const count = tid ? (accordionData.chatCountByTenant[String(tid)] ?? '—') : '—';
                                                             const clinicName = clinics.find((c) => c.id === row.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(row.tenant_id));
@@ -720,120 +479,53 @@ const UserApprovalView: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal Editar Perfil (optimizado mobile: bottom-sheet en móvil, tres columnas en desktop) */}
-            {editingProfessionalRow && (
+            {/* Modal Editar Perfil CRM (B-01: CRM puro — sin specialty/working_hours dentales) */}
+            {editingSellerRow && (
                 <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={(e) => e.target === e.currentTarget && closeEditProfileModal()}
                 >
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[92dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in duration-200">
                         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 shrink-0">
-                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                                    <Edit size={22} className="sm:w-6 sm:h-6" />
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                    <Edit size={22} />
                                 </div>
                                 <div className="min-w-0">
-                                    <h2 className="text-base sm:text-xl font-bold text-gray-900 truncate">
-                                        {t('approvals.edit_profile_title')}: {editFormData.name || (staffForEditModal?.first_name && staffForEditModal?.last_name ? `${staffForEditModal.first_name} ${staffForEditModal.last_name}` : staffForEditModal?.email) || t('approvals.professional_fallback')}
+                                    <h2 className="text-base font-bold text-gray-900 truncate">
+                                        {t('approvals.edit_profile_title')}: {editFormData.name || staffForEditModal?.email || t('approvals.professional_fallback')}
                                     </h2>
-                                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5 hidden sm:block">{t('approvals.complete_staff_info')}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        {clinics.find((c) => c.id === editingSellerRow.tenant_id)?.clinic_name || `Sede #${editingSellerRow.tenant_id ?? '—'}`}
+                                    </p>
                                 </div>
                             </div>
                             <button type="button" onClick={closeEditProfileModal} className="shrink-0 p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors touch-manipulation" aria-label="Cerrar">
                                 <X size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleEditProfileSubmit} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
-                            <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-                                <div className="lg:col-span-4 space-y-5">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('approvals.main_data')}</h3>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.clinic_label')}</label>
-                                        <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium text-gray-800">
-                                            {clinics.find((c) => c.id === editingProfessionalRow.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(editingProfessionalRow.tenant_id ?? '—'))}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.full_name_required')}</label>
-                                        <input type="text" value={editFormData.name} onChange={(e) => setEditFormData((p) => ({ ...p, name: e.target.value }))} className="edit-profile-input" required />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.specialty')}</label>
-                                        <select value={editFormData.specialty} onChange={(e) => setEditFormData((p) => ({ ...p, specialty: e.target.value }))} className="edit-profile-input">
-                                            <option value="">{t('approvals.select')}</option>
-                                            {SPECIALTIES.map((s) => <option key={s.value} value={s.value}>{t('approvals.' + s.key)}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.license_number')}</label>
-                                        <input type="text" value={editFormData.license_number} onChange={(e) => setEditFormData((p) => ({ ...p, license_number: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.license_placeholder')} />
-                                    </div>
-                                </div>
-                                <div className="lg:col-span-4 space-y-5">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('approvals.contact_status')}</h3>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.email')}</label>
-                                        <input type="email" value={editFormData.email} onChange={(e) => setEditFormData((p) => ({ ...p, email: e.target.value }))} className="edit-profile-input" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.phone')}</label>
-                                        <input type="text" value={editFormData.phone} onChange={(e) => setEditFormData((p) => ({ ...p, phone: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.phone_edit_placeholder')} />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.google_calendar_id')}</label>
-                                        <input type="text" value={editFormData.google_calendar_id} onChange={(e) => setEditFormData((p) => ({ ...p, google_calendar_id: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.google_calendar_id_placeholder')} />
-                                    </div>
-                                    <label className="flex items-center gap-3 cursor-pointer mt-4">
-                                        <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                        <span className="text-sm font-medium text-gray-700">{t('approvals.active')}</span>
-                                    </label>
-                                </div>
-                                <div className="lg:col-span-4 space-y-4">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={14} /> {t('approvals.availability')}</h3>
-                                    <p className="text-xs text-gray-500">{t('approvals.availability_help')}</p>
-                                    <div className="space-y-2">
-                                        {DAYS_HORARIOS.map((day) => {
-                                            const dayKey = day.key;
-                                            const config = editFormData.working_hours[dayKey];
-                                            const isExpanded = expandedEditDays.includes(dayKey);
-                                            return (
-                                                <div key={day.key} className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
-                                                    <div className="flex items-center justify-between px-4 py-3 min-h-[48px] hover:bg-gray-50/80 transition-colors">
-                                                        <label className="flex items-center gap-3 cursor-pointer flex-1 touch-manipulation py-1">
-                                                            <input type="checkbox" checked={config.enabled} onChange={() => toggleEditDayEnabled(dayKey)} className="w-4 h-4 rounded border-gray-300 text-blue-600" />
-                                                            <span className="text-sm font-medium text-gray-800">{t('approvals.day_' + day.key)}</span>
-                                                        </label>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-gray-500 tabular-nums">{config.slots.length} {t('approvals.slots')}</span>
-                                                            <button type="button" onClick={() => setExpandedEditDays((prev) => isExpanded ? prev.filter((d) => d !== dayKey) : [...prev, dayKey])} className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-200 text-gray-500 touch-manipulation flex items-center justify-center">
-                                                                <ChevronDown size={18} className={isExpanded ? 'rotate-180' : ''} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    {isExpanded && config.enabled && (
-                                                        <div className="px-4 pb-4 pt-1 space-y-3 bg-gray-50/50 border-t border-gray-100">
-                                                            {config.slots.map((slot, idx) => (
-                                                                <div key={idx} className="flex items-center gap-3">
-                                                                    <input type="time" value={slot.start} onChange={(e) => updateEditTimeSlot(dayKey, idx, 'start', e.target.value)} className="edit-profile-input w-28" />
-                                                                    <span className="text-gray-400">–</span>
-                                                                    <input type="time" value={slot.end} onChange={(e) => updateEditTimeSlot(dayKey, idx, 'end', e.target.value)} className="edit-profile-input w-28" />
-                                                                    <button type="button" onClick={() => removeEditTimeSlot(dayKey, idx)} className="text-sm text-red-500 hover:text-red-700">{t('approvals.remove')}</button>
-                                                                </div>
-                                                            ))}
-                                                            <button type="button" onClick={() => addEditTimeSlot(dayKey)} className="text-sm font-medium text-blue-600 hover:text-blue-800">+ {t('approvals.add_schedule')}</button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                        <form onSubmit={handleEditProfileSubmit} className="p-4 sm:p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.full_name_required')}</label>
+                                <input type="text" value={editFormData.name} onChange={(e) => setEditFormData((p) => ({ ...p, name: e.target.value }))} className="edit-profile-input" required />
                             </div>
-                            <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-t border-gray-100 bg-gray-50/50 flex flex-col-reverse sm:flex-row gap-3 justify-end rounded-b-3xl shrink-0">
-                                <button type="button" onClick={closeEditProfileModal} className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 touch-manipulation">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.email')}</label>
+                                <input type="email" value={editFormData.email} onChange={(e) => setEditFormData((p) => ({ ...p, email: e.target.value }))} className="edit-profile-input" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.phone')}</label>
+                                <input type="text" value={editFormData.phone} onChange={(e) => setEditFormData((p) => ({ ...p, phone: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.phone_edit_placeholder')} />
+                            </div>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                <span className="text-sm font-medium text-gray-700">{t('approvals.active')}</span>
+                            </label>
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={closeEditProfileModal} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 touch-manipulation">
                                     {t('common.cancel')}
                                 </button>
-                                <button type="submit" disabled={editFormSubmitting} className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 touch-manipulation">
+                                <button type="submit" disabled={editFormSubmitting} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 touch-manipulation">
                                     {editFormSubmitting ? t('common.saving') : t('common.save_changes')}
                                 </button>
                             </div>
@@ -1027,7 +719,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onAction, isRequest, onCardCl
                         title={t('approvals.edit_profile_schedules')}
                         aria-label={t('approvals.edit_profile_schedules')}
                     >
-                        <Settings size={20} />
+                        <Edit size={20} />
                     </button>
                 )}
                 {isRequest ? (

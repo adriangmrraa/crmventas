@@ -573,3 +573,79 @@ En rutas de listado administrativas suelen soportarse:
 | **404** | Recurso no encontrado (paciente, turno, sede, etc.). |
 | **422** | Error de validación (body o query params incorrectos). |
 | **500** | Error interno del servidor. |
+
+---
+
+## CRM Sales — Leads y Prospección
+
+> [!NOTE]
+> Todos los endpoints bajo `/admin/core/crm/*` requieren `Authorization: Bearer <JWT>` + `X-Admin-Token`.
+
+### Listar Leads (Generic — todas las fuentes)
+`GET /admin/core/crm/leads`
+
+Retorna todos los leads del tenant autenticado (extraído del JWT). **No filtra por `source`** — incluye WhatsApp inbound, Apify scrape y leads manuales.
+
+**Query params:**
+
+| Parámetro | Tipo | Default | Límite | Descripción |
+|-----------|------|---------|--------|-------------|
+| `limit` | int | 50 | ≤ 500 | Registros por página |
+| `offset` | int | 0 | — | Paginación |
+| `status` | str | — | — | Filtrar por estado (`new`, `contacted`, etc.) |
+| `search` | str | — | — | Búsqueda por nombre, teléfono o email |
+| `assigned_seller_id` | UUID | — | — | Filtrar por vendedor asignado |
+
+**Response:** `List[LeadResponse]` — incluye `id`, `tenant_id`, `phone_number`, `first_name`, `last_name`, `email`, `status`, `source`, `apify_title`, `social_links`, `outreach_message_sent`, `created_at`, `updated_at` entre otros.
+
+> [!IMPORTANT]
+> **Límite actualizado 2026-02-24**: El límite fue aumentado de `le=100` a `le=500` para soportar la vista de Leads del frontend (que carga hasta 500 registros en una sola llamada).
+
+---
+
+### Listar Leads de Prospección (Apify Only)
+`GET /admin/core/crm/prospecting/leads`
+
+Retorna **solo leads con `source = 'apify_scrape'`**. Requiere `tenant_id_override` explícito (diseñado para admins multi-tenant). Usado por la vista de **Prospección**.
+
+**Query params obligatorios:**
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `tenant_id_override` | int | **Requerido.** ID del tenant a consultar |
+| `only_pending` | bool | Si `true`, solo leads con `outreach_message_sent = false` |
+| `limit` | int | Default 200, máximo 500 |
+| `offset` | int | Paginación |
+
+> [!WARNING]
+> Si `tenant_id_override` no se envía, el backend responde **422**. Este endpoint **no** agrupa leads de WhatsApp.
+
+---
+
+### Crear Lead
+`POST /admin/core/crm/leads`
+
+**Payload:**
+```json
+{
+  "phone_number": "+5491155554444",
+  "first_name": "Juan",
+  "last_name": "García",
+  "email": "juan@ejemplo.com",
+  "status": "new"
+}
+```
+
+### Actualizar Lead
+`PUT /admin/core/crm/leads/{id}`
+
+### Convertir Lead → Cliente
+`POST /admin/core/crm/leads/{id}/convert-to-client`
+
+### Resumen de fuentes de leads (`source`)
+
+| Valor | Origen |
+|-------|--------|
+| `whatsapp_inbound` | Contacto inició conversación por WhatsApp |
+| `apify_scrape` | Scraping de Google Maps via Apify |
+| `manual` | Creado manualmente desde la UI |

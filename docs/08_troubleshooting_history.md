@@ -55,3 +55,31 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 ---
 
 *Histórico de Problemas y Soluciones Nexus v3 © 2026*
+
+---
+
+## LeadsView: Pantalla en Blanco + Error React #31 (2026-02-24)
+
+**Problema:**
+- La página `/crm/leads` mostraba una pantalla en blanco en producción.
+- Error React #31: un objeto (array de detalles 422) se pasaba como children de un nodo React.
+- El backend retornaba `422 Unprocessable Entity` al llamar `GET /admin/core/crm/leads`.
+
+**Causa Raíz:**
+1. `LeadsView.tsx` llamaba al endpoint **equivocado**: `GET /admin/core/crm/leads` (que existía pero tenía `le=100` y no filtraba por source).
+2. En un refactor intermedio se cambió a `GET /admin/core/crm/prospecting/leads`, que **requiere `tenant_id_override` obligatorio** — sin este param el backend responde 422.
+3. El array `detail` del 422 era pasado directamente a `setError()` y luego renderizado como nodo React.
+
+**Solución Aplicada:**
+- **Frontend**: `LeadsView.tsx` vuelve a usar `GET /admin/core/crm/leads` (endpoint genérico, todo sources, JWT-based).
+- **Backend**: Se aumentó el límite de `le=100` → `le=500` en `list_leads` para soportar carga completa.
+- **Error #31**: Se agregó un guard `typeof error === 'string' ? error : JSON.stringify(error)` en el setter de error del componente.
+
+**Diferencia clave entre endpoints:**
+
+| Endpoint | Source filter | tenant_id | Usar para |
+|----------|--------------|-----------|-----------|
+| `GET /admin/core/crm/leads` | Ninguno (todos) | JWT automático | Vista de Leads (todas las pestañas) |
+| `GET /admin/core/crm/prospecting/leads` | Solo `apify_scrape` | `tenant_id_override` obligatorio | Vista de Prospección |
+
+**Estado:** ✅ Resuelto en commit `4c857ca`.

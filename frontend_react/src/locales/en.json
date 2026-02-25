@@ -695,5 +695,67 @@
     "selectTemplate": "Select template...",
     "noTemplates": "No approved templates found.",
     "statusSending": "Sending..."
+  },
+  "marketing": {
+    "subtitle": "Ads & ROI Monitoring",
+    "range_30d": "30 days",
+    "range_90d": "90 days",
+    "range_year": "This year",
+    "range_all": "All",
+    "roi_card_title": "Estimated ROI",
+    "investment": "Investment",
+    "return": "Return",
+    "leads": "Leads",
+    "meta_connection": "Meta Ads Connection",
+    "connected_disconnected": "Disconnected",
+    "disconnected_desc": "Connect your Meta account to see real-time metrics.",
+    "connect": "Connect with Meta",
+    "tabs": {
+      "campaigns": "Campaigns",
+      "creatives": "Creatives"
+    },
+    "period_label": "Period",
+    "table_campaign_ad": "Campaign / Ad",
+    "table_spend": "Spend",
+    "table_leads": "Leads",
+    "table_appts": "Appts",
+    "table_roi": "ROI",
+    "table_status": "Status",
+    "errors": {
+      "missing_tenant": "Error: Missing Tenant ID",
+      "auth_failed": "Meta authentication failed",
+      "token_exchange_failed": "Token exchange failed"
+    }
+  },
+  "hsm": {
+    "title": "HSM Automation",
+    "subtitle": "Messaging and reminders automation",
+    "timezone": "Timezone",
+    "motor_active": "Motor Active",
+    "motor_desc": "The automation motor is processing events.",
+    "motor_operational": "Operational",
+    "sent_count": "Sent",
+    "last_24h": "Last 24h",
+    "conversion": "Conversion",
+    "delivery_rate": "Delivery Rate",
+    "transparency_feed": "Transparency Feed",
+    "real_time": "Real Time",
+    "table_patient": "Patient",
+    "table_trigger": "Trigger",
+    "table_datetime": "Date / Time",
+    "table_status": "Status",
+    "no_logs": "No recent logs",
+    "regional_config": "Regional Config",
+    "timezone_help": "Choose your timezone for sending reminders.",
+    "timezone_disclaimer": "* Used to calculate the allowed sending window.",
+    "business_rules": "Business Rules",
+    "rules": {
+      "reminder_24h": "24h Reminder",
+      "reminder_24h_desc": "Sends an automatic message 24h before the appointment.",
+      "feedback": "Feedback Request",
+      "feedback_desc": "Asks for a review after the appointment.",
+      "lead_recovery": "Lead Recovery",
+      "lead_recovery_desc": "Reactive message for leads without schedule."
+    }
   }
 }

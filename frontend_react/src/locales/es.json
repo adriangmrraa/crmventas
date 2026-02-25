@@ -695,5 +695,67 @@
     "selectTemplate": "Seleccionar plantilla...",
     "noTemplates": "No se encontraron plantillas aprobadas.",
     "statusSending": "Enviando..."
+  },
+  "marketing": {
+    "subtitle": "Monitoreo de Ads y ROI",
+    "range_30d": "30 días",
+    "range_90d": "90 días",
+    "range_year": "Este año",
+    "range_all": "Todo",
+    "roi_card_title": "ROI Estimado",
+    "investment": "Inversión",
+    "return": "Retorno",
+    "leads": "Leads",
+    "meta_connection": "Conexión con Meta Ads",
+    "connected_disconnected": "Desconectado",
+    "disconnected_desc": "Conectá tu cuenta de Meta para ver métricas en tiempo real.",
+    "connect": "Conectar con Meta",
+    "tabs": {
+      "campaigns": "Campañas",
+      "creatives": "Creativos"
+    },
+    "period_label": "Período",
+    "table_campaign_ad": "Campaña / Anuncio",
+    "table_spend": "Gasto",
+    "table_leads": "Leads",
+    "table_appts": "Citas",
+    "table_roi": "ROI",
+    "table_status": "Estado",
+    "errors": {
+      "missing_tenant": "Error: Falta Tenant ID",
+      "auth_failed": "Error de autenticación con Meta",
+      "token_exchange_failed": "Error al intercambiar token"
+    }
+  },
+  "hsm": {
+    "title": "HSM Automation",
+    "subtitle": "Automatización de mensajes y recordatorios",
+    "timezone": "Zona horaria",
+    "motor_active": "Motor Activo",
+    "motor_desc": "El motor de automatización está procesando eventos.",
+    "motor_operational": "Operativo",
+    "sent_count": "Enviados",
+    "last_24h": "Últimas 24h",
+    "conversion": "Conversión",
+    "delivery_rate": "Tasa de entrega",
+    "transparency_feed": "Feed de Transparencia",
+    "real_time": "Tiempo Real",
+    "table_patient": "Paciente",
+    "table_trigger": "Disparador",
+    "table_datetime": "Fecha / Hora",
+    "table_status": "Estado",
+    "no_logs": "No hay logs recientes",
+    "regional_config": "Configuración Regional",
+    "timezone_help": "Elegí tu zona horaria para el envío de recordatorios.",
+    "timezone_disclaimer": "* Se usa para calcular la ventana de envío permitida.",
+    "business_rules": "Reglas de Negocio",
+    "rules": {
+      "reminder_24h": "Recordatorio 24h",
+      "reminder_24h_desc": "Envía un mensaje automático 24hs antes del turno.",
+      "feedback": "Solicitud de Feedback",
+      "feedback_desc": "Pide una reseña después de la cita.",
+      "lead_recovery": "Recuperación de Leads",
+      "lead_recovery_desc": "Mensaje reactivo para leads sin agenda."
+    }
   }
 }

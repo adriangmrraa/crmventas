@@ -67,9 +67,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   };
 
   return (
-    <aside className="h-full bg-business-900 text-white flex flex-col relative shadow-xl overflow-hidden">
+    <aside className="h-full bg-medical-900 text-white flex flex-col relative shadow-xl overflow-hidden">
       {/* Logo Area */}
-      <div className={`h-16 flex items-center ${collapsed && !onCloseMobile ? 'justify-center' : 'px-6'} border-b border-business-800 shrink-0`}>
+      <div className={`h-16 flex items-center ${collapsed && !onCloseMobile ? 'justify-center' : 'px-6'} border-b border-medical-800 shrink-0`}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
             <Stethoscope size={18} className="text-white" />
@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
       {!onCloseMobile && (
         <button
           onClick={onToggle}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white rounded-full shadow-lg items-center justify-center text-business-900 hover:bg-gray-100 transition-all z-20"
+          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white rounded-full shadow-lg items-center justify-center text-medical-900 hover:bg-gray-100 transition-all z-20"
           aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -139,9 +139,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
 
       {/* Footer Info */}
       {(!collapsed || onCloseMobile) && (
-        <div className="p-4 border-t border-business-800 bg-business-900/50 shrink-0">
+        <div className="p-4 border-t border-medical-800 bg-medical-900/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-business-600 flex items-center justify-center text-xs font-medium uppercase shrink-0">
+            <div className="w-8 h-8 rounded-full bg-medical-600 flex items-center justify-center text-xs font-medium uppercase shrink-0">
               {user?.email?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">

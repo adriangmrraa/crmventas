@@ -14,8 +14,8 @@ import {
     RefreshCw,
     ShieldCheck
 } from 'lucide-react';
-import api from '../api/axios';
-import { useTranslation } from '../context/LanguageContext';
+import api from '../../api/axios';
+import { useTranslation } from '../../context/LanguageContext';
 
 interface AutomationLog {
     id: number;

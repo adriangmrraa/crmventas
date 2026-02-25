@@ -808,6 +808,43 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_sellers_tenant ON sellers(tenant_id);
                 CREATE INDEX IF NOT EXISTS idx_sellers_user ON sellers(user_id);
             END $$;
+            """,
+            # Parche 33: Tabla de Auditoría (system_events)
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS system_events (
+                    id BIGSERIAL PRIMARY KEY,
+                    event_type TEXT NOT NULL,
+                    severity TEXT DEFAULT 'info' CHECK (severity IN ('info', 'warning', 'critical')),
+                    message TEXT,
+                    payload JSONB,
+                    occurred_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_system_events_type ON system_events(event_type);
+                CREATE INDEX IF NOT EXISTS idx_system_events_severity ON system_events(severity);
+                CREATE INDEX IF NOT EXISTS idx_system_events_occurred ON system_events(occurred_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_system_events_payload ON system_events USING gin(payload);
+            END $$;
+            """,
+            # Parche 34: Tabla Credentials (Encriptada) - Fix para multi-tenancy y seguridad
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS credentials (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    name TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    category TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE (tenant_id, name)
+                );
+                CREATE INDEX IF NOT EXISTS idx_credentials_tenant ON credentials(tenant_id);
+                CREATE INDEX IF NOT EXISTS idx_credentials_name ON credentials(name);
+                CREATE INDEX IF NOT EXISTS idx_credentials_category ON credentials(category);
+            END $$;
             """
         ]
 

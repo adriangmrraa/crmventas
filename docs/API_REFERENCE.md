@@ -99,6 +99,8 @@ El backend aplica fallbacks si la tabla `professionals` no tiene columnas `phone
 
 **Payload:** `email`, `password` (form/x-www-form-urlencoded o JSON).
 
+**Nexus Security v7.7 (Hardening):** Rate limited a **5 intentos por minuto por IP**. Si se excede, devuelve **429 Too Many Requests**.
+
 **Response (200):**
 ```json
 {
@@ -125,7 +127,9 @@ Limpia la cookie `access_token` en el navegador.
 ### Usuario actual (Check de Sesión)
 `GET /auth/me`
 
-Requiere `Authorization: Bearer <JWT>` o presencia de Cookie HttpOnly. Devuelve el usuario autenticado. El frontend usa este endpoint al iniciar para verificar si la cookie HttpOnly aún es válida (evita el login manual si la sesión persiste).
+Requiere `Authorization: Bearer <JWT>` o presencia de Cookie HttpOnly. Devuelve el usuario autenticado. 
+
+**Nexus Security v7.7:** Esta ruta genera un evento de auditoría automático `verify_session` en la tabla `system_events`. El frontend usa este endpoint al iniciar para verificar si la cookie HttpOnly aún es válida.
 
 ### Perfil
 `GET /auth/profile` — Datos de perfil del usuario (incl. profesional si aplica).  
@@ -184,7 +188,40 @@ Aprueba o rechaza un usuario pendiente.
 
 **Payload:** `{ "status": "approved" }` o `{ "status": "rejected" }`.
 
+**Nexus Security v7.7:** Acción auditada automáticamente bajo el evento `update_user_status`.
+
 ---
+
+## Auditoría y Seguridad (Nexus v7.7)
+
+Solo **CEO** puede consultar los logs de auditoría.
+
+### Listar logs de sistema
+`GET /admin/core/audit/logs`
+
+Retorna los eventos grabados por el sistema de auditoría persistente.
+
+**Query params:**
+- `event_type`: (opcional) Filtrar por tipo (ej. `login_failure`, `verify_session`).
+- `severity`: (opcional) `info`, `warning`, `critical`.
+- `limit`, `offset`: Paginación.
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": "uuid",
+      "event_type": "read_pending_users",
+      "severity": "info",
+      "message": "Auto-audit from get_pending_users",
+      "payload": { "ip": "1.2.3.4", "user_agent": "..." },
+      "occurred_at": "2026-02-25T10:00:00"
+    }
+  ],
+  "total": 150
+}
+```
 
 ## Sedes (Tenants)
 

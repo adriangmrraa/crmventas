@@ -6,6 +6,7 @@ Basado en ClinicForge Nexus Security v7.6.
 import os
 import uuid
 import logging
+import json
 from typing import List, Optional, Any
 from fastapi import Header, HTTPException, Depends, Request, status
 from db import db
@@ -208,6 +209,72 @@ async def get_allowed_tenant_ids(user_data=Depends(verify_admin_token)) -> List[
 
 # ─── Auditoría ────────────────────────────────────────────────────────────────
 
+async def log_security_event(
+    request: Request,
+    user_data: Any,
+    event_type: str,
+    severity: str = "info",
+    resource_id: Any = None,
+    details: str = ""
+):
+    """
+    Nexus Protocol v7.7 — Registro persistente de eventos de seguridad.
+    """
+    payload = {
+        "user_id": user_data.user_id,
+        "user_email": user_data.email,
+        "user_role": user_data.role,
+        "resource_id": str(resource_id) if resource_id else None,
+        "details": details,
+        "ip_address": request.client.host if request.client else "unknown",
+        "user_agent": request.headers.get("user-agent", ""),
+        "path": request.url.path,
+        "method": request.method,
+    }
+
+    try:
+        await db.pool.execute("""
+            INSERT INTO system_events (event_type, severity, message, payload)
+            VALUES ($1, $2, $3, $4::jsonb)
+        """, event_type, severity, f"{user_data.role}@{user_data.email}: {event_type}", json.dumps(payload))
+    except Exception as e:
+        logger.error(f"❌ Error logging security event: {e}")
+
+
+def audit_access(event_type: str, resource_param: str = "id"):
+    """
+    Decorator para auditoría automática de accesos a endpoints.
+    """
+    def decorator(func):
+        from functools import wraps
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Buscar request y user_data en los argumentos del endpoint
+            request: Optional[Request] = None
+            user_data: Any = None
+
+            for arg in list(args) + list(kwargs.values()):
+                if isinstance(arg, Request):
+                    request = arg
+                if hasattr(arg, 'user_id') and hasattr(arg, 'role'):
+                    user_data = arg
+
+            if request and user_data:
+                resource_id = kwargs.get(resource_param) or "unknown"
+                await log_security_event(
+                    request=request,
+                    user_data=user_data,
+                    event_type=event_type,
+                    severity="info",
+                    resource_id=resource_id,
+                    details=f"Auto-audit from {func.__name__}"
+                )
+
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
 async def log_pii_access(
     request: Request,
     user_data: Any,
@@ -215,16 +282,22 @@ async def log_pii_access(
     action: str = "read"
 ):
     """
-    Registra auditoría de acceso a datos sensibles (Nexus Protocol v7.6).
-    Llamar en endpoints que expongan PII (leads, contactos, datos de venta).
+    Registra auditoría de acceso a datos sensibles (Nexus Protocol v7.7).
     """
     logger.info(
         f"🛡️ AUDIT: {user_data.email} ({user_data.role}) → {action} on {resource_id}. "
         f"IP: {request.client.host if request.client else 'unknown'}"
     )
+    # También registrar en DB
+    await log_security_event(
+        request=request,
+        user_data=user_data,
+        event_type=f"pii_{action}",
+        severity="warning" if action in ["delete", "update_all"] else "info",
+        resource_id=resource_id,
+        details=f"PII Access detected: {action}"
+    )
 
-
-# ─── Contexto de Usuario ──────────────────────────────────────────────────────
 
 async def get_current_user_context(user_data=Depends(verify_admin_token)) -> dict:
     """Retorna el contexto del usuario actual para usar en dependencias de FastAPI."""

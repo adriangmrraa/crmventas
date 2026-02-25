@@ -141,14 +141,16 @@ La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** c
 
 ## Estado por categoría (Dentalogic)
 
-### A01 – Broken Access Control
+### 1. Sesión y Autenticación (Nexus v7.6/v7.7)
+- **Cookies HttpOnly**: El JWT no es accesible vía JS.
+- **Rate Limiting**: El endpoint `/auth/login` está protegido contra ataques de fuerza bruta (5 peticiones/min/IP).
 
-- **Rutas admin:** Protegidas con `verify_admin_token` (JWT + X-Admin-Token); roles (CEO vs professional/secretary) comprobados donde aplica.
-- **Multi-tenant:** Consultas filtradas por `tenant_id` (regla de soberanía). `get_resolved_tenant_id` para endpoints que requieren tenant.
-- **Rutas públicas:** Solo `/login` y `/demo`; el resto bajo `ProtectedRoute`.
-- **Recomendación:** Revisar periódicamente que ningún endpoint admin olvide el filtro `tenant_id` ni la comprobación de rol.
+### 2. Auditoría Persistente (Nexus v7.7)
+- **Tabla `system_events`**: Registro detallado de accesos administrativos, fallos de login y accesos a PII.
+- **Decorador `@audit_access`**: Automatización de la auditoría en rutas críticas del backend.
+- **Panel CEO**: Los eventos se pueden consultar en `/admin/core/audit/logs`.
 
-### A02 – Security Misconfiguration
+### 3. Middlewares de Seguridad (OWASP A02)
 
 - **CORS:** Configurado en el orchestrator; revisar orígenes permitidos en producción.
 - **Headers:** Valorar añadir políticas de seguridad (CSP, X-Content-Type-Options, etc.) en respuestas HTTP.
@@ -175,7 +177,7 @@ La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** c
 ### A06 – Insecure Design
 
 - **Demo:** La landing y el flujo de login demo están pensados para no depender de credenciales en texto plano en la interfaz (ver medida de redacción).
-- **Límites:** Valorar rate limiting en `/auth/login` y en POST `/chat` para mitigar fuerza bruta y abuso.
+- **Límites (v7.7)**: Implementación de **Rate Limiting** dinámico mediante `slowapi` en `/auth/login` (5/min). Se recomienda extender a otros endpoints de alta carga en el futuro.
 
 ### A07 – Authentication Failures
 
@@ -190,8 +192,8 @@ La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** c
 
 ### A09 – Security Logging and Alerting Failures
 
-- **Logs:** El orchestrator registra errores y eventos relevantes (chat, tenant, excepciones). No se detalla aquí un formato estándar de auditoría (quién, qué, cuándo).
-- **Recomendación:** Definir qué eventos se consideran de seguridad (login fallido, cambios de rol, acceso a datos sensibles) y registrarlos de forma estructurada.
+- **Logs (v7.7)**: Implementación de la tabla `system_events` para auditoría estructurada (IP, UserAgent, Actor, Acción, Payload). Los eventos críticos se registran con severidad `critical`.
+- **Recomendación:** Monitorear logs de auditoría ante ráfagas de `login_failure` que podrían indicar intentos de intrusión distribuidos.
 
 ### A10 – Mishandling of Exceptional Conditions
 

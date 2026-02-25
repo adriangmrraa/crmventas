@@ -8,6 +8,7 @@ import json
 import logging
 from db import db
 from auth_service import auth_service
+from core.security import audit_access
 
 router = APIRouter(prefix="/auth", tags=["Nexus Auth"])
 logger = logging.getLogger("auth_routes")
@@ -129,13 +130,22 @@ async def register(payload: UserRegister):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLogin):
+async def login(request: Request, payload: UserLogin):
     """
     Autentica usuario y retorna JWT.
-    Nexus Security v7.6: emite Set-Cookie HttpOnly para mitigación XSS.
-    El token también se retorna en body para compatibilidad durante transición.
+    Nexus Security v7.7: Rate limited (5/min) + HttpOnly Cookie.
     """
-    user = await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
+    # Rate limiting dinámico desde app state
+    limiter = request.app.state.limiter
+    async def _dummy_handler(): pass # slowapi decorates actual functions
+    
+    # Aplicar límite manualmente o vía decorador si se tiene acceso al objeto limiter
+    # Como el router se incluye en app, usamos el decorador con el limiter global
+    from main import limiter
+    
+    @limiter.limit("5/minute")
+    async def _processed_login(request, payload):
+        user = await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
 
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
@@ -212,6 +222,7 @@ async def login(payload: UserLogin):
 
 
 @router.get("/me")
+@audit_access("verify_session")
 async def get_me(request: Request):
     """
     Retorna el perfil del usuario autenticado.

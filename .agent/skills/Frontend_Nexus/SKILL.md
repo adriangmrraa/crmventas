@@ -60,6 +60,11 @@ const api = axios.create({
 - Gestión de `GOOGLE_CREDENTIALS` y `YCLOUD_API_KEY`.
 - Muestra la URL dinámica para el Webhook de YCloud con opción de copiado.
 
+### AuditLogsView.tsx (Nexus v7.7)
+- Solo visible para usuarios con rol `ceo`.
+- Consume `GET /admin/core/audit/logs`.
+- Permite filtrar eventos por severidad y tipo para trazabilidad de seguridad.
+
 ## 4. Estilos y UX (Premium Dental)
 - **Glassmorphism**: Usar clase `.glass` para tarjetas e inputs.
 - **Micro-animaciones**: Usar `animate-pulse` para estados de triaje crítico.
@@ -75,6 +80,6 @@ const api = axios.create({
 
 ## 7. Checklist de UI
 - [ ] ¿El componente maneja `isLoading` con un spinner o esqueleto?
-- [ ] ¿Los errores se muestran vía Toasts o alertas `check-fail`?
+- [ ] ¿Los errores se muestran vía Toasts o alertas `check-fail`? (Manejar específicamente el error **429 Rate Limit** con mensaje de "esperar 60s").
 - [ ] ¿Se usa `Lucide` para coherencia visual?
 - [ ] ¿La tabla/lista tiene `key` único (IDs de la BD)?

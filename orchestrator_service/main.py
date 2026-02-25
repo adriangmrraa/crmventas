@@ -1,5 +1,8 @@
 import os
 import json
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import logging
 import asyncio
 import socketio
@@ -40,7 +43,10 @@ engine = create_async_engine(POSTGRES_DSN, echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # --- APP SETUP ---
-app = FastAPI(title="Nexus Orchestrator", version="7.6.0")
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(title="Nexus Orchestrator", version="7.7.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS: merge defaults with CORS_ALLOWED_ORIGINS (comma-separated) for EasyPanel/custom deployments
 _default_origins = [

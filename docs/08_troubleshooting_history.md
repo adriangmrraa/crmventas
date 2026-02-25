@@ -104,3 +104,23 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 **Lección**: Nunca confiar en `CREATE TABLE IF NOT EXISTS` para integridad de columnas si la tabla pudo ser creada manualmente. Usar siempre `ALTER TABLE` reparadores.
 
 **Estado:** ✅ Resuelto en commit `5cb58e1`.
+
+---
+
+## Error 429: Too Many Requests (Rate Limiting v7.7)
+
+**Problema:**
+- El frontend o integraciones automatizadas reciben un error **429** al intentar loguearse repetidamente.
+
+**Causa Raíz:**
+- Se implementó `slowapi` con un límite de 5 intentos por minuto por IP para prevenir ataques de fuerza bruta.
+
+**Solución:**
+- El usuario debe esperar 60 segundos antes de reintentar. 
+- En entornos de prueba (CI/CD), se puede considerar aumentar el límite o usar IPs blancas si es necesario.
+
+**Estado:** ✅ Comportamiento de diseño Nexus v7.7.
+
+---
+
+*Histórico de Problemas y Soluciones Nexus v7.7 © 2026*

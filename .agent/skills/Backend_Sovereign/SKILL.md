@@ -54,5 +54,10 @@ Garantizar que el Frontend esté siempre al día:
 - **Deduplicación**: Cache de 2 minutos en Redis para evitar procesar webhooks duplicados.
 - **Buffering**: Agrupar mensajes en ráfaga para mejorar el contexto del LLM.
 
+## 8. Hardening v7.7 (Rate Limiting & Auditoría)
+- **Rate Limiting**: Uso obligatorio de `slowapi` en endpoints de autenticación y alta carga.
+- **Auditoría Persistente**: Uso del decorador `@audit_access("nombre_evento")` en rutas administrativas para trazabilidad en `system_events`.
+- **Security Logging**: Todo fallo crítico o acceso a PII debe registrarse mediante `log_security_event`.
+
 ---
 *Nexus v8.0 - Senior Backend Architect & Python Expert Protocol*

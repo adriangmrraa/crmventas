@@ -57,6 +57,7 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 | **`ENVIRONMENT`** | Entorno de ejecución (`production` activa flag Secure en cookies) | `production` | `development` |
 | **`CORS_ALLOWED_ORIGINS`** | Origins CORS permitidos (comma-separated). Requerido para cookies cross-domain. | `https://ui.clinic.com,http://localhost:3000` | `*` |
 | **`CREDENTIALS_FERNET_KEY`** | Clave Fernet (AES-256) para encriptar/desencriptar la tabla `credentials` | `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` | ✅ |
+| **`LOG_LEVEL`** | Nivel de logs (afecta visibilidad de eventos de seguridad) | `INFO`, `DEBUG`, `ERROR` | `INFO` |
 | **`GOOGLE_CREDENTIALS`** | JSON completo de credenciales de Google | (JSON string) | ❌ |
 
 **Generar clave Fernet:** En la raíz del proyecto, con Python en el PATH: `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows). En Linux/macOS: `python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Guardar la salida en `CREDENTIALS_FERNET_KEY`.

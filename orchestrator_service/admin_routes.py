@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks,
 from pydantic import BaseModel
 
 from db import db
-from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, ADMIN_TOKEN
+from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, ADMIN_TOKEN, audit_access
 from core.utils import normalize_phone, ARG_TZ
 
 from core.services.chat_service import ChatService
@@ -73,6 +73,7 @@ async def send_to_whatsapp_task(phone: str, message: str, business_number: str):
 
 # --- RUTAS DE USUARIOS ---
 @router.get("/users/pending", tags=["Usuarios"])
+@audit_access("read_pending_users")
 async def get_pending_users(user_data = Depends(verify_admin_token)):
     if user_data.role not in ['ceo', 'secretary']: raise HTTPException(status_code=403, detail="Forbidden")
     users = await db.fetch("SELECT id, email, role, status, created_at, first_name, last_name FROM users WHERE status = 'pending' ORDER BY created_at DESC")
@@ -85,6 +86,7 @@ async def get_all_users(user_data = Depends(verify_admin_token)):
     return [dict(u) for u in users]
 
 @router.post("/users/{user_id}/status", tags=["Usuarios"])
+@audit_access("update_user_status", resource_param="user_id")
 async def update_user_status(user_id: str, payload: StatusUpdate, user_data = Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403, detail="CEO only")
     await db.execute("UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2", payload.status, user_id)
@@ -331,3 +333,59 @@ async def get_deployment_config(request: Request):
     host = request.headers.get("host", "localhost:8000")
     base_url = f"https://{host}"
     return {"orchestrator_url": base_url, "environment": os.getenv("ENVIRONMENT", "development")}
+
+
+@router.get("/audit/logs", tags=["Seguridad"])
+async def get_audit_logs(
+    user_data=Depends(verify_admin_token),
+    tenant_id: int = Depends(get_resolved_tenant_id),
+    event_type: Optional[str] = None,
+    severity: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0
+):
+    """
+    Obtiene logs de auditoría (solo CEO).
+    """
+    if user_data.role != 'ceo':
+        raise HTTPException(status_code=403, detail="Acceso denegado: Solo CEOs pueden consultar auditoría.")
+    
+    query = """
+        SELECT id, event_type, severity, message, payload, occurred_at
+        FROM system_events
+        WHERE 1=1
+    """
+    params = []
+    
+    if event_type:
+        query += f" AND event_type = ${len(params)+1}"
+        params.append(event_type)
+    
+    if severity:
+        query += f" AND severity = ${len(params)+1}"
+        params.append(severity)
+    
+    query += f" ORDER BY occurred_at DESC LIMIT ${len(params)+1} OFFSET ${len(params)+2}"
+    params.extend([limit, offset])
+    
+    try:
+        logs = await db.pool.fetch(query, *params)
+        total = await db.pool.fetchval("SELECT COUNT(*) FROM system_events")
+        
+        return {
+            "logs": [
+                {
+                    "id": log["id"],
+                    "event_type": log["event_type"],
+                    "severity": log["severity"],
+                    "message": log["message"],
+                    "payload": log["payload"],
+                    "occurred_at": log["occurred_at"].isoformat() if log["occurred_at"] else None
+                }
+                for log in logs
+            ],
+            "total": total
+        }
+    except Exception as e:
+        logger.error(f"Error fetching audit logs: {e}")
+        raise HTTPException(status_code=500, detail="Error al consultar logs de auditoría.")

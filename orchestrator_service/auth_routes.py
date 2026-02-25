@@ -132,17 +132,14 @@ async def register(request: Request, payload: UserRegister):
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def login(request: Request, payload: UserLogin):
     """
     Autentica usuario y retorna JWT.
     Nexus Security v7.7: Rate limited (5/min) + HttpOnly Cookie.
     """
-    # Rate limiting dinámico
-    @limiter.limit("5/minute")
-    async def _processed_login(q_request: Request):
-        return await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
-
-    user = await _processed_login(request)
+    # Fetch user
+    user = await db.fetchrow("SELECT * FROM users WHERE email = $1", payload.email)
 
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")

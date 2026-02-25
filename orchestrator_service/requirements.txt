@@ -28,3 +28,4 @@ pyjwt
 email-validator
 sqlalchemy
 cryptography
+slowapi

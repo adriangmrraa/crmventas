@@ -153,15 +153,19 @@ async def connect_meta(
     
     data = response.json()
     
-    return {
-        "status": "success",
-        "assets": data.get("assets", {}),
-        "connected": {
-            "facebook": bool(data.get("assets", {}).get("pages")),
-            "instagram": bool(data.get("assets", {}).get("instagram")),
-            "whatsapp": bool(data.get("assets", {}).get("whatsapp"))
-        }
     }
+    
+## 5. Lead Form Webhooks (Marketing Hub)
+
+### Protocolo de Recepción
+Para soportar formularios de Meta Ads, el Diplomat debe asegurar:
+1. **Verification Token**: Coincidencia de `META_WEBHOOK_VERIFY_TOKEN` con Meta Developers.
+2. **Page ID Mapping**: La tabla `meta_tokens` DEBE tener la columna `page_id` poblada.
+3. **Graph API Retrieval**: Invocación a `/{leadgen_id}` para obtener PII (Nombre, Teléfono, Email).
+4. **Attribution Ingestion**: Llamada a `ensure_lead_exists` con `source='meta_lead_form'`.
+
+### Notificaciones v7.8
+Al recibir un lead de formulario, se debe emitir un evento `META_LEAD_RECEIVED` vía Socket.IO para alerta inmediata en el Dashboard.
 ```
 
 

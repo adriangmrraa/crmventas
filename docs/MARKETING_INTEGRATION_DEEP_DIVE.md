@@ -125,6 +125,14 @@ class MarketingService:
 - Connection status
 - Refresh/Reconnect actions
 
+### 4. Meta Webhooks (`meta_webhooks.py`)
+Módulo encargado de recibir notificaciones asíncronas de Meta:
+- **Verification**: Handshake inicial para validar el webhook con Meta Graph API.
+- **LeadGen Processing**: 
+  - Al recibir un `leadgen_id`, el sistema usa el `page_id` del payload para encontrar el `tenant_id` en la tabla `meta_tokens`.
+  - Recupera los datos del lead (nombre, email, teléfono) y realiza e **upsert** en el CRM.
+  - Genera notificaciones Socket.IO en tiempo real para el Dashboard.
+
 ---
 
 ## Flujos de Trabajo
@@ -185,76 +193,99 @@ CREATE TABLE meta_tokens (
     expires_at TIMESTAMP,
     meta_user_id VARCHAR(100),
     business_manager_id VARCHAR(100),
+    page_id VARCHAR(255),  -- ID de la página de Facebook vinculada
     encrypted_data BYTEA,  -- Datos adicionales encriptados
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE INDEX idx_meta_tokens_page_id ON meta_tokens(page_id);
+
 -- Campañas Meta Ads
 CREATE TABLE meta_ads_campaigns (
-    id SERIAL PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    campaign_id VARCHAR(100) NOT NULL,
-    campaign_name VARCHAR(255),
-    objective VARCHAR(100),
-    status VARCHAR(50),
-    daily_budget DECIMAL(10,2),
-    lifetime_budget DECIMAL(10,2),
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    meta_data JSONB,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(tenant_id, campaign_id)
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    meta_campaign_id VARCHAR(255) NOT NULL,
+    meta_account_id VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
+    objective TEXT,
+    status TEXT,
+    daily_budget DECIMAL(12,2),
+    lifetime_budget DECIMAL(12,2),
+    spend DECIMAL(12,2) DEFAULT 0,
+    impressions INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    leads_count INTEGER DEFAULT 0,
+    roi_percentage DECIMAL(5,2) DEFAULT 0,
+    last_synced_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_meta_campaign_per_tenant UNIQUE (tenant_id, meta_campaign_id)
 );
 
 -- Insights diarios campañas
 CREATE TABLE meta_ads_insights (
-    id SERIAL PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    campaign_id VARCHAR(100) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    meta_campaign_id VARCHAR(255) NOT NULL,
     date DATE NOT NULL,
-    impressions INTEGER,
-    clicks INTEGER,
-    spend DECIMAL(10,2),
-    conversions INTEGER,
-    conversion_value DECIMAL(10,2),
-    cpm DECIMAL(10,2),
-    cpc DECIMAL(10,2),
-    roas DECIMAL(10,2),
-    meta_data JSONB,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(tenant_id, campaign_id, date)
+    spend DECIMAL(12,2) DEFAULT 0,
+    impressions INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    leads INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_insight_per_day UNIQUE (tenant_id, meta_campaign_id, date)
 );
 
 -- Plantillas HSM WhatsApp
 CREATE TABLE meta_templates (
-    id SERIAL PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    template_name VARCHAR(255) NOT NULL,
-    category VARCHAR(100),
-    language VARCHAR(10),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    meta_template_id VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    language TEXT DEFAULT 'es',
+    status TEXT,
     components JSONB NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending',
-    meta_template_id VARCHAR(100),
-    rejection_reason TEXT,
-    approved_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_meta_template_per_tenant UNIQUE (tenant_id, meta_template_id)
 );
 
 -- Reglas automatización marketing
 CREATE TABLE automation_rules (
-    id SERIAL PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    rule_name VARCHAR(255) NOT NULL,
-    trigger_type VARCHAR(100),  -- lead_status_change, campaign_conversion, etc.
-    trigger_config JSONB,
-    action_type VARCHAR(100),   -- send_hsm, update_lead, create_opportunity
-    action_config JSONB,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    name TEXT NOT NULL,
+    trigger_type TEXT NOT NULL,
+    trigger_conditions JSONB NOT NULL,
+    action_type TEXT NOT NULL,
+    action_config JSONB NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Pipeline de Ventas (ROI Tracking)
+CREATE TABLE opportunities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    lead_id UUID REFERENCES leads(id) NOT NULL,
+    seller_id UUID REFERENCES users(id),
+    name TEXT NOT NULL,
+    value DECIMAL(12,2) NOT NULL,
+    stage TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sales_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    opportunity_id UUID REFERENCES opportunities(id),
+    amount DECIMAL(12,2) NOT NULL,
+    attribution_source TEXT,
+    meta_campaign_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

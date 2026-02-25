@@ -42,7 +42,8 @@ Sustituye `localhost:8000` por la URL del Orchestrator en tu entorno.
 12. [Profesionales / Vendedores](#profesionales)
 13. [Calendario y bloques](#calendario-y-bloques)
 14. [Tratamientos](#tratamientos-services)
-15. [Otros (health, chat IA)](#otros)
+15. [Webhooks (Meta Ads)](#webhooks-meta-ads)
+16. [Otros (health, chat IA)](#otros)
 
 ---
 
@@ -459,6 +460,29 @@ Todos los endpoints de marketing incluyen:
 - **Multi-tenant**: Filtrado automático por `tenant_id`
 - **Token validation**: Verificación JWT + X-Admin-Token
 
+---
+
+## Webhooks (Meta Ads)
+
+Endpoints para recibir notificaciones automáticas de Meta (Facebook/Instagram).
+
+### Verificación de Webhook
+`GET /webhooks/meta`
+
+Usado por Meta para validar el endpoint. Requiere `hub.verify_token` configurado en `META_WEBHOOK_VERIFY_TOKEN`.
+
+### Recepción de Leads (LeadGen)
+`POST /webhooks/meta`
+
+Recibe notificaciones de nuevos leads completando formularios en Meta Ads. 
+1. El backend detecta el `leadgen_id` y `page_id`.
+2. Resuelve el `tenant_id` usando el `page_id` almacenado en `meta_tokens`.
+3. Obtiene detalles (Nombre, Teléfono, Email) vía Graph API.
+4. Realiza un **upsert** en la tabla `leads` con `source = 'meta_lead_form'`.
+5. Emite un evento Socket.IO `META_LEAD_RECEIVED` al panel administrativo.
+
+---
+
 ### Ejemplo de Uso
 
 ```bash
@@ -719,17 +743,15 @@ En rutas de listado administrativas suelen soportarse:
 ### Listar Leads (Generic — todas las fuentes)
 Retorna todos los leads del tenant autenticado (extraído del JWT). **No filtra por `source`** — incluye WhatsApp inbound, Apify scrape y leads manuales. El frontend aplica un guardia de 404 si el lead no existe o ha sido borrado.
 
-**Query params:**
+**Response:** `List[LeadResponse]` — incluye `id`, `tenant_id`, `phone_number`, `first_name`, `last_name`, `email`, `status`, `source`, `apify_title`, `social_links`, `outreach_message_sent`, `created_at`, `updated_at`.
 
-| Parámetro | Tipo | Default | Límite | Descripción |
-|-----------|------|---------|--------|-------------|
-| `limit` | int | 50 | ≤ 500 | Registros por página |
-| `offset` | int | 0 | — | Paginación |
-| `status` | str | — | — | Filtrar por estado (`new`, `contacted`, etc.) |
-| `search` | str | — | — | Búsqueda por nombre, teléfono o email |
-| `assigned_seller_id` | UUID | — | — | Filtrar por vendedor asignado |
-
-**Response:** `List[LeadResponse]` — incluye `id`, `tenant_id`, `phone_number`, `first_name`, `last_name`, `email`, `status`, `source`, `apify_title`, `social_links`, `outreach_message_sent`, `created_at`, `updated_at` entre otros.
+#### Atribución Meta Ads (Nuevos campos)
+- `lead_source`: `ORGANIC`, `META_ADS`, `META_LEAD_FORM`.
+- `meta_ad_id`: ID del anuncio de procedencia.
+- `meta_campaign_id`: ID de la campaña.
+- `meta_ad_headline`: Titular del anuncio.
+- `meta_ad_body`: Texto del anuncio o nota del formulario.
+ - `external_ids`: JSONB con IDs externos (ej. leadgen_id).
 
 > [!IMPORTANT]
 > **Límite actualizado 2026-02-24**: El límite fue aumentado de `le=100` a `le=500` para soportar la vista de Leads del frontend (que carga hasta 500 registros en una sola llamada).
@@ -781,4 +803,5 @@ Retorna **solo leads con `source = 'apify_scrape'`**. Requiere `tenant_id_overri
 |-------|--------|
 | `whatsapp_inbound` | Contacto inició conversación por WhatsApp |
 | `apify_scrape` | Scraping de Google Maps via Apify |
+| `meta_lead_form` | Formulario de Meta Ads (Hub de Marketing) |
 | `manual` | Creado manualmente desde la UI |

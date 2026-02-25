@@ -369,11 +369,20 @@ async def ycloud_webhook(request: Request):
             text = msg.get("text", {}).get("body")
             if text:
                 buffer_key, timer_key, lock_key = f"buffer:{from_n}", f"timer:{from_n}", f"active_task:{from_n}"
-                redis_client.rpush(buffer_key, json.dumps({
+                
+                # Payload enriquecido con referral (Spec Meta Attribution)
+                payload_data = {
                     "text": text,
                     "wamid": msg.get("wamid") or event.get("id"),
                     "event_id": event.get("id")
-                }))
+                }
+                
+                # Check for referral in the message
+                referral = msg.get("referral")
+                if referral:
+                    payload_data["referral"] = referral
+
+                redis_client.rpush(buffer_key, json.dumps(payload_data))
                 redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                 if not redis_client.get(lock_key):
                     redis_client.setex(lock_key, 60, "1")

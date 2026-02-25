@@ -13,11 +13,12 @@ Módulo de ventas (leads, pipeline, vendedores, agenda) dentro de **CRM VENTAS**
 
 ## Entidades
 
-- **Leads:** phone_number, first_name, last_name, email, status (new → contacted → interested → negotiation → closed_won → closed_lost), assigned_seller_id, source, tags, **social_links** (JSONB), apify_* (fields enriquecidos).
+- **Leads:** phone_number, first_name, last_name, email, status (new → contacted → interested → negotiation → closed_won → closed_lost), assigned_seller_id, source, tags, **social_links** (JSONB).
+- **Atribución Meta Ads**: Campos `lead_source` (ORGANIC, META_ADS, META_LEAD_FORM), `meta_ad_id`, `meta_campaign_id`, `meta_ad_headline`, `meta_ad_body`.
 - **Pipeline / stages:** Etapas configurables por tenant (o fijas según spec).
 - **Sellers (vendedores):** Usuarios con rol seller; asignación a leads.
 - **Appointments:** Agenda híbrida (local BD o Google Calendar por tenant); campos source, google_calendar_event_id cuando aplique.
-- **Prospecting:** Workflow de extracción masiva vía Apify con filtrado por nicho y locación. Utiliza ** polling asíncrono** en el backend para manejar ejecuciones largas (>60s).
+- **Prospecting:** Workflow de extracción masiva vía Apify con filtrado por nicho y locación. Utiliza **polling asíncrono** en el backend para manejar ejecuciones largas (>60s).
 
 ---
 

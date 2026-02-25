@@ -1,7 +1,8 @@
 import asyncpg
 import os
 import json
-from typing import List, Tuple, Optional
+from datetime import datetime
+from typing import List, Tuple, Optional, Dict, Any
 
 POSTGRES_DSN = os.getenv("POSTGRES_DSN")
 
@@ -862,6 +863,148 @@ class Database:
             # Parche 36: Normalizar source='whatsapp_inbound' para consistencia core (v7.7.2)
             """
             UPDATE leads SET source = 'whatsapp_inbound' WHERE source = 'whatsapp';
+            """,
+            # Parche 37: Columna page_id en meta_tokens (Marketing Hub)
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meta_tokens') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name = 'meta_tokens' AND column_name = 'page_id') THEN
+                        ALTER TABLE meta_tokens ADD COLUMN page_id VARCHAR(255);
+                        CREATE INDEX IF NOT EXISTS idx_meta_tokens_page_id ON meta_tokens(page_id);
+                    END IF;
+                END IF;
+            END $$;
+            """,
+            # Parche 38: Tablas de Marketing Hub (Sync Meta Ads)
+            """
+            DO $$
+            BEGIN
+                -- meta_ads_campaigns
+                CREATE TABLE IF NOT EXISTS meta_ads_campaigns (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    meta_campaign_id VARCHAR(255) NOT NULL,
+                    meta_account_id VARCHAR(255) NOT NULL,
+                    name TEXT NOT NULL,
+                    objective TEXT,
+                    status TEXT,
+                    daily_budget DECIMAL(12,2),
+                    lifetime_budget DECIMAL(12,2),
+                    start_time TIMESTAMP,
+                    end_time TIMESTAMP,
+                    spend DECIMAL(12,2) DEFAULT 0,
+                    impressions INTEGER DEFAULT 0,
+                    clicks INTEGER DEFAULT 0,
+                    leads_count INTEGER DEFAULT 0,
+                    roi_percentage DECIMAL(5,2) DEFAULT 0,
+                    last_synced_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_meta_campaign_per_tenant UNIQUE (tenant_id, meta_campaign_id)
+                );
+                
+                -- meta_ads_insights
+                CREATE TABLE IF NOT EXISTS meta_ads_insights (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    meta_campaign_id VARCHAR(255) NOT NULL,
+                    date DATE NOT NULL,
+                    spend DECIMAL(12,2) DEFAULT 0,
+                    impressions INTEGER DEFAULT 0,
+                    clicks INTEGER DEFAULT 0,
+                    leads INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_insight_per_day UNIQUE (tenant_id, meta_campaign_id, date)
+                );
+
+                -- meta_templates
+                CREATE TABLE IF NOT EXISTS meta_templates (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    meta_template_id VARCHAR(255) NOT NULL,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    language TEXT DEFAULT 'es',
+                    status TEXT,
+                    components JSONB NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_meta_template_per_tenant UNIQUE (tenant_id, meta_template_id)
+                );
+            END $$;
+            """,
+            # Parche 39: Automatización y Reglas (CRM Marketing)
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS automation_rules (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    name TEXT NOT NULL,
+                    trigger_type TEXT NOT NULL,
+                    trigger_conditions JSONB NOT NULL,
+                    action_type TEXT NOT NULL,
+                    action_config JSONB NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS automation_logs (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    rule_id UUID REFERENCES automation_rules(id),
+                    trigger_type TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    error_message TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            END $$;
+            """,
+            # Parche 40: Pipeline de Ventas (Opportunities & Transactions)
+            """
+            DO $$
+            BEGIN
+                CREATE TABLE IF NOT EXISTS opportunities (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    lead_id UUID REFERENCES leads(id) NOT NULL,
+                    seller_id UUID REFERENCES users(id),
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    value DECIMAL(12,2) NOT NULL,
+                    currency TEXT DEFAULT 'USD',
+                    stage TEXT NOT NULL,
+                    probability DECIMAL(5,2) DEFAULT 0,
+                    expected_close_date DATE,
+                    closed_at TIMESTAMP,
+                    close_reason TEXT,
+                    tags JSONB DEFAULT '[]',
+                    custom_fields JSONB DEFAULT '{}',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS sales_transactions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    opportunity_id UUID REFERENCES opportunities(id),
+                    lead_id UUID REFERENCES leads(id),
+                    amount DECIMAL(12,2) NOT NULL,
+                    currency TEXT DEFAULT 'USD',
+                    transaction_date DATE NOT NULL,
+                    description TEXT,
+                    payment_method TEXT,
+                    payment_status TEXT DEFAULT 'pending',
+                    attribution_source TEXT,
+                    meta_campaign_id VARCHAR(255),
+                    meta_ad_id VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            END $$;
             """
         ]
 
@@ -941,6 +1084,7 @@ class Database:
         phone_number: str,
         customer_name: Optional[str] = None,
         source: str = "whatsapp_inbound",
+        referral: Optional[dict] = None,
     ):
         """
         Ensures a lead record exists for this tenant + phone (CRM Sales).
@@ -951,37 +1095,83 @@ class Database:
         parts = (customer_name or "").strip().split(None, 1)
         first_name = parts[0] if parts else None
         last_name = parts[1] if len(parts) > 1 else None
+        
         async with self.pool.acquire() as conn:
             existing = await conn.fetchrow(
-                "SELECT id, first_name, last_name FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND phone_number = $2",
                 tenant_id,
                 phone_number,
             )
+            
+            # Atribución Meta Ads Logic (Spec Meta Attribution)
+            # Siempre intentamos actualizar la atribución si viene referral (Last Click)
+            attribution_update = {}
+            if referral:
+                ad_id = referral.get("ad_id")
+                if ad_id:
+                    attribution_update = {
+                        "lead_source": "META_ADS",
+                        "meta_ad_id": ad_id,
+                        "meta_ad_headline": referral.get("headline"),
+                        "meta_ad_body": referral.get("body"),
+                        "updated_at": datetime.now()
+                    }
+
             if existing:
-                if first_name is not None or last_name is not None:
-                    fn = first_name or existing["first_name"]
-                    ln = last_name if last_name is not None else existing["last_name"]
-                    await conn.execute(
-                        "UPDATE leads SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name), updated_at = NOW() WHERE id = $3",
-                        fn,
-                        ln,
-                        existing["id"],
-                    )
-                return existing
+                # Use dict casting to avoid Pyre indexing issues with Record
+                existing_dict = dict(existing)
+                # Update base fields
+                fn = first_name or existing_dict.get("first_name")
+                ln = last_name if last_name is not None else existing_dict.get("last_name")
+                
+                # Merge attribution if needed
+                update_fields = {
+                    "first_name": fn,
+                    "last_name": ln,
+                    "updated_at": datetime.now()
+                }
+                if attribution_update:
+                    update_fields.update(attribution_update)
+                
+                # Build dynamic query
+                set_clauses = []
+                values = []
+                for i, (k, v) in enumerate(update_fields.items()):
+                    set_clauses.append(f"{k} = ${i+1}")
+                    values.append(v)
+                values.append(existing_dict.get("id"))
+                
+                query = f"UPDATE leads SET {', '.join(set_clauses)} WHERE id = ${len(values)}"
+                await conn.execute(query, *values)
+                return {**existing_dict, **update_fields}
+
+            # New Lead
             fn = first_name or "Lead"
             ln = last_name or ""
-            row = await conn.fetchrow(
-                """
-                INSERT INTO leads (tenant_id, phone_number, first_name, last_name, status, source, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, 'new', $5, NOW(), NOW())
-                RETURNING id, tenant_id, phone_number, first_name, last_name, status, source
-                """,
-                tenant_id,
-                phone_number,
-                fn,
-                ln,
-                source,
-            )
+            
+            # Prep default insert values
+            insert_fields: Dict[str, Any] = {
+                "tenant_id": tenant_id,
+                "phone_number": phone_number,
+                "first_name": fn,
+                "last_name": ln,
+                "status": "new",
+                "source": source,
+                "lead_source": "ORGANIC",
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            }
+            # Override with attribution if present
+            if attribution_update:
+                for k, v in attribution_update.items():
+                    insert_fields[k] = v
+            
+            # Dynamic Insert
+            cols = ", ".join(insert_fields.keys())
+            placeholders = ", ".join([f"${i+1}" for i in range(len(insert_fields))])
+            query = f"INSERT INTO leads ({cols}) VALUES ({placeholders}) RETURNING id, tenant_id, phone_number, first_name, last_name, status, source"
+            
+            row = await conn.fetchrow(query, *insert_fields.values())
             return row
 
     async def get_chat_history(self, from_number: str, limit: int = 15, tenant_id: Optional[int] = None) -> List[dict]:

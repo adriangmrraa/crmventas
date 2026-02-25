@@ -569,6 +569,7 @@ class MetaOAuthService:
             scopes = token_data.get("scopes", [])
             business_managers = token_data.get("business_managers", [])
             user_id = token_data.get("user_id")
+            page_id = token_data.get("page_id")
             
             # Verificar si ya existe un token para este tenant
             existing_token = await db.fetch_one(
@@ -582,11 +583,12 @@ class MetaOAuthService:
                     """
                     UPDATE meta_tokens 
                     SET access_token = $1, expires_at = $2, scopes = $3, 
-                        business_managers = $4, updated_at = $5, last_used_by = $6
-                    WHERE tenant_id = $7 AND token_type = $8
+                        business_managers = $4, updated_at = $5, last_used_by = $6,
+                        page_id = $7
+                    WHERE tenant_id = $8 AND token_type = $9
                     """,
                     access_token, expires_at, scopes, business_managers, 
-                    datetime.utcnow(), user_id, tenant_id, token_type
+                    datetime.utcnow(), user_id, page_id, tenant_id, token_type
                 )
             else:
                 # Insertar nuevo token
@@ -594,11 +596,11 @@ class MetaOAuthService:
                     """
                     INSERT INTO meta_tokens 
                     (tenant_id, access_token, token_type, expires_at, scopes, 
-                     business_managers, created_at, updated_at, last_used_by)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                     business_managers, created_at, updated_at, last_used_by, page_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                     """,
                     tenant_id, access_token, token_type, expires_at, scopes,
-                    business_managers, datetime.utcnow(), datetime.utcnow(), user_id
+                    business_managers, datetime.utcnow(), datetime.utcnow(), user_id, page_id
                 )
             
             logger.info(f"Stored Meta token for tenant {tenant_id}, type: {token_type}")

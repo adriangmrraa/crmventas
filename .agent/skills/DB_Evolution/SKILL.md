@@ -16,6 +16,7 @@ auto-invoke: true
 - **CRM Persistence**: La tabla `leads` se gestiona vía el pipeline de evolución (Patch 16+). No buscarla en el schema base inicial.
 - **Bloques DO $$**: Uso mandatorio de bloques `DO $$` con lógica de verificación (`IF NOT EXISTS`, `IF EXISTS`) para garantizar la estabilidad tras múltiples reinicios.
 - **Auditoría & Normalización**: Parche 35 (Auditoría con `tenant_id`) y Parche 36 (Normalización de `source` a `whatsapp_inbound`) son críticos para la integridad v7.7.
+- **Parches 37-40 (Marketing & Sales)**: Implementan `page_id` en tokens, tablas de campañas, insights, templates, automatización y el pipeline de ventas (opportunities/transactions).
 - **Sincronización de Base**: Tras evolucionar el pipeline, se debe actualizar el archivo de cimiento `db/init/dentalogic_schema.sql` para nuevas instalaciones.
 
 ## 2. Multi-tenancy & Aislamiento Legal

@@ -25,7 +25,7 @@ Asegurar que **CADA NUEVO DESPLIEGUE** en un entorno limpio nazca funcional y qu
     *   Los parches se agregan como strings SQL a la lista `patches`.
 
 3.  **No Modificar Patches Antiguos**:
-    *   Los parches son históricos. Agrega siempre al final de la lista.
+    *   Los parches son históricos. Agrega siempre al final de la lista. (Log actual: Parches 001-040 sincronizados con `dentalogic_schema.sql`).
     *   Solo se modifican si rompen el arranque por error de sintaxis grave.
 
 4.  **Smart SQL Splitting**:

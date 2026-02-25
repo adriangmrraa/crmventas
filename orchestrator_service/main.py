@@ -99,10 +99,12 @@ except Exception as e:
 try:
     from routes.marketing import router as marketing_router
     from routes.meta_auth import router as meta_auth_router
+    from routes.meta_webhooks import router as meta_webhooks_router
     
     app.include_router(marketing_router, prefix="/crm/marketing", tags=["Marketing"])
     app.include_router(meta_auth_router, prefix="/crm/auth/meta", tags=["Meta OAuth"])
-    logger.info("✅ Meta Ads Marketing API mounted at /crm/marketing and /crm/auth/meta")
+    app.include_router(meta_webhooks_router, prefix="/webhooks", tags=["Webhooks"])
+    logger.info("✅ Meta Ads Marketing API and Webhooks mounted")
 except Exception as e:
     logger.warning(f"Could not mount Meta Ads Marketing routes: {e}")
 
@@ -190,9 +192,27 @@ async def chat_inbound(
 
     await db.mark_inbound_processing(provider, provider_message_id)
     try:
-        await db.ensure_lead_exists(
-            tenant_id, from_number, customer_name=customer_name, source="whatsapp_inbound"
+        # Pass referral to ensure_lead_exists (Spec Meta Attribution)
+        referral = body.get("referral")
+        lead = await db.ensure_lead_exists(
+            tenant_id, from_number, customer_name=customer_name, source="whatsapp_inbound", referral=referral
         )
+
+        # Notify via Socket.IO if attributed (Spec Mission 4)
+        if referral and lead and lead.get("lead_source") == "META_ADS":
+            try:
+                await sio.emit('META_LEAD_RECEIVED', {
+                    "tenant_id": tenant_id,
+                    "lead_id": str(lead.get("id")),
+                    "phone_number": from_number,
+                    "name": f"{lead.get('first_name', '')} {lead.get('last_name', '')}".strip(),
+                    "ad_id": referral.get("ad_id"),
+                    "headline": referral.get("headline"),
+                    "timestamp": datetime.now().isoformat()
+                })
+                logger.info(f"📡 Socket META_LEAD_RECEIVED emitted for {from_number}")
+            except Exception as sio_err:
+                logger.error(f"⚠️ Error emitting Meta lead notification: {sio_err}")
 
         await db.append_chat_message(
             from_number, "user", text, correlation_id, tenant_id

@@ -138,6 +138,22 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 
 **Estado:** ✅ Resuelto y verificado en commit `7750617`.
 
+## Consolidación de Base de Datos: Fuente Única de Verdad (2026-02-25)
+
+**Problema:**
+- Existencia de múltiples archivos de esquema (`init.sql`, `migrations.sql`, `dentalogic_schema.sql`) y parches manuales.
+- Riesgo de inconsistencia al desplegar nuevos tenants o actualizar existentes.
+
+**Causa Raíz:**
+- El crecimiento orgánico del proyecto (módulo CRM, Meta Ads) generó fragmentación en la definición de la base de datos.
+
+**Solución Aplicada:**
+- **Master Schema**: Se consolidaron todos los parches (001-040) y tablas de Marketing Hub en `dentalogic_schema.sql` (v2.0).
+- **Maintenance Robot**: Se sincronizó `db.py` para incluir todos los parches de forma idempotente, permitiendo que cualquier DB antigua se actualice automáticamente al arrancar.
+- **Validación de Tipos**: Se corrigieron errores de Pyre2 en `db.py` mediante el uso de `Dict[str, Any]` y casts para permitir la inyección dinámica de datos de atribución.
+
+**Estado:** ✅ Arquitectura unificada y verificada.
+
 ---
 
-*Histórico de Problemas y Soluciones Nexus v7.7 © 2026*
+*Histórico de Problemas y Soluciones Nexus v7.8 © 2026*

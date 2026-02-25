@@ -528,6 +528,7 @@ async def get_crm_dashboard_stats(
     try:
         # Determine days based on range
         days = 7 if range == "weekly" else 30
+        interval = f"INTERVAL '{days} days'"
         
         # 1. Total leads (all time)
         total_leads = await db.pool.fetchval("""
@@ -542,39 +543,81 @@ async def get_crm_dashboard_stats(
         """, tenant_id) or 0
         
         # 3. Active leads (recent, not converted)
-        active_leads = await db.pool.fetchval("""
+        active_leads = await db.pool.fetchval(f"""
             SELECT COUNT(*) FROM leads 
             WHERE tenant_id = $1 
             AND status NOT IN ('closed_won', 'closed_lost', 'deleted')
-            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
-        """, tenant_id, days) or 0
+            AND created_at >= NOW() - {interval}
+        """, tenant_id) or 0
         
         # 4. Converted leads (closed won in period)
-        converted_leads = await db.pool.fetchval("""
+        converted_leads = await db.pool.fetchval(f"""
             SELECT COUNT(*) FROM leads 
             WHERE tenant_id = $1 
             AND status = 'closed_won'
-            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
-        """, tenant_id, days) or 0
+            AND created_at >= NOW() - {interval}
+        """, tenant_id) or 0
         
-        # 5. Total revenue (estimated from converted leads)
-        # En un sistema real, tendríamos una tabla 'deals' o 'sales'
-        # Por ahora, estimamos $1000 por lead convertido
+        # 5. Total revenue (estimated from converted leads: $1000 per lead)
         total_revenue = converted_leads * 1000.0
         
         # 6. Conversion rate (based on period)
-        conversion_rate = 0.0
-        period_leads = await db.pool.fetchval("""
+        period_leads = await db.pool.fetchval(f"""
             SELECT COUNT(*) FROM leads 
             WHERE tenant_id = $1 
             AND status != 'deleted'
-            AND created_at >= CURRENT_DATE - INTERVAL '1 day' * $2
-        """, tenant_id, days) or 0
+            AND created_at >= NOW() - {interval}
+        """, tenant_id) or 0
         
-        if period_leads > 0:
-            conversion_rate = (converted_leads / period_leads) * 100
+        conversion_rate = (converted_leads / period_leads * 100) if period_leads > 0 else 0.0
         
-        # 7. Recent leads for "Recent Leads" section
+        # 7. Status distribution
+        status_rows = await db.pool.fetch("""
+            SELECT status, COUNT(*) as count FROM leads
+            WHERE tenant_id = $1 AND status != 'deleted'
+            GROUP BY status
+        """, tenant_id)
+        
+        status_colors = {
+            'new': '#3b82f6',
+            'contacted': '#f59e0b',
+            'interested': '#8b5cf6',
+            'negotiation': '#f97316',
+            'closed_won': '#10b981',
+            'closed_lost': '#ef4444'
+        }
+        
+        status_distribution = [
+            {"status": r["status"] or "new", "count": r["count"], "color": status_colors.get(r["status"], "#94a3b8")}
+            for r in status_rows
+        ]
+
+        # 8. Revenue & Leads Trend (Last 6 months)
+        trend_rows = await db.pool.fetch("""
+            WITH months AS (
+                SELECT generate_series(
+                    date_trunc('month', CURRENT_DATE - INTERVAL '5 months'),
+                    date_trunc('month', CURRENT_DATE),
+                    '1 month'::interval
+                ) as month_start
+            )
+            SELECT 
+                to_char(m.month_start, 'Mon') as month_label,
+                COUNT(l.id) as leads_count,
+                COALESCE(SUM(CASE WHEN l.status = 'closed_won' THEN 1000.0 ELSE 0 END), 0) as revenue
+            FROM months m
+            LEFT JOIN leads l ON date_trunc('month', l.created_at) = m.month_start 
+              AND l.tenant_id = $1 AND l.status != 'deleted'
+            GROUP BY m.month_start
+            ORDER BY m.month_start ASC
+        """, tenant_id)
+        
+        revenue_leads_trend = [
+            {"month": r["month_label"], "revenue": float(r["revenue"]), "leads": r["leads_count"]}
+            for r in trend_rows
+        ]
+
+        # 9. Recent leads
         recent_leads = await db.pool.fetch("""
             SELECT id, first_name, last_name, phone_number, status, 
                    created_at, source, prospecting_niche
@@ -585,34 +628,17 @@ async def get_crm_dashboard_stats(
             LIMIT 5
         """, tenant_id)
         
-        # Format recent leads
         formatted_recent_leads = []
         for lead in recent_leads:
-            # Formatear nombre
-            first_name = lead["first_name"] or ""
-            last_name = lead["last_name"] or ""
-            name = f"{first_name} {last_name}".strip()
-            if not name:
-                name = "Lead sin nombre"
-            
-            # Formatear teléfono
-            phone = lead["phone_number"] or "Sin teléfono"
-            
-            # Formatear fecha
-            created_at = lead["created_at"]
-            if created_at:
-                created_at_iso = created_at.isoformat()
-            else:
-                created_at_iso = None
-            
+            name = f"{lead['first_name'] or ''} {lead['last_name'] or ''}".strip() or "Lead sin nombre"
             formatted_recent_leads.append({
                 "id": str(lead["id"]),
                 "name": name,
-                "phone": phone,
+                "phone": lead["phone_number"] or "Sin teléfono",
                 "status": lead["status"] or "new",
                 "source": lead["source"] or "manual",
                 "niche": lead["prospecting_niche"] or "General",
-                "created_at": created_at_iso
+                "created_at": lead["created_at"].isoformat() if lead["created_at"] else None
             })
         
         return CrmDashboardStats(
@@ -622,12 +648,13 @@ async def get_crm_dashboard_stats(
             converted_leads=converted_leads,
             total_revenue=total_revenue,
             conversion_rate=round(conversion_rate, 1),
+            status_distribution=status_distribution,
+            revenue_leads_trend=revenue_leads_trend,
             recent_leads=formatted_recent_leads
         )
         
     except Exception as e:
         logger.error(f"Error getting CRM dashboard stats: {e}")
-        # En caso de error, devolver datos básicos
         return CrmDashboardStats(
             total_leads=0,
             total_clients=0,
@@ -635,6 +662,8 @@ async def get_crm_dashboard_stats(
             converted_leads=0,
             total_revenue=0.0,
             conversion_rate=0.0,
+            status_distribution=[],
+            revenue_leads_trend=[],
             recent_leads=[]
         )
 

@@ -349,6 +349,8 @@ class CrmDashboardStats(BaseModel):
     converted_leads: int
     total_revenue: float
     conversion_rate: float
+    status_distribution: List[dict] = Field(default_factory=list)
+    revenue_leads_trend: List[dict] = Field(default_factory=list)
     recent_leads: List[dict] = Field(default_factory=list)
     
     class Config:

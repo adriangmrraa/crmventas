@@ -48,12 +48,18 @@ export default function LeadDetailView() {
       setLoading(true);
       setError(null);
       const response = await api.get<Lead>(`${CRM_LEADS_BASE}/${id}`);
+      if (!response.data) {
+        setError('Lead not found');
+        return;
+      }
       setLead(response.data);
-    } catch (err: unknown) {
-      const message = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : 'Failed to load lead';
-      setError(String(message));
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setError('Lead not found');
+      } else {
+        const message = err.response?.data?.detail || 'Failed to load lead';
+        setError(String(message));
+      }
       setLead(null);
     } finally {
       setLoading(false);

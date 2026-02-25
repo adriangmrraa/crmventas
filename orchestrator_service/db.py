@@ -858,6 +858,10 @@ class Database:
                     CREATE INDEX idx_system_events_tenant_v2 ON system_events(tenant_id);
                 END IF;
             END $$;
+            """,
+            # Parche 36: Normalizar source='whatsapp_inbound' para consistencia core (v7.7.2)
+            """
+            UPDATE leads SET source = 'whatsapp_inbound' WHERE source = 'whatsapp';
             """
         ]
 

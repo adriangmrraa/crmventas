@@ -48,12 +48,17 @@ Sustituye `localhost:8000` por la URL del Orchestrator en tu entorno.
 
 ## Autenticación y headers
 
-Todas las rutas bajo **`/admin/core/*`** (y **`/admin/core/crm/*`**) exigen:
+Todas las rutas bajo **`/admin/core/*`** (y **`/admin/core/crm/*`**) están protegidas por una **triple capa de seguridad**:
 
-| Header | Obligatorio | Descripción |
-|--------|-------------|-------------|
-| **`Authorization`** | Sí | `Bearer <JWT>`. El JWT se obtiene con `POST /auth/login`. |
-| **`X-Admin-Token`** | Sí (si está configurado en servidor) | Token estático de infraestructura. El frontend lo inyecta desde `VITE_ADMIN_TOKEN`. Sin este header, el backend responde **401** aunque el JWT sea válido. |
+1. **Infraestructura (X-Admin-Token)**: El header `X-Admin-Token` debe coincidir con el secreto del servidor. El frontend lo inyecta desde `VITE_ADMIN_TOKEN`.
+2. **Sesión (JWT)**: Se admite vía header `Authorization: Bearer <JWT>` o vía **Cookie HttpOnly** `access_token` (Nexus Security v7.6).
+3. **Capa de Aplicación (RBAC)**: El backend valida que el rol (`ceo`, `professional`, etc.) tenga permisos y resuelve el `tenant_id` automáticamente.
+
+| Header / Cookie | Obligatorio | Descripción |
+|-----------------|-------------|-------------|
+| **`Authorization`** | Sí (o Cookie) | `Bearer <JWT>`. El JWT se obtiene con `POST /auth/login`. |
+| **`Cookie: access_token`** | Sí (o Header) | Cookie HttpOnly emitida por el servidor. Permite persistencia de sesión segura contra XSS. |
+| **`X-Admin-Token`** | Sí | Token estático de infraestructura. Sin este header, el backend responde **401**. |
 
 Rutas **públicas** (sin JWT/X-Admin-Token): `GET /auth/clinics`, `POST /auth/register`, `POST /auth/login`, `GET /health`.
 
@@ -108,12 +113,19 @@ El backend aplica fallbacks si la tabla `professionals` no tiene columnas `phone
   }
 }
 ```
-El frontend guarda `access_token` y lo envía en `Authorization: Bearer <JWT>` junto con `X-Admin-Token` en rutas `/admin/*`.
+**Efecto Lateral (Security v7.6):** El servidor emite una cabecera `Set-Cookie` con el `access_token` (HttpOnly, Secure, SameSite=Lax). El frontend **debe** usar `withCredentials: true` en Axios para que el navegador maneje esta cookie automáticamente.
 
-### Usuario actual
+### Logout (Nuevo v7.6)
+`POST /auth/logout`
+
+Limpia la cookie `access_token` en el navegador.
+
+**Response (200):** `{ "status": "logged_out" }`
+
+### Usuario actual (Check de Sesión)
 `GET /auth/me`
 
-Requiere `Authorization: Bearer <JWT>`. Devuelve el usuario autenticado (id, email, role, tenant_id, allowed_tenant_ids).
+Requiere `Authorization: Bearer <JWT>` o presencia de Cookie HttpOnly. Devuelve el usuario autenticado. El frontend usa este endpoint al iniciar para verificar si la cookie HttpOnly aún es válida (evita el login manual si la sesión persiste).
 
 ### Perfil
 `GET /auth/profile` — Datos de perfil del usuario (incl. profesional si aplica).  

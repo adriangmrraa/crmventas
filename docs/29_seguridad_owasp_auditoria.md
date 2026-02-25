@@ -98,6 +98,30 @@ Con esto queda documentado: el JWT está expuesto en el cliente por diseño, per
 
 ---
 
+## Capa de Seguridad Nexus v7.6 (Endurecimiento)
+
+Implementada en Febrero 2026 para CRM Ventas, esta capa añade protecciones de nivel bancario/clínico:
+
+### 1. Sesión Robusta (HttpOnly Cookies)
+Se migró de `localStorage` a Cookies HttpOnly para el JWT. Esto mitiga el robo de sesión vía XSS, ya que JavaScript no puede leer la cookie. El backend emite la cookie en el `/login` y el frontend la propaga automáticamente mediante `withCredentials: true`.
+
+### 2. Middlewares de Seguridad (OWASP A02)
+El microservicio `orchestrator_service` ahora inyecta automáticamente cabeceras de protección en cada respuesta:
+- **HSTS (Strict-Transport-Security)**: Fuerza el uso de HTTPS por 1 año.
+- **Content Security Policy (CSP)**: Restringe de qué dominios se pueden cargar scripts, estilos e imágenes, mitigando inyecciones de código.
+- **X-Frame-Options**: Evita ataques de Clickjacking prohibiendo que la app se cargue en un `<iframe>`.
+- **X-Content-Type-Options**: Previene el "MIME sniffing".
+
+### 3. Prompt Security (OWASP A05/LLM)
+Implementación de `core/prompt_security.py` para analizar los mensajes entrantes de WhatsApp antes de enviarlos a la IA.
+- Detecta intentos de **Prompt Injection** (ej: "olvida tus instrucciones previas").
+- Bloquea mensajes sospechosos directamente en la entrada, protegiendo la lógica del agente.
+
+### 4. Encriptación Fernet (OWASP A04)
+La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** con una clave maestra (`CREDENTIALS_FERNET_KEY`) rotativa. Esto protege tokens de Google y YCloud incluso en caso de dump de la base de datos.
+
+---
+
 ## Resumen OWASP Top 10:2025
 
 | # | Categoría | Descripción breve |
@@ -200,6 +224,9 @@ Con esto queda documentado: el JWT está expuesto en el cliente por diseño, per
 
 ## Checklist de revisión periódica
 
+- [x] **Secure Cookies (v7.6)**: Uso de HttpOnly, Secure y SameSite=Lax para JWT.
+- [x] **Security Headers (v7.6)**: Middleware con CSP, HSTS, X-Frame-Options y X-Content-Type-Options.
+- [x] **Prompt Security (v7.6)**: Detección de inyección de prompts en el orquestador.
 - [ ] Todas las consultas SQL usan parámetros (no f-strings con entrada de usuario).
 - [ ] Ningún endpoint admin omite el filtro `tenant_id` ni la comprobación de rol cuando aplica.
 - [ ] Variables de entorno sensibles (JWT_SECRET_KEY, CREDENTIALS_FERNET_KEY, ADMIN_TOKEN, etc.) no están en el repositorio.

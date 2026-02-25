@@ -15,13 +15,11 @@ El frontend en `frontend_react/` es una SPA moderna basada en:
 - **React 18** + TypeScript + Vite.
 - **TailwindCSS** para el layout y **Vanilla CSS** para el diseño premium (Glassmorphism).
 - **Lucide Icons** para la iconografía dental.
-- **Axios**: Cliente HTTP configurado en `src/api/axios.ts`.
-
-## 2. API Communication Protocol
-**REGLA DE ORO**: Todas las llamadas al backend administrativo **DEBEN** incluir el header `X-Admin-Token`.
-
-### Hook `useApi`:
-Utiliza el hook personalizado para manejar estados de carga y errores de forma estandarizada.
+### 1. Gestión de Sesión (Nexus Security v7.6)
+- **Zero LocalStorage**: El token JWT NO debe guardarse en `localStorage`. La sesión se maneja mediante una **Cookie HttpOnly** emitida por el backend.
+- **Axios Configuration**: Es MANDATORIO el uso de `withCredentials: true` en todas las peticiones para que el navegador incluya automáticamente la cookie HttpOnly.
+- **Persistencia de Sesión**: Al cargar la app, el `AuthContext` debe llamar a `GET /auth/me`. Si el backend responde 200, el usuario está activo (la cookie es válida).
+- **Logout**: Se debe llamar al endpoint `POST /auth/logout` para que el servidor limpie la cookie del lado del cliente.
 
 ### Cliente Axios (`src/api/axios.ts`):
 ```typescript

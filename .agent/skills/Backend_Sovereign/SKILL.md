@@ -36,11 +36,14 @@ Las herramientas del agente deben actuar como gatekeepers:
 2. **Lead-to-Patient Conversion**: `book_appointment` debe denegar la reserva si un usuario `guest` no ha proporcionado: **Nombre Completo, DNI, Obra Social y Teléfono**.
 3. **Triaje y Derivación**: Clasificación NLP obligatoria antes de ofrecer turnos de urgencia.
 
-## 5. Seguridad & Infraestructura
-- **Auth Layer**: Manejo de JWT (HS256) diferenciando roles: `ceo`, `professional`, `secretary`.
-- **INTERNAL_API_TOKEN**: Uso mandatorio para la comunicación entre `whatsapp_service` y `orchestrator_service`.
+## 5. Seguridad & Infraestructura (Nexus v7.6)
+- **Security Layer**: Implementación obligatoria de `SecurityHeadersMiddleware` (CSP, HSTS, X-Frame-Options) en `main.py`.
+- **Auth Layer**: Manejo de JWT (HS256) con **Cookies HttpOnly**. Login emite `Set-Cookie` y logout limpia la sesión.
+- **Prompt Security**: Validación de mensajes entrantes mediante `core/prompt_security.py` para detectar inyecciones de prompts antes de procesar con LLM.
+- **Fernet Encryption**: Uso de `core/credentials.py` para encriptación AES-256 de claves API en la tabla `credentials`.
+- **RBAC**: Diferenciación estricta de roles: `ceo`, `professional`, `secretary`, `setter`, `closer`.
 - **Gatekeeper Flow**: Usuarios nuevos nacen `pending`. La activación (`active`) es responsabilidad única del rol `ceo`.
-- **Protocolo Omega**: Logs de emergencia para links de activación si el SMTP no está disponible.
+- **Protocolo de Resiliencia**: Los queries a tablas de módulos (como `sellers`) deben estar protegidos con `try/except` para manejar estados de migración incompletos.
 
 ## 6. Sincronización Real-Time (WebSockets)
 Garantizar que el Frontend esté siempre al día:

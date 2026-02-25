@@ -6,22 +6,32 @@ scope: "SECURITY"
 auto-invoke: false
 ---
 
-# Protocolo de Auditoría Soberana
+# Protocolo## Auditoría de Seguridad Nexus v7.6
 
-Tu trabajo es encontrar grietas en el aislamiento Multi-Tenant.
+### 1. Sesión y Cookies (OWASP A02)
+- [ ] Verificar que `auth_routes.py` emita `Set-Cookie` con los flags `httponly=True`, `secure=True`, `samesite="lax"`.
+- [ ] Validar que el frontend use `withCredentials: true` en todas las instancias de Axios.
+- [ ] Comprobar que el endpoint `/auth/logout` limpie efectivamente la cookie.
 
-1. **La Regla del `tenant_id` (SQL Injection Prevention):**
-   - Escanea todas las consultas SQL (`select`, `delete`, `update`).
-   - 🚨 **ALERTA ROJA:** Si ves `where(Model.id == id)` sin acompañamiento.
-   - ✅ **CORRECCIÓN:** Debe ser `where(Model.id == id, Model.tenant_id == tenant_id)`.
+### 2. Infraestructura y Cabeceras (OWASP A01/A05)
+- [ ] Confirmar que `SecurityHeadersMiddleware` esté registrado en `main.py`.
+- [ ] Probar con `curl -I` que las respuestas incluyan `Content-Security-Policy`, `Strict-Transport-Security` y `X-Frame-Options`.
 
-2. **Detección de Fugas de Credenciales:**
-   - Busca patrones como `os.getenv("OPENAI_API_KEY")` en el código de negocio.
-   - Eso está **PROHIBIDO**. El código debe fallar si no hay llave en la DB (`credentials` table).
+### 3. IA y Prompts (OWASP LLM01)
+- [ ] Asegurar que los mensajes de WhatsApp pasen por `core/prompt_security.py` antes de llegar a la IA.
+- [ ] Red Flag: Si se pasa el mensaje del usuario directamente a un prompt string sin validación previa.
 
-3. **Validación de Tipos de Identidad:**
-   - En Nexus v6, `User.id` es UUID y `Tenant.id` es INTEGER.
-   - Si ves código que intenta comparar `user.tenant_id` (int) con un string UUID, bloquéalo.
+### 4. Bóveda de Datos (OWASP A04)
+- [ ] Verificar que NO existan credenciales en texto plano en la DB (tabla `credentials`).
+- [ ] Validar que se use `CREDENTIALS_FERNET_KEY` y no claves estáticas en el código.
+
+## Auditoría de Soberanía Nexus
+
+### 1. Multi-tenancy (Aislamiento de Datos)
+- [ ] **Filtro `tenant_id`**: Cada consulta SQL (`SELECT`, `UPDATE`, `DELETE`) DEBE incluir `WHERE tenant_id = :tid`.
+- [ ] **Prevención de Fugado**: Comprobar que no existan joins o subconsultas que omitan el filtro de tenant.
+- [ ] **Sellers Fallback**: Validar que los errores en tablas de módulos (como `sellers`) se manejen con `try/except` para no romper el flujo principal.
+(int) con un string UUID, bloquéalo.
 
 4. **Sanitización de Logs:**
    - Verifica que ningún `print()` o `logger.info()` esté imprimiendo objetos `credential` completos. Los valores deben estar enmascarados (`***`).

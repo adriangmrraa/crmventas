@@ -83,3 +83,24 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 | `GET /admin/core/crm/prospecting/leads` | Solo `apify_scrape` | `tenant_id_override` obligatorio | Vista de Prospección |
 
 **Estado:** ✅ Resuelto en commit `4c857ca`.
+
+---
+
+## Error 500 en Login: Tabla Sellers Inexistente / Índices Duplicados (2026-02-25)
+
+**Problema:**
+- Tras implementar Seguridad Nexus v7.6, el login devolvía **500 Internal Server Error** para cuentas CEO.
+- El log indicaba `column "tenant_id" of relation "sellers" does not exist` o errores de duplicación de índices.
+- La tabla `sellers` se había creado previamente fuera del pipeline de evolución sin la columna `tenant_id`.
+
+**Causa Raíz:**
+1. El parche de evolución 32 usaba `CREATE TABLE IF NOT EXISTS`, lo cual no reparaba la tabla si ya existía pero con esquema incompleto.
+2. El código de login intentaba consultar `sellers` para resolver el `tenant_id` del usuario sin manejar la posible ausencia de la tabla o columna.
+
+**Solución Aplicada:**
+- **Backend (db.py)**: Se refactorizó el parche 32 para ser **idempotente y reparador**. Ahora crea la tabla si no existe, y luego usa `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` para asegurar que `tenant_id` esté presente. También usa bloques `EXCEPTION` para ignorar errores de índices duplicados.
+- **Backend (auth_routes.py)**: Se envolvió la consulta a `sellers` en un bloque `try/except`. Si la tabla falla (p. ej. en medio de una migración), el sistema cae a un fallback seguro usando la tabla `professionals` o el `tenant_id` directo del usuario.
+
+**Lección**: Nunca confiar en `CREATE TABLE IF NOT EXISTS` para integridad de columnas si la tabla pudo ser creada manualmente. Usar siempre `ALTER TABLE` reparadores.
+
+**Estado:** ✅ Resuelto en commit `5cb58e1`.

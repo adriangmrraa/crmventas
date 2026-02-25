@@ -53,34 +53,15 @@ CREATE INDEX idx_credentials_tenant_category
 ON credentials(tenant_id, category);
 ```
 
-### Categorías Soportadas
+### Categorías Soportadas (v7.6+)
 ```python
 SUPPORTED_CATEGORIES = {
-    "openai": {
-        "fields": ["API_KEY"],
-        "masked_display": True
-    },
-    "google": {
-        "fields": ["API_KEY"],
-        "masked_display": True
-    },
-    "smtp": {
-        "fields": ["host", "port", "user", "pass"],
-        "special_handling": "json_stringify"
-    },
-    "tiendanube": {
-        "fields": ["access_token", "user_id"],
-        "oauth": True
-    },
-    "whatsapp_cloud": {
-        "fields": ["access_token", "phone_number_id", "waba_id"],
-        "oauth": True
-    },
-    "meta": {
-        "fields": ["long_lived_token"],
-        "oauth": True,
-        "expires": True
-    }
+    "openai": ["API_KEY"],
+    "google_calendar": ["access_token", "refresh_token"], # OAuth via Connect Sovereign
+    "ycloud": ["API_KEY", "WEBHOOK_SECRET"],
+    "smtp": ["host", "port", "user", "pass"], # JSON stringified
+    "tiendanube": ["access_token", "user_id"],
+    "meta": ["long_lived_token", "user_id"]
 }
 ```
 
@@ -89,44 +70,21 @@ SUPPORTED_CATEGORIES = {
 ### Master Key (Environment Variable)
 ```python
 # orchestrator_service/.env
-INTERNAL_SECRET_KEY=base64_encoded_32_byte_key_here
+# Requerida para orquestador v7.6+
+CREDENTIALS_FERNET_KEY=base64_encoded_32_byte_key_here
 ```
 
-### Encryption Module
+### Encryption Module (Security v7.6)
+Utilizar `orchestrator_service/core/credentials.py`. Este módulo maneja la lógica de derivación y encriptación robusta.
+
 ```python
-# app/core/encryption.py
+from core.credentials import encrypt_credential, decrypt_credential
 
-from cryptography.fernet import Fernet
-import base64
-import os
+# Encriptar antes de guardar en DB (parche 31/32)
+encrypted = encrypt_credential("mi-secreto")
 
-class CredentialEncryption:
-    def __init__(self):
-        # Derivar key desde INTERNAL_SECRET_KEY
-        secret = os.getenv('INTERNAL_SECRET_KEY')
-        if not secret:
-            raise ValueError("INTERNAL_SECRET_KEY not set")
-        
-        # Asegurar 32 bytes (URL-safe base64)
-        key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32))
-        self.cipher = Fernet(key)
-    
-    def encrypt(self, plaintext: str) -> str:
-        """
-        Encripta valor y retorna string base64
-        """
-        encrypted_bytes = self.cipher.encrypt(plaintext.encode())
-        return encrypted_bytes.decode('utf-8')
-    
-    def decrypt(self, ciphertext: str) -> str:
-        """
-        Desencripta valor desde string base64
-        """
-        decrypted_bytes = self.cipher.decrypt(ciphertext.encode())
-        return decrypted_bytes.decode('utf-8')
-
-# Singleton
-encryptor = CredentialEncryption()
+# Desencriptar al usar en runtime
+decrypted = decrypt_credential(encrypted_from_db)
 ```
 
 ## 4. Guardar Credencial (Frontend → Backend)

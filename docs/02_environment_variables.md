@@ -51,14 +51,13 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `ADMIN_TOKEN` | Token maestro de protección | `admin-secret-token` | ✅ |
-| `JWT_SECRET_KEY` | Clave secreta para firmar tokens JWT | `mue-la-se-cre-t-a` | ✅ |
-| `JWT_ALGORITHM` | Algoritmo de firma para JWT | `HS256` | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Duración del token de sesión | `43200` (30 días) | `30` |
-| `PLATFORM_URL` | URL del frontend (para links de activación) | `https://ui.clinic.com` | `http://localhost:3000` |
-| `CORS_ALLOWED_ORIGINS` | Origins CORS permitidos (comma-separated) | `http://localhost:3000,https://domain.com` | `*` |
-| `CREDENTIALS_FERNET_KEY` | Clave Fernet (base64) para cifrar tokens en `credentials` (ej. Auth0 en connect-sovereign) | Salida de `Fernet.generate_key().decode()` | ✅ (si se usa connect-sovereign) |
-| `GOOGLE_CREDENTIALS` | JSON completo de credenciales de Google (Service Account o OAuth) para integración con Google Calendar | Contenido del archivo JSON descargado de Google Cloud Console | ❌ (solo si la clínica usa `calendar_provider: google` y se consulta disponibilidad vía GCal) |
+| **`ADMIN_TOKEN`** | Token maestro de protección (Infraestructura) | `admin-secret-token` | ✅ |
+| **`JWT_SECRET_KEY`** | Clave secreta para firmar tokens JWT (64 bytes hex) | `python -c "import secrets; print(secrets.token_hex(64))"` | ✅ |
+| **`JWT_ALGORITHM`** | Algoritmo de firma para JWT | `HS256` | `HS256` |
+| **`ENVIRONMENT`** | Entorno de ejecución (`production` activa flag Secure en cookies) | `production` | `development` |
+| **`CORS_ALLOWED_ORIGINS`** | Origins CORS permitidos (comma-separated). Requerido para cookies cross-domain. | `https://ui.clinic.com,http://localhost:3000` | `*` |
+| **`CREDENTIALS_FERNET_KEY`** | Clave Fernet (AES-256) para encriptar/desencriptar la tabla `credentials` | `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` | ✅ |
+| **`GOOGLE_CREDENTIALS`** | JSON completo de credenciales de Google | (JSON string) | ❌ |
 
 **Generar clave Fernet:** En la raíz del proyecto, con Python en el PATH: `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows). En Linux/macOS: `python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Guardar la salida en `CREDENTIALS_FERNET_KEY`.
 

@@ -761,7 +761,7 @@ class Database:
             ADD COLUMN IF NOT EXISTS apify_rating FLOAT,
             ADD COLUMN IF NOT EXISTS apify_reviews INTEGER;
             """,
-            # Parche 30 (Nexus Security v7.6): Tabla de auditoría system_events
+            # Parche 30 (Nexus Security v7.6): Tabla de auditoría system_events completa
             """
             DO $$
             BEGIN
@@ -772,12 +772,33 @@ class Database:
                     event_type VARCHAR(100) NOT NULL,
                     description TEXT,
                     metadata JSONB DEFAULT '{}',
-                    created_at TIMESTAMPTZ DEFAULT NOW()
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    severity TEXT DEFAULT 'info',
+                    message TEXT,
+                    payload JSONB DEFAULT '{}',
+                    occurred_at TIMESTAMPTZ DEFAULT NOW()
                 );
+                
+                -- Si la tabla se creó previamente sin las nuevas columnas, agregarlas
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'system_events' AND column_name = 'severity') THEN
+                    ALTER TABLE system_events ADD COLUMN severity TEXT DEFAULT 'info';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'system_events' AND column_name = 'message') THEN
+                    ALTER TABLE system_events ADD COLUMN message TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'system_events' AND column_name = 'payload') THEN
+                    ALTER TABLE system_events ADD COLUMN payload JSONB DEFAULT '{}';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'system_events' AND column_name = 'occurred_at') THEN
+                    ALTER TABLE system_events ADD COLUMN occurred_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+
                 CREATE INDEX IF NOT EXISTS idx_system_events_tenant ON system_events(tenant_id);
                 CREATE INDEX IF NOT EXISTS idx_system_events_user ON system_events(user_id);
                 CREATE INDEX IF NOT EXISTS idx_system_events_type ON system_events(event_type);
                 CREATE INDEX IF NOT EXISTS idx_system_events_created ON system_events(created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_system_events_occurred ON system_events(occurred_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_system_events_severity ON system_events(severity);
             END $$;
             """,
             # Parche 31 (Nexus Security v7.6): Columna category en credentials para clasificación
@@ -843,21 +864,12 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_sellers_user ON sellers(user_id);
             END $$;
             """,
-            # Parche 33: Tabla de Auditoría (system_events)
+            # Parche 33: Tabla de Auditoría (system_events) - Desactivado por consolidación en Parche 30
             """
             DO $$
             BEGIN
-                CREATE TABLE IF NOT EXISTS system_events (
-                    id BIGSERIAL PRIMARY KEY,
-                    event_type TEXT NOT NULL,
-                    severity TEXT DEFAULT 'info' CHECK (severity IN ('info', 'warning', 'critical')),
-                    message TEXT,
-                    payload JSONB,
-                    occurred_at TIMESTAMPTZ DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_system_events_type ON system_events(event_type);
-                CREATE INDEX IF NOT EXISTS idx_system_events_severity ON system_events(severity);
-                CREATE INDEX IF NOT EXISTS idx_system_events_occurred ON system_events(occurred_at DESC);
+                -- Este parche se integró en Parche 30 de manera segura.
+                -- Solo mantenemos el índice GIN de payload por compatibilidad
                 CREATE INDEX IF NOT EXISTS idx_system_events_payload ON system_events USING gin(payload);
             END $$;
             """,

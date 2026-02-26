@@ -219,7 +219,8 @@ export default function ConfigView() {
             showSuccess(`Configuración de ${intConfig.provider === 'ycloud' ? 'WhatsApp' : 'Chatwoot'} guardada.`);
             loadCredentials(); // Refresh table
         } catch (err: any) {
-            setError(err.message || "Error al guardar integración.");
+            const serverDetail = err.response?.data?.detail || err.message || "Error al guardar integración.";
+            setError(serverDetail);
         } finally {
             setSaving(false);
         }

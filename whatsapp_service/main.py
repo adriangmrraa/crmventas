@@ -375,7 +375,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
     # --- 1. Handle Inbound Messages ---
     if event_type == "whatsapp.inbound_message.received":
         msg = event.get("whatsappInboundMessage", {})
-        from_n, to_n, name = msg.get("from"), msg.get("to"), msg.get("customerProfile", {}).get(\"name")
+        from_n, to_n, name = msg.get("from"), msg.get("to"), msg.get("customerProfile", {}).get("name")
         msg_type = msg.get("type")
         
         # DEDUP DE WEBHOOK: YCloud puede reintentar la entrega hasta 24hs después.

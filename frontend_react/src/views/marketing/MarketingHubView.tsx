@@ -67,7 +67,7 @@ export default function MarketingHubView() {
 
     const loadDeploymentConfig = async () => {
         try {
-            const { data } = await api.get('/admin/config/deployment');
+            const { data } = await api.get('/admin/core/config/deployment');
             setDeploymentConfig(data);
         } catch (error) {
             console.error("Error loading deployment config:", error);

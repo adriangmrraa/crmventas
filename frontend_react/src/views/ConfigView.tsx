@@ -139,8 +139,8 @@ export default function ConfigView() {
     const loadIntegrationConfig = async (provider: 'ycloud', tenantId: number | null) => {
         try {
             setLoading(true);
-            const query = tenantId ? `?tenant_id=${tenantId}` : '';
-            const { data } = await api.get(`/admin/integrations/${provider}/config${query}`);
+            const tenantParam = tenantId ? tenantId.toString() : 'global';
+            const { data } = await api.get(`/admin/settings/integration/${provider}/${tenantParam}`);
 
             setIntConfig(prev => ({
                 ...prev,
@@ -152,7 +152,11 @@ export default function ConfigView() {
             // For YCloud, we might need deployment config for the webhook URL
             if (provider === 'ycloud' && !data.ycloud_webhook_url) {
                 const depRes = await api.get('/admin/config/deployment');
-                setIntConfig(prev => ({ ...prev, ycloud_webhook_url: depRes.data.webhook_ycloud_url }));
+                let baseWebhook = depRes.data.webhook_ycloud_url;
+                if (tenantId) {
+                    baseWebhook = `${baseWebhook}/${tenantId}`;
+                }
+                setIntConfig(prev => ({ ...prev, ycloud_webhook_url: baseWebhook }));
             }
         } catch (err) {
             console.error(err);
@@ -182,7 +186,8 @@ export default function ConfigView() {
         setSaving(true);
         setError(null);
         try {
-            await api.post(`/admin/integrations/${intConfig.provider}/config`, intConfig);
+            const tenantParam = intConfig.tenant_id ? intConfig.tenant_id.toString() : 'global';
+            await api.post(`/admin/settings/integration/${intConfig.provider}/${tenantParam}`, intConfig);
             showSuccess(`Configuración de ${intConfig.provider === 'ycloud' ? 'WhatsApp' : 'Chatwoot'} guardada.`);
             loadCredentials(); // Refresh table
         } catch (err: any) {
@@ -318,7 +323,7 @@ export default function ConfigView() {
                                 onChange={(e) => setIntConfig({ ...intConfig, tenant_id: e.target.value ? Number(e.target.value) : null })}
                             >
                                 <option value="">{t('config.global_all_tenants')}</option>
-                                {tenants.map(t => <option key={t.id} value={t.id}>{t.clinic_name}</option>)}
+                                {tenants.map(t => <option key={t.id} value={t.id.toString()}>{t.clinic_name}</option>)}
                             </select>
                         </div>
 

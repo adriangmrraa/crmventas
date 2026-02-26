@@ -60,7 +60,22 @@
     "niche_help": "Cambiar entre Dental (agenda, pacientes) y CRM Ventas (leads). El menú y la vista se actualizan al instante.",
     "niche_dental": "Dental",
     "niche_crm_sales": "CRM Ventas",
-    "niche_updated": "Modo actualizado. El menú ha cambiado."
+    "niche_updated": "Modo actualizado. El menú ha cambiado.",
+    "configure_credential": "Configurar credencial",
+    "field_tenant": "Entidad",
+    "global_all_tenants": "Global",
+    "save_config": "Guardar configuración",
+    "active_credentials": "Credenciales Activas",
+    "col_tenant": "Entidad",
+    "col_status": "Estado",
+    "col_actions": "Acciones",
+    "status_active": "Activo",
+    "no_whatsapp_configured": "Aún no has configurado ninguna credencial",
+    "other_integrations": "Otras integraciones",
+    "other_integrations_hint": "Administra integraciones de otros servicios",
+    "webhook_title_ycloud": "URL de Webhook (YCloud WhatsApp)",
+    "webhook_hint_ycloud": "Configurá esta URL en el panel de desarrollador de YCloud para recibir mensajes de esta entidad.",
+    "copy_url": "Copiar URL del Webhook"
   },
   "login": {
     "title": "CRM Ventas",

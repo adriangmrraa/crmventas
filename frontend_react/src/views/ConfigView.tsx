@@ -384,7 +384,7 @@ export default function ConfigView() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {credentials.filter(c => c.category === 'ycloud' && c.name === 'YCLOUD_API_KEY').map(c => (
+                                {credentials.filter(c => c.category === 'integration' && c.name === 'YCLOUD_API_KEY').map(c => (
                                     <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-4 py-4 font-medium text-gray-900">{getTenantName(c.tenant_id)}</td>
                                         <td className="px-4 py-4">
@@ -412,7 +412,7 @@ export default function ConfigView() {
                                         </td>
                                     </tr>
                                 ))}
-                                {credentials.filter(c => c.category === 'ycloud').length === 0 && (
+                                {credentials.filter(c => c.category === 'integration' && c.name === 'YCLOUD_API_KEY').length === 0 && (
                                     <tr><td colSpan={3} className="px-4 py-12 text-center text-gray-400 italic">{t('config.no_whatsapp_configured')}</td></tr>
                                 )}
                             </tbody>
@@ -439,7 +439,7 @@ export default function ConfigView() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {credentials.filter(c => c.category !== 'ycloud').map(cred => (
+                {credentials.filter(c => c.category !== 'integration').map(cred => (
                     <div key={cred.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow group relative overflow-hidden">
                         <div className={`absolute top-0 left-0 w-1 h-full rounded-l-2xl ${cred.scope === 'global' ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
                         <div className="flex justify-between items-start mb-3 pl-2">
@@ -466,7 +466,7 @@ export default function ConfigView() {
                         </div>
                     </div>
                 ))}
-                {credentials.filter(c => c.category !== 'ycloud').length === 0 && (
+                {credentials.filter(c => c.category !== 'integration').length === 0 && (
                     <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                         {t('config.no_other_credentials')}
                     </div>

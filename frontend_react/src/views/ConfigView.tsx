@@ -102,7 +102,7 @@ export default function ConfigView() {
     const loadGeneralSettings = async () => {
         try {
             setLoading(true);
-            const res = await api.get<ClinicSettings>('/admin/settings/clinic');
+            const res = await api.get<ClinicSettings>('/admin/core/settings/clinic');
             setSettings(res.data);
             setSelectedLang((res.data.ui_language as UiLanguage) || 'en');
         } catch (err) {
@@ -114,7 +114,7 @@ export default function ConfigView() {
 
     const loadTenants = async () => {
         try {
-            const { data } = await api.get<Tenant[]>('/admin/chat/tenants');
+            const { data } = await api.get<Tenant[]>('/admin/core/chat/tenants');
             if (Array.isArray(data)) {
                 setTenants(data);
                 // Default tenant for integration forms if not set
@@ -129,7 +129,7 @@ export default function ConfigView() {
 
     const loadCredentials = async () => {
         try {
-            const { data } = await api.get('/admin/credentials');
+            const { data } = await api.get('/admin/core/credentials');
             if (Array.isArray(data)) setCredentials(data);
         } catch (e) {
             console.error(e);
@@ -140,7 +140,7 @@ export default function ConfigView() {
         try {
             setLoading(true);
             const tenantParam = tenantId ? tenantId.toString() : 'global';
-            const { data } = await api.get(`/admin/settings/integration/${provider}/${tenantParam}`);
+            const { data } = await api.get(`/admin/core/settings/integration/${provider}/${tenantParam}`);
 
             setIntConfig(prev => ({
                 ...prev,
@@ -151,7 +151,7 @@ export default function ConfigView() {
 
             // For YCloud, we might need deployment config for the webhook URL
             if (provider === 'ycloud' && !data.ycloud_webhook_url) {
-                const depRes = await api.get('/admin/config/deployment');
+                const depRes = await api.get('/admin/core/config/deployment');
                 let baseWebhook = depRes.data.webhook_ycloud_url;
                 if (tenantId) {
                     baseWebhook = `${baseWebhook}/${tenantId}`;
@@ -171,7 +171,7 @@ export default function ConfigView() {
         setSelectedLang(value);
         setSaving(true);
         try {
-            await api.patch('/admin/settings/clinic', { ui_language: value });
+            await api.patch('/admin/core/settings/clinic', { ui_language: value });
             setSettings(prev => (prev ? { ...prev, ui_language: value } : null));
             setLanguage(value);
             showSuccess(t('config.saved'));
@@ -187,7 +187,7 @@ export default function ConfigView() {
         setError(null);
         try {
             const tenantParam = intConfig.tenant_id ? intConfig.tenant_id.toString() : 'global';
-            await api.post(`/admin/settings/integration/${intConfig.provider}/${tenantParam}`, intConfig);
+            await api.post(`/admin/core/settings/integration/${intConfig.provider}/${tenantParam}`, intConfig);
             showSuccess(`Configuración de ${intConfig.provider === 'ycloud' ? 'WhatsApp' : 'Chatwoot'} guardada.`);
             loadCredentials(); // Refresh table
         } catch (err: any) {
@@ -201,9 +201,9 @@ export default function ConfigView() {
         e.preventDefault();
         try {
             if (editingCred?.id) {
-                await api.put(`/admin/credentials/${editingCred.id}`, credForm);
+                await api.put(`/admin/core/credentials/${editingCred.id}`, credForm);
             } else {
-                await api.post('/admin/credentials', credForm);
+                await api.post('/admin/core/credentials', credForm);
             }
             setIsCredModalOpen(false);
             loadCredentials();
@@ -217,7 +217,7 @@ export default function ConfigView() {
         if (!confirm(`¿Estás seguro de que deseas eliminar los archivos multimedia con más de ${days} días de antigüedad? Esta acción es irreversible.`)) return;
         setSaving(true);
         try {
-            const { data } = await api.post('/admin/maintenance/clean-media', { days });
+            const { data } = await api.post('/admin/core/maintenance/clean-media', { days });
             showSuccess(`Limpieza completada. Se eliminaron ${data.deleted} archivos.`);
         } catch (err: any) {
             setError(err.message || "Error al realizar limpieza.");
@@ -229,7 +229,7 @@ export default function ConfigView() {
     const handleDeleteCredential = async (id: number) => {
         if (!confirm('¿Eliminar esta credencial?')) return;
         try {
-            await api.delete(`/admin/credentials/${id}`);
+            await api.delete(`/admin/core/credentials/${id}`);
             loadCredentials();
             showSuccess("Credencial eliminada.");
         } catch (e: any) {

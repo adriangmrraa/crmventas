@@ -171,7 +171,7 @@ class Database:
             END $$;
             """,
 
-            # Parche 5: Columnas extendidas en 'leads'
+            # Parche 5: Columnas extendidas en 'leads' y roles CRM
             """
             DO $$ BEGIN 
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='email') THEN
@@ -183,21 +183,19 @@ class Database:
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='assigned_seller_id') THEN
                     ALTER TABLE leads ADD COLUMN assigned_seller_id UUID REFERENCES users(id);
                 END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='assigned_seller_id') THEN
+                    ALTER TABLE leads ADD COLUMN assigned_seller_id UUID REFERENCES users(id);
+                END IF;
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='stage_id') THEN
                     ALTER TABLE leads ADD COLUMN stage_id UUID;
                 END IF;
-            END $$;
-            """,
-
-            # Parche 6: Roles de venta setter/closer
-            """
-            DO $$ BEGIN 
+                -- Roles de venta
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
                 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('ceo', 'professional', 'secretary', 'setter', 'closer'));
             EXCEPTION WHEN others THEN NULL; END $$;
             """,
 
-            # Parche 7: Tabla 'system_events' (Auditoría)
+            # Parche 6: Tabla 'system_events' (Auditoría v7.7.3)
             """
             DO $$ BEGIN 
                 IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'system_events') THEN
@@ -211,33 +209,115 @@ class Database:
                         created_at TIMESTAMPTZ DEFAULT NOW()
                     );
                 END IF;
-                -- Asegurar tenant_id si la tabla existía sin él
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='system_events' AND column_name='tenant_id') THEN
                     ALTER TABLE system_events ADD COLUMN tenant_id INTEGER REFERENCES tenants(id);
+                END IF;
+                CREATE INDEX IF NOT EXISTS idx_system_events_payload ON system_events USING gin(payload);
+            END $$;
+            """,
+
+            # Parche 7: Tablas de Marketing Hub, Automatización y Leads Extended
+            """
+            DO $$ BEGIN
+                CREATE TABLE IF NOT EXISTS meta_ads_campaigns (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    meta_campaign_id VARCHAR(255) NOT NULL,
+                    name TEXT NOT NULL,
+                    status TEXT,
+                    spend DECIMAL(12,2) DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_meta_campaign_per_tenant UNIQUE (tenant_id, meta_campaign_id)
+                );
+                CREATE TABLE IF NOT EXISTS automation_rules (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+                    name TEXT NOT NULL,
+                    trigger_type TEXT NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                -- Prospecting fields in leads
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='apify_title') THEN
+                    ALTER TABLE leads ADD COLUMN apify_title TEXT, ADD COLUMN apify_category_name TEXT, ADD COLUMN apify_address TEXT;
+                    ALTER TABLE leads ADD COLUMN apify_reviews_count INTEGER, ADD COLUMN apify_rating FLOAT;
                 END IF;
             END $$;
             """,
 
-            # Parche 8: Tablas de Marketing y Automatización
+            # Parche 8: Pipeline de Ventas (Opportunities, Transactions & Clients)
             """
-            CREATE TABLE IF NOT EXISTS meta_ads_campaigns (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
-                meta_campaign_id VARCHAR(255) NOT NULL,
-                name TEXT NOT NULL,
-                status TEXT,
-                spend DECIMAL(12,2) DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT unique_meta_campaign_per_tenant UNIQUE (tenant_id, meta_campaign_id)
-            );
-            CREATE TABLE IF NOT EXISTS automation_rules (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
-                name TEXT NOT NULL,
-                trigger_type TEXT NOT NULL,
-                is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'clients') THEN
+                    CREATE TABLE clients (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+                        phone_number VARCHAR(50) NOT NULL,
+                        first_name VARCHAR(100),
+                        last_name VARCHAR(100),
+                        status VARCHAR(50) DEFAULT 'active',
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        CONSTRAINT clients_tenant_phone_unique UNIQUE (tenant_id, phone_number)
+                    );
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'opportunities') THEN
+                    CREATE TABLE opportunities (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        lead_id UUID REFERENCES leads(id) NOT NULL,
+                        seller_id UUID REFERENCES users(id),
+                        name TEXT NOT NULL,
+                        value DECIMAL(12,2) NOT NULL,
+                        stage TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales_transactions') THEN
+                    CREATE TABLE sales_transactions (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        opportunity_id UUID REFERENCES opportunities(id),
+                        amount DECIMAL(12,2) NOT NULL,
+                        transaction_date DATE NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'seller_agenda_events') THEN
+                    CREATE TABLE seller_agenda_events (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        seller_id INTEGER NOT NULL REFERENCES professionals(id) ON DELETE CASCADE,
+                        title TEXT NOT NULL,
+                        start_datetime TIMESTAMPTZ NOT NULL,
+                        end_datetime TIMESTAMPTZ NOT NULL,
+                        lead_id UUID REFERENCES leads(id),
+                        status TEXT DEFAULT 'scheduled'
+                    );
+                END IF;
+            END $$;
+            """,
+
+            # Parche 9: Auto-activación del primer CEO (Nexus Onboarding)
+            """
+            DO $$ 
+            BEGIN 
+                -- Si no hay ningún CEO activo, activamos todos los CEOs pendientes
+                IF NOT EXISTS (SELECT 1 FROM users WHERE role = 'ceo' AND status = 'active') THEN
+                    UPDATE users SET status = 'active' WHERE role = 'ceo' AND status = 'pending';
+                    -- Sincronizar con profesionales si existe el registro correspondiente
+                    UPDATE professionals SET is_active = TRUE 
+                    WHERE email IN (SELECT email FROM users WHERE role = 'ceo' AND status = 'active');
+                END IF;
+            END $$;
+            """,
+
+            # Parche 10: Asegurar tenant_id en users y constraints finales
+            """
+            DO $$ BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='tenant_id') THEN
+                    ALTER TABLE users ADD COLUMN tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE;
+                END IF;
+            EXCEPTION WHEN others THEN NULL; END $$;
             """
         ]
 

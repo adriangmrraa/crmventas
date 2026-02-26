@@ -171,6 +171,13 @@ Dentalogic implementa una arquitectura de **Seguridad de Triple Capa**:
 2.  **Capa de Infraestructura (X-Admin-Token)**: Las rutas administrativas críticas requieren un token estático (`INTERNAL_SECRET_KEY`) para prevenir accesos no autorizados incluso si la sesión del usuario es válida.
 3.  **Capa de Gatekeeper (Aprobación)**: Todo registro nuevo entra en estado `pending`. Solo un usuario con rol `ceo` puede activar cuentas desde el panel de control.
 
+### 4.2 Sovereign Credentials (The Vault)
+Nexus v7.8 introduce **The Vault**, un sistema de gestión de credenciales multi-tenant encriptadas:
+- **Persistencia**: Las claves de integración (YCloud API Key, Webhook Secret, OpenAI por tenant) se almacenan en la tabla `credentials`.
+- **Encriptación**: Uso de **Fernet (AES-256)** para proteger los valores en reposo.
+- **Jerarquía**: El sistema prioriza las credenciales de la base de datos (The Vault) sobre las variables de entorno, permitiendo configuraciones únicas por sede.
+- **Aislamiento**: Cada par de credenciales está estrictamente vinculado a un `tenant_id`.
+
 ## 5. Flujo de una Urgencia
 
 ---

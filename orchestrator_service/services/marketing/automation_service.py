@@ -165,7 +165,7 @@ class AutomationService:
                 template_name="lead_recovery_v1",
                 language="es",
                 components=[
-                    {"type": "body", "parameters": [{"type": "text", "text": lead['first_name']}]}
+                    {"type": "body", "parameters": [{"type": "text", "text": (lead['first_name'] or "Hola")}]}
                 ],
                 trigger_type="lead_recovery",
                 target_id=str(lead['id']),
@@ -205,6 +205,18 @@ class AutomationService:
             """, tenant_id, patient_id, trigger_type, target_id, json.dumps(response))
             
             logger.info(f"✅ HSM {trigger_type} enviado a {to} (Tenant {tenant_id})")
+            
+            # Registrar en chat_messages para que aparezca en el CRM
+            # Buscamos el contenido aproximado o un placeholder descriptivo si no tenemos el texto exacto del template aquí
+            template_desc = f"[Mensaje Automático: {template_name}]"
+            await db.append_chat_message(
+                from_number=to,
+                role="assistant",
+                content=template_desc,
+                correlation_id=f"auto_{trigger_type}_{target_id}",
+                tenant_id=tenant_id
+            )
+            
             return True
 
         except Exception as e:

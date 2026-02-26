@@ -97,10 +97,13 @@ Variables para integración con Meta (Facebook/Instagram) Ads y WhatsApp HSM Aut
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `YCLOUD_API_KEY` | API Key de YCloud | `api_key_xxxxx` | ✅ |
-| `YCLOUD_WEBHOOK_SECRET` | Secreto para validar webhooks de YCloud | `webhook_secret_xxxxx` | ✅ |
+| `YCLOUD_API_KEY` | API Key de YCloud (Fallback) | `api_key_xxxxx` | ❌ (Usa "The Vault") |
+| `YCLOUD_WEBHOOK_SECRET` | Secreto webhooks (Fallback) | `webhook_secret_xxxxx` | ❌ (Usa "The Vault") |
 | `ORCHESTRATOR_SERVICE_URL` | URL del Orchestrator (interna) | `http://orchestrator_service:8000` | ✅ |
 | `INTERNAL_API_TOKEN` | Token para comunicarse con Orchestrator | (mismo que global) | ✅ |
+
+> [!NOTE]
+> **Nexus v7.8 (Sovereign Credentials)**: Las claves de YCloud ahora se gestionan primordialmente a través de la tabla `credentials` ("The Vault") asociada a cada `tenant_id`. Las variables de entorno solo se usan como respaldo (fallback) inicial.
 
 ## 5. Platform UI (80)
 

@@ -156,4 +156,41 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 
 ---
 
+---
+
+## Visibilidad de Leads: "No name" en Conversaciones (2026-02-26)
+
+**Problema:**
+- La lista de conversaciones mostraba "No name" para contactos que sí tenían nombre en la base de datos.
+- El contexto clínico funcionaba bien, pero la cabecera y lista de chats fallaban.
+
+**Causa Raíz:**
+- Desajuste de llaves entre Backend y Frontend. El Backend devolvía `contact_name` / `contact_id`, mientras que el Frontend (`ChatsView.tsx`) esperaba `patient_name` / `patient_id`.
+
+**Solución Aplicada:**
+- **Backend (chat_service.py)**: Se modificó `_get_crm_sessions` para devolver ambas llaves (`patient_name` y `patient_id` como alias de los campos de contacto), garantizando compatibilidad retroactiva.
+
+**Estado:** ✅ Resuelto y verificado.
+
+---
+
+## Mensajes Fantasma: Bucle de Repetición del Bot (2026-02-26)
+
+**Problema:**
+- El usuario recibía mensajes del bot ("Hola de nuevo", etc.) de forma repetitiva cada 15-20 minutos.
+- Estos mensajes **no aparecían** en el historial de chat de la plataforma.
+
+**Causa Raíz:**
+1. **TypeError en WhatsApp Service**: La firma de `send_template` en `ycloud_client.py` no aceptaba el argumento opcional `tenant_id`, causando que el proceso fallara *después* de enviar el mensaje a YCloud pero *antes* de marcar el éxito en la base de datos del Orchestrator.
+2. **Missing Logging**: El `AutomationService` registraba la acción en `automation_logs` pero no en `chat_messages`.
+3. **Loop de Reintentos**: Al no registrarse el éxito debido al error de firma, el trigger (p. ej. Lead Recovery) volvía a dispararse en el siguiente ciclo.
+
+**Solución Aplicada:**
+- **WhatsApp Service**: Se sincronizaron las firmas de `YCloudClient` para aceptar `tenant_id`.
+- **Orchestrator (automation_service.py)**: Se agregó una llamada a `db.append_chat_message` dentro de `send_hsm`. Ahora los mensajes automáticos son visibles en el CRM y el flujo se completa correctamente sin reintentos infinitos.
+
+**Estado:** ✅ Resuelto en v7.8.
+
+---
+
 *Histórico de Problemas y Soluciones Nexus v7.8 © 2026*

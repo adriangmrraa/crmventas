@@ -51,8 +51,15 @@ Para garantizar la eficiencia del operador humano en Dentalogic:
 - **Scroll de Mensajes**: El historial debe tener scroll propio e independiente (Caja de mensajes).
 - **Carga de Historial**: Usar el botón de "Cargar más" para acceder a mensajes antiguos sin perder el contexto de la conversación actual.
 
-## 5. Checklist de Operación
-- [ ] ¿El `YCLOUD_WEBHOOK_SECRET` está configurado correctamente en el entorno?
+## 6. Protocolos Técnicos v7.8 (Críticos)
+Para evitar fallos de tipo y bucles de reintentos ("Mensajes Fantasma"):
+- **Tipado de Tenant**: El `tenant_id` **DEBE** ser tratado siempre como `int` en la comunicación entre Orquestador y WhatsApp Service.
+- **Registro de HSM**: Todo mensaje enviado mediante plantilla (HSM) debe registrarse en `chat_messages` mediante `db.append_chat_message` inmediatamente después del envío exitoso.
+- **Credenciales Soberanas**: Las API Keys y Webhook Secrets de YCloud deben leerse preferentemente de la tabla `credentials` ("The Vault") para permitir aislamiento por sede.
+
+## 7. Checklist de Operación
+- [x] ¿El `YCLOUD_WEBHOOK_SECRET` está configurado en **The Vault** (tabla `credentials`)?
+- [x] ¿El `tenant_id` se está pasando como entero (`int`) en las peticiones internas?
 - [ ] ¿El triaje IA de "Gala" está activado en el orquestador?
 - [ ] ¿Las notificaciones de handoff están configuradas para alertar al personal?
-- [ ] ¿El Dashboard muestra los estados de entrega (sent, delivered, read) devueltos por YCloud?
+- [x] ¿Los mensajes automáticos (HSM) aparecen en el historial de chat del Dashboard?

@@ -165,17 +165,41 @@ Store in DB → meta_ads_campaigns, meta_ads_insights
 Update cache → Frontend muestra datos actualizados
 ```
 
-### Flujo 3: HSM Automation
+### Flujo 3: HSM Automation (v7.8)
 
 ```
-Marketing event trigger → Check automation rules
+Evento (Recordatorio/Recuperación) → AutomationService
     ↓
-Rule matches → Get HSM template
+Check de Reglas (automation_rules)
     ↓
-Send via WhatsApp Business API
+Send via WhatsApp Business API (YCloudClient)
     ↓
-Log in automation_logs → Update lead status
+1. Log en automation_logs (Estado del trigger)
+2. Log en chat_messages (Visibilidad en CRM) ✅ NEW v7.8
+    ↓
+Lead status update
 ```
+
+**Nota Técnica v7.8**: Se sincronizaron las firmas de `YCloudClient.send_template` entre microservicios para evitar fallos de tipo (`TypeError`) que interrumpían el flujo de registro, previniendo bucles de reintentos infinitos ("Mensajes Fantasma").
+
+---
+
+## Protocolos de Seguridad y Estabilidad v7.8 (Crítico)
+
+Durante la estabilización de Febrero 2026, se implementaron cambios clave en la relación con **YCloud** y el manejo de **Tenants**:
+
+### 1. The Vault: Credenciales Soberanas
+- **Eliminación de Hardcoding**: Las claves `YCLOUD_API_KEY` y `YCLOUD_WEBHOOK_SECRET` ya no dependen exclusivamente de variables de entorno globales.
+- **Jerarquía de Carga**: El sistema busca primero en la tabla `credentials` ("The Vault") filtrando por `tenant_id`. Las variables de entorno actúan solo como *fallback* de emergencia.
+- **Encriptación**: Todos los secretos en "The Vault" se almacenan mediante **Fernet (AES-256)**.
+
+### 2. Aislamiento Multi-tenant Robusto
+- **Tipado Estricto**: Se identificó que el paso de `tenant_id` como string causaba fallos silenciosos en la firma de mensajes. **Regla**: El `tenant_id` debe ser siempre un entero (`int`) en todo el pipeline de comunicación.
+- **Deduplicación por Sede**: La lógica de Redis ahora incorpora el `tenant_id` para evitar colisiones de mensajes entre diferentes clínicas compartiendo infraestructura.
+
+### 3. Registro Espejo (HSM Visibility)
+- Todo mensaje saliente generado por automatizaciones (HSM) ahora se registra obligatoriamente en `chat_messages`. 
+- Esto garantiza que el operador humano vea qué le dijo la IA al paciente, evitando el problema de "Mensajes Fantasma" (mensajes que se enviaban pero no se veían en el CRM).
 
 ---
 

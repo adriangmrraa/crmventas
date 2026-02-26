@@ -67,7 +67,7 @@ class YCloudClient:
             response.raise_for_status()
             return response.json()
 
-    async def send_template(self, to: str, template_name: str, language: str, components: list, correlation_id: str):
+    async def send_template(self, to: str, template_name: str, language: str, components: list, correlation_id: str, tenant_id: Optional[int] = None):
         """Sends a WhatsApp message using a template."""
         payload = {
             "from": self.business_number,

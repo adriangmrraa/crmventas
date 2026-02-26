@@ -18,10 +18,11 @@ auto-invoke: true
 - **Bloques DO $$**: Usar siempre bloques `DO $$` para garantizar que la migración sea idempotente (ej: `IF NOT EXISTS (SELECT 1 FROM information_schema.columns...)`).
 - **Foundation**: Si el parche es crítico para nuevos tenants, debe replicarse en `db/init/00x_schema.sql`.
 
-## 2. Multi-tenancy & Esquema Dental
+## 2. Multi-tenancy & Esquema Dental (v7.8)
 Es obligatorio el aislamiento estricto de datos:
+- **Tenant Isolation**: Todas las queries SQL **DEBEN** incluir el filtro `tenant_id`. No asumas nunca contexto global. El `tenant_id` debe ser manejado siempre como **entero (`int`)** para evitar fallos de firma en integraciones.
+- **The Vault (Sovereign Credentials)**: Las claves de integración (YCloud, Meta, etc.) deben leerse de la tabla `credentials` filtrando por `tenant_id`. El uso de variables de entorno para esto es considerado **legacy/fallback**.
 - **Tablas Core**: `patients`, `professionals`, `appointments`, `clinical_records`, `accounting_transactions`, `daily_cash_flow`.
-- **Filtro tenant_id**: Todas las queries SQL **DEBEN** incluir el filtro `tenant_id`. No asumas nunca contexto global.
 - **Tipado JSONB**: Dominio de la estructura de `medical_history` y de `working_hours` (0-6 days) en PostgreSQL.
 
 ## 3. Sincronización JIT v2 (Google Calendar)
@@ -49,10 +50,13 @@ Las herramientas del agente deben actuar como gatekeepers:
 Garantizar que el Frontend esté siempre al día:
 - **Emitir Eventos**: Emitir `NEW_APPOINTMENT` o `APPOINTMENT_UPDATED` vía Socket.IO tras cualquier mutación exitosa en la base de datos de turnos.
 
-## 7. WhatsApp Service (Pipeline)
+## 7. WhatsApp Service (Pipeline) v7.8
 - **Transcripción**: Integración Whisper para audios.
 - **Deduplicación**: Cache de 2 minutos en Redis para evitar procesar webhooks duplicados.
 - **Buffering**: Agrupar mensajes en ráfaga para mejorar el contexto del LLM.
+- **Protocolo HSM (v7.8)**: 
+    - **Consistencia de Firma**: Todo cliente de mensajería (YCloudClient) debe mantener firmas idénticas (`tenant_id` opcional) entre servicios para evitar fallos de tipo en disparadores asíncronos.
+    - **Registro Espejo**: Todo mensaje automático/saliente (HSM) debe registrarse en `chat_messages` mediante `db.append_chat_message` para garantizar visibilidad en el CRM y prevenir bucles de reintentos por falta de estado conversacional.
 
 ## 8. Hardening v7.7.1 (Rate Limiting & Auditoría Multi-tenant)
 - **Rate Limiting (slowapi)**: 

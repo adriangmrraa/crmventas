@@ -172,9 +172,12 @@ DROP TABLE IF EXISTS chat_conversations CASCADE;
 2. Busca "Webhook Settings" o "API Configuration"
 3. Configura:
    - **URL:** `https://wa.tudominio.com/webhook/ycloud`
-   - **Secret:** El valor de `YCLOUD_WEBHOOK_SECRET` (debe coincidir)
+   - **Secret:** El valor de `YCLOUD_WEBHOOK_SECRET` (debe coincidir con el valor guardado en **The Vault**).
    - **Events:** Message, MessageStatus, etc.
-4. Prueba webhook (ping test desde panel de YCloud)
+4. **The Vault (Sovereign Credentials)**:
+   - Es **obligatorio** cargar el `YCLOUD_API_KEY` y `YCLOUD_WEBHOOK_SECRET` en la tabla `credentials` para cada `tenant_id`. 
+   - El sistema prioriza estos valores sobre las variables de entorno para permitir el aislamiento multi-sede.
+5. **Tipado Crítico**: Asegúrate de que el `tenant_id` se maneje siempre como un **entero** en las comunicaciones internas (el sistema v7.8 incluye casts automáticos para prevenir errores de tipo).
 
 ### 4.3 Verificar Conectividad
 

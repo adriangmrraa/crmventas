@@ -44,6 +44,9 @@ class ChatService:
                 "phone_number": r["phone_number"],
                 "contact_id": str(r["contact_id"]) if r.get("contact_id") else None,
                 "contact_name": (r["contact_name"] or "").strip() or "Lead",
+                # Frontend (ChatsView.tsx) expects patient_name/patient_id
+                "patient_id": str(r["contact_id"]) if r.get("contact_id") else None,
+                "patient_name": (r["contact_name"] or "").strip() or "Lead",
                 "contact_type": "lead",
                 "last_message": r.get("last_message"),
                 "last_message_time": str(r["last_message_time"]) if r.get("last_message_time") else None,

@@ -140,13 +140,15 @@ class Database:
             """
             DO $$ 
             BEGIN 
-                -- Si existe un usuario CEO en estado pending, lo activamos
-                UPDATE users SET status = 'active' 
-                WHERE role = 'ceo' AND status = 'pending';
-                
-                -- Aseguramos que su perfil profesional también esté activo
-                UPDATE professionals SET is_active = TRUE 
-                WHERE email IN (SELECT email FROM users WHERE role = 'ceo' AND status = 'active');
+                -- Solo activamos un CEO pendiente si NO hay ningún CEO activo
+                IF NOT EXISTS (SELECT 1 FROM users WHERE role = 'ceo' AND status = 'active') THEN
+                    UPDATE users SET status = 'active' 
+                    WHERE role = 'ceo' AND status = 'pending';
+                    
+                    -- Aseguramos que su perfil profesional también esté activo (si existe)
+                    UPDATE professionals SET is_active = TRUE 
+                    WHERE email IN (SELECT email FROM users WHERE role = 'ceo' AND status = 'active');
+                END IF;
             END $$;
             """,
             # Agrega más parches aquí en el futuro...

@@ -104,4 +104,4 @@ async def save_tenant_credential(tenant_id: int, name: str, value: str, category
         return True
     except Exception as e:
         logger.error(f"Error saving credential {name} for tenant {tenant_id}: {e}")
-        return False
+        raise e

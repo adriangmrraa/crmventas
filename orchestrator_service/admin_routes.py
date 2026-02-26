@@ -410,10 +410,11 @@ async def get_credentials(tenant_id_filter: Optional[int] = None, include_integr
 @router.post("/credentials", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def save_credential(payload: CredentialItem, tenant_id: int = Depends(get_resolved_tenant_id)):
     """Guarda o actualiza una credencial cruda para un tenant. Solo para la pestaña 'Otras'."""
-    success = await save_tenant_credential(tenant_id, payload.name, payload.value, payload.category)
-    if not success:
-        raise HTTPException(status_code=500, detail="Error saving credential")
-    return {"status": "ok"}
+    try:
+        await save_tenant_credential(tenant_id, payload.name, payload.value, payload.category)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving credential: {str(e)}")
 
 @router.delete("/credentials/{cred_id}", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def delete_credential(cred_id: int, user_data=Depends(verify_admin_token), tenant_id: int = Depends(get_resolved_tenant_id)):
@@ -473,11 +474,14 @@ async def save_integration_settings(provider: str, tenant_id: str, payload: Inte
              raise HTTPException(status_code=403, detail="Only CEO can save global integration settings")
 
     if provider == "ycloud":
-        if payload.ycloud_api_key and payload.ycloud_api_key != "***":
-            await save_tenant_credential(actual_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
-        if payload.ycloud_webhook_secret and payload.ycloud_webhook_secret != "***":
-            await save_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
-        return {"status": "ok"}
+        try:
+            if payload.ycloud_api_key and payload.ycloud_api_key != "***":
+                await save_tenant_credential(actual_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
+            if payload.ycloud_webhook_secret and payload.ycloud_webhook_secret != "***":
+                await save_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
+            return {"status": "ok"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     else:
         raise HTTPException(status_code=400, detail="Provider not supported or missing tenant_id")
 

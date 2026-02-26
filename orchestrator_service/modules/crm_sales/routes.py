@@ -37,6 +37,12 @@ INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "internal-secret-token")
 WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_service:8002")
 
 # ============================================
+# ROUTERS AND DEPENDENCIES INCLUSION
+# ============================================
+from routes.lead_status_routes import router as lead_status_router
+router.include_router(lead_status_router)
+
+# ============================================
 # LEADS ENDPOINTS
 # ============================================
 

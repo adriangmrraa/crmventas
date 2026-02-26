@@ -83,6 +83,10 @@ const KPICard = ({ title, value, icon: Icon, color, trend }: any) => (
   </div>
 );
 
+import { LeadStatusBadge } from '../components/leads/LeadStatusBadge';
+import { BulkStatusUpdate } from '../components/leads/BulkStatusUpdate';
+import { LeadHistoryTimeline } from '../components/leads/LeadHistoryTimeline';
+
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
     'new': 'bg-blue-100 text-blue-700 border-blue-200',
@@ -110,6 +114,25 @@ export default function CrmDashboardView() {
   const [stats, setStats] = useState<CrmDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'weekly' | 'monthly'>('weekly');
+  const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [historyModalLead, setHistoryModalLead] = useState<{ id: string, name: string } | null>(null);
+
+  const isAdvancedLeadStatusEnabled = import.meta.env.VITE_ENABLE_ADVANCED_LEAD_STATUS === 'true';
+
+  const toggleLeadSelection = (id: string) => {
+    setSelectedLeads(prev =>
+      prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedLeads.length === stats?.recent_leads?.length) {
+      setSelectedLeads([]);
+    } else {
+      setSelectedLeads(stats?.recent_leads?.map(l => l.id) || []);
+    }
+  };
 
   useEffect(() => {
     const loadDashboardData = async (range: string) => {
@@ -268,8 +291,24 @@ export default function CrmDashboardView() {
 
         {/* BOTTOM ROW: RECENT LEADS */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-4">
-          <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-800">Recent Leads</h2>
+          <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-slate-800">Recent Leads</h2>
+              {isAdvancedLeadStatusEnabled && selectedLeads.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-left-4 flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                    {selectedLeads.length} seleccionados
+                  </span>
+                  <button
+                    onClick={() => setShowBulkModal(true)}
+                    className="text-white text-sm font-semibold hover:bg-blue-700 bg-blue-600 px-4 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
+                  >
+                    Actualizar Estado Múltiple
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => navigate('/crm/leads')}
               className="text-blue-600 text-sm font-semibold hover:underline px-3 py-2"
@@ -281,6 +320,16 @@ export default function CrmDashboardView() {
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-slate-50/50">
+                  {isAdvancedLeadStatusEnabled && (
+                    <th className="px-6 py-4 w-12 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        checked={selectedLeads.length > 0 && selectedLeads.length === (stats?.recent_leads ? stats.recent_leads.length : 0)}
+                        onChange={toggleAllSelection}
+                      />
+                    </th>
+                  )}
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Lead</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
@@ -292,7 +341,17 @@ export default function CrmDashboardView() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {(stats?.recent_leads || []).map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedLeads.includes(lead.id) && isAdvancedLeadStatusEnabled ? 'bg-blue-50/30' : ''}`}>
+                    {isAdvancedLeadStatusEnabled && (
+                      <td className="px-6 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          checked={selectedLeads.includes(lead.id)}
+                          onChange={() => toggleLeadSelection(lead.id)}
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
@@ -331,7 +390,11 @@ export default function CrmDashboardView() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <StatusBadge status={lead.status} />
+                      {isAdvancedLeadStatusEnabled ? (
+                        <LeadStatusBadge statusCode={lead.status} />
+                      ) : (
+                        <StatusBadge status={lead.status} />
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       <span className="capitalize">{lead.source}</span>
@@ -349,12 +412,24 @@ export default function CrmDashboardView() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => navigate(`/crm/leads/${lead.id}`)}
-                        className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        {isAdvancedLeadStatusEnabled && (
+                          <button
+                            title="Ver Historial de Estados"
+                            onClick={() => setHistoryModalLead({ id: lead.id, name: lead.name })}
+                            className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          >
+                            <Clock size={18} />
+                          </button>
+                        )}
+                        <button
+                          title="Ver Detalles del Lead"
+                          onClick={() => navigate(`/crm/leads/${lead.id}`)}
+                          className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        >
+                          <ArrowUpRight size={20} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -374,6 +449,29 @@ export default function CrmDashboardView() {
           </div>
         </div>
       </main>
+
+      {/* Bulk Status Update Modal */}
+      {isAdvancedLeadStatusEnabled && showBulkModal && (
+        <BulkStatusUpdate
+          selectedLeadIds={selectedLeads}
+          onCancel={() => setShowBulkModal(false)}
+          onSuccess={() => {
+            setShowBulkModal(false);
+            setSelectedLeads([]);
+            // Force local manual reload since the hook query invalidation hits 'leads' rather than dashboard stats
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Lead History Timeline Modal */}
+      {isAdvancedLeadStatusEnabled && historyModalLead && (
+        <LeadHistoryTimeline
+          leadId={historyModalLead.id}
+          leadName={historyModalLead.name}
+          onClose={() => setHistoryModalLead(null)}
+        />
+      )}
     </div>
   );
 }

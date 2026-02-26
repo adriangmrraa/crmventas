@@ -406,136 +406,6 @@ export default function ConfigView() {
         </div>
     );
 
-    const renderChatwootTab = () => (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* 1. Webhook Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-2 text-blue-800">
-                    <MessageCircle className="w-5 h-5" />
-                    <h3 className="font-semibold">{t('config.webhook_title_chatwoot')}</h3>
-                </div>
-                <p className="text-sm text-blue-700 mb-4">{t('config.webhook_hint_chatwoot')}</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <input readOnly value={intConfig.full_webhook_url || 'Cargando...'} className="flex-1 px-3 py-2 bg-white rounded-lg border border-blue-200 text-sm font-mono text-gray-600 focus:outline-none" />
-                    <button onClick={() => copyToClipboard(intConfig.full_webhook_url || '')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 font-medium">
-                        <Copy size={16} /> <span className="sm:hidden">{t('config.copy_url')}</span>
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {/* 2. Form */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                        <User className="text-blue-600" size={20} />
-                        {t('config.configure_credential')}
-                    </h2>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1 block">{t('config.field_tenant')}</label>
-                            <select
-                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                value={intConfig.tenant_id === null ? '' : intConfig.tenant_id}
-                                onChange={(e) => setIntConfig({ ...intConfig, tenant_id: e.target.value ? Number(e.target.value) : null })}
-                            >
-                                <option value="">{t('config.global_all_tenants')}</option>
-                                {tenants.map(t => <option key={t.id} value={t.id}>{t.clinic_name}</option>)}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1 block">Chatwoot Base URL</label>
-                            <input
-                                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="https://app.chatwoot.com"
-                                value={intConfig.chatwoot_base_url || ''}
-                                onChange={e => setIntConfig({ ...intConfig, chatwoot_base_url: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">Account ID</label>
-                                <input
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                    placeholder="Ej: 1"
-                                    value={intConfig.chatwoot_account_id || ''}
-                                    onChange={e => setIntConfig({ ...intConfig, chatwoot_account_id: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1 block">User API Token</label>
-                            <input
-                                type="password"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="Token de administrador..."
-                                value={intConfig.chatwoot_api_token || ''}
-                                onChange={e => setIntConfig({ ...intConfig, chatwoot_api_token: e.target.value })}
-                            />
-                        </div>
-
-                        <button
-                            onClick={handleSaveIntegration}
-                            disabled={saving}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all flex justify-center items-center gap-2 mt-4"
-                        >
-                            {saving ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={18} /> {t('config.save_config')}</>}
-                        </button>
-                    </div>
-                </div>
-
-                {/* 3. Table */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col min-h-[400px]">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('config.active_credentials')}</h2>
-                    <div className="overflow-x-auto flex-1">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
-                                <tr>
-                                    <th className="px-4 py-3 rounded-l-lg font-semibold">{t('config.col_tenant')}</th>
-                                    <th className="px-4 py-3 font-semibold">Account ID</th>
-                                    <th className="px-4 py-3 rounded-r-lg text-right font-semibold">{t('config.col_actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {credentials.filter(c => c.category ===  && c.name === 'CHATWOOT_ACCOUNT_ID').map(c => (
-                                    <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-4 font-medium text-gray-900">{getTenantName(c.tenant_id)}</td>
-                                        <td className="px-4 py-4 text-gray-600 font-mono tracking-tight">{c.value}</td>
-                                        <td className="px-4 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => setIntConfig({ ...intConfig, tenant_id: c.tenant_id || null })}
-                                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteCredential(c.id!)}
-                                                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {credentials.filter(c => c.category === ).length === 0 && (
-                                    <tr><td colSpan={3} className="px-4 py-12 text-center text-gray-400 italic">{t('config.no_chatwoot_configured')}</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-
     const renderOthersTab = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -552,7 +422,7 @@ export default function ConfigView() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {credentials.filter(c => !['ycloud', ].includes(c.category)).map(cred => (
+                {credentials.filter(c => c.category !== 'ycloud').map(cred => (
                     <div key={cred.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow group relative overflow-hidden">
                         <div className={`absolute top-0 left-0 w-1 h-full rounded-l-2xl ${cred.scope === 'global' ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
                         <div className="flex justify-between items-start mb-3 pl-2">
@@ -579,7 +449,7 @@ export default function ConfigView() {
                         </div>
                     </div>
                 ))}
-                {credentials.filter(c => !['ycloud', ].includes(c.category)).length === 0 && (
+                {credentials.filter(c => c.category !== 'ycloud').length === 0 && (
                     <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                         {t('config.no_other_credentials')}
                     </div>
@@ -699,12 +569,6 @@ export default function ConfigView() {
                                 <Zap size={18} /> YCloud (WhatsApp)
                             </button>
                             <button
-                                onClick={() => setActiveTab()}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab ===  ? 'border-blue-600 text-blue-600 font-semibold' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-200'}`}
-                            >
-                                <MessageCircle size={18} /> Chatwoot (Meta)
-                            </button>
-                            <button
                                 onClick={() => setActiveTab('others')}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'others' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-gray-500 hover:text-indigo-500 hover:border-indigo-200'}`}
                             >
@@ -726,7 +590,6 @@ export default function ConfigView() {
                 <div className="p-6 max-w-6xl mx-auto pb-32">
                     {activeTab === 'general' && renderGeneralTab()}
                     {activeTab === 'ycloud' && user?.role === 'ceo' && renderYCloudTab()}
-                    {activeTab ===  && user?.role === 'ceo' && renderChatwootTab()}
                     {activeTab === 'others' && user?.role === 'ceo' && renderOthersTab()}
                     {activeTab === 'maintenance' && user?.role === 'ceo' && renderMaintenanceTab()}
                 </div>

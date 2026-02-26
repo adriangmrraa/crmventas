@@ -138,6 +138,34 @@ async def get_agent_executor(tenant_id: int):
     return AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 
+# --- PUBLIC WEBHOOK PROXIES ---
+import httpx
+from fastapi.responses import Response
+
+@app.post("/webhook/ycloud/{tenant_id}", tags=["Webhooks"])
+async def proxy_ycloud_webhook(tenant_id: int, request: Request):
+    """
+    Proxies inbound YCloud webhooks from the public orchestrator domain to the internal whatsapp_service.
+    """
+    WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_service:8002")
+    
+    body = await request.body()
+    headers = dict(request.headers)
+    headers.pop("host", None) # Remove host to avoid conflicts
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{WHATSAPP_SERVICE_URL}/webhook/ycloud/{tenant_id}",
+                content=body,
+                headers=headers,
+                timeout=15.0
+            )
+            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
+        except httpx.RequestError as e:
+            logger.error(f"Error proxying webhook to whatsapp_service: {e}")
+            raise HTTPException(status_code=502, detail="Bad Gateway")
+
 # --- INTERNAL CHAT (WhatsApp inbound) ---
 INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "internal-secret-token")
 

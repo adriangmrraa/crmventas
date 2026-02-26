@@ -93,7 +93,7 @@ export default function MarketingHubView() {
     };
 
     return (
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="h-full w-full overflow-y-auto bg-gray-50/50">
             <div className="p-4 sm:p-6 pb-24 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <PageHeader

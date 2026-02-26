@@ -50,55 +50,6 @@ async def get_marketing_stats(
         logger.error(f"Error getting marketing stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting marketing stats: {str(e)}") 
 
-@router.get("/debug/marketing-sync")
-async def debug_marketing_sync(
-    request: Request,
-    tenant_id: int = Query(1, description="Tenant ID to debug"),
-    time_range: str = Query("last_30d", description="Time range")
-) -> Dict[str, Any]:
-    """
-    [DEBUG ONLY] Get raw marketing stats output without auth for debugging connection issues.
-    """
-    try:
-        from core.credentials import get_tenant_credential
-        from services.marketing.meta_ads_service import MetaAdsClient
-        
-        token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
-        ad_account_id = await get_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID")
-        
-        debug_info = {
-            "has_token": bool(token),
-            "ad_account_id": ad_account_id,
-            "raw_campaigns": [],
-            "raw_ads": [],
-            "meta_api_errors": []
-        }
-        
-        if token and ad_account_id:
-            try:
-                client = MetaAdsClient(token)
-                meta_campaigns = await client.get_campaigns_with_insights(ad_account_id, date_preset="maximum")
-                debug_info["raw_campaigns"] = meta_campaigns
-                
-                meta_ads = await client.get_ads_with_insights(ad_account_id, include_insights=True, date_preset="maximum")
-                debug_info["raw_ads"] = meta_ads
-            except Exception as e:
-                debug_info["meta_api_errors"].append(str(e))
-                logger.error(f"Debug Meta API Error: {e}", exc_info=True)
-                
-        # Also get the original stats output
-        campaign_stats = await MarketingService.get_campaign_stats(tenant_id, time_range)
-        
-        return {
-            "success": True,
-            "tenant_id": tenant_id,
-            "debug_info": debug_info,
-            "parsed_data": campaign_stats,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    except Exception as e:
-        logger.error(f"Error in debug_marketing_sync: {e}", exc_info=True)
-        return {"success": False, "error": str(e), "tenant_id": tenant_id}
 
 @router.get("/stats/roi")
 @audit_access("get_roi_details")

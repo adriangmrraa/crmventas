@@ -183,9 +183,6 @@ class Database:
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='assigned_seller_id') THEN
                     ALTER TABLE leads ADD COLUMN assigned_seller_id UUID REFERENCES users(id);
                 END IF;
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='assigned_seller_id') THEN
-                    ALTER TABLE leads ADD COLUMN assigned_seller_id UUID REFERENCES users(id);
-                END IF;
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='stage_id') THEN
                     ALTER TABLE leads ADD COLUMN stage_id UUID;
                 END IF;
@@ -335,23 +332,98 @@ class Database:
             await self.pool.close()
 
     async def try_insert_inbound(self, provider: str, provider_message_id: str, event_id: str, from_number: str, payload: dict, correlation_id: str) -> bool:
+        """Try to insert inbound message. Returns True if inserted, False if duplicate."""
         query = "INSERT INTO inbound_messages (provider, provider_message_id, event_id, from_number, payload, status, correlation_id) VALUES ($1, $2, $3, $4, $5, 'received', $6) ON CONFLICT (provider, provider_message_id) DO NOTHING RETURNING id"
         async with self.pool.acquire() as conn:
             result = await conn.fetchval(query, provider, provider_message_id, event_id, from_number, json.dumps(payload), correlation_id)
             return result is not None
+
+    async def mark_inbound_processing(self, provider: str, provider_message_id: str):
+        query = "UPDATE inbound_messages SET status = 'processing' WHERE provider = $1 AND provider_message_id = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(query, provider, provider_message_id)
+
+    async def mark_inbound_done(self, provider: str, provider_message_id: str):
+        query = "UPDATE inbound_messages SET status = 'done', processed_at = NOW() WHERE provider = $1 AND provider_message_id = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(query, provider, provider_message_id)
+
+    async def mark_inbound_failed(self, provider: str, provider_message_id: str, error: str):
+        query = "UPDATE inbound_messages SET status = 'failed', processed_at = NOW(), error = $3 WHERE provider = $1 AND provider_message_id = $2"
+        async with self.pool.acquire() as conn:
+            await conn.execute(query, provider, provider_message_id, error)
 
     async def append_chat_message(self, from_number: str, role: str, content: str, correlation_id: str, tenant_id: int = 1):
         query = "INSERT INTO chat_messages (from_number, role, content, correlation_id, tenant_id) VALUES ($1, $2, $3, $4, $5)"
         async with self.pool.acquire() as conn:
             await conn.execute(query, from_number, role, content, correlation_id, tenant_id)
 
-    async def ensure_lead_exists(self, tenant_id: int, phone_number: str, customer_name: Optional[str] = None, source: str = "whatsapp_inbound", referral: Optional[dict] = None):
+    async def ensure_lead_exists(
+        self,
+        tenant_id: int,
+        phone_number: str,
+        customer_name: Optional[str] = None,
+        source: str = "whatsapp_inbound",
+        referral: Optional[dict] = None
+    ):
+        """
+        Ensures a lead record exists (CRM Sales).
+        customer_name: WhatsApp display name; split into first_name/last_name.
+        Handles Meta Ads attribution if referral is present.
+        """
         parts = (customer_name or "").strip().split(None, 1)
-        fn = parts[0] if parts else "Lead"
-        ln = parts[1] if len(parts) > 1 else ""
+        first_name = parts[0] if parts else "Lead"
+        last_name = parts[1] if len(parts) > 1 else ""
+        
         async with self.pool.acquire() as conn:
-            query = "INSERT INTO leads (tenant_id, phone_number, first_name, last_name, source) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (tenant_id, phone_number) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, updated_at = NOW() RETURNING id"
-            return await conn.fetchrow(query, tenant_id, phone_number, fn, ln, source)
+            # 1. Check for existing lead
+            existing = await conn.fetchrow(
+                "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                tenant_id, phone_number
+            )
+            
+            # 2. Build attribution fields if referral present (Spec Multi-Attribution)
+            attribution_data = {}
+            if referral:
+                ad_id = referral.get("ad_id")
+                if ad_id:
+                    attribution_data = {
+                        "lead_source": "META_ADS",
+                        "meta_ad_id": ad_id,
+                        "meta_campaign_id": referral.get("campaign_id")
+                    }
+
+            if existing:
+                # Update existing lead
+                update_fields = {
+                    "first_name": first_name if first_name != "Lead" else existing["first_name"],
+                    "last_name": last_name if last_name else existing["last_name"],
+                    "updated_at": datetime.now()
+                }
+                if attribution_data:
+                    update_fields.update(attribution_data)
+                
+                set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(update_fields.keys())]
+                query = f"UPDATE leads SET {', '.join(set_clauses)} WHERE id = ${len(update_fields)+1}"
+                await conn.execute(query, *update_fields.values(), existing["id"])
+                return {**dict(existing), **update_fields}
+
+            # 3. Create new lead
+            insert_fields = {
+                "tenant_id": tenant_id,
+                "phone_number": phone_number,
+                "first_name": first_name,
+                "last_name": last_name,
+                "source": source,
+                "lead_source": attribution_data.get("lead_source", "ORGANIC")
+            }
+            if attribution_data:
+                insert_fields.update(attribution_data)
+                
+            cols = ", ".join(insert_fields.keys())
+            placeholders = ", ".join([f"${i+1}" for i in range(len(insert_fields))])
+            query = f"INSERT INTO leads ({cols}) VALUES ({placeholders}) RETURNING id, tenant_id, phone_number, first_name, last_name, status, source, lead_source"
+            return await conn.fetchrow(query, *insert_fields.values())
 
     async def get_chat_history(self, from_number: str, limit: int = 15, tenant_id: Optional[int] = None) -> List[dict]:
         if tenant_id is not None:

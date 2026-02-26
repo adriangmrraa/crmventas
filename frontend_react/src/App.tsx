@@ -18,6 +18,8 @@ import ProspectingView from './modules/crm_sales/views/ProspectingView';
 // Marketing Views
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
+// Legal Pages
+import PrivacyTermsView from './views/PrivacyTermsView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -30,6 +32,9 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginView />} />
             <Route path="/demo" element={<LandingView />} />
+            <Route path="/legal" element={<PrivacyTermsView />} />
+            <Route path="/privacy" element={<PrivacyTermsView />} />
+            <Route path="/terms" element={<PrivacyTermsView />} />
 
             <Route path="/*" element={
               <ProtectedRoute>

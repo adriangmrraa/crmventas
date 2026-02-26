@@ -759,6 +759,35 @@
       "feedback_desc": "Asks for a review after the appointment.",
       "lead_recovery": "Lead Recovery",
       "lead_recovery_desc": "Reactive message for leads without schedule."
+    },
+    "legal": {
+      "center_title": "Legal & Privacy",
+      "center_subtitle": "Transparency and security in handling your data.",
+      "back_button": "Back to Home",
+      "footer": "© 2026 {appName}. All rights reserved."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "last_updated": "Last updated: February 25, 2026",
+      "s1_title": "1. Information Collection",
+      "s1_body": "{appName} collects information necessary for sales and CRM management, including lead names, contact data and interaction history. When you connect your Meta Ads account, we collect performance statistics (clicks, spend, impressions) to calculate your ROI.",
+      "s2_title": "2. Use of Meta Data",
+      "s2_intro": "Data obtained through Meta APIs is used exclusively for:",
+      "s2_item1": "Visualizing your campaign performance in our dashboard.",
+      "s2_item2": "Attributing incoming WhatsApp messages to specific Meta ads.",
+      "s2_item3": "Generating return on investment (ROI) reports for the sales team.",
+      "s3_title": "3. Data Protection",
+      "s3_body": "We use AES-256 encryption to protect all access tokens and sensitive credentials. We never share your data with third parties without your explicit consent."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "By using {appName}, you agree to the following terms:",
+      "s1_title": "1. Software Use",
+      "s1_body": "{appName} is a platform for sales and CRM management. The user is responsible for the accuracy of entered data and compliance with local data protection regulations.",
+      "s2_title": "2. Third-Party Integrations",
+      "s2_body": "Integration with Meta Ads and WhatsApp depends on the terms and conditions of Meta Platforms, Inc. We are not responsible for service interruptions caused by external platforms.",
+      "s3_title": "3. Termination",
+      "s3_body": "You can revoke access to your data at any time through the Meta configuration panel or within our platform in the Marketing section."
     }
   }
 }

@@ -375,8 +375,18 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
     # --- 1. Handle Inbound Messages ---
     if event_type == "whatsapp.inbound_message.received":
         msg = event.get("whatsappInboundMessage", {})
-        from_n, to_n, name = msg.get("from"), msg.get("to"), msg.get("customerProfile", {}).get("name")
+        from_n, to_n, name = msg.get("from"), msg.get("to"), msg.get("customerProfile", {}).get(\"name")
         msg_type = msg.get("type")
+        
+        # DEDUP DE WEBHOOK: YCloud puede reintentar la entrega hasta 24hs después.
+        # Guardamos el wamid en Redis por 86400 segundos (24h) para ignorar reintentos.
+        wamid = msg.get("wamid") or event.get("id") or ""
+        if wamid:
+            dedup_key = f"wamid_seen:{tenant_int}:{wamid}"
+            if redis_client.get(dedup_key):
+                logger.info("webhook_duplicate_ignored", wamid=wamid, tenant_id=tenant_int)
+                return {"status": "duplicate_ignored", "wamid": wamid}
+            redis_client.setex(dedup_key, 86400, "1")  # 24h TTL
         
         # A. Text Messages -> Buffer (Debounce) y mismo flujo para transcripción de audio
         if msg_type == "text":
@@ -387,7 +397,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 # Payload enriquecido con referral (Spec Meta Attribution)
                 payload_data = {
                     "text": text,
-                    "wamid": msg.get("wamid") or event.get("id"),
+                    "wamid": wamid or msg.get("wamid") or event.get("id"),
                     "event_id": event.get("id")
                 }
                 
@@ -400,7 +410,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                 if not redis_client.get(lock_key):
                     redis_client.setex(lock_key, 60, "1")
-                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_int))
+                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), wamid, tenant_id=tenant_int))
                 return {"status": "buffering_started", "correlation_id": correlation_id}
             return {"status": "buffering_updated", "correlation_id": correlation_id}
 

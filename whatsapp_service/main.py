@@ -24,29 +24,33 @@ load_dotenv()
 # Config handling
 _config_cache = {}
 
-async def get_config(name: str, default: str = None) -> str:
+async def get_config(name: str, default: str = None, tenant_id: str = None) -> str:
+    cache_key = f"{tenant_id}_{name}" if tenant_id else name
     # 1. Check local cache
-    if name in _config_cache:
-        return _config_cache[name]
+    if cache_key in _config_cache:
+        return _config_cache[cache_key]
     
     # 2. Check local Environment
     val = os.getenv(name)
     if val:
-        _config_cache[name] = val
+        _config_cache[cache_key] = val
         return val
         
     # 3. Query Orchestrator
     try:
+        url = f"{ORCHESTRATOR_URL}/admin/internal/credentials/{name}"
+        if tenant_id:
+            url += f"?tenant_id={tenant_id}"
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                f"{ORCHESTRATOR_URL}/admin/internal/credentials/{name}",
+                url,
                 headers={"X-Internal-Token": INTERNAL_API_TOKEN},
                 timeout=5.0
             )
             if resp.status_code == 200:
                 val = resp.json().get("value")
                 if val:
-                    _config_cache[name] = val
+                    _config_cache[cache_key] = val
                     return val
     except Exception as e:
         logger.warning("config_fetch_failed", name=name, error=str(e))
@@ -131,7 +135,7 @@ async def add_metrics_and_logs(request: Request, call_next):
     return response
 
 # --- Helpers ---
-async def verify_signature(request: Request):
+async def verify_signature(request: Request, tenant_id: str = None):
     signature_header = request.headers.get("ycloud-signature")
     if not signature_header: raise HTTPException(status_code=401, detail="Missing signature header")
     try:
@@ -145,7 +149,7 @@ async def verify_signature(request: Request):
     signed_payload = f"{t}.{body_str}"
     
     # Fetch secret dynamically to support DB-stored credentials
-    v_secret = await get_config("YCLOUD_WEBHOOK_SECRET", YCLOUD_WEBHOOK_SECRET)
+    v_secret = await get_config("YCLOUD_WEBHOOK_SECRET", YCLOUD_WEBHOOK_SECRET, tenant_id=tenant_id)
     if not v_secret:
         logger.error("missing_webhook_secret", note="Cannot verify signature without secret")
         raise HTTPException(status_code=500, detail="Webhook configuration error")
@@ -355,7 +359,7 @@ def health(): return {"status": "ok"}
 @app.post("/webhook/ycloud/{tenant_id}")
 async def ycloud_webhook(request: Request, tenant_id: str = None):
     logger.info("webhook_hit", headers=str(request.headers), tenant_id=tenant_id)
-    await verify_signature(request)
+    await verify_signature(request, tenant_id=tenant_id)
     correlation_id = request.headers.get("traceparent") or str(uuid.uuid4())
     try: body = await request.json()
     except: raise HTTPException(status_code=400, detail="Invalid JSON")

@@ -341,9 +341,14 @@ async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_
     return out
 
 @router.get("/internal/credentials/{name}", tags=["Internal"])
-async def get_internal_credential(name: str, x_internal_token: str = Header(None)):
+async def get_internal_credential(name: str, tenant_id: Optional[int] = None, x_internal_token: str = Header(None)):
     if x_internal_token != INTERNAL_API_TOKEN: raise HTTPException(status_code=401)
-    val = os.getenv(name)
+    
+    if tenant_id is not None:
+        val = await get_tenant_credential(tenant_id, name)
+    else:
+        val = os.getenv(name)
+        
     if not val: raise HTTPException(status_code=404)
     return {"name": name, "value": val}
 

@@ -372,7 +372,7 @@ async def get_deployment_config(request: Request):
     
     return {
         "webhook_ycloud_url": f"{base_url}/webhook/ycloud",
-        "webhook_meta_url": f"{base_url}/crm/webhook/meta",
+        "webhook_meta_url": f"{base_url}/webhooks/meta",
         "orchestrator_url": base_url,
         "environment": os.getenv("ENVIRONMENT", "production")
     }

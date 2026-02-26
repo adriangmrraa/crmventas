@@ -74,7 +74,9 @@
     "other_integrations": "Other integrations",
     "other_integrations_hint": "Manage integrations from other services",
     "webhook_title_ycloud": "Webhook URL (YCloud WhatsApp)",
-    "webhook_hint_ycloud": "Configure this URL in the YCloud developer panel to receive messages for this entity.",
+    "webhook_hint_ycloud": "Set this URL in your YCloud developer panel to receive messages for this entity.",
+    "webhook_title_meta": "Webhook URL (Meta Ads Leads)",
+    "webhook_hint_meta": "Copy and paste this URL into LeadsBridge, n8n, or your connection tool to receive Meta leads generated for this entity.",
     "copy_url": "Copy Webhook URL"
   },
   "login": {

@@ -55,7 +55,7 @@ interface IntegrationConfig {
 export default function ConfigView() {
     const { t, setLanguage } = useTranslation();
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'others' | 'maintenance'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance'>('general');
 
     // General Settings State
     const [settings, setSettings] = useState<ClinicSettings | null>(null);
@@ -75,6 +75,10 @@ export default function ConfigView() {
     const [isCredModalOpen, setIsCredModalOpen] = useState(false);
     const [editingCred, setEditingCred] = useState<Credential | null>(null);
 
+    // Meta Settings State
+    const [metaTenantId, setMetaTenantId] = useState<number | null>(null);
+    const [baseMetaWebhookUrl, setBaseMetaWebhookUrl] = useState<string | null>(null);
+
     // Status State
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -86,6 +90,7 @@ export default function ConfigView() {
         if (user?.role === 'ceo') {
             loadTenants();
             loadCredentials();
+            loadDeploymentConfig();
         }
     }, [user, activeTab]);
 
@@ -133,6 +138,17 @@ export default function ConfigView() {
             if (Array.isArray(data)) setCredentials(data);
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const loadDeploymentConfig = async () => {
+        try {
+            const { data } = await api.get('/admin/core/config/deployment');
+            if (data?.webhook_meta_url) {
+                setBaseMetaWebhookUrl(data.webhook_meta_url);
+            }
+        } catch (e) {
+            console.error("Error loading deployment config in settings", e);
         }
     };
 
@@ -423,6 +439,43 @@ export default function ConfigView() {
         </div>
     );
 
+    const renderMetaTab = () => {
+        const fullWebhookUrl = baseMetaWebhookUrl
+            ? (metaTenantId ? `${baseMetaWebhookUrl}/${metaTenantId}` : baseMetaWebhookUrl)
+            : 'Cargando...';
+
+        return (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2 text-blue-800">
+                        <Globe className="w-5 h-5" />
+                        <h3 className="font-semibold">{t('config.webhook_title_meta')}</h3>
+                    </div>
+                    <p className="text-sm text-blue-700 mb-6">{t('config.webhook_hint_meta')}</p>
+
+                    <div className="mb-4">
+                        <label className="text-sm font-medium text-blue-900 mb-1 block">{t('config.field_tenant')}</label>
+                        <select
+                            className="w-full sm:w-80 px-4 py-2 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                            value={metaTenantId === null ? '' : metaTenantId}
+                            onChange={(e) => setMetaTenantId(e.target.value ? Number(e.target.value) : null)}
+                        >
+                            <option value="">{t('config.global_all_tenants')}</option>
+                            {tenants.map(t => <option key={t.id} value={t.id.toString()}>{t.clinic_name}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <input readOnly value={fullWebhookUrl} className="flex-1 px-3 py-2 bg-white rounded-lg border border-blue-200 text-sm font-mono text-gray-600 focus:outline-none" />
+                        <button onClick={() => fullWebhookUrl !== 'Cargando...' && copyToClipboard(fullWebhookUrl)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 font-medium">
+                            <Copy size={16} /> <span className="sm:hidden">{t('config.copy_url')}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderOthersTab = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -586,6 +639,12 @@ export default function ConfigView() {
                                 <Zap size={18} /> YCloud (WhatsApp)
                             </button>
                             <button
+                                onClick={() => setActiveTab('meta')}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'meta' ? 'border-blue-600 text-blue-600 font-semibold' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-200'}`}
+                            >
+                                <Globe size={18} /> Meta Ads (Leadgen)
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('others')}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'others' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-gray-500 hover:text-indigo-500 hover:border-indigo-200'}`}
                             >
@@ -607,6 +666,7 @@ export default function ConfigView() {
                 <div className="p-6 max-w-6xl mx-auto pb-32">
                     {activeTab === 'general' && renderGeneralTab()}
                     {activeTab === 'ycloud' && user?.role === 'ceo' && renderYCloudTab()}
+                    {activeTab === 'meta' && user?.role === 'ceo' && renderMetaTab()}
                     {activeTab === 'others' && user?.role === 'ceo' && renderOthersTab()}
                     {activeTab === 'maintenance' && user?.role === 'ceo' && renderMaintenanceTab()}
                 </div>

@@ -16,7 +16,9 @@ GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION", "v19.0")
 VERIFY_TOKEN = os.getenv("META_WEBHOOK_VERIFY_TOKEN", "nexus_meta_secret_token")
 
 @router.get("/meta")
+@router.get("/meta/{tenant_id}")
 async def verify_meta_webhook(
+    tenant_id: Optional[int] = None,
     hub_mode: str = Query(None, alias="hub.mode"),
     hub_challenge: str = Query(None, alias="hub.challenge"),
     hub_verify_token: str = Query(None, alias="hub.verify_token"),
@@ -30,7 +32,12 @@ async def verify_meta_webhook(
     raise HTTPException(status_code=403, detail="Verification failed")
 
 @router.post("/meta")
-async def receive_meta_webhook(request: Request, background_tasks: BackgroundTasks):
+@router.post("/meta/{tenant_id}")
+async def receive_meta_webhook(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    tenant_id: Optional[int] = None
+):
     """
     Receives LeadGen notifications from Meta OR custom flattened payloads (n8n).
     """
@@ -61,19 +68,19 @@ async def receive_meta_webhook(request: Request, background_tasks: BackgroundTas
     for item in data_list:
         payload = item.get("body") if isinstance(item, dict) and "body" in item else item
         if isinstance(payload, dict) and "phone_number" in payload:
-            logger.info(f"🚀 Processing flattened lead ingestion: {payload.get('phone_number')}")
-            background_tasks.add_task(process_flattened_lead, payload)
+            logger.info(f"🚀 Processing flattened lead ingestion: {payload.get('phone_number')} for tenant {tenant_id or 1}")
+            background_tasks.add_task(process_flattened_lead, payload, tenant_id)
 
     return {"status": "received", "type": "meta_custom"}
 
-async def process_flattened_lead(data: Dict[str, Any]):
+async def process_flattened_lead(data: Dict[str, Any], url_tenant_id: Optional[int] = None):
     """
     Directly ingests a lead from a pre-parsed payload (n8n style).
     No Graph API call needed.
     """
     try:
         # 1. Logic for Tenant Discovery (Default to first active or mapping by Page ID if present)
-        tenant_id = 1 # Fallback or dynamic logic here
+        tenant_id = url_tenant_id if url_tenant_id is not None else 1 # Fallback or dynamic logic here
         
         phone = str(data.get("phone_number", "")).strip()
         full_name = data.get("full_name") or "Lead Meta"

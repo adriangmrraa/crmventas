@@ -43,7 +43,7 @@ class MarketingService:
                 FROM leads l
                 JOIN opportunities o ON l.id = o.lead_id
                 WHERE l.tenant_id = $1 AND l.lead_source = 'META_ADS'
-                AND o.opportunity_datetime >= NOW() - $2::interval
+                AND o.created_at >= NOW() - $2::interval
             """, tenant_id, interval) or 0
 
             # 3. Calcular Ingresos Reales en el periodo
@@ -217,8 +217,8 @@ class MarketingService:
                        COUNT(id) as leads,
                        COUNT(id) FILTER (WHERE EXISTS (
                            SELECT 1 FROM opportunities a 
-                           WHERE a.lead_id = leads.id AND a.status IN ('confirmed', 'completed')
-                           AND a.opportunity_datetime >= NOW() - $2::interval
+                           WHERE a.lead_id = leads.id
+                           AND a.created_at >= NOW() - $2::interval
                        )) as opportunities,
                        (SELECT SUM(t.amount) 
                         FROM accounting_transactions t 

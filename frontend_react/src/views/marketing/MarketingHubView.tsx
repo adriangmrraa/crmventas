@@ -77,11 +77,14 @@ export default function MarketingHubView() {
     const handleConnectMeta = async () => {
         try {
             const tenantId = getCurrentTenantId();
-            // Solicitamos la URL de OAuth al backend, pasando el tenant en el state para seguridad
             const { data } = await api.get(`/crm/auth/meta/url?state=tenant_${tenantId}`);
-            if (data?.url) {
+            const authUrl = data?.data?.auth_url || data?.url || data?.auth_url;
+            if (authUrl) {
                 // Redirigir a la página de OAuth de Meta
-                window.location.href = data.url;
+                window.location.href = authUrl;
+            } else {
+                console.error("No auth_url in response:", data);
+                alert(t('marketing.errors.init_failed'));
             }
         } catch (error) {
             console.error("Error initiating Meta OAuth:", error);

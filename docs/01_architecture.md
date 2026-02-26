@@ -291,3 +291,57 @@ Nueva capa de marketing implementada en Febrero 2026 que extiende el CRM con cap
 - **API Rate Limits**: Considerar límites Meta API (200 calls/hour)
 - **Monitoring**: Logs OAuth, errores API, métricas ROI
 
+### Debugging & Diagnostic Tools (Febrero 2026)
+
+Nuevas herramientas implementadas para troubleshooting y diagnóstico:
+
+#### **1. debug_marketing_stats.py**
+```python
+# Propósito: Debugging estadísticas marketing
+# Uso: python debug_marketing_stats.py
+# Funcionalidad: Consulta stats campañas tenant 1
+```
+
+#### **2. check_automation.py**
+```python
+# Propósito: Diagnóstico automatización
+# Uso: python check_automation.py
+# Funcionalidad: Verifica reglas activas, logs recientes, status leads
+```
+
+#### **3. check_leads.py**
+```python
+# Propósito: Verificación leads base datos
+# Uso: python check_leads.py
+# Funcionalidad: Lista leads tenant 1 + números chat
+```
+
+### Mejoras Recientes (Febrero 2026)
+
+#### **Frontend:**
+- **MetaConnectionWizard.tsx**: UI/UX mejorada, flujo paso a paso optimizado
+- **ConfigView.tsx**: Refactorización completa con gestión credenciales CRUD
+- **MarketingHubView.tsx**: Dashboard mejorado, tablas creativos con filtros
+- **Webhook Configuration**: URLs copiables mejoradas en dashboard marketing
+
+#### **Backend:**
+- **admin_routes.py**: Nuevas rutas administrativas, configuración deployment
+- **meta_ads_service.py**: Manejo errores robusto, filtros status expandidos
+- **whatsapp_service/main.py**: Refactorización completa, logging mejorado
+- **Credentials Management**: Sistema centralizado credenciales multi-tenant
+
+#### **Security:**
+- **Webhook Meta URL**: Incluida en configuración deployment (`/crm/webhook/meta`)
+- **Rate Limiting**: Endpoints marketing con límites específicos
+- **Audit Logging**: Todas las acciones OAuth y marketing registradas
+- **Token Encryption**: Almacenamiento seguro tokens Meta con rotación automática
+
+### Webhook Configuration
+
+Sistema dual de webhooks implementado:
+
+1. **YCloud Webhook**: `{base_url}/webhook/ycloud`
+2. **Meta Webhook**: `{base_url}/crm/webhook/meta`
+
+Ambas URLs disponibles via API `GET /admin/config/deployment` para configuración fácil en paneles de proveedores.
+

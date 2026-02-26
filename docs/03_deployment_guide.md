@@ -560,6 +560,92 @@ Si usas EasyPanel para deployment:
 3. **ROI Tracking:** Conversiones atribuidas a campañas
 4. **Token Expiry:** Notificar 7 días antes de expiración
 
+### Herramientas de Diagnóstico Post-Deployment
+
+#### **1. Verificar Estadísticas Marketing:**
+```bash
+cd /home/node/.openclaw/workspace/projects/crmventas
+python debug_marketing_stats.py
+```
+
+#### **2. Diagnóstico Automatización:**
+```bash
+cd /home/node/.openclaw/workspace/projects/crmventas/orchestrator_service
+python check_automation.py
+```
+
+#### **3. Verificar Leads Database:**
+```bash
+cd /home/node/.openclaw/workspace/projects/crmventas/orchestrator_service
+python check_leads.py
+```
+
+### Configuración Webhooks (Actualizado Febrero 2026)
+
+#### **URLs Webhook Disponibles:**
+- **YCloud Webhook**: `{base_url}/webhook/ycloud`
+- **Meta Webhook**: `{base_url}/crm/webhook/meta`
+
+#### **Obtener URLs de Configuración:**
+```bash
+# API endpoint para obtener URLs configuración
+curl -X GET "http://localhost:8000/admin/config/deployment" \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Admin-Token: <ADMIN_TOKEN>"
+
+# Respuesta:
+{
+  "webhook_ycloud_url": "https://tu-crm.com/webhook/ycloud",
+  "webhook_meta_url": "https://tu-crm.com/crm/webhook/meta",
+  "orchestrator_url": "https://tu-crm.com",
+  "environment": "production"
+}
+```
+
+#### **Configurar en Meta Developers:**
+1. **Meta Developers → App → Webhooks**
+2. **Leadgen Webhook:**
+   - URL: `https://tu-crm.com/crm/webhook/meta`
+   - Verify Token: `WEBHOOK_META_VERIFY_TOKEN` (si configurado)
+   - Secret: `WEBHOOK_META_SECRET` (si configurado)
+3. **Subscribe to Fields:** `leadgen`
+
+#### **Configurar en YCloud:**
+1. **YCloud Dashboard → Webhook Settings**
+2. **Webhook URL:** `https://tu-crm.com/webhook/ycloud`
+3. **Secret:** `WEBHOOK_YCLOUD_SECRET` (si configurado)
+4. **Events:** Message, MessageStatus, TemplateStatus
+
+### Páginas Legales Requeridas (Meta OAuth)
+
+Para aprobación Meta OAuth, se requieren URLs públicas:
+
+1. **Privacy Policy URL:** `https://tu-crm.com/privacy`
+2. **Terms of Service URL:** `https://tu-crm.com/terms`
+
+**Implementadas en:** `frontend_react/src/views/PrivacyTermsView.tsx`
+**Rutas disponibles:** `/legal`, `/privacy`, `/terms`
+
+### Mejoras Recientes (Febrero 2026)
+
+#### **Frontend:**
+- **MetaConnectionWizard.tsx**: UI/UX mejorada, flujo paso a paso optimizado
+- **ConfigView.tsx**: Gestión credenciales CRUD completa
+- **MarketingHubView.tsx**: Dashboard mejorado con webhook configuration
+- **Responsive Design**: Scroll optimizado para móviles
+
+#### **Backend:**
+- **admin_routes.py**: Nuevas rutas administrativas + deployment config
+- **meta_ads_service.py**: Manejo errores robusto + filtros expandidos
+- **whatsapp_service/main.py**: Refactorización completa + logging mejorado
+- **Credentials Management**: Sistema centralizado multi-tenant
+
+#### **Security:**
+- **Webhook URLs**: Incluidas en configuración deployment
+- **Rate Limiting**: Endpoints marketing con límites específicos
+- **Audit Logging**: Todas las acciones registradas
+- **Token Encryption**: Almacenamiento seguro con rotación automática
+
 ### Rollback Procedure
 
 Si necesitas deshabilitar Marketing Hub:

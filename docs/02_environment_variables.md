@@ -92,6 +92,56 @@ Variables para integración con Meta (Facebook/Instagram) Ads y WhatsApp HSM Aut
 3. **App Review**: Requiere aprobación Meta para permisos `ads_management`, `business_management`
 4. **HSM Templates**: Requiere aprobación separada para plantillas WhatsApp Business
 5. **Production**: En producción, `META_REDIRECT_URI` debe usar HTTPS
+6. **Privacy Policy & Terms URLs**: Requeridas para aprobación Meta OAuth:
+   - Privacy Policy URL: `https://tu-crmventas.com/privacy`
+   - Terms of Service URL: `https://tu-crmventas.com/terms`
+
+### Variables para Debugging & Diagnóstico (Nuevo - Febrero 2026)
+
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `DEBUG_MARKETING_STATS` | Activar debugging estadísticas marketing | `true` | ❌ (default: false) |
+| `LOG_META_API_CALLS` | Log detallado llamadas API Meta | `true` | ❌ (default: false) |
+| `ENABLE_AUTOMATION_DIAGNOSTICS` | Activar diagnósticos automatización | `true` | ❌ (default: false) |
+| `META_API_DEBUG_MODE` | Modo debug API Meta (respuestas raw) | `true` | ❌ (default: false) |
+
+### Herramientas de Diagnóstico Implementadas
+
+#### **1. debug_marketing_stats.py**
+```bash
+# Uso: python debug_marketing_stats.py
+# Requiere: POSTGRES_DSN configurado
+# Propósito: Debugging estadísticas marketing tenant 1
+```
+
+#### **2. check_automation.py**
+```bash
+# Uso: python check_automation.py
+# Requiere: POSTGRES_DSN configurado
+# Propósito: Diagnóstico reglas automatización + logs recientes
+```
+
+#### **3. check_leads.py**
+```bash
+# Uso: python check_leads.py
+# Requiere: POSTGRES_DSN configurado
+# Propósito: Verificación leads base datos + números chat
+```
+
+### Configuración Webhooks (Nuevo - Febrero 2026)
+
+#### **URLs Webhook Disponibles:**
+- **YCloud Webhook**: `{base_url}/webhook/ycloud`
+- **Meta Webhook**: `{base_url}/crm/webhook/meta`
+
+#### **Variables Específicas Webhook:**
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `WEBHOOK_META_VERIFY_TOKEN` | Token verificación webhook Meta | `meta_verify_token_123` | ❌ |
+| `WEBHOOK_META_SECRET` | Secreto webhook Meta | `meta_secret_456` | ❌ |
+| `WEBHOOK_YCLOUD_SECRET` | Secreto webhook YCloud | `ycloud_secret_789` | ❌ |
+
+**Nota:** Las URLs webhook completas están disponibles via API `GET /admin/config/deployment`
 
 ## 4. WhatsApp Service (8002)
 

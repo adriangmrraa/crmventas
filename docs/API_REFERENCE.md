@@ -159,10 +159,26 @@ Devuelve la configuración de la clínica/entidad del tenant resuelto del usuari
 
 Actualiza la configuración de la clínica. Solo se envían los campos a modificar.
 
-### Configuración de despliegue
+### Configuración de despliegue (Actualizado Febrero 2026)
 `GET /admin/core/config/deployment`
 
 Devuelve datos de configuración del despliegue (feature flags, URLs, etc.) para el frontend. Requiere autenticación admin.
+
+**Response (Actualizado):**
+```json
+{
+  "webhook_ycloud_url": "https://tu-crm.com/webhook/ycloud",
+  "webhook_meta_url": "https://tu-crm.com/crm/webhook/meta",
+  "orchestrator_url": "https://tu-crm.com",
+  "environment": "production",
+  "company_name": "CRM Ventas"
+}
+```
+
+**Uso en Frontend:**
+- **Webhook Configuration**: URLs copiables en dashboard marketing
+- **Meta Developers**: Configurar webhook URLs en panel Meta
+- **YCloud**: Configurar webhook URL en panel YCloud
 
 **Payload:**
 ```json
@@ -421,12 +437,15 @@ Nuevo módulo implementado (Febrero 2026) que integra Meta Ads (Facebook/Instagr
 | **`/crm/marketing`** | Dashboard marketing, campañas Meta Ads, HSM Automation, plantillas WhatsApp |
 | **`/crm/auth/meta`** | OAuth Meta/Facebook, gestión tokens, conexión cuentas |
 
-### Endpoints de Marketing Hub
+### Endpoints de Marketing Hub (Actualizado Febrero 2026)
 
 #### Dashboard y Métricas
 - `GET /crm/marketing/stats` - Métricas generales (ROI, leads, conversiones)
+- `GET /crm/marketing/stats/roi` - Métricas ROI específicas por campaña
 - `GET /crm/marketing/campaigns` - Lista campañas Meta Ads activas
 - `GET /crm/marketing/campaigns/{campaign_id}/insights` - Métricas específicas campaña
+- `GET /crm/marketing/creatives` - Creativos publicitarios con filtros
+- `GET /crm/marketing/token-status` - Estado tokens OAuth Meta
 
 #### HSM Automation (WhatsApp Business)
 - `GET /crm/marketing/hsm` - Lista plantillas HSM aprobadas
@@ -439,11 +458,18 @@ Nuevo módulo implementado (Febrero 2026) que integra Meta Ads (Facebook/Instagr
 - `POST /crm/marketing/automation/rules` - Crear regla automatización
 - `PUT /crm/marketing/automation/rules/{rule_id}` - Actualizar regla
 - `DELETE /crm/marketing/automation/rules/{rule_id}` - Eliminar regla
+- `GET /crm/marketing/automation-logs` - Logs ejecución automatización
 
 #### Gestión de Cuentas Meta
-- `GET /crm/marketing/meta-portfolios` - Portafolios Meta Ads
-- `GET /crm/marketing/meta-accounts` - Cuentas publicitarias
+- `GET /crm/marketing/meta-portfolios` - Portafolios Meta Ads (Business Managers)
+- `GET /crm/marketing/meta-accounts` - Cuentas publicitarias (Ad Accounts)
 - `GET /crm/marketing/meta-tokens` - Tokens OAuth almacenados
+- `POST /crm/marketing/connect` - Conectar cuenta Meta seleccionada
+- `POST /crm/marketing/disconnect` - Desconectar cuenta Meta
+
+#### Debug y Diagnóstico
+- `GET /crm/marketing/debug/stats` - Debug estadísticas marketing (raw API responses)
+- `GET /crm/marketing/debug/api-calls` - Log llamadas API Meta (si DEBUG_MODE activado)
 
 ### Endpoints de OAuth Meta
 
@@ -506,10 +532,43 @@ META_APP_SECRET=tu_app_secret_facebook
 META_REDIRECT_URI=https://tu-crm.com/crm/auth/meta/callback
 ```
 
+### Herramientas de Diagnóstico (Nuevo - Febrero 2026)
+
+#### Scripts de Diagnóstico Disponibles:
+
+**1. debug_marketing_stats.py**
+```bash
+# Uso: python debug_marketing_stats.py
+# Propósito: Debugging estadísticas marketing tenant 1
+# Requiere: POSTGRES_DSN configurado en entorno
+```
+
+**2. check_automation.py**
+```bash
+# Uso: python check_automation.py
+# Propósito: Diagnóstico automatización + logs recientes
+# Verifica: Reglas activas, logs últimos 60 minutos, status leads
+```
+
+**3. check_leads.py**
+```bash
+# Uso: python check_leads.py
+# Propósito: Verificación leads base datos
+# Lista: Leads tenant 1 + números chat para cross-reference
+```
+
+#### Variables Entorno Debug:
+- `DEBUG_MARKETING_STATS=true` - Activar debugging estadísticas
+- `LOG_META_API_CALLS=true` - Log detallado llamadas API Meta
+- `ENABLE_AUTOMATION_DIAGNOSTICS=true` - Activar diagnósticos automatización
+- `META_API_DEBUG_MODE=true` - Modo debug API Meta (respuestas raw)
+
 ### Documentación Adicional
 - Ver `FINAL_IMPLEMENTATION_SUMMARY.md` para detalles técnicos
 - Ver `ENV_EXAMPLE.md` para configuración completa
 - Ver `SPRINT3_OAUTH_CONFIGURATION.md` para guía paso a paso
+- Ver `URLS_POLITICAS_PRIVACIDAD.md` para URLs páginas legales
+- Ver `08_troubleshooting_history.md` para historial problemas/soluciones
 
 ## Enriquecimiento de Leads (Upsert)
 

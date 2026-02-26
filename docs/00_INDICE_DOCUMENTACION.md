@@ -71,6 +71,11 @@ Este documento lista **todos** los archivos de la carpeta `docs/` con una breve 
 | **AUDITORIA_FINAL_CONCLUSION.md** (raíz) | Resultados auditoría ClinicForge vs CRM Ventas - verificación implementación completa. |
 | **SPEC_SPRINTS_1_2_META_ADS.md** (raíz) | Especificación técnica original Sprints 1-2 (backend + frontend). |
 | **META_ADS_SPRINTS_3_4_IMPLEMENTATION.md** (raíz) | Especificación técnica Sprints 3-4 (OAuth + deployment). |
+| **URLS_POLITICAS_PRIVACIDAD.md** (raíz) | Guía completa URLs páginas legales para Meta OAuth: `/privacy`, `/terms`, contenido, configuración. |
+| **MARKETING_INTEGRATION_DEEP_DIVE.md** (docs/) | Análisis técnico profundo integración Meta Ads Marketing Hub: arquitectura, componentes, flujos, seguridad, debugging. |
+| **debug_marketing_stats.py** (raíz) | Script diagnóstico estadísticas marketing tenant 1. |
+| **check_automation.py** (orchestrator_service/) | Script diagnóstico automatización + logs recientes. |
+| **check_leads.py** (orchestrator_service/) | Script verificación leads base datos + números chat. |
 ---
 
 ## Total

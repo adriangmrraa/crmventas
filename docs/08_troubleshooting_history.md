@@ -193,4 +193,110 @@ Este documento registra problemas encontrados y sus soluciones para referencia f
 
 ---
 
-*Histórico de Problemas y Soluciones Nexus v7.8 © 2026*
+## Herramientas de Diagnóstico Implementadas (Febrero 2026)
+
+### Problema: Debugging Complejo de Marketing Hub
+- Dificultad para diagnosticar problemas en estadísticas marketing
+- Falta de visibilidad en automatización HSM
+- Verificación manual tediosa de leads y datos
+
+### Solución: Scripts de Diagnóstico Automatizados
+
+#### **1. debug_marketing_stats.py**
+```bash
+# Uso: python debug_marketing_stats.py
+# Propósito: Debugging estadísticas marketing tenant 1
+# Funcionalidad: Consulta stats campañas, creativos, account total spend
+```
+
+#### **2. check_automation.py**
+```bash
+# Uso: python check_automation.py
+# Propósito: Diagnóstico automatización
+# Funcionalidad: Verifica reglas activas, logs recientes, status leads específicos
+```
+
+#### **3. check_leads.py**
+```bash
+# Uso: python check_leads.py
+# Propósito: Verificación leads base datos
+# Funcionalidad: Lista leads tenant 1 + números chat para cross-reference
+```
+
+### Casos de Uso Comunes:
+
+#### **Caso 1: Estadísticas Marketing No Muestran Datos**
+```bash
+python debug_marketing_stats.py
+# Verifica: Conexión DB, tenant_id 1, consultas MarketingService
+```
+
+#### **Caso 2: Automatización HSM No Funciona**
+```bash
+python check_automation.py
+# Verifica: Reglas activas, logs recientes, status leads target
+```
+
+#### **Caso 3: Leads No Sincronizados con Chat**
+```bash
+python check_leads.py
+# Verifica: Leads en DB vs números en chat_messages
+```
+
+### Mejoras en Frontend (Febrero 2026)
+
+#### **Problema: UI Scroll Issues en Marketing Hub**
+- Modales con contenido extenso no scrolleaban en móviles
+- Tablas de creativos sin paginación adecuada
+- Wizard conexión Meta con UX mejorable
+
+#### **Solución:**
+- **MetaConnectionWizard.tsx**: Refactorizado con mejor UX, flujo paso a paso
+- **MarketingHubView.tsx**: Scroll optimizado, tablas con filtros mejorados
+- **ConfigView.tsx**: Gestión credenciales CRUD completa
+- **Responsive Design**: `overflow-y-auto`, `max-h-[60vh]` para modales
+
+#### **Problema: Endpoints Incorrectos en Producción**
+- Frontend usando endpoints `/admin/marketing/` en lugar de `/crm/marketing/`
+- OAuth popup no funcionando por URLs incorrectas
+
+#### **Solución:**
+- **Corrección Endpoints**: Todos los componentes actualizados para usar `/crm/marketing/` y `/crm/auth/meta/`
+- **Data Structure Compatibility**: Soporte para `data.data || data` en API responses
+- **Commit Fix**: `02853aa` - Corrección endpoints producción
+
+### Webhook Configuration Issues
+
+#### **Problema: URLs Webhook No Disponibles en Configuración**
+- Dashboard marketing no mostraba URLs webhook copiables
+- Configuración Meta Developers requería URLs manuales
+
+#### **Solución:**
+- **API Deployment Config**: Nuevo endpoint `GET /admin/config/deployment`
+- **Inclusión Webhook Meta**: `webhook_meta_url` agregada a respuesta
+- **Frontend Integration**: URLs disponibles en dashboard marketing
+
+### Páginas Legales para Meta OAuth
+
+#### **Problema: Meta OAuth Requiere Privacy Policy y Terms URLs**
+- Aprobación Meta Developers necesita URLs públicas
+- Proyecto sin páginas legales implementadas
+
+#### **Solución:**
+- **PrivacyTermsView.tsx**: Vista única para páginas legales
+- **Rutas Implementadas**: `/legal`, `/privacy`, `/terms`
+- **i18n Completo**: Español e inglés con contenido específico
+- **Commit**: `ce4bfc5` - Implementación completa páginas legales
+
+### Estado Actual:
+- ✅ **Herramientas Debug**: Implementadas y documentadas
+- ✅ **UI/UX Mejorado**: Scroll, endpoints, responsive design
+- ✅ **Webhooks Config**: URLs disponibles via API
+- ✅ **Páginas Legales**: Implementadas para Meta OAuth
+- ✅ **Documentación**: Actualizada con todas las mejoras
+
+**Recomendación:** Usar herramientas diagnóstico antes de reportar problemas en producción.
+
+---
+
+*Histórico de Problemas y Soluciones Nexus v7.8 + Marketing Hub v1.0 © 2026*

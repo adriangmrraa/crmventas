@@ -8,7 +8,7 @@
 
 ---
 
-- **Marketing Hub & Meta Ads** (Nuevo - Feb 2026): Dashboard marketing, campañas Meta Ads (Facebook/Instagram), HSM Automation WhatsApp, OAuth Meta integration, ROI tracking, plantillas aprobadas.
+- **Marketing Hub & Meta Ads** (Nuevo - Feb 2026): Dashboard marketing, campañas Meta Ads (Facebook/Instagram), HSM Automation WhatsApp, OAuth Meta integration, ROI tracking, plantillas aprobadas, herramientas debug, páginas legales para Meta OAuth.
 ## 1. Qué es el proyecto
 
 - **Nombre:** CRM Ventas (Nexus Core).
@@ -89,6 +89,50 @@ frontend_react/src/
 **Tools del agente (nombres exactos):** `check_availability`, `book_appointment`, `triage_urgency`, `derivhumano`, `cancel_appointment`, `reschedule_appointment`, `list_services`. Todos reciben/respetan `tenant_id`.
 
 **Flujo del agente (datos que necesita):** Saludo mencionando la clínica → definir **siempre un servicio** (máx. 3 si se listan) → usar duración del servicio para disponibilidad y agendar → **consultar disponibilidad** (local o Google según sede) y **elegir profesional** (preguntar preferencia o "cualquiera disponible") → con servicio, profesional (opcional), día/hora y datos del paciente, ejecutar `book_appointment`. Detalle en `README.md` (sección "Flujo del agente de IA") y `docs/04_agent_logic_and_persona.md` (sección 3.1).
+
+---
+
+## Herramientas de Diagnóstico y Debugging (Nuevo - Febrero 2026)
+
+### Scripts de Diagnóstico Disponibles:
+
+**1. debug_marketing_stats.py**
+```bash
+# Uso: python debug_marketing_stats.py
+# Propósito: Debugging estadísticas marketing tenant 1
+# Requiere: POSTGRES_DSN configurado
+```
+
+**2. check_automation.py**
+```bash
+# Uso: python check_automation.py
+# Propósito: Diagnóstico automatización + logs recientes
+# Verifica: Reglas activas, logs últimos 60 minutos, status leads
+```
+
+**3. check_leads.py**
+```bash
+# Uso: python check_leads.py
+# Propósito: Verificación leads base datos
+# Lista: Leads tenant 1 + números chat para cross-reference
+```
+
+### Variables Entorno Debug:
+- `DEBUG_MARKETING_STATS=true` - Activar debugging estadísticas
+- `LOG_META_API_CALLS=true` - Log detallado llamadas API Meta
+- `ENABLE_AUTOMATION_DIAGNOSTICS=true` - Activar diagnósticos automatización
+- `META_API_DEBUG_MODE=true` - Modo debug API Meta (respuestas raw)
+
+### Páginas Legales para Meta OAuth:
+- **Privacy Policy URL:** `https://tu-crm.com/privacy`
+- **Terms of Service URL:** `https://tu-crm.com/terms`
+- **Implementadas en:** `frontend_react/src/views/PrivacyTermsView.tsx`
+- **Rutas disponibles:** `/legal`, `/privacy`, `/terms`
+
+### Configuración Webhook:
+- **YCloud Webhook:** `{base_url}/webhook/ycloud`
+- **Meta Webhook:** `{base_url}/crm/webhook/meta`
+- **Disponibles via API:** `GET /admin/config/deployment`
 
 ---
 

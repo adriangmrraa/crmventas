@@ -97,33 +97,52 @@ class MarketingService:
     async def create_automation_rule(self, tenant_id: int, rule_data: Dict) -> Dict
 ```
 
-### 3. Frontend Components
+### 3. Frontend Components (Actualizado Febrero 2026)
 
-**MarketingHubView.tsx** - Dashboard principal:
+**MarketingHubView.tsx** - Dashboard principal mejorado:
 - Métricas ROI, conversiones, spend
 - Gráficos campañas performance
-- Quick actions: connect Meta, create campaign
+- **Webhook Configuration**: URLs copiables para Meta y YCloud
+- **Tablas Creativos**: Filtros, ordenamiento, paginación mejorados
+- **Responsive Design**: Scroll optimizado para móviles (`overflow-y-auto`)
 
-**MetaConnectionWizard.tsx** - Wizard 4 pasos:
-1. Init OAuth → Meta Login
-2. Select Business Manager
-3. Select Ad Accounts
-4. Confirm & Save
+**MetaConnectionWizard.tsx** - Wizard 4 pasos optimizado:
+1. **Init OAuth** → Meta Login con mejor UX
+2. **Select Business Manager** - Carga datos iniciales entidad
+3. **Select Ad Accounts** - Filtrado por portfolio seleccionado
+4. **Confirm & Save** - Manejo errores mejorado con mensajes específicos
+- **UI/UX**: Gradientes, iconos, espaciado mejorado
+- **Error Handling**: Mensajes específicos por tipo error
 
 **MetaTemplatesView.tsx** - Gestión HSM:
 - Lista plantillas aprobadas
 - Crear nueva plantilla
 - Historial envíos
+- **Automation Logs**: Visualización logs ejecución automatización
 
 **MarketingPerformanceCard.tsx** - Componente reutilizable:
 - Display métricas KPI
 - Trend arrows (↑↓)
 - Comparison period
+- **Data Structure Compatibility**: Soporte `data.data || data`
 
 **MetaTokenBanner.tsx** - Banner estado:
 - Token expiry countdown
 - Connection status
 - Refresh/Reconnect actions
+- **Endpoint Correction**: Usa `/crm/marketing/token-status`
+
+**ConfigView.tsx** - Nueva vista configuración:
+- **Gestión Credenciales CRUD**: Crear, leer, actualizar, eliminar
+- **Categorización**: Credenciales por categoría (global/tenant)
+- **Integraciones**: YCloud, Chatwoot, Meta
+- **UI Profesional**: Modales, formularios, validaciones
+
+**PrivacyTermsView.tsx** - Páginas legales:
+- **Vista única**: Maneja 3 URLs (`/legal`, `/privacy`, `/terms`)
+- **i18n Completo**: Español e inglés con interpolación dinámica
+- **Diseño Responsive**: Mobile-first, navegación por anclas
+- **Contenido específico**: Menciona Meta Ads API para aprobación OAuth
 
 ### 4. Meta Webhooks (`meta_webhooks.py`)
 Módulo encargado de recibir notificaciones asíncronas de Meta:
@@ -476,8 +495,9 @@ async def call_meta_api_with_retry():
 - Si falla, notificar usuario para reconnect
 - Log error para debugging
 
-### Debug Endpoints
+### Debug Endpoints y Herramientas (Actualizado Febrero 2026)
 
+#### **Endpoints Debug API:**
 ```bash
 # Health check marketing endpoints
 curl -X GET "http://localhost:8000/crm/marketing/stats" \
@@ -487,7 +507,66 @@ curl -X GET "http://localhost:8000/crm/marketing/stats" \
 curl -X GET "http://localhost:8000/crm/auth/meta/url" \
   -H "Authorization: Bearer $JWT" \
   -H "X-Admin-Token: $ADMIN_TOKEN"
+
+# Debug marketing stats (raw API responses)
+curl -X GET "http://localhost:8000/crm/marketing/debug/stats" \
+  -H "Authorization: Bearer $JWT" \
+  -H "X-Admin-Token: $ADMIN_TOKEN"
 ```
+
+#### **Herramientas de Diagnóstico Scripts:**
+
+**1. debug_marketing_stats.py**
+```bash
+# Uso: python debug_marketing_stats.py
+# Propósito: Debugging estadísticas marketing tenant 1
+# Funcionalidad: Consulta stats campañas, creativos, account total spend
+```
+
+**2. check_automation.py**
+```bash
+# Uso: python check_automation.py
+# Propósito: Diagnóstico automatización
+# Funcionalidad: Verifica reglas activas, logs recientes, status leads específicos
+```
+
+**3. check_leads.py**
+```bash
+# Uso: python check_leads.py
+# Propósito: Verificación leads base datos
+# Funcionalidad: Lista leads tenant 1 + números chat para cross-reference
+```
+
+#### **Variables Entorno Debug:**
+```bash
+# Archivo .env.production
+DEBUG_MARKETING_STATS=true          # Activar debugging estadísticas
+LOG_META_API_CALLS=true             # Log detallado llamadas API Meta
+ENABLE_AUTOMATION_DIAGNOSTICS=true  # Activar diagnósticos automatización
+META_API_DEBUG_MODE=true            # Modo debug API Meta (respuestas raw)
+```
+
+#### **Configuración Webhook (Nuevo):**
+```bash
+# Obtener URLs configuración webhook
+curl -X GET "http://localhost:8000/admin/config/deployment" \
+  -H "Authorization: Bearer $JWT" \
+  -H "X-Admin-Token: $ADMIN_TOKEN"
+
+# Respuesta incluye:
+{
+  "webhook_ycloud_url": "https://tu-crm.com/webhook/ycloud",
+  "webhook_meta_url": "https://tu-crm.com/crm/webhook/meta",
+  "orchestrator_url": "https://tu-crm.com",
+  "environment": "production"
+}
+```
+
+#### **Páginas Legales (Meta OAuth):**
+- **Privacy Policy URL:** `https://tu-crm.com/privacy`
+- **Terms of Service URL:** `https://tu-crm.com/terms`
+- **Implementadas en:** `frontend_react/src/views/PrivacyTermsView.tsx`
+- **Rutas disponibles:** `/legal`, `/privacy`, `/terms`
 
 ---
 

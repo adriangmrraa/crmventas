@@ -56,10 +56,10 @@ export default function MarketingHubView() {
 
     const loadStats = async () => {
         try {
-            const { data } = await api.get(`/admin/marketing/stats?range=${timeRange}`);
+            const { data } = await api.get(`/crm/marketing/stats?range=${timeRange}`);
             console.log("[MarketingHub] Stats data loaded:", data);
-            setStats(data);
-            setIsMetaConnected(data?.is_connected || false);
+            setStats(data.data || data);
+            setIsMetaConnected(data?.data?.meta_connected || data?.meta_connected || false);
         } catch (error) {
             console.error("Error loading marketing stats:", error);
         }
@@ -78,7 +78,7 @@ export default function MarketingHubView() {
         try {
             const tenantId = getCurrentTenantId();
             // Solicitamos la URL de OAuth al backend, pasando el tenant en el state para seguridad
-            const { data } = await api.get(`/admin/marketing/meta-auth/url?state=tenant_${tenantId}`);
+            const { data } = await api.get(`/crm/auth/meta/url?state=tenant_${tenantId}`);
             if (data?.url) {
                 // Redirigir a la página de OAuth de Meta
                 window.location.href = data.url;

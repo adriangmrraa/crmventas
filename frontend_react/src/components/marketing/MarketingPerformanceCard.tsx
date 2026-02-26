@@ -24,8 +24,8 @@ export default function MarketingPerformanceCard({ stats: externalStats, loading
         const fetchStats = async () => {
             try {
                 setLoading(true);
-                const { data } = await api.get(`/admin/marketing/stats/roi?range=${timeRange}`);
-                setStats(data);
+                const { data } = await api.get(`/crm/marketing/stats/roi?range=${timeRange}`);
+                setStats(data.data || data);
             } catch (error) {
                 console.error("Error fetching ROI stats:", error);
             } finally {

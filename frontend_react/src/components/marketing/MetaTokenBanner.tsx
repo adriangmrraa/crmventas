@@ -16,7 +16,7 @@ export default function MetaTokenBanner() {
 
         const checkToken = async () => {
             try {
-                const { data } = await api.get('/admin/marketing/token-status');
+                const { data } = await api.get('/crm/marketing/token-status');
                 if (data.needs_reconnect || (data.days_left !== null && data.days_left <= 7)) {
                     setStatus(data);
                 }

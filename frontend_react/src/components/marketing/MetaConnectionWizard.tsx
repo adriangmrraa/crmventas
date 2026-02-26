@@ -33,8 +33,8 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
         setLoading(true);
         setError(null);
         try {
-            const { data } = await api.get('/admin/marketing/accounts');
-            setClinics(data.accounts || []);
+            const { data } = await api.get('/crm/marketing/meta-portfolios');
+            setClinics(data.data || []);
             setStep(1);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Error loading accounts");
@@ -47,8 +47,8 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
         setLoading(true);
         setError(null);
         try {
-            const { data } = await api.get('/admin/marketing/meta-portfolios');
-            setPortfolios(data.portfolios || []);
+            const { data } = await api.get('/crm/marketing/meta-accounts');
+            setPortfolios(data.data || []);
             setStep(2);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Error loading portfolios");
@@ -62,10 +62,10 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
         setError(null);
         try {
             const url = portfolioId
-                ? `/admin/marketing/meta-accounts?portfolio_id=${portfolioId}`
-                : `/admin/marketing/meta-accounts`;
+                ? `/crm/marketing/meta-accounts?portfolio_id=${portfolioId}`
+                : `/crm/marketing/meta-accounts`;
             const { data } = await api.get(url);
-            setAccounts(data.accounts || []);
+            setAccounts(data.data || []);
             setStep(3);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Error loading accounts");
@@ -78,10 +78,9 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
         setLoading(true);
         setError(null);
         try {
-            await api.post('/admin/marketing/connect', {
-                tenant_id: selectedClinic.id,
-                ad_account_id: selectedAccount.id,
-                ad_account_name: selectedAccount.name
+            await api.post('/crm/marketing/connect', {
+                account_id: selectedAccount.id,
+                account_name: selectedAccount.name
             });
             setStep(4);
             setTimeout(() => {
@@ -98,8 +97,8 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+            <div className="bg-white rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 my-auto">
                 {/* Header */}
                 <div className="p-8 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-4 mb-2">
@@ -177,7 +176,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {step === 2 && (
                                 <>
                                     <h3 className="font-bold text-gray-900 mb-2">Paso 2: Selecciona el Portafolio</h3>
-                                    <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2">
+                                    <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-2">
                                         {portfolios.map(p => (
                                             <button
                                                 key={p.id}
@@ -214,7 +213,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {step === 3 && (
                                 <>
                                     <h3 className="font-bold text-gray-900 mb-2">Paso 3: Elige la Cuenta de Anuncios</h3>
-                                    <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2">
+                                    <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-2">
                                         {accounts.map(a => (
                                             <button
                                                 key={a.id}

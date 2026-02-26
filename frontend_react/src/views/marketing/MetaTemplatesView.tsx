@@ -36,8 +36,8 @@ const MetaTemplatesView: React.FC = () => {
     const fetchLogs = async () => {
         try {
             setRefreshing(true);
-            const res = await api.get('/admin/marketing/automation-logs');
-            setLogs(res.data);
+            const res = await api.get('/crm/marketing/automation-logs');
+            setLogs(res.data.data || res.data);
         } catch (err) {
             console.error("Error fetching logs:", err);
         } finally {

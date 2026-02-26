@@ -3,11 +3,11 @@ Meta OAuth Routes for CRM Ventas
 Handles Meta/Facebook OAuth flow for connecting ad accounts
 """
 
-import logging
+import os
 import secrets
-import json
+import logging
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
@@ -20,18 +20,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # OAuth configuration
-import os
-
 META_APP_ID = os.getenv("META_APP_ID", "YOUR_META_APP_ID")  # From environment variables
 META_APP_SECRET = os.getenv("META_APP_SECRET", "YOUR_META_APP_SECRET")  # From environment variables
-META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "https://your-domain.com/crm/auth/meta/callback")  # Update in production
-META_SCOPES = [
-    "ads_management",
-    "ads_read",
-    "business_management",
-    "whatsapp_business_management",
-    "whatsapp_business_messaging"
-]
+META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "")
+META_SCOPES = "ads_management,ads_read,business_management,whatsapp_business_management,whatsapp_business_messaging"
+FRONTEND_URL = os.getenv("PLATFORM_URL", os.getenv("FRONTEND_URL", ""))
 
 # Store OAuth states (in production, use Redis)
 oauth_states = {}
@@ -174,7 +167,12 @@ async def meta_auth_callback(
         )
         
         logger.info(f"Successfully connected Meta account for tenant {tenant_id}")
+
+        # Redirigir al CRM frontend en lugar de retornar JSON crudo
+        if FRONTEND_URL:
+            return RedirectResponse(url=f"{FRONTEND_URL}/marketing?success=connected", status_code=302)
         
+        # Fallback: retornar JSON si no hay PLATFORM_URL configurada
         return {
             "success": True,
             "data": {
@@ -185,11 +183,13 @@ async def meta_auth_callback(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in Meta OAuth callback: {e}", exc_info=True)
+        if FRONTEND_URL:
+            return RedirectResponse(url=f"{FRONTEND_URL}/marketing?error=auth_failed", status_code=302)
         raise HTTPException(status_code=500, detail=f"Error in Meta OAuth callback: {str(e)}")
 
 @router.post("/disconnect")

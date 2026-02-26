@@ -559,53 +559,52 @@ class MetaOAuthService:
             True si se almacenó correctamente
         """
         try:
-            from core.database import db
+            from core.credentials import save_tenant_credential
+            import json
             from datetime import datetime
-            
-            # Extraer datos del token
+
             access_token = token_data.get("access_token")
-            token_type = token_data.get("token_type", "META_USER_LONG_TOKEN")
             expires_at = token_data.get("expires_at")
-            scopes = token_data.get("scopes", [])
             business_managers = token_data.get("business_managers", [])
             user_id = token_data.get("user_id")
-            page_id = token_data.get("page_id")
-            
-            # Verificar si ya existe un token para este tenant
-            existing_token = await db.fetch_one(
-                "SELECT id FROM meta_tokens WHERE tenant_id = $1 AND token_type = $2",
-                tenant_id, token_type
+
+            # Guardar token usando The Vault (encriptado con Fernet)
+            await save_tenant_credential(
+                tenant_id=tenant_id,
+                name="META_USER_LONG_TOKEN",
+                value=access_token,
+                category="meta"
             )
-            
-            if existing_token:
-                # Actualizar token existente
-                await db.execute(
-                    """
-                    UPDATE meta_tokens 
-                    SET access_token = $1, expires_at = $2, scopes = $3, 
-                        business_managers = $4, updated_at = $5, last_used_by = $6,
-                        page_id = $7
-                    WHERE tenant_id = $8 AND token_type = $9
-                    """,
-                    access_token, expires_at, scopes, business_managers, 
-                    datetime.utcnow(), user_id, page_id, tenant_id, token_type
-                )
-            else:
-                # Insertar nuevo token
-                await db.execute(
-                    """
-                    INSERT INTO meta_tokens 
-                    (tenant_id, access_token, token_type, expires_at, scopes, 
-                     business_managers, created_at, updated_at, last_used_by, page_id)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                    """,
-                    tenant_id, access_token, token_type, expires_at, scopes,
-                    business_managers, datetime.utcnow(), datetime.utcnow(), user_id, page_id
-                )
-            
-            logger.info(f"Stored Meta token for tenant {tenant_id}, type: {token_type}")
+
+            # Guardar metadatos (expires_at, user_id, business managers) como JSON
+            meta_info = {
+                "expires_at": expires_at,
+                "user_id": user_id,
+                "business_managers": business_managers,
+                "connected_at": datetime.utcnow().isoformat()
+            }
+            await save_tenant_credential(
+                tenant_id=tenant_id,
+                name="META_CONNECTION_INFO",
+                value=json.dumps(meta_info),
+                category="meta"
+            )
+
+            # Guardar ID de la primera ad account si existe
+            if business_managers:
+                bm = business_managers[0]
+                ad_accounts = bm.get("ad_accounts", [])
+                if ad_accounts:
+                    await save_tenant_credential(
+                        tenant_id=tenant_id,
+                        name="META_AD_ACCOUNT_ID",
+                        value=ad_accounts[0].get("account_id", ""),
+                        category="meta"
+                    )
+
+            logger.info(f"Stored Meta token in Vault for tenant {tenant_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error storing Meta token: {e}", exc_info=True)
             return False
@@ -622,14 +621,14 @@ class MetaOAuthService:
             True si se eliminó correctamente
         """
         try:
-            from core.database import db
-            
+            from db import db
+ 
             await db.execute(
-                "DELETE FROM meta_tokens WHERE tenant_id = $1",
+                "DELETE FROM credentials WHERE tenant_id = $1 AND name IN ('META_USER_LONG_TOKEN', 'META_CONNECTION_INFO', 'META_AD_ACCOUNT_ID')",
                 tenant_id
             )
             
-            logger.info(f"Removed Meta token for tenant {tenant_id}")
+            logger.info(f"Removed Meta credentials from Vault for tenant {tenant_id}")
             return True
             
         except Exception as e:

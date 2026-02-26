@@ -140,26 +140,38 @@ export default function ConfigView() {
         try {
             setLoading(true);
             const tenantParam = tenantId ? tenantId.toString() : 'global';
-            const { data } = await api.get(`/admin/core/settings/integration/${provider}/${tenantParam}`);
+
+            let configData: Partial<IntegrationConfig> = {};
+            try {
+                const { data } = await api.get(`/admin/core/settings/integration/${provider}/${tenantParam}`);
+                configData = data;
+            } catch (configErr: any) {
+                // If 404 or no configuration exists yet for this tenant/global, just continue
+                console.warn(`No existing config found for ${provider} / ${tenantParam} (or error fetching). Proceeding with defaults.`);
+            }
 
             setIntConfig(prev => ({
                 ...prev,
-                ...data,
+                ...configData,
                 provider,
                 tenant_id: tenantId
             }));
 
             // For YCloud, we might need deployment config for the webhook URL
-            if (provider === 'ycloud' && !data.ycloud_webhook_url) {
-                const depRes = await api.get('/admin/core/config/deployment');
-                let baseWebhook = depRes.data.webhook_ycloud_url;
-                if (tenantId) {
-                    baseWebhook = `${baseWebhook}/${tenantId}`;
+            if (provider === 'ycloud' && !configData.ycloud_webhook_url) {
+                try {
+                    const depRes = await api.get('/admin/core/config/deployment');
+                    let baseWebhook = depRes.data.webhook_ycloud_url;
+                    if (tenantId) {
+                        baseWebhook = `${baseWebhook}/${tenantId}`;
+                    }
+                    setIntConfig(prev => ({ ...prev, ycloud_webhook_url: baseWebhook }));
+                } catch (depErr) {
+                    console.error("Failed to fetch deployment configuration for webhook URL", depErr);
                 }
-                setIntConfig(prev => ({ ...prev, ycloud_webhook_url: baseWebhook }));
             }
         } catch (err) {
-            console.error(err);
+            console.error("Unexpected error in loadIntegrationConfig", err);
         } finally {
             setLoading(false);
         }

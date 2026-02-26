@@ -58,7 +58,7 @@ class MarketingService:
             """, tenant_id, interval) or 0
 
             # 4. Inversión (Spend) - Sincronizada con Meta si hay conexión
-            from services.meta_ads_service import MetaAdsClient
+            from services.marketing.meta_ads_service import MetaAdsClient
             ad_account_id = await get_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID")
             
             total_spend = 0.0
@@ -143,7 +143,7 @@ class MarketingService:
         """
         try:
             from core.credentials import get_tenant_credential
-            from services.meta_ads_service import MetaAdsClient
+            from services.marketing.meta_ads_service import MetaAdsClient
             
             token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
             ad_account_id = await get_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID")

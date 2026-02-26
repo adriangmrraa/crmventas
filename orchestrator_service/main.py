@@ -106,7 +106,7 @@ try:
     app.include_router(meta_webhooks_router, prefix="/webhooks", tags=["Webhooks"])
     logger.info("✅ Meta Ads Marketing API and Webhooks mounted")
 except Exception as e:
-    logger.warning(f"Could not mount Meta Ads Marketing routes: {e}")
+    logger.error(f"❌ Could not mount Meta Ads Marketing routes: {e}", exc_info=True)
 
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)

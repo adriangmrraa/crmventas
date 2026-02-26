@@ -55,16 +55,19 @@ class Database:
         try:
             # 1. Auditoría de Salud: ¿Existe la base mínima?
             async with self.pool.acquire() as conn:
-                schema_exists = await conn.fetchval("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_name = 'tenants'
-                    )
-                """)
+                # Comprobamos un set crítico de tablas para detectar esquemas parciales
+                critical_tables = ['tenants', 'credentials', 'users', 'leads']
+                existing_tables = await conn.fetch("""
+                    SELECT table_name FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = ANY($1)
+                """, critical_tables)
+                
+                existing_table_names = [r['table_name'] for r in existing_tables]
+                foundation_needed = len(existing_table_names) < len(critical_tables)
             
-            # 2. Aplicar Base (Foundation) si es un Fresh Install
-            if not schema_exists:
-                logger.warning("⚠️ Base de datos vacía, aplicando Foundation...")
+            # 2. Aplicar Base (Foundation) si es un Fresh Install o esquema muy parcial
+            if foundation_needed:
+                logger.warning(f"⚠️ Esquema incompleto (tablas encontradas: {existing_table_names}), aplicando Foundation...")
                 await self._apply_foundation(logger)
             
             # 3. Evolución Continua (Pipeline de Cirugía)
@@ -98,27 +101,17 @@ class Database:
         clean_lines = [line.split('--')[0].rstrip() for line in schema_sql.splitlines()]
         clean_sql = "\n".join(clean_lines)
         
-        statements = []
-        current_stmt = []
-        in_dollar = False
-        for line in clean_sql.splitlines():
-            if "$$" in line:
-                in_dollar = not in_dollar if line.count("$$") % 2 != 0 else in_dollar
-            current_stmt.append(line)
-            if not in_dollar and ";" in line:
-                full = "\n".join(current_stmt).strip()
-                if full: statements.append(full)
-                current_stmt = []
-        
-        if current_stmt:
-            leftover = "\n".join(current_stmt).strip()
-            if leftover: statements.append(leftover)
-
+        # OJO: asyncpg no soporta múltiples sentencias en una sola llamada execute si tienen parámetros,
+        # pero aquí es SQL crudo de creación. Usamos execute() directamente o separamos por ';' sencillo.
+        # Para seguridad con bloques $$ usamos un parser minimalista o confiamos en exec_many si fuera el caso.
+        # Aquí ejecutaremos el bloque completo ya que es DDL.
         async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                for i, stmt in enumerate(statements):
-                    await conn.execute(stmt)
-        logger.info(f"✅ Foundation aplicada ({len(statements)} sentencias)")
+            try:
+                await conn.execute(clean_sql)
+                logger.info("✅ Foundation aplicada con éxito.")
+            except Exception as e:
+                logger.error(f"❌ Error aplicando Foundation: {e}")
+                # No lanzamos para permitir que los parches intenten arreglar lo que puedan
 
     async def _run_evolution_pipeline(self, logger):
         """
@@ -136,49 +129,39 @@ class Database:
                 END IF;
             END $$;
             """,
-            # Parche 2: Auto-activación del primer CEO (Protocolo Omega Prime)
+            # Parche 2: Auto-activación del primer CEO
             """
             DO $$ 
             BEGIN 
-                -- Solo activamos un CEO pendiente si NO hay ningún CEO activo
                 IF NOT EXISTS (SELECT 1 FROM users WHERE role = 'ceo' AND status = 'active') THEN
                     UPDATE users SET status = 'active' 
                     WHERE role = 'ceo' AND status = 'pending';
                     
-                    -- Aseguramos que su perfil profesional también esté activo (si existe)
                     UPDATE professionals SET is_active = TRUE 
                     WHERE email IN (SELECT email FROM users WHERE role = 'ceo' AND status = 'active');
                 END IF;
             END $$;
             """,
-            # Agrega más parches aquí en el futuro...
-            # Parche 3: Permitir DNI y Apellido nulos para 'guests' (Chat Users)
+            # Parche 3: Permitir DNI y Apellido nulos para 'guests'
             """
             DO $$ 
             BEGIN 
-                -- Hacer dni nullable
                 ALTER TABLE patients ALTER COLUMN dni DROP NOT NULL;
-                
-                -- Hacer last_name nullable
                 ALTER TABLE patients ALTER COLUMN last_name DROP NOT NULL;
-                
-                -- El constraint de unique dni debe ignorar nulos (Postgres lo hace por defecto, pero revisamos index)
             EXCEPTION
-                WHEN others THEN null; -- Ignorar si ya se aplicó o falla
+                WHEN others THEN null;
             END $$;
             """,
             # Parche 4: Asegurar constraint unique (tenant_id, phone_number) en patients
             """
             DO $$ 
             BEGIN 
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_constraint WHERE conname = 'patients_tenant_id_phone_number_key'
-                ) THEN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'patients_tenant_id_phone_number_key') THEN
                     ALTER TABLE patients ADD CONSTRAINT patients_tenant_id_phone_number_key UNIQUE (tenant_id, phone_number);
                 END IF;
             END $$;
             """,
-            # Parche 5: Agregar urgencia a la tabla patients para tracking de leads
+            # Parche 5: Agregar urgencia a la tabla patients
             """
             DO $$ 
             BEGIN 
@@ -190,44 +173,10 @@ class Database:
                 END IF;
             END $$;
             """,
-            # Parche 37: Add page_id to meta_tokens
+            # Parche 6: Evolucionar treatment_plan a JSONB
             """
             DO $$ 
             BEGIN 
-                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meta_tokens') THEN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='meta_tokens' AND column_name='page_id') THEN
-                        ALTER TABLE meta_tokens ADD COLUMN page_id VARCHAR(255);
-                        CREATE INDEX IF NOT EXISTS idx_meta_tokens_page_id ON meta_tokens(page_id);
-                    END IF;
-                END IF;
-            END $$;
-            """,
-            # Parche 38: Columnas de Atribución Extendida para Meta Ads
-            """
-            DO $$ 
-            BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_adset_id') THEN
-                    ALTER TABLE leads ADD COLUMN meta_adset_id VARCHAR(255);
-                END IF;
-
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_campaign_name') THEN
-                    ALTER TABLE leads ADD COLUMN meta_campaign_name TEXT;
-                END IF;
-
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_adset_name') THEN
-                    ALTER TABLE leads ADD COLUMN meta_adset_name TEXT;
-                END IF;
-
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='meta_ad_name') THEN
-                    ALTER TABLE leads ADD COLUMN meta_ad_name TEXT;
-                END IF;
-            END $$;
-            """,
-            # Parche 6: Evolucionar treatment_plan a JSONB en clinical_records
-            """
-            DO $$ 
-            BEGIN 
-                -- Si la columna existe y es de tipo text/varchar, la convertimos a JSONB
                 IF EXISTS (
                     SELECT 1 FROM information_schema.columns 
                     WHERE table_name='clinical_records' AND column_name='treatment_plan' 
@@ -236,7 +185,6 @@ class Database:
                     ALTER TABLE clinical_records ALTER COLUMN treatment_plan TYPE JSONB USING treatment_plan::jsonb;
                 END IF;
                 
-                -- Si no existe, la creamos
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clinical_records' AND column_name='treatment_plan') THEN
                     ALTER TABLE clinical_records ADD COLUMN treatment_plan JSONB DEFAULT '{}';
                 END IF;

@@ -683,6 +683,76 @@ class MetaOAuthService:
             }
     
     @staticmethod
+    async def get_business_managers(tenant_id: int) -> List[Dict[str, Any]]:
+        """
+        Obtiene Business Managers del tenant usando el token guardado en The Vault.
+        Usado por el wizard de conexión.
+        """
+        from core.credentials import get_tenant_credential
+        import json
+        token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
+        if not token:
+            return []
+        
+        # Intentar obtener desde META_CONNECTION_INFO (ya guardado en el login OAuth)
+        conn_info_str = await get_tenant_credential(tenant_id, "META_CONNECTION_INFO")
+        if conn_info_str:
+            try:
+                conn_info = json.loads(conn_info_str)
+                bms = conn_info.get("business_managers", [])
+                if bms:
+                    return bms
+            except Exception:
+                pass
+        
+        # Fallback: obtener en vivo desde la Graph API
+        return await MetaAdsService.get_business_managers_with_token(tenant_id, token)
+
+    @staticmethod
+    async def get_ad_accounts(tenant_id: int, portfolio_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Obtiene Ad Accounts desde Meta usando el token guardado en The Vault.
+        Si se pasa portfolio_id, filtra las cuentas del Business Manager.
+        """
+        from core.credentials import get_tenant_credential
+        token = await get_tenant_credential(tenant_id, "META_USER_LONG_TOKEN")
+        if not token:
+            return []
+
+        try:
+            if portfolio_id:
+                url = f"{GRAPH_API_BASE}/{portfolio_id}/owned_ad_accounts"
+            else:
+                url = f"{GRAPH_API_BASE}/me/adaccounts"
+            
+            params = {
+                "fields": "id,name,account_id,account_status,currency,timezone_name",
+                "access_token": token,
+                "limit": 50
+            }
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    return response.json().get("data", [])
+                logger.warning(f"Meta get_ad_accounts error: {response.text}")
+                return []
+        except Exception as e:
+            logger.error(f"Error in get_ad_accounts: {e}", exc_info=True)
+            return []
+
+    @staticmethod
+    async def connect_ad_account(tenant_id: int, account_id: str, account_name: str) -> Dict[str, Any]:
+        """
+        Guarda el Ad Account seleccionado en The Vault como la cuenta activa del tenant.
+        """
+        from core.credentials import save_tenant_credential
+        # Normalizar: quitar el prefijo 'act_' si viene, luego guardar con y sin prefijo
+        clean_id = account_id.replace("act_", "")
+        await save_tenant_credential(tenant_id, "META_AD_ACCOUNT_ID", clean_id, "meta")
+        logger.info(f"Connected ad account {clean_id} for tenant {tenant_id}")
+        return {"connected": True, "account_id": clean_id, "account_name": account_name}
+
+    @staticmethod
     async def test_connection(tenant_id: int) -> Dict[str, Any]:
         """
         Testea conexión con Meta API usando token almacenado.

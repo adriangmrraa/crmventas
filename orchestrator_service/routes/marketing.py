@@ -41,8 +41,10 @@ async def get_marketing_stats(
         return {
             "success": True,
             "data": {
-                **stats,
+                "roi": stats,
                 "campaigns": campaign_stats,
+                "currency": stats.get("currency", "ARS"),
+                "meta_connected": stats.get("is_connected", False)
             },
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -64,7 +66,7 @@ async def get_roi_details(
     Get detailed ROI breakdown.
     """
     try:
-        details = await MarketingService.get_campaign_stats(tenant_id, time_range)
+        details = await MarketingService.get_roi_stats(tenant_id, time_range)
         return {
             "success": True,
             "data": details,

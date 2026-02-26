@@ -92,6 +92,7 @@ class MarketingService:
                 "total_revenue": float(total_revenue or 0),
                 "leads": meta_leads,
                 "leads_converted": converted_leads,
+                "patients_converted": converted_leads, # Alias para compatibilidad con el componente frontend
                 "cpa": cpa,
                 "is_connected": is_connected,
                 "ad_account_id": ad_account_id,

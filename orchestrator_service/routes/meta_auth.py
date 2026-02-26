@@ -22,7 +22,11 @@ router = APIRouter()
 # OAuth configuration
 META_APP_ID = os.getenv("META_APP_ID", "YOUR_META_APP_ID")  # From environment variables
 META_APP_SECRET = os.getenv("META_APP_SECRET", "YOUR_META_APP_SECRET")  # From environment variables
-META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "")
+META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "").rstrip("/")
+# Si la URI ya viene con el path completo, la dejamos como está (pero sin slash al final).
+# Si no incluye /callback, se vuelve una URL parcial que el frontend o el backend podrían romper.
+# Para CRM Ventas, el estándar es f"{ORCHESTRATOR_URL}/crm/auth/meta/callback"
+
 META_SCOPES = [
     "ads_management",
     "ads_read",
@@ -30,7 +34,7 @@ META_SCOPES = [
     "whatsapp_business_management",
     "whatsapp_business_messaging"
 ]
-FRONTEND_URL = os.getenv("PLATFORM_URL", os.getenv("FRONTEND_URL", ""))
+FRONTEND_URL = os.getenv("PLATFORM_URL", os.getenv("FRONTEND_URL", "")).rstrip("/")
 
 # Store OAuth states (in production, use Redis)
 oauth_states = {}

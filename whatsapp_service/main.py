@@ -33,13 +33,15 @@ async def get_config(name: str, default: str = None, tenant_id: str = None) -> s
     # 2. Query Orchestrator (Strict Tenant isolation)
     if tenant_id:
         try:
-            url = f"{ORCHESTRATOR_URL}/admin/internal/credentials/{name}?tenant_id={tenant_id}"
+            # Ensure tenant_id is treated as integer for the query
+            url = f"{ORCHESTRATOR_URL}/admin/core/internal/credentials/{name}?tenant_id={int(tenant_id)}"
             async with httpx.AsyncClient() as client:
                 resp = await client.get(
                     url,
                     headers={"X-Internal-Token": INTERNAL_API_TOKEN},
                     timeout=5.0
                 )
+
                 if resp.status_code == 200:
                     val = resp.json().get("value")
                     if val:

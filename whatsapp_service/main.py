@@ -165,11 +165,13 @@ async def forward_to_orchestrator(payload: dict, headers: dict):
         response.raise_for_status()
         return response.json()
 
-async def transcribe_audio(audio_url: str, correlation_id: str) -> Optional[str]:
+async def transcribe_audio(audio_url: str, correlation_id: str, tenant_id: str = None) -> Optional[str]:
     """Downloads audio from YCloud and transcribes it using OpenAI Whisper."""
-    if not OPENAI_API_KEY:
-        logger.error("missing_openai_api_key", note="Transcription requires OpenAI API key")
+    v_openai = await get_config("OPENAI_API_KEY", OPENAI_API_KEY, tenant_id=tenant_id)
+    if not v_openai:
+        logger.error("missing_openai_api_key", note="Transcription requires OpenAI API key", tenant_id=tenant_id)
         return None
+
     
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
@@ -180,7 +182,6 @@ async def transcribe_audio(audio_url: str, correlation_id: str) -> Optional[str]
             
             # 2. Transcribe with Whisper
             files = {"file": ("audio.ogg", audio_data, "audio/ogg")}
-            v_openai = await get_config("OPENAI_API_KEY", OPENAI_API_KEY)
             headers = {"Authorization": f"Bearer {v_openai}"}
             data = {"model": "whisper-1"}
             
@@ -312,17 +313,15 @@ async def process_user_buffer(from_number: str, business_number: str, customer_n
                 break
 
             if orch_res.send:
-                if not YCLOUD_API_KEY:
-                    log.error("missing_ycloud_api_key", note="Cannot send sequence without API key")
-                else:
-                    msgs = orch_res.messages
-                    if not msgs and orch_res.text:
-                        msgs = [OrchestratorMessage(text=orch_res.text)]
-                    
-                    if msgs:
-                        img_count = len([m for m in msgs if m.imageUrl])
-                        log.info("starting_send_sequence", count=len(msgs), images_found=img_count)
-                        await send_sequence(msgs, from_number, business_number, current_event_id, correlation_id)
+                msgs = orch_res.messages
+                if not msgs and orch_res.text:
+                    msgs = [OrchestratorMessage(text=orch_res.text)]
+                
+                if msgs:
+                    img_count = len([m for m in msgs if m.imageUrl])
+                    log.info("starting_send_sequence", count=len(msgs), images_found=img_count)
+                    await send_sequence(msgs, from_number, business_number, current_event_id, correlation_id, tenant_id=tenant_id)
+
             
             # 3. ATOMIC TRIM: Remove only the messages we just processed
             redis_client.ltrim(buffer_key, L, -1)
@@ -406,8 +405,8 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
         if msg_type == "audio":
             node = msg.get("audio", {})
             if node.get("link"):
-                logger.info("audio_received_starting_transcription", correlation_id=correlation_id)
-                transcription = await transcribe_audio(node.get("link"), correlation_id)
+                logger.info("audio_received_starting_transcription", correlation_id=correlation_id, tenant_id=tenant_id)
+                transcription = await transcribe_audio(node.get("link"), correlation_id, tenant_id=tenant_id)
                 if transcription and transcription.strip():
                     buffer_key, timer_key, lock_key = f"buffer:{from_n}", f"timer:{from_n}", f"active_task:{from_n}"
                     redis_client.rpush(buffer_key, json.dumps({

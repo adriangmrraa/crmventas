@@ -365,13 +365,7 @@ async def get_deployment_config(request: Request):
     if public_webhook_url:
         base_url = public_webhook_url.rstrip('/')
     else:
-        # Heurística para easypanel: si el host tiene "-orchestrator.", sugerimos reemplazar por "-whatsapp." predeterminadamente
-        # ya que el webhook de YCloud vive en whatsapp_service.
-        if "-orchestrator." in host:
-            host_whatsapp = host.replace("-orchestrator.", "-whatsapp.")
-            base_url = f"{protocol}://{host_whatsapp}"
-        else:
-            base_url = f"{protocol}://{host}"
+        base_url = f"{protocol}://{host}"
     
     return {
         "webhook_ycloud_url": f"{base_url}/webhook/ycloud",

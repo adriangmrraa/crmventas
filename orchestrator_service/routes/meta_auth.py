@@ -176,7 +176,7 @@ async def meta_auth_callback(
 
         # Redirigir al CRM frontend en lugar de retornar JSON crudo
         if FRONTEND_URL:
-            return RedirectResponse(url=f"{FRONTEND_URL}/marketing?success=connected", status_code=302)
+            return RedirectResponse(url=f"{FRONTEND_URL}/crm/marketing?success=connected", status_code=302)
         
         # Fallback: retornar JSON si no hay PLATFORM_URL configurada
         return {
@@ -195,7 +195,7 @@ async def meta_auth_callback(
     except Exception as e:
         logger.error(f"Error in Meta OAuth callback: {e}", exc_info=True)
         if FRONTEND_URL:
-            return RedirectResponse(url=f"{FRONTEND_URL}/marketing?error=auth_failed", status_code=302)
+            return RedirectResponse(url=f"{FRONTEND_URL}/crm/marketing?error=auth_failed", status_code=302)
         raise HTTPException(status_code=500, detail=f"Error in Meta OAuth callback: {str(e)}")
 
 @router.post("/disconnect")

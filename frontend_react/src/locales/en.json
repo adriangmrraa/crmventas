@@ -723,6 +723,9 @@
     "leads": "Leads",
     "meta_connection": "Meta Ads Connection",
     "connected_disconnected": "Disconnected",
+    "connected_active": "Connected",
+    "connected_desc": "Your Meta Ads account is active. Campaign data and ROI are synced automatically.",
+    "reconnect": "Reconnect Meta",
     "disconnected_desc": "Connect your Meta account to see real-time metrics.",
     "connect": "Connect with Meta",
     "tabs": {

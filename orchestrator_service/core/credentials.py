@@ -60,13 +60,11 @@ async def get_tenant_credential(tenant_id: int, name: str) -> Optional[str]:
         name,
     )
     if not row or not row["value"]:
-        # Fallback a variable de entorno global (Nexus Resilience Protocol)
-        import os
-        env_val = os.getenv(name)
-        return env_val.strip() if env_val else None
+        return None
     
     # Intentar decriptar si es un valor encriptado (Fernet)
     return decrypt_value(str(row["value"]))
+
 
 
 

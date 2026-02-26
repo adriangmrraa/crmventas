@@ -24,7 +24,7 @@ load_dotenv()
 # Config handling
 _config_cache = {}
 
-async def get_config(name: str, default: str = None, tenant_id: str = None) -> str:
+async def get_config(name: str, default: str = None, tenant_id: Optional[int] = None) -> str:
     cache_key = f"{tenant_id}_{name}" if tenant_id else name
     # 1. Check local cache
     if cache_key in _config_cache:
@@ -137,7 +137,7 @@ async def add_metrics_and_logs(request: Request, call_next):
     return response
 
 # --- Helpers ---
-async def verify_signature(request: Request, tenant_id: str = None):
+async def verify_signature(request: Request, tenant_id: Optional[int] = None):
     signature_header = request.headers.get("ycloud-signature")
     if not signature_header: raise HTTPException(status_code=401, detail="Missing signature header")
     try:
@@ -167,7 +167,7 @@ async def forward_to_orchestrator(payload: dict, headers: dict):
         response.raise_for_status()
         return response.json()
 
-async def transcribe_audio(audio_url: str, correlation_id: str, tenant_id: str = None) -> Optional[str]:
+async def transcribe_audio(audio_url: str, correlation_id: str, tenant_id: Optional[int] = None) -> Optional[str]:
     """Downloads audio from YCloud and transcribes it using OpenAI Whisper."""
     v_openai = await get_config("OPENAI_API_KEY", OPENAI_API_KEY, tenant_id=tenant_id)
     if not v_openai:
@@ -199,7 +199,7 @@ async def transcribe_audio(audio_url: str, correlation_id: str, tenant_id: str =
         logger.error("transcription_failed", error=str(e), correlation_id=correlation_id)
         return None
 
-async def send_sequence(messages: List[OrchestratorMessage], user_number: str, business_number: str, inbound_id: str, correlation_id: str, tenant_id: str = None):
+async def send_sequence(messages: List[OrchestratorMessage], user_number: str, business_number: str, inbound_id: str, correlation_id: str, tenant_id: Optional[int] = None):
     v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
     client = YCloudClient(v_ycloud, business_number)
     
@@ -252,7 +252,7 @@ async def send_sequence(messages: List[OrchestratorMessage], user_number: str, b
 
 
 # --- Background Task ---
-async def process_user_buffer(from_number: str, business_number: str, customer_name: Optional[str], event_id: str, provider_message_id: str, tenant_id: str = None):
+async def process_user_buffer(from_number: str, business_number: str, customer_name: Optional[str], event_id: str, provider_message_id: str, tenant_id: Optional[int] = None):
     buffer_key, timer_key, lock_key = f"buffer:{from_number}", f"timer:{from_number}", f"active_task:{from_number}"
     correlation_id = str(uuid.uuid4())
     log = logger.bind(correlation_id=correlation_id, from_number=from_number[-4:], tenant_id=tenant_id)
@@ -358,12 +358,13 @@ def ready():
 @app.get("/health")
 def health(): return {"status": "ok"}
 
-@app.post("/webhook")
-@app.post("/webhook/ycloud")
 @app.post("/webhook/ycloud/{tenant_id}")
 async def ycloud_webhook(request: Request, tenant_id: str = None):
-    logger.info("webhook_hit", headers=str(request.headers), tenant_id=tenant_id)
-    await verify_signature(request, tenant_id=tenant_id)
+    # Ensure tenant_id is int for internal propagation (Spec 2.0)
+    tenant_int = int(tenant_id) if tenant_id else None
+    logger.info("webhook_hit", headers=str(request.headers), tenant_id=tenant_int)
+    await verify_signature(request, tenant_id=tenant_int)
+
     correlation_id = request.headers.get("traceparent") or str(uuid.uuid4())
     try: body = await request.json()
     except: raise HTTPException(status_code=400, detail="Invalid JSON")
@@ -399,7 +400,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                 if not redis_client.get(lock_key):
                     redis_client.setex(lock_key, 60, "1")
-                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_id))
+                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_int))
                 return {"status": "buffering_started", "correlation_id": correlation_id}
             return {"status": "buffering_updated", "correlation_id": correlation_id}
 
@@ -408,7 +409,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
             node = msg.get("audio", {})
             if node.get("link"):
                 logger.info("audio_received_starting_transcription", correlation_id=correlation_id, tenant_id=tenant_id)
-                transcription = await transcribe_audio(node.get("link"), correlation_id, tenant_id=tenant_id)
+                transcription = await transcribe_audio(node.get("link"), correlation_id, tenant_id=tenant_int)
                 if transcription and transcription.strip():
                     buffer_key, timer_key, lock_key = f"buffer:{from_n}", f"timer:{from_n}", f"active_task:{from_n}"
                     redis_client.rpush(buffer_key, json.dumps({
@@ -419,7 +420,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                     redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                     if not redis_client.get(lock_key):
                         redis_client.setex(lock_key, 60, "1")
-                        asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_id))
+                        asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_int))
                     return {"status": "buffering_started", "correlation_id": correlation_id, "source": "audio"}
                 logger.warning("audio_transcription_empty_or_failed", correlation_id=correlation_id)
             return {"status": "ignored_type_or_empty", "type": msg_type}
@@ -463,7 +464,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 "event_type": "whatsapp.inbound_message.received", 
                 "correlation_id": correlation_id,
                 "media": media_list,
-                "tenant_id": tenant_id
+                "tenant_id": tenant_int
              }
              headers = {"X-Correlation-Id": correlation_id}
              if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN
@@ -485,7 +486,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                              msgs = [OrchestratorMessage(text=orch_res.text)]
                          
                          if msgs:
-                             await send_sequence(msgs, from_n, to_n, event.get("id"), correlation_id, tenant_id=tenant_id)
+                             await send_sequence(msgs, from_n, to_n, event.get("id"), correlation_id, tenant_id=tenant_int)
              except Exception as e:
                  logger.error("media_response_processing_error", error=str(e))
                  
@@ -526,7 +527,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 "text": text,
                 "event_type": "whatsapp.message.echo", # Standardize for Orchestrator
                 "correlation_id": correlation_id,
-                "tenant_id": tenant_id
+                "tenant_id": tenant_int
              }
              headers = {"X-Correlation-Id": correlation_id}
              if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN
@@ -548,9 +549,11 @@ async def get_templates(request: Request):
     if token != INTERNAL_API_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    tenant_id = request.query_params.get("tenant_id")
+    tenant_id_raw = request.query_params.get("tenant_id")
+    tenant_id = int(tenant_id_raw) if tenant_id_raw else None
     v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
-    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or "default"
+    business_number = (await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or 
+                       request.query_params.get("from_number") or "default")
     
     try:
         client = YCloudClient(v_ycloud, business_number)
@@ -572,9 +575,11 @@ async def send_message(message: SendMessage, request: Request):
     if token != INTERNAL_API_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    tenant_id = request.query_params.get("tenant_id")
+    tenant_id_raw = request.query_params.get("tenant_id")
+    tenant_id = int(tenant_id_raw) if tenant_id_raw else None
     v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
-    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or "default"
+    business_number = (await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or 
+                       request.query_params.get("from_number") or "default")
     
     try:
         client = YCloudClient(v_ycloud, business_number)

@@ -214,6 +214,10 @@ async def chat_inbound(
     
     if not tenant_id:
         tenant_id = 1 # Extreme fallback
+    
+    # Critical: Ensure tenant_id is int for asyncpg (Spec Database Evolution)
+    tenant_id = int(tenant_id)
+
 
 
     is_new = await db.try_insert_inbound(

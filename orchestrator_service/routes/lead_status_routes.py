@@ -12,7 +12,7 @@ from modules.crm_sales.status_models import (
     LeadStatusChangeRequest,
     LeadBulkStatusChangeRequest,
     LeadStatusHistoryResponse,
-    LeadStatusUpdate # Added
+    LeadStatusUpdate
 )
 
 router = APIRouter(prefix="/admin/core/crm", tags=["Lead Status"])
@@ -66,12 +66,12 @@ async def update_lead_status(
     """Actualiza el estado de un lead y registra el historial."""
     tenant_id = await get_resolved_tenant_id(user_data)
     try:
-        updated_status = await status_service.update_lead_status(
-            tenant_id=tenant_id,
+        updated_status = await status_service.change_lead_status(
             lead_id=lead_id,
-            new_status_id=status_update.new_status_id,
-            reason=status_update.reason,
-            seller_id=user_data.user_id if hasattr(user_data, 'user_id') else None
+            tenant_id=tenant_id,
+            new_status=status_update.new_status_id,
+            comment=status_update.reason,
+            user_id=user_data["user_id"] if isinstance(user_data, dict) else (user_data.user_id if hasattr(user_data, 'user_id') else None)
         )
         return updated_status
     except ValueError as e:

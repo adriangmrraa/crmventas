@@ -42,4 +42,9 @@ Migrar el sistema actual de CRM Ventas de estados rígidos de texto libre a una 
 1. **Pérdida de Operatividad en Producción:** Mitigado implementando Feature Flags (`REACT_APP_ENABLE_ADVANCED_LEAD_STATUS`) en el frontend para no interrumpir el workflow si hay fallos.
 2. **Race Conditions en Bulk Update:** Mitigado con locks transaccionales de DB (`pg_advisory_xact_lock`).
 3. **Errores de N+1 Queries en Listados:** Mitigado ejecutando sentencias de JOIN optimizadas con la tabla `lead_statuses` al pedir iterablemente los leads.
-4. **Fallas en Servicios Externos de Triggers:** Mitigado usando un "Circuit Breaker Pattern" en Meta y servicios de Mailing.
+## 6. Clarificaciones (Acordadas con el Usuario)
+1. **Feature Flag Frontend:** Se mantiene el interruptor (`REACT_APP_ENABLE_ADVANCED_LEAD_STATUS`) activo hasta validar estabilidad total.
+2. **Circuit Breaker:** Implementar una estrategia profesional de "Safe-Retry". Tras 5 fallos consecutivos en envíos HSM para un tenant, se suspenderá la cola automáticamente por 1 hora para proteger la cuenta.
+3. **Flujo de Estados:** Los estados "finales" (ej. Won/Lost) NO bloquean nuevas transiciones. El usuario retiene libertad de movimiento total.
+4. **Migración de Datos:** Fallback predeterminado para estados no reconocidos será el código `new`.
+5. **Locks Masivos:** Se valida el uso de Advisory Locks por Tenant para garantizar integridad en Bulk Updates.

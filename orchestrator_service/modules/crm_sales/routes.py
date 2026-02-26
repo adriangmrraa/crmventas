@@ -16,7 +16,7 @@ from core.rate_limiter import limiter
 
 logger = logging.getLogger("orchestrator")
 
-from .models import (
+from modules.crm_sales.models import (
     LeadCreate, LeadUpdate, LeadResponse, LeadAssignRequest, LeadStageUpdateRequest,
     ClientCreate, ClientUpdate, ClientResponse,
     WhatsAppConnectionCreate, WhatsAppConnectionResponse,

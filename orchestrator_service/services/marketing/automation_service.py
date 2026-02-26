@@ -230,6 +230,22 @@ class AutomationService:
                 VALUES ($1, $2, $3, $4, 'failed', $5)
             """, tenant_id, patient_id, trigger_type, target_id, str(e))
             return False
+            
+    @staticmethod
+    async def get_automation_logs(tenant_id: int, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+        """Recupera el historial de ejecuciones de automatización."""
+        query = """
+            SELECT l.id, l.tenant_id, l.patient_id, l.trigger_type, l.target_id, 
+                   l.status, l.error_details, l.meta, l.created_at,
+                   p.first_name || ' ' || COALESCE(p.last_name, '') as patient_name
+            FROM automation_logs l
+            LEFT JOIN leads p ON l.patient_id = p.id
+            WHERE l.tenant_id = $1
+            ORDER BY l.created_at DESC
+            LIMIT $2 OFFSET $3
+        """
+        rows = await db.pool.fetch(query, tenant_id, limit, offset)
+        return [dict(row) for row in rows]
 
 # Instancia singleton
 automation_service = AutomationService()

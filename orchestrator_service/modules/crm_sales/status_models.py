@@ -74,3 +74,8 @@ class LeadStatusHistoryResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class LeadStatusUpdate(BaseModel):
+    """Payload para actualizar el estado de un lead desde la interfaz nexus"""
+    new_status_id: str = Field(..., description="El código del nuevo estado a aplicar")
+    reason: Optional[str] = Field(None, description="Comentario o razón de cambio")

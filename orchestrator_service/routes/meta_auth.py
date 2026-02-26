@@ -53,7 +53,7 @@ async def get_meta_auth_url(
         state = f"tenant_{tenant_id}_{secrets.token_urlsafe(32)}"
         oauth_states[state] = {
             "tenant_id": tenant_id,
-            "user_id": user_data.get("id"),
+            "user_id": user_data.user_id,
             "created_at": datetime.utcnow().isoformat()
         }
         
@@ -211,7 +211,7 @@ async def disconnect_meta_account(
         # Audit the disconnection
         logger.info(
             f"[AUDIT] meta_oauth_disconnected: tenant_id={tenant_id}, "
-            f"user_id={user_data.get('id')}"
+            f"user_id={user_data.user_id}"
         )
         
         logger.info(f"Successfully disconnected Meta account for tenant {tenant_id}")

@@ -57,7 +57,7 @@ async def get_roi_details(
     Get detailed ROI breakdown.
     """
     try:
-        details = await MarketingService.get_roi_breakdown(tenant_id, time_range)
+        details = await MarketingService.get_campaign_stats(tenant_id, time_range)
         return {
             "success": True,
             "data": details,

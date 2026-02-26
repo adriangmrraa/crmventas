@@ -355,7 +355,18 @@ async def get_deployment_config(request: Request):
     host = request.headers.get("x-forwarded-host") or request.headers.get("host") or getattr(request.url, "netloc", "localhost:8000")
     
     # URL base para webhooks dinámicos (usualmente el dominio público)
-    base_url = f"{protocol}://{host}"
+    # Permite override manual de la URL mediante la variable de entorno PUBLIC_WEBHOOK_URL
+    public_webhook_url = os.getenv("PUBLIC_WEBHOOK_URL")
+    if public_webhook_url:
+        base_url = public_webhook_url.rstrip('/')
+    else:
+        # Heurística para easypanel: si el host tiene "-orchestrator.", sugerimos reemplazar por "-whatsapp." predeterminadamente
+        # ya que el webhook de YCloud vive en whatsapp_service.
+        if "-orchestrator." in host:
+            host_whatsapp = host.replace("-orchestrator.", "-whatsapp.")
+            base_url = f"{protocol}://{host_whatsapp}"
+        else:
+            base_url = f"{protocol}://{host}"
     
     return {
         "webhook_ycloud_url": f"{base_url}/webhook/ycloud",

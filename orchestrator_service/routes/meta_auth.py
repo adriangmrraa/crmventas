@@ -12,8 +12,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 
-from core.security import verify_admin_token, get_resolved_tenant_id
-from core.audit import audit_access
+from core.security import verify_admin_token, get_resolved_tenant_id, audit_access
 from core.rate_limiter import limiter
 from services.marketing.meta_ads_service import MetaAdsService
 
@@ -169,17 +168,9 @@ async def meta_auth_callback(
         )
         
         # Audit the connection
-        from core.audit import log_system_event
-        await log_system_event(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            action="meta_oauth_connected",
-            resource_type="meta_account",
-            resource_id="N/A",
-            details={
-                "business_managers_count": len(business_managers),
-                "scopes": META_SCOPES
-            }
+        logger.info(
+            f"[AUDIT] meta_oauth_connected: tenant_id={tenant_id}, "
+            f"user_id={user_id}, business_managers={len(business_managers)}"
         )
         
         logger.info(f"Successfully connected Meta account for tenant {tenant_id}")
@@ -218,14 +209,9 @@ async def disconnect_meta_account(
         await MetaAdsService.remove_meta_token(tenant_id)
         
         # Audit the disconnection
-        from core.audit import log_system_event
-        await log_system_event(
-            tenant_id=tenant_id,
-            user_id=user_data.get("id"),
-            action="meta_oauth_disconnected",
-            resource_type="meta_account",
-            resource_id="N/A",
-            details={}
+        logger.info(
+            f"[AUDIT] meta_oauth_disconnected: tenant_id={tenant_id}, "
+            f"user_id={user_data.get('id')}"
         )
         
         logger.info(f"Successfully disconnected Meta account for tenant {tenant_id}")

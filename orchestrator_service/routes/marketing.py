@@ -10,8 +10,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
-from core.security import verify_admin_token, get_resolved_tenant_id
-from core.audit import audit_access
+from core.security import verify_admin_token, get_resolved_tenant_id, audit_access
 from core.rate_limiter import limiter
 from services.marketing.marketing_service import MarketingService
 from services.marketing.meta_ads_service import MetaAdsService

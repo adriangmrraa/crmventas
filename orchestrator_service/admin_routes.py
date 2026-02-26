@@ -9,6 +9,10 @@ from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks,
 from pydantic import BaseModel
 
 from db import db
+from core.credentials import (
+    get_tenant_credential, save_tenant_credential, 
+    YCLOUD_API_KEY, YCLOUD_WEBHOOK_SECRET
+)
 from core.security import verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, ADMIN_TOKEN, audit_access
 from core.utils import normalize_phone, ARG_TZ
 
@@ -51,7 +55,16 @@ class TenantUpdate(BaseModel):
 class TenantCreate(BaseModel):
     clinic_name: str
     bot_phone_number: str
-    calendar_provider: Optional[str] = None  # 'local' | 'google'
+    calendar_provider: Optional[str] = None
+
+class CredentialItem(BaseModel):
+    name: str
+    value: str
+    category: str = "general"
+
+class IntegrationPayload(BaseModel):
+    ycloud_api_key: Optional[str] = None
+    ycloud_webhook_secret: Optional[str] = None  # 'local' | 'google'
 
 # --- HELPERS ---
 async def emit_appointment_event(event_type: str, data: Dict[str, Any], request: Request):
@@ -336,23 +349,129 @@ async def get_internal_credential(name: str, x_internal_token: str = Header(None
 
 @router.get("/config/deployment", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_deployment_config(request: Request):
-    """
-    Retorna la configuración de despliegue, incluyendo URLs de webhooks para integración externa.
-    """
-    # 1. Resolver Base URL del orquestador
-    api_base = os.getenv("BASE_URL", "").rstrip("/")
-    if not api_base:
-        # Fallback usando los headers del request
-        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-        host = request.headers.get("host", request.url.netloc)
-        api_base = f"{scheme}://{host}"
+    """Retorna la configuración de despliegue, incluyendo URLs de webhooks para integración externa."""
+    # Intentamos obtener protocol y host desde las cabeceras (cuando se usa proxy reverso)
+    protocol = "https" if request.headers.get("x-forwarded-proto") == "https" else "http"
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or getattr(request.url, "netloc", "localhost:8000")
+    
+    # URL base para webhooks dinámicos (usualmente el dominio público)
+    base_url = f"{protocol}://{host}"
     
     return {
-        "orchestrator_url": api_base,
-        "webhook_ycloud_url": f"{api_base}/chat", # Chat inbound es el webhook para YCloud
-        "webhook_meta_url": f"{api_base}/webhooks/meta", # Endpoint para Meta Lead Forms
-        "environment": os.getenv("ENVIRONMENT", "development")
+        "webhook_ycloud_url": f"{base_url}/webhook/ycloud",
+        "orchestrator_url": base_url,
+        "environment": os.getenv("ENVIRONMENT", "production")
     }
+
+# --- CREDENTIALS MANAGEMENT (Otras & YCloud Tabs) ---
+
+@router.get("/credentials", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+async def get_credentials(tenant_id_filter: Optional[int] = None, user_data=Depends(verify_admin_token)):
+    """Retorna las credenciales genéricas (category != 'integration'). CEO ve todas o filtra por tenant_id."""
+    # Validación de acceso basada en rol
+    role = user_data.get("role")
+    user_tenant = user_data.get("tenant_id")
+    
+    query = "SELECT id, tenant_id, name, '***' as value, category, updated_at FROM credentials WHERE category != 'integration'"
+    params = []
+    
+    if role == "ceo":
+        # CEO puede ver todo, o filtrar si pasa tenant_id_filter
+        if tenant_id_filter:
+            query += " AND tenant_id = $1"
+            params.append(tenant_id_filter)
+    else:
+        # Secretary / Professional solo ven las de su tenant
+        query += " AND tenant_id = $1"
+        params.append(user_tenant)
+        
+    query += " ORDER BY tenant_id ASC, name ASC"
+    
+    rows = await db.pool.fetch(query, *params)
+    return [dict(r) for r in rows]
+
+@router.post("/credentials", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+async def save_credential(payload: CredentialItem, tenant_id: int = Depends(get_resolved_tenant_id)):
+    """Guarda o actualiza una credencial cruda para un tenant. Solo para la pestaña 'Otras'."""
+    success = await save_tenant_credential(tenant_id, payload.name, payload.value, payload.category)
+    if not success:
+        raise HTTPException(status_code=500, detail="Error saving credential")
+    return {"status": "ok"}
+
+@router.delete("/credentials/{cred_id}", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+async def delete_credential(cred_id: int, user_data=Depends(verify_admin_token), tenant_id: int = Depends(get_resolved_tenant_id)):
+    """Elimina una credencial específica por su ID. Validado por tenant_id a menos que sea CEO."""
+    role = user_data.get("role")
+    
+    if role == "ceo":
+        result = await db.pool.execute("DELETE FROM credentials WHERE id = $1", cred_id)
+    else:
+        result = await db.pool.execute("DELETE FROM credentials WHERE id = $1 AND tenant_id = $2", cred_id, tenant_id)
+        
+    if result == "DELETE 0":
+        raise HTTPException(status_code=404, detail="Credential not found or access denied")
+    return {"status": "ok"}
+
+@router.get("/settings/integration/{provider}/{tenant_id}", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+async def get_integration_settings(provider: str, tenant_id: str, user_data=Depends(verify_admin_token), resolved_tenant: int = Depends(get_resolved_tenant_id)):
+    """Obtiene la configuración específica de una integración (ej. YCloud). tenant_id puede ser 'global' o numérico."""
+    # Validación de acceso (CEO vs Otros) - Manejo de 'global'
+    actual_tenant_id = None
+    if tenant_id != "global":
+        try:
+            actual_tenant_id = int(tenant_id)
+            if user_data.get("role") != "ceo" and actual_tenant_id != resolved_tenant:
+                raise HTTPException(status_code=403, detail="Forbidden")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tenant_id")
+    else:
+        if user_data.get("role") != "ceo":
+             raise HTTPException(status_code=403, detail="Only CEO can access global integration settings")
+
+    if provider == "ycloud":
+        api_key = await get_tenant_credential(actual_tenant_id, YCLOUD_API_KEY) if actual_tenant_id else None
+        webhook_secret = await get_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET) if actual_tenant_id else None
+        
+        return {
+            "ycloud_api_key": "***" if api_key else "",
+            "ycloud_webhook_secret": "***" if webhook_secret else ""
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Provider not supported")
+
+@router.post("/settings/integration/{provider}/{tenant_id}", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
+async def save_integration_settings(provider: str, tenant_id: str, payload: IntegrationPayload, user_data=Depends(verify_admin_token), resolved_tenant: int = Depends(get_resolved_tenant_id)):
+    """Guarda configuración específica de YCloud u otro provider para un tenant dado."""
+    actual_tenant_id = None
+    if tenant_id != "global":
+        try:
+            actual_tenant_id = int(tenant_id)
+            if user_data.get("role") != "ceo" and actual_tenant_id != resolved_tenant:
+                raise HTTPException(status_code=403, detail="Forbidden")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tenant_id")
+    else:
+        if user_data.get("role") != "ceo":
+             raise HTTPException(status_code=403, detail="Only CEO can save global integration settings")
+
+    if provider == "ycloud" and actual_tenant_id is not None:
+        if payload.ycloud_api_key and payload.ycloud_api_key != "***":
+            await save_tenant_credential(actual_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
+        if payload.ycloud_webhook_secret and payload.ycloud_webhook_secret != "***":
+            await save_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
+        return {"status": "ok"}
+    else:
+        raise HTTPException(status_code=400, detail="Provider not supported or missing tenant_id")
+
+# --- MANTENIMIENTO ---
+
+@router.post("/maintenance/clean-media", dependencies=[Depends(verify_admin_token)], tags=["Mantenimiento"])
+async def clean_media(request: Request, user_data=Depends(verify_admin_token)):
+    """Mock endpoint para el botón de limpieza de archivos en UI. (No-op por ahora al no usar Chatwoot local storage exhaustivo)"""
+    if user_data.get("role") != "ceo":
+        raise HTTPException(status_code=403, detail="Only CEO can run maintenance tasks")
+        
+    return {"status": "ok", "message": "Limpieza de archivos completada exitosamente. (Mock)"}
 
 
 @router.get("/audit/logs", tags=["Seguridad"])

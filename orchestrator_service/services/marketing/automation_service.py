@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta, timezone
 import json
 from db import db
-import pytz
+from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
 
 logger = logging.getLogger("automation")
@@ -66,7 +66,10 @@ class AutomationService:
     async def process_tenant_triggers(self, tenant: Dict[str, Any]):
         tenant_id = tenant['id']
         tz_name = tenant.get('timezone') or 'America/Argentina/Buenos_Aires'
-        tz = pytz.timezone(tz_name)
+        try:
+            tz = ZoneInfo(tz_name)
+        except Exception:
+            tz = ZoneInfo('America/Argentina/Buenos_Aires')
         now_local = datetime.now(tz)
 
         # 1. Recordatorios de Citas (24h antes)

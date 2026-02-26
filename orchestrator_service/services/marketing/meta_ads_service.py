@@ -323,7 +323,7 @@ class MetaAdsClient:
         if filtering is None:
             filtering = [{'field': 'effective_status', 'operator': 'IN', 'value': [
                 'ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'IN_PROCESS', 'WITH_ISSUES', 
-                'CAMPAIGN_PAUSED', 'ADSET_PAUSED'
+                'CAMPAIGN_PAUSED', 'ADSET_PAUSED', 'PENDING_REVIEW', 'DISAPPROVED', 'PREAPPROVED', 'PENDING_BILLING_INFO'
             ]}]
 
         url = f"{GRAPH_API_BASE}/{account_id}/ads"

@@ -49,10 +49,10 @@ class MarketingService:
             # 3. Calcular Ingresos Reales en el periodo
             total_revenue = await db.pool.fetchval("""
                 SELECT SUM(amount) 
-                FROM accounting_transactions t
+                FROM sales_transactions t
                 JOIN leads p ON t.lead_id = p.id
                 WHERE p.tenant_id = $1 AND p.lead_source = 'META_ADS'
-                AND t.status = 'completed'
+                AND t.payment_status = 'completed'
                 AND t.created_at >= NOW() - $2::interval
             """, tenant_id, interval) or 0
 
@@ -221,9 +221,9 @@ class MarketingService:
                            AND a.created_at >= NOW() - $2::interval
                        )) as opportunities,
                        (SELECT SUM(t.amount) 
-                        FROM accounting_transactions t 
+                        FROM sales_transactions t 
                         JOIN leads p2 ON t.lead_id = p2.id 
-                        WHERE p2.meta_ad_id = leads.meta_ad_id AND t.status = 'completed'
+                        WHERE p2.meta_ad_id = leads.meta_ad_id AND t.payment_status = 'completed'
                         AND t.created_at >= NOW() - $2::interval
                        ) as revenue
                 FROM leads

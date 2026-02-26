@@ -23,7 +23,13 @@ router = APIRouter()
 META_APP_ID = os.getenv("META_APP_ID", "YOUR_META_APP_ID")  # From environment variables
 META_APP_SECRET = os.getenv("META_APP_SECRET", "YOUR_META_APP_SECRET")  # From environment variables
 META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "")
-META_SCOPES = "ads_management,ads_read,business_management,whatsapp_business_management,whatsapp_business_messaging"
+META_SCOPES = [
+    "ads_management",
+    "ads_read",
+    "business_management",
+    "whatsapp_business_management",
+    "whatsapp_business_messaging"
+]
 FRONTEND_URL = os.getenv("PLATFORM_URL", os.getenv("FRONTEND_URL", ""))
 
 # Store OAuth states (in production, use Redis)

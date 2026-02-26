@@ -369,8 +369,8 @@ async def get_deployment_config(request: Request):
 async def get_credentials(tenant_id_filter: Optional[int] = None, user_data=Depends(verify_admin_token)):
     """Retorna las credenciales genéricas (category != 'integration'). CEO ve todas o filtra por tenant_id."""
     # Validación de acceso basada en rol
-    role = user_data.get("role")
-    user_tenant = user_data.get("tenant_id")
+    role = user_data.role
+    user_tenant = user_data.tenant_id
     
     query = "SELECT id, tenant_id, name, '***' as value, category, updated_at FROM credentials WHERE category != 'integration'"
     params = []
@@ -401,7 +401,7 @@ async def save_credential(payload: CredentialItem, tenant_id: int = Depends(get_
 @router.delete("/credentials/{cred_id}", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def delete_credential(cred_id: int, user_data=Depends(verify_admin_token), tenant_id: int = Depends(get_resolved_tenant_id)):
     """Elimina una credencial específica por su ID. Validado por tenant_id a menos que sea CEO."""
-    role = user_data.get("role")
+    role = user_data.role
     
     if role == "ceo":
         result = await db.pool.execute("DELETE FROM credentials WHERE id = $1", cred_id)
@@ -420,12 +420,12 @@ async def get_integration_settings(provider: str, tenant_id: str, user_data=Depe
     if tenant_id != "global":
         try:
             actual_tenant_id = int(tenant_id)
-            if user_data.get("role") != "ceo" and actual_tenant_id != resolved_tenant:
+            if user_data.role != "ceo" and actual_tenant_id != resolved_tenant:
                 raise HTTPException(status_code=403, detail="Forbidden")
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tenant_id")
     else:
-        if user_data.get("role") != "ceo":
+        if user_data.role != "ceo":
              raise HTTPException(status_code=403, detail="Only CEO can access global integration settings")
 
     if provider == "ycloud":
@@ -446,12 +446,12 @@ async def save_integration_settings(provider: str, tenant_id: str, payload: Inte
     if tenant_id != "global":
         try:
             actual_tenant_id = int(tenant_id)
-            if user_data.get("role") != "ceo" and actual_tenant_id != resolved_tenant:
+            if user_data.role != "ceo" and actual_tenant_id != resolved_tenant:
                 raise HTTPException(status_code=403, detail="Forbidden")
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tenant_id")
     else:
-        if user_data.get("role") != "ceo":
+        if user_data.role != "ceo":
              raise HTTPException(status_code=403, detail="Only CEO can save global integration settings")
 
     if provider == "ycloud" and actual_tenant_id is not None:

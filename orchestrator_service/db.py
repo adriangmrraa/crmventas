@@ -194,9 +194,11 @@ class Database:
             """
             DO $$ 
             BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='meta_tokens' AND column_name='page_id') THEN
-                    ALTER TABLE meta_tokens ADD COLUMN page_id VARCHAR(255);
-                    CREATE INDEX IF NOT EXISTS idx_meta_tokens_page_id ON meta_tokens(page_id);
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meta_tokens') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='meta_tokens' AND column_name='page_id') THEN
+                        ALTER TABLE meta_tokens ADD COLUMN page_id VARCHAR(255);
+                        CREATE INDEX IF NOT EXISTS idx_meta_tokens_page_id ON meta_tokens(page_id);
+                    END IF;
                 END IF;
             END $$;
             """,

@@ -35,14 +35,20 @@ async def get_marketing_stats(
     """
     try:
         stats = await MarketingService.get_roi_stats(tenant_id, time_range)
+        # Add meta_connected alias so the frontend's isMetaConnected detection works
+        stats["meta_connected"] = stats.get("is_connected", False)
+        campaign_stats = await MarketingService.get_campaign_stats(tenant_id, time_range)
         return {
             "success": True,
-            "data": stats,
+            "data": {
+                **stats,
+                "campaigns": campaign_stats,
+            },
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting marketing stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error getting marketing stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting marketing stats: {str(e)}") 
 
 @router.get("/stats/roi")
 @audit_access("get_roi_details")

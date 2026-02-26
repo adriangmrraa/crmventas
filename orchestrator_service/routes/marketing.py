@@ -50,6 +50,27 @@ async def get_marketing_stats(
         logger.error(f"Error getting marketing stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting marketing stats: {str(e)}") 
 
+@router.get("/debug/marketing-sync")
+async def debug_marketing_sync(
+    request: Request,
+    tenant_id: int = Query(1, description="Tenant ID to debug"),
+    time_range: str = Query("last_30d", description="Time range")
+) -> Dict[str, Any]:
+    """
+    [DEBUG ONLY] Get raw marketing stats output without auth for debugging connection issues.
+    """
+    try:
+        campaign_stats = await MarketingService.get_campaign_stats(tenant_id, time_range)
+        return {
+            "success": True,
+            "tenant_id": tenant_id,
+            "data": campaign_stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error in debug_marketing_sync: {e}", exc_info=True)
+        return {"success": False, "error": str(e), "tenant_id": tenant_id}
+
 @router.get("/stats/roi")
 @audit_access("get_roi_details")
 @limiter.limit("50/minute")

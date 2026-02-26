@@ -30,32 +30,32 @@ async def get_config(name: str, default: str = None, tenant_id: str = None) -> s
     if cache_key in _config_cache:
         return _config_cache[cache_key]
     
-    # 2. Check local Environment
+    # 2. Query Orchestrator (Strict Tenant isolation)
+    if tenant_id:
+        try:
+            url = f"{ORCHESTRATOR_URL}/admin/internal/credentials/{name}?tenant_id={tenant_id}"
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    url,
+                    headers={"X-Internal-Token": INTERNAL_API_TOKEN},
+                    timeout=5.0
+                )
+                if resp.status_code == 200:
+                    val = resp.json().get("value")
+                    if val:
+                        _config_cache[cache_key] = val
+                        return val
+        except Exception as e:
+            logger.warning("config_fetch_failed", name=name, tenant_id=tenant_id, error=str(e))
+        
+    # 3. Check local Environment (System fallback only)
     val = os.getenv(name)
     if val:
         _config_cache[cache_key] = val
         return val
         
-    # 3. Query Orchestrator
-    try:
-        url = f"{ORCHESTRATOR_URL}/admin/internal/credentials/{name}"
-        if tenant_id:
-            url += f"?tenant_id={tenant_id}"
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                url,
-                headers={"X-Internal-Token": INTERNAL_API_TOKEN},
-                timeout=5.0
-            )
-            if resp.status_code == 200:
-                val = resp.json().get("value")
-                if val:
-                    _config_cache[cache_key] = val
-                    return val
-    except Exception as e:
-        logger.warning("config_fetch_failed", name=name, error=str(e))
-        
     return default
+
 
 # Initialize startup values (can be overridden later)
 YCLOUD_API_KEY = os.getenv("YCLOUD_API_KEY")
@@ -196,8 +196,8 @@ async def transcribe_audio(audio_url: str, correlation_id: str) -> Optional[str]
         logger.error("transcription_failed", error=str(e), correlation_id=correlation_id)
         return None
 
-async def send_sequence(messages: List[OrchestratorMessage], user_number: str, business_number: str, inbound_id: str, correlation_id: str):
-    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY)
+async def send_sequence(messages: List[OrchestratorMessage], user_number: str, business_number: str, inbound_id: str, correlation_id: str, tenant_id: str = None):
+    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
     client = YCloudClient(v_ycloud, business_number)
     
     try: 
@@ -245,13 +245,14 @@ async def send_sequence(messages: List[OrchestratorMessage], user_number: str, b
             await asyncio.sleep(BUBBLE_DELAY_SECONDS)
 
         except Exception as e:
-            logger.error("sequence_step_error", error=str(e), correlation_id=correlation_id)
+            logger.error("sequence_step_error", error=str(e), correlation_id=correlation_id, tenant_id=tenant_id)
+
 
 # --- Background Task ---
-async def process_user_buffer(from_number: str, business_number: str, customer_name: Optional[str], event_id: str, provider_message_id: str):
+async def process_user_buffer(from_number: str, business_number: str, customer_name: Optional[str], event_id: str, provider_message_id: str, tenant_id: str = None):
     buffer_key, timer_key, lock_key = f"buffer:{from_number}", f"timer:{from_number}", f"active_task:{from_number}"
     correlation_id = str(uuid.uuid4())
-    log = logger.bind(correlation_id=correlation_id, from_number=from_number[-4:])
+    log = logger.bind(correlation_id=correlation_id, from_number=from_number[-4:], tenant_id=tenant_id)
     try:
         while True:
             # 1. Debounce Phase: Wait until user stopped typing
@@ -286,8 +287,10 @@ async def process_user_buffer(from_number: str, business_number: str, customer_n
                 "provider_message_id": current_wamid,
                 "from_number": from_number, "to_number": business_number, "text": joined_text, "customer_name": customer_name,
                 "event_type": "whatsapp.inbound_message.received", "correlation_id": correlation_id,
-                "referral": referral
+                "referral": referral,
+                "tenant_id": tenant_id # Pass explicit tenant_id
             }
+
             headers = {"X-Correlation-Id": correlation_id}
             if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN
                  
@@ -395,7 +398,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                 if not redis_client.get(lock_key):
                     redis_client.setex(lock_key, 60, "1")
-                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id")))
+                    asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_id))
                 return {"status": "buffering_started", "correlation_id": correlation_id}
             return {"status": "buffering_updated", "correlation_id": correlation_id}
 
@@ -415,7 +418,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                     redis_client.setex(timer_key, DEBOUNCE_SECONDS, "1")
                     if not redis_client.get(lock_key):
                         redis_client.setex(lock_key, 60, "1")
-                        asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id")))
+                        asyncio.create_task(process_user_buffer(from_n, to_n, name, event.get("id"), msg.get("wamid") or event.get("id"), tenant_id=tenant_id))
                     return {"status": "buffering_started", "correlation_id": correlation_id, "source": "audio"}
                 logger.warning("audio_transcription_empty_or_failed", correlation_id=correlation_id)
             return {"status": "ignored_type_or_empty", "type": msg_type}
@@ -458,7 +461,8 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 "customer_name": name,
                 "event_type": "whatsapp.inbound_message.received", 
                 "correlation_id": correlation_id,
-                "media": media_list
+                "media": media_list,
+                "tenant_id": tenant_id
              }
              headers = {"X-Correlation-Id": correlation_id}
              if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN
@@ -480,7 +484,7 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                              msgs = [OrchestratorMessage(text=orch_res.text)]
                          
                          if msgs:
-                             await send_sequence(msgs, from_n, to_n, event.get("id"), correlation_id)
+                             await send_sequence(msgs, from_n, to_n, event.get("id"), correlation_id, tenant_id=tenant_id)
              except Exception as e:
                  logger.error("media_response_processing_error", error=str(e))
                  
@@ -520,7 +524,8 @@ async def ycloud_webhook(request: Request, tenant_id: str = None):
                 "to_number": bot_phone,
                 "text": text,
                 "event_type": "whatsapp.message.echo", # Standardize for Orchestrator
-                "correlation_id": correlation_id
+                "correlation_id": correlation_id,
+                "tenant_id": tenant_id
              }
              headers = {"X-Correlation-Id": correlation_id}
              if INTERNAL_API_TOKEN: headers["X-Internal-Token"] = INTERNAL_API_TOKEN
@@ -542,8 +547,9 @@ async def get_templates(request: Request):
     if token != INTERNAL_API_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY)
-    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID") or "default"
+    tenant_id = request.query_params.get("tenant_id")
+    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
+    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or "default"
     
     try:
         client = YCloudClient(v_ycloud, business_number)
@@ -565,8 +571,9 @@ async def send_message(message: SendMessage, request: Request):
     if token != INTERNAL_API_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY)
-    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID") or "default"
+    tenant_id = request.query_params.get("tenant_id")
+    v_ycloud = await get_config("YCLOUD_API_KEY", YCLOUD_API_KEY, tenant_id=tenant_id)
+    business_number = request.query_params.get("from_number") or await get_config("YCLOUD_Phone_Number_ID", tenant_id=tenant_id) or "default"
     
     try:
         client = YCloudClient(v_ycloud, business_number)
@@ -579,7 +586,8 @@ async def send_message(message: SendMessage, request: Request):
                 template_name=message.template_name,
                 language=message.language or "es_AR",
                 components=message.components or [],
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
+                tenant_id=tenant_id
             )
             return {"status": "sent", "type": "template", "ycloud_id": res.get("id"), "correlation_id": correlation_id}
         else:

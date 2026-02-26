@@ -50,26 +50,21 @@ META_APP_SECRET = "META_APP_SECRET"
 
 
 async def get_tenant_credential(tenant_id: int, name: str) -> Optional[str]:
-    """Obtiene el valor de una credencial del tenant desde la tabla credentials."""
+    """
+    Obtiene el valor de una credencial del tenant desde la tabla credentials.
+    Nexus Resilience: Aislamiento estricto por tenant_id.
+    """
     row = await db.fetchrow(
         "SELECT value FROM credentials WHERE tenant_id = $1 AND name = $2 LIMIT 1",
         tenant_id,
         name,
     )
     if not row or not row["value"]:
-        # Fallback a variable de entorno global (Nexus Resilience Protocol)
-        import os
-        env_val = os.getenv(name)
-        
-        # Fallback específico para tokens de Meta (Nexus Resilience)
-        if not env_val and name == "META_USER_LONG_TOKEN":
-            env_val = os.getenv("META_ADS_TOKEN")
-            
-        return env_val.strip() if env_val else None
-
+        return None
     
     # Intentar decriptar si es un valor encriptado (Fernet)
     return decrypt_value(str(row["value"]))
+
 
 
 async def get_tenant_credential_int(tenant_id: int, name: str) -> Optional[int]:

@@ -202,15 +202,19 @@ async def chat_inbound(
     if not from_number or text is None:
         raise HTTPException(status_code=400, detail="from_number and text required")
 
-    # Resolve tenant (by bot phone number or default 1)
-    tenant_id = 1
-    if to_number:
+    # Resolve tenant (prioritize explicit tenant_id from payload)
+    tenant_id = body.get("tenant_id")
+    if not tenant_id and to_number:
         row = await db.fetchrow(
             "SELECT id FROM tenants WHERE bot_phone_number = $1 LIMIT 1",
             to_number,
         )
         if row:
             tenant_id = row["id"]
+    
+    if not tenant_id:
+        tenant_id = 1 # Extreme fallback
+
 
     is_new = await db.try_insert_inbound(
         provider, provider_message_id, event_id, from_number, body, correlation_id

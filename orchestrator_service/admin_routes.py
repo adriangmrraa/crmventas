@@ -342,15 +342,18 @@ async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_
 
 @router.get("/internal/credentials/{name}", tags=["Internal"])
 async def get_internal_credential(name: str, tenant_id: Optional[int] = None, x_internal_token: str = Header(None)):
-    if x_internal_token != INTERNAL_API_TOKEN: raise HTTPException(status_code=401)
+    if x_internal_token != INTERNAL_API_TOKEN: raise HTTPException(status_code=401, detail="Internal token invalid")
     
-    if tenant_id is not None:
-        val = await get_tenant_credential(tenant_id, name)
-    else:
-        val = os.getenv(name)
+    # Nexus Isolation: Credential must belong to a tenant context
+    actual_tenant_id = tenant_id if tenant_id is not None else 1
+    
+    val = await get_tenant_credential(actual_tenant_id, name)
         
-    if not val: raise HTTPException(status_code=404)
+    if not val: 
+        raise HTTPException(status_code=404, detail=f"Credential {name} not found for tenant {actual_tenant_id}")
+        
     return {"name": name, "value": val}
+
 
 @router.get("/config/deployment", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
 async def get_deployment_config(request: Request):
@@ -442,9 +445,9 @@ async def get_integration_settings(provider: str, tenant_id: str, user_data=Depe
              raise HTTPException(status_code=403, detail="Only CEO can access global integration settings")
 
     if provider == "ycloud":
-        target_tenant_id = actual_tenant_id if actual_tenant_id is not None else 1
-        api_key = await get_tenant_credential(target_tenant_id, YCLOUD_API_KEY)
-        webhook_secret = await get_tenant_credential(target_tenant_id, YCLOUD_WEBHOOK_SECRET)
+        # target_tenant_id is None if 'global', else the integer ID
+        api_key = await get_tenant_credential(actual_tenant_id, YCLOUD_API_KEY)
+        webhook_secret = await get_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET)
         
         return {
             "ycloud_api_key": "***" if api_key else "",
@@ -469,11 +472,10 @@ async def save_integration_settings(provider: str, tenant_id: str, payload: Inte
              raise HTTPException(status_code=403, detail="Only CEO can save global integration settings")
 
     if provider == "ycloud":
-        target_tenant_id = actual_tenant_id if actual_tenant_id is not None else 1
         if payload.ycloud_api_key and payload.ycloud_api_key != "***":
-            await save_tenant_credential(target_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
+            await save_tenant_credential(actual_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
         if payload.ycloud_webhook_secret and payload.ycloud_webhook_secret != "***":
-            await save_tenant_credential(target_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
+            await save_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
         return {"status": "ok"}
     else:
         raise HTTPException(status_code=400, detail="Provider not supported or missing tenant_id")

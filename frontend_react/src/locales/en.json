@@ -739,6 +739,8 @@
     "table_appts": "Appts",
     "table_roi": "ROI",
     "table_status": "Status",
+    "table_ad": "Ad / Creative",
+    "no_data": "No data available for this period yet.",
     "errors": {
       "missing_tenant": "Error: Missing Tenant ID",
       "auth_failed": "Meta authentication failed",

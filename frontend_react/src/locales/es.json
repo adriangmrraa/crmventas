@@ -739,6 +739,8 @@
     "table_appts": "Citas",
     "table_roi": "ROI",
     "table_status": "Estado",
+    "table_ad": "Anuncio / Creativo",
+    "no_data": "Aún no hay datos para mostrar en este período.",
     "errors": {
       "missing_tenant": "Error: Falta Tenant ID",
       "auth_failed": "Error de autenticación con Meta",

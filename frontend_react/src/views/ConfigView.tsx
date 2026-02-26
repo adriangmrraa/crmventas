@@ -129,7 +129,7 @@ export default function ConfigView() {
 
     const loadCredentials = async () => {
         try {
-            const { data } = await api.get('/admin/core/credentials');
+            const { data } = await api.get('/admin/core/credentials?include_integrations=true');
             if (Array.isArray(data)) setCredentials(data);
         } catch (e) {
             console.error(e);

@@ -377,24 +377,27 @@ async def get_deployment_config(request: Request):
 # --- CREDENTIALS MANAGEMENT (Otras & YCloud Tabs) ---
 
 @router.get("/credentials", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
-async def get_credentials(tenant_id_filter: Optional[int] = None, user_data=Depends(verify_admin_token)):
-    """Retorna las credenciales genéricas (category != 'integration'). CEO ve todas o filtra por tenant_id."""
+async def get_credentials(tenant_id_filter: Optional[int] = None, include_integrations: bool = False, user_data=Depends(verify_admin_token)):
+    """Retorna las credenciales genéricas (category != 'integration' por defecto). CEO ve todas o filtra por tenant_id."""
     # Validación de acceso basada en rol
     role = user_data.role
     user_tenant = user_data.tenant_id
     
-    query = "SELECT id, tenant_id, name, '***' as value, category, updated_at FROM credentials WHERE category != 'integration'"
+    query = "SELECT id, tenant_id, name, '***' as value, category, updated_at FROM credentials WHERE 1=1"
+    if not include_integrations:
+        query += " AND category != 'integration'"
+        
     params = []
     
     if role == "ceo":
         # CEO puede ver todo, o filtrar si pasa tenant_id_filter
         if tenant_id_filter:
-            query += " AND tenant_id = $1"
             params.append(tenant_id_filter)
+            query += f" AND tenant_id = ${len(params)}"
     else:
         # Secretary / Professional solo ven las de su tenant
-        query += " AND tenant_id = $1"
         params.append(user_tenant)
+        query += f" AND tenant_id = ${len(params)}"
         
     query += " ORDER BY tenant_id ASC, name ASC"
     
@@ -440,8 +443,9 @@ async def get_integration_settings(provider: str, tenant_id: str, user_data=Depe
              raise HTTPException(status_code=403, detail="Only CEO can access global integration settings")
 
     if provider == "ycloud":
-        api_key = await get_tenant_credential(actual_tenant_id, YCLOUD_API_KEY) if actual_tenant_id else None
-        webhook_secret = await get_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET) if actual_tenant_id else None
+        target_tenant_id = actual_tenant_id if actual_tenant_id is not None else 1
+        api_key = await get_tenant_credential(target_tenant_id, YCLOUD_API_KEY)
+        webhook_secret = await get_tenant_credential(target_tenant_id, YCLOUD_WEBHOOK_SECRET)
         
         return {
             "ycloud_api_key": "***" if api_key else "",
@@ -465,11 +469,12 @@ async def save_integration_settings(provider: str, tenant_id: str, payload: Inte
         if user_data.role != "ceo":
              raise HTTPException(status_code=403, detail="Only CEO can save global integration settings")
 
-    if provider == "ycloud" and actual_tenant_id is not None:
+    if provider == "ycloud":
+        target_tenant_id = actual_tenant_id if actual_tenant_id is not None else 1
         if payload.ycloud_api_key and payload.ycloud_api_key != "***":
-            await save_tenant_credential(actual_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
+            await save_tenant_credential(target_tenant_id, YCLOUD_API_KEY, payload.ycloud_api_key, "integration")
         if payload.ycloud_webhook_secret and payload.ycloud_webhook_secret != "***":
-            await save_tenant_credential(actual_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
+            await save_tenant_credential(target_tenant_id, YCLOUD_WEBHOOK_SECRET, payload.ycloud_webhook_secret, "integration")
         return {"status": "ok"}
     else:
         raise HTTPException(status_code=400, detail="Provider not supported or missing tenant_id")

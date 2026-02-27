@@ -22,8 +22,8 @@ except ImportError:
 
 from sqlalchemy import text
 
-from ..db import get_db
-from ..config import settings
+from db import get_db
+from config import settings
 
 @dataclass
 class Notification:

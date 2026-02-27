@@ -23,7 +23,7 @@ try:
 except ImportError:
     try:
         # Try relative import (when running from core/ directory)
-        from ..services.seller_notification_service import notification_service as ns
+        from services.seller_notification_service import notification_service as ns
         notification_service = ns
         logger.info("✅ Notification service imported via relative path")
     except ImportError:
@@ -140,7 +140,7 @@ def register_notification_socket_handlers():
                 return
             
             # Obtener count desde Redis o DB
-            from ..db import get_db
+            from db import get_db
             async with get_db() as db:
                 result = await db.execute(
                     "SELECT * FROM unread_notifications_count WHERE user_id = :user_id",
@@ -177,7 +177,7 @@ async def emit_notification_count_update(user_id: str):
     """Emitir actualización de count de notificaciones"""
     try:
         # Obtener count actualizado
-        from ..db import get_db
+        from db import get_db
         async with get_db() as db:
             result = await db.execute(
                 "SELECT * FROM unread_notifications_count WHERE user_id = :user_id",

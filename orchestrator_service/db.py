@@ -464,6 +464,23 @@ class Database:
                     ALTER TABLE sellers ADD COLUMN phone_number VARCHAR(50);
                 END IF;
             END $$;
+            """,
+            # Parche 13: Asegurar columnas críticas en 'sellers' (Error 500 Fix)
+            """
+            DO $$ BEGIN 
+                -- Asegurar created_at
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sellers' AND column_name='created_at') THEN
+                    ALTER TABLE sellers ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+                -- Asegurar updated_at
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sellers' AND column_name='updated_at') THEN
+                    ALTER TABLE sellers ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+                -- Asegurar phone_number (doble verificación)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sellers' AND column_name='phone_number') THEN
+                    ALTER TABLE sellers ADD COLUMN phone_number VARCHAR(50);
+                END IF;
+            END $$;
             """
         ]
 

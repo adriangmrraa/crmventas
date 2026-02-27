@@ -302,11 +302,15 @@ async def log_pii_access(
 async def get_current_user_context(user_data=Depends(verify_admin_token)) -> dict:
     """Retorna el contexto del usuario actual para usar en dependencias de FastAPI."""
     tenant_id = await get_resolved_tenant_id(user_data)
+    user_id = user_data.user_id
+    email = user_data.email
+    role = user_data.role
     return {
-        "id": user_data.user_id, # Alias for compatibility
-        "user_id": user_data.user_id,
-        "role": user_data.role,
-        "tenant_id": tenant_id,
+        "user_id": user_id,
+        "id": user_id,  # Alias for compatibility
+        "email": email,
+        "role": role,
+        "tenant_id": tenant_id
     }
 
 # Alias for legacy routes compatibility

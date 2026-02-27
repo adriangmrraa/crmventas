@@ -56,7 +56,7 @@ async def health_check():
     # Verificar Redis (si está configurado)
     redis_status = {"status": "not_configured", "available": False}
     try:
-        from ..services.seller_notification_service import notification_service
+        from services.seller_notification_service import notification_service
         if notification_service.redis_client:
             # Intentar ping a Redis
             ping_result = await notification_service.redis_client.ping()
@@ -86,19 +86,19 @@ async def health_check():
     }
     
     try:
-        from ..services.seller_notification_service import notification_service
+        from services.seller_notification_service import notification_service
         services_status["notification_service"] = "available"
     except Exception:
         services_status["notification_service"] = "unavailable"
     
     try:
-        from ..services.seller_metrics_service import seller_metrics_service
+        from services.seller_metrics_service import seller_metrics_service
         services_status["metrics_service"] = "available"
     except Exception:
         services_status["metrics_service"] = "unavailable"
     
     try:
-        from ..core.socket_notifications import register_notification_socket_handlers
+        from core.socket_notifications import register_notification_socket_handlers
         services_status["socket_io"] = "available"
     except Exception:
         services_status["socket_io"] = "unavailable"
@@ -183,7 +183,7 @@ async def run_notification_checks_now():
     Ejecutar verificaciones de notificaciones inmediatamente
     """
     try:
-        from ..services.scheduled_tasks import scheduled_tasks_service
+        from services.scheduled_tasks import scheduled_tasks_service
         
         # Ejecutar tarea manualmente
         result = await scheduled_tasks_service.run_notification_checks()
@@ -206,7 +206,7 @@ async def run_metrics_refresh_now():
     Ejecutar refresh de métricas inmediatamente
     """
     try:
-        from ..services.scheduled_tasks import scheduled_tasks_service
+        from services.scheduled_tasks import scheduled_tasks_service
         
         result = await scheduled_tasks_service.refresh_seller_metrics()
         
@@ -228,7 +228,7 @@ async def run_cleanup_now():
     Ejecutar limpieza de datos inmediatamente
     """
     try:
-        from ..services.scheduled_tasks import scheduled_tasks_service
+        from services.scheduled_tasks import scheduled_tasks_service
         
         result = await scheduled_tasks_service.cleanup_expired_data()
         

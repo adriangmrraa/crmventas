@@ -120,15 +120,17 @@ async def register(request: Request, payload: UserRegister):
         auth_service.log_protocol_omega_activation(payload.email, activation_token)
 
         return {
+            "success": True,
             "status": "pending",
-            "message": "Registro exitoso. Tu cuenta está pendiente de aprobación.",
+            "message": "¡Registro exitoso! Tu cuenta ha sido creada y está pendiente de aprobación por el CEO. Recibirás un correo cuando sea activada.",
             "user_id": user_id,
         }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error registering user: {e}")
-        raise HTTPException(status_code=500, detail="Error interno durante el registro.")
+        # Intentar limpiar si falló a mitad (aunque db.pool suele ser atómico si usas transacción, aquí son llamadas separadas)
+        raise HTTPException(status_code=500, detail="Error interno durante el registro. Por favor, intenta de nuevo.")
 
 
 @router.post("/login", response_model=TokenResponse)

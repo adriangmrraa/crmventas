@@ -13,8 +13,8 @@ from apscheduler.triggers.cron import CronTrigger
 
 from .seller_notification_service import notification_service
 from .seller_metrics_service import seller_metrics_service
-from ..db import get_db
-from ..config import settings
+from db import get_db
+from config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -111,7 +111,7 @@ async def run_notification_checks(
         if not tenant_id:
             raise HTTPException(status_code=400, detail="User does not have a tenant assigned")
         
-        from ..services.seller_notification_service import notification_service
+        from services.seller_notification_service import notification_service
         notifications = await notification_service.run_all_checks(tenant_id)
         
         return RunTaskResponse(
@@ -139,7 +139,7 @@ async def run_metrics_refresh(
         if not tenant_id:
             raise HTTPException(status_code=400, detail="User does not have a tenant assigned")
         
-        from ..services.seller_metrics_service import seller_metrics_service
+        from services.seller_metrics_service import seller_metrics_service
         result = await seller_metrics_service.refresh_all_metrics(tenant_id)
         
         return RunTaskResponse(
@@ -163,7 +163,7 @@ async def run_data_cleanup(
         raise HTTPException(status_code=403, detail="Only CEO/admin can run data cleanup")
     
     try:
-        from ..services.seller_notification_service import notification_service
+        from services.seller_notification_service import notification_service
         expired_count = await notification_service.delete_expired_notifications()
         
         return RunTaskResponse(

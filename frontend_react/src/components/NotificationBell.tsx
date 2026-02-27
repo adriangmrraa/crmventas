@@ -31,12 +31,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   refreshInterval = 30000 // 30 segundos
 }) => {
   const { t } = useTranslation();
-  const { 
-    notificationCount: socketCount, 
+  const {
+    notificationCount: socketCount,
     refreshCount: socketRefresh,
-    isConnected: socketConnected 
+    isConnected: socketConnected
   } = useSocketNotifications();
-  
+
   const [showCenter, setShowCenter] = useState(false);
   const [notificationCount, setNotificationCount] = useState<NotificationCount>({
     total: 0,
@@ -49,7 +49,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [usingSocket, setUsingSocket] = useState(useSocket);
-  
+
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Usar Socket.IO si está disponible y conectado
@@ -74,11 +74,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get('/notifications/count');
       setNotificationCount(response.data);
       setLastUpdated(new Date());
-      
+
     } catch (err: any) {
       console.error('Error fetching notification count:', err);
       setError(err.response?.data?.detail || t('common.error'));
@@ -90,7 +90,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   const markAllAsRead = async () => {
     try {
       await api.post('/notifications/read-all');
-      
+
       // Refresh count según el método que estemos usando
       if (usingSocket && socketConnected) {
         socketRefresh();
@@ -145,13 +145,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const getTooltipText = () => {
     if (notificationCount.total === 0) return t('notifications.no_notifications');
-    
+
     const parts = [];
     if (notificationCount.critical > 0) parts.push(`${notificationCount.critical} críticas`);
     if (notificationCount.high > 0) parts.push(`${notificationCount.high} altas`);
     if (notificationCount.medium > 0) parts.push(`${notificationCount.medium} medias`);
     if (notificationCount.low > 0) parts.push(`${notificationCount.low} bajas`);
-    
+
     return `${notificationCount.total} notificaciones (${parts.join(', ')})`;
   };
 
@@ -174,10 +174,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       // If notification center is open, we might want to refresh it too
       // This will be handled by the NotificationCenter component via props
     }
-  };
-
-  const handleBellClick = () => {
-    setShowCenter(!showCenter);
   };
 
   const getConnectionStatus = () => {
@@ -210,22 +206,21 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       >
         <div className="relative">
           {getPriorityIcon()}
-          
+
           {/* Connection status indicator */}
           {usingSocket && (
-            <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${
-              socketConnected ? 'bg-green-500' : 'bg-red-500'
-            }`} />
+            <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'
+              }`} />
           )}
         </div>
-        
+
         {/* Badge with count */}
         {notificationCount.total > 0 && (
           <span className={`absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full text-xs font-bold text-white flex items-center justify-center ${getPriorityColor()}`}>
             {notificationCount.total > 99 ? '99+' : notificationCount.total}
           </span>
         )}
-        
+
         {/* Loading indicator */}
         {loading && (
           <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2">
@@ -238,7 +233,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Label if enabled */}
       {showLabel && (
         <div className="mt-1 text-xs text-gray-500 text-center">
-          {notificationCount.total === 0 
+          {notificationCount.total === 0
             ? t('notifications.no_notifications')
             : `${notificationCount.total} ${t('notifications.notifications')}`
           }
@@ -249,11 +244,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       {showCenter && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 z-40"
             onClick={handleCloseCenter}
           />
-          
+
           {/* Center Container */}
           <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[80vh] overflow-hidden">
             <NotificationCenter

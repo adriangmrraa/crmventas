@@ -857,7 +857,7 @@ export default function ChatsView() {
 
       {/* Chat Detail */}
       {selectedSession ? (
-        <>
+        <div>
           <div className="flex-1 flex flex-col min-w-0 bg-gray-50 h-full min-h-0">
             {/* Header + Messages + Input Container */}
             <div className="flex-1 flex flex-col min-h-0 relative">
@@ -1235,7 +1235,7 @@ export default function ChatsView() {
               })()}
             </div>
           </div>
-        </>
+        </div>
       ) : (
         <div className="hidden lg:flex flex-1 items-center justify-center bg-gray-50 flex-col gap-4">
           <MessageCircle size={64} className="opacity-20" />
@@ -1283,6 +1283,10 @@ export default function ChatsView() {
           animation: slide-in 0.3s ease-out;
         }
       `}</style>
+    </div>
+    </div>
+    </div>
+    </div>
     </div>
   );
 }

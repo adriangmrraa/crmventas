@@ -100,10 +100,13 @@ async def register(request: Request, payload: UserRegister):
     last_name = (payload.last_name or "").strip() or " "
 
     try:
+        # Determine tenant_id (defaults to 1 for CEO/Admin if not provided, though they usually aren't registered this way)
+        assigned_tenant_id = int(payload.tenant_id) if payload.tenant_id is not None else 1
+
         await db.execute("""
-            INSERT INTO users (id, email, password_hash, role, status, first_name, last_name)
-            VALUES ($1, $2, $3, $4, 'pending', $5, $6)
-        """, user_id, payload.email, password_hash, payload.role, first_name, last_name)
+            INSERT INTO users (id, email, password_hash, role, status, first_name, last_name, tenant_id)
+            VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7)
+        """, user_id, payload.email, password_hash, payload.role, first_name, last_name, assigned_tenant_id)
 
         # CRM: Crear fila en sellers para roles que requieren tenant
         if payload.role in CRM_TENANT_ROLES:

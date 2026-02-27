@@ -101,11 +101,21 @@ class AutomationService:
             FROM opportunities a
             JOIN leads p ON a.patient_id = p.id
             JOIN professionals pr ON a.professional_id = pr.id
-            LEFT JOIN automation_logs l ON l.target_id = a.id::text AND l.trigger_type = 'appointment_reminder'
             WHERE a.tenant_id = $1 
               AND a.status = 'scheduled'
               AND a.appointment_datetime BETWEEN $2 AND $3
-              AND l.id IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM automation_logs l 
+                  WHERE l.target_id = a.id::text 
+                    AND l.trigger_type = 'appointment_reminder' 
+                    AND l.status = 'sent'
+              )
+              AND (
+                  SELECT COUNT(*) FROM automation_logs l2
+                  WHERE l2.target_id = a.id::text 
+                    AND l2.trigger_type = 'appointment_reminder' 
+                    AND l2.status = 'failed'
+              ) < 5
         """, tenant_id, target_start, target_end)
 
         for apt in opportunities:
@@ -135,6 +145,12 @@ class AutomationService:
               AND a.status = 'completed'
               AND a.feedback_sent = false
               AND a.appointment_datetime < $2
+              AND (
+                  SELECT COUNT(*) FROM automation_logs l
+                  WHERE l.target_id = a.id::text 
+                    AND l.trigger_type = 'appointment_feedback' 
+                    AND l.status = 'failed'
+              ) < 5
         """, tenant_id, target_time)
 
         for apt in opportunities:
@@ -162,12 +178,22 @@ class AutomationService:
             SELECT p.id, p.phone_number, p.first_name
             FROM leads p
             LEFT JOIN opportunities a ON a.patient_id = p.id
-            LEFT JOIN automation_logs l ON l.patient_id = p.id AND l.trigger_type = 'lead_recovery'
             WHERE p.tenant_id = $1
               AND p.lead_source = 'META_ADS'
               AND p.created_at BETWEEN $2 AND $3
               AND a.id IS NULL
-              AND l.id IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM automation_logs l 
+                  WHERE l.patient_id = p.id 
+                    AND l.trigger_type = 'lead_recovery' 
+                    AND l.status = 'sent'
+              )
+              AND (
+                  SELECT COUNT(*) FROM automation_logs l2
+                  WHERE l2.patient_id = p.id 
+                    AND l2.trigger_type = 'lead_recovery' 
+                    AND l2.status = 'failed'
+              ) < 5
         """, tenant_id, three_hours_ago, two_hours_ago)
 
         for lead in leads:

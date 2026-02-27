@@ -696,6 +696,5 @@ function LeadsViewInner() {
         )}
       </div>
     </div>
-    </div >
   );
 }

@@ -38,14 +38,14 @@ export default function CompaniesView() {
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchCompanys();
+        fetchCompanies();
     }, []);
 
-    const fetchCompanys = async () => {
+    const fetchCompanies = async () => {
         try {
             setLoading(true);
             const resp = await api.get('/admin/core/tenants');
-            setCompanys(resp.data);
+            setCompanies(resp.data);
         } catch (err) {
             console.error('Error cargando clínicas:', err);
         } finally {
@@ -89,7 +89,7 @@ export default function CompaniesView() {
                 });
                 setSuccess(t(isEntity ? 'clinics.toast_created_entity' : 'clinics.toast_created'));
             }
-            await fetchCompanys();
+            await fetchCompanies();
             setIsModalOpen(false);
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
@@ -103,7 +103,7 @@ export default function CompaniesView() {
         if (!window.confirm(t(isEntity ? 'alerts.confirm_delete_entity' : 'alerts.confirm_delete_clinic'))) return;
         try {
             await api.delete(`/admin/core/tenants/${id}`);
-            fetchCompanys();
+            fetchCompanies();
         } catch (err) {
             console.error('Error eliminando clínica:', err);
         }

@@ -10,6 +10,18 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 
+# Setup logger first
+logger = logging.getLogger(__name__)
+
+try:
+    import redis.asyncio as redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    # Setup logger first
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     import redis.asyncio as redis
     REDIS_AVAILABLE = True
@@ -21,8 +33,6 @@ from sqlalchemy import text
 
 from ..db import get_db
 from ..config import settings
-
-logger = logging.getLogger(__name__)
 
 @dataclass
 class Notification:

@@ -34,3 +34,10 @@ facebook-business==19.0.0
 cryptography==42.0.5
 redis==5.0.1
 pytz
+
+# Sprint 2 - Tracking Avanzado Dependencies
+apscheduler==3.10.4
+python-socketio==5.11.2
+python-engineio==4.9.0
+asyncpg==0.29.0
+redis==5.0.1

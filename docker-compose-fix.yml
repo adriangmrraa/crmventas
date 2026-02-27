@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: crmventas
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-password}
+
+  orchestrator:
+    build: ./orchestrator_service
+    environment:
+      - POSTGRES_DSN=postgresql://user:password@postgres:5432/crmventas
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-password}@redis:6379
+      - ENABLE_SCHEDULED_TASKS=${ENABLE_SCHEDULED_TASKS:-false}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             python main_minimal.py"
+
+volumes:
+  postgres_data:

@@ -1,6 +1,18 @@
-# Variables de Entorno - Guía Completa
+# Variables de Entorno - Guía Completa (Actualizado Sprint 2)
 
 Este proyecto se configura completamente mediante variables de entorno. En despliegue de EasyPanel, carga estas variables para cada microservicio.
+
+## 📋 **ÍNDICE**
+
+1. [Variables Globales](#1-variables-globales-todos-los-servicios)
+2. [Orchestrator Service](#2-orchestrator-service-8000)
+3. [WhatsApp Service](#3-whatsapp-service-8002)
+4. [Frontend React](#4-frontend-react-5173)
+5. [Sprint 2 - Nuevas Variables](#5-sprint-2---tracking-avanzado-nuevas-variables)
+6. [Configuración de Producción](#6-configuración-de-producción)
+7. [Ejemplo .env Completo](#7-ejemplo-env-completo)
+
+---
 
 ## 1. Variables Globales (Todos los Servicios)
 
@@ -10,6 +22,7 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 | `OPENAI_API_KEY` | Clave API de OpenAI (GPT-4o-mini + Whisper) | `sk-proj-xxxxx` | ✅ |
 | `REDIS_URL` | URL de conexión a Redis | `redis://redis:6379` | ✅ |
 | `POSTGRES_DSN` | URL de conexión a PostgreSQL | `postgres://user:pass@db:5432/database` | ✅ |
+| `NODE_ENV` | Entorno de ejecución | `production`, `development`, `staging` | ✅ |
 
 ## 2. Orchestrator Service (8000)
 
@@ -17,185 +30,482 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `STORE_NAME` | Nombre de la clínica (legacy/fallback) | `Dentalogic` | ❌ |
-| `BOT_PHONE_NUMBER` | Número de WhatsApp del bot (fallback cuando no viene `to_number` en la petición) | `+5493756123456` | ❌ |
-| `CLINIC_NAME` | Nombre de clínica usado como fallback si la sede no tiene `clinic_name` en BD | `Clínica Dental` | ❌ |
-| `CLINIC_LOCATION` | Ubicación (usado en respuestas de configuración; opcional) | `República de Francia 2899, Mercedes, Buenos Aires` | ❌ |
-| `STORE_LOCATION` | Ciudad/País | `Paraná, Entre Ríos, Argentina` | ❌ |
-| `STORE_WEBSITE` | URL de la clínica | `https://www.odontolea.com` | ❌ |
-| `STORE_DESCRIPTION` | Especialidad clínica | `Salud Bucal e Implantología` | ❌ |
-| `STORE_CATALOG_KNOWLEDGE` | Categorías/marcas principales (para inyectar en prompt) | `Puntas Grishko, Bloch, Capezio...` | ❌ |
-| `SHIPPING_PARTNERS` | Empresas de envío (comma-separated) | `Andreani, Correo Argentino` | ❌ |
+| `STORE_NAME` | Nombre del negocio (legacy/fallback) | `CRM Ventas` | ❌ |
+| `BOT_PHONE_NUMBER` | Número de WhatsApp del bot (fallback) | `+5493756123456` | ❌ |
+| `COMPANY_NAME` | Nombre de la empresa usado como fallback | `Empresa de Ventas` | ❌ |
+| `STORE_LOCATION` | Ciudad/País | `Buenos Aires, Argentina` | ❌ |
+| `STORE_WEBSITE` | URL del negocio | `https://www.empresa.com` | ❌ |
 
-**Multi-tenant (Dentalogic):** En este proyecto, el **número del bot** y el **nombre de la clínica** por sede son la fuente de verdad en la base de datos: `tenants.bot_phone_number` y `tenants.clinic_name`. Se configuran en **Sedes (Clinics)** en el panel. Las variables `BOT_PHONE_NUMBER` y `CLINIC_NAME` (y `CLINIC_LOCATION`) se usan solo como **respaldo** cuando no hay valor en BD o cuando la petición no trae `to_number` (ej. pruebas manuales). No es obligatorio definirlas si todas las sedes tienen ya sus datos cargados en la plataforma. `CLINIC_PHONE` no se utiliza en el orquestador y puede omitirse.
-   
-### 2.2 Integración Tienda Nube
+### 2.2 Seguridad y RBAC (Nexus v7.6)
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `TIENDANUBE_STORE_ID` | ID numérico de la tienda en TN | `123456` | ✅ |
-| `TIENDANUBE_ACCESS_TOKEN` | Token de API de Tienda Nube | `t_1234567890...` | ✅ |
+| `JWT_SECRET_KEY` | Clave para firmar tokens JWT | `supersecretkey123` | ✅ |
+| `ADMIN_TOKEN` | Token para rutas `/admin/*` (X-Admin-Token) | `admin-super-secret-token` | ✅ |
+| `CREDENTIALS_FERNET_KEY` | Clave para cifrar credenciales de Google Calendar | (32 bytes base64) | ❌ |
+| `CORS_ORIGINS` | Orígenes permitidos para CORS | `http://localhost:5173,https://app.empresa.com` | ✅ |
 
-### 2.3 Handoff / Derivación a Humanos
-
-| Variable | Descripción | Ejemplo | Requerida |
-| :--- | :--- | :--- | :--- |
-| `HANDOFF_EMAIL` | Mail que recibe alertas de derivación | `soporte@tienda.com` | ✅ (si handoff activo) |
-| `SMTP_HOST` | Host del servidor SMTP | `smtp.gmail.com` | ✅ (si handoff activo) |
-| `SMTP_PORT` | Puerto del servidor SMTP | `465` | ✅ (si handoff activo) |
-| `SMTP_USER` / `SMTP_USERNAME` | Usuario SMTP | `noreply@tienda.com` | ✅ (si handoff activo) |
-| `SMTP_PASS` / `SMTP_PASSWORD` | Contraseña SMTP | (password de app) | ✅ (si handoff activo) |
-| `SMTP_SECURITY` | Tipo de seguridad SMTP | `SSL` o `STARTTLS` | ✅ (si handoff activo) |
-
-### 2.4 Seguridad y RBAC (Nexus v7.6)
+### 2.3 Google Calendar (Opcional)
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| **`ADMIN_TOKEN`** | Token maestro de protección (Infraestructura) | `admin-secret-token` | ✅ |
-| **`JWT_SECRET_KEY`** | Clave secreta para firmar tokens JWT (64 bytes hex) | `python -c "import secrets; print(secrets.token_hex(64))"` | ✅ |
-| **`JWT_ALGORITHM`** | Algoritmo de firma para JWT | `HS256` | `HS256` |
-| **`ENVIRONMENT`** | Entorno de ejecución (`production` activa flag Secure en cookies) | `production` | `development` |
-| **`CORS_ALLOWED_ORIGINS`** | Origins CORS permitidos (comma-separated). Requerido para cookies cross-domain. | `https://ui.clinic.com,http://localhost:3000` | `*` |
-| **`CREDENTIALS_FERNET_KEY`** | Clave Fernet (AES-256) para encriptar/desencriptar la tabla `credentials` | `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` | ✅ |
-| **`LOG_LEVEL`** | Nivel de logs (afecta visibilidad de eventos de seguridad) | `INFO`, `DEBUG`, `ERROR` | `INFO` |
-| **`GOOGLE_CREDENTIALS`** | JSON completo de credenciales de Google | (JSON string) | ❌ |
+| `GOOGLE_CREDENTIALS` | Credenciales de servicio JSON (base64) | `eyJ0eXBlI...` | ❌ |
+| `GOOGLE_CALENDAR_ID` | ID del calendario principal | `primary` | ❌ |
 
-**Generar claves de seguridad (v7.7.1):** Se ha incluido un script helper para generar automáticamente valores seguros para estas variables.
-Ejecuta: `python orchestrator_service/core/generate_env_vars.py`
-
-Alternativamente, de forma manual:
-- **Fernet:** `py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` (Windows).
-- **JWT Secret:** `python -c "import secrets; print(secrets.token_hex(64))"`.
-
-## 3. Meta Ads Marketing Hub (Nuevo - Febrero 2026)
-
-Variables para integración con Meta (Facebook/Instagram) Ads y WhatsApp HSM Automation:
+### 2.4 Logging y Monitoreo
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `META_APP_ID` | App ID de Meta Developers (Facebook) | `123456789012345` | ✅ (para Marketing Hub) |
-| `META_APP_SECRET` | App Secret de Meta Developers | `abcdef1234567890abcdef1234567890` | ✅ (para Marketing Hub) |
-| `META_REDIRECT_URI` | URL callback OAuth (debe coincidir con Meta Developers) | `https://tu-crm.com/crm/auth/meta/callback` | ✅ (para Marketing Hub) |
-| `META_API_VERSION` | Versión Graph API de Meta | `v20.0` | ❌ (default: v20.0) |
-| `META_BASE_URL` | URL base Graph API | `https://graph.facebook.com` | ❌ (default: https://graph.facebook.com) |
-| `META_OAUTH_URL` | URL login OAuth | `https://www.facebook.com/v20.0/dialog/oauth` | ❌ (default: https://www.facebook.com/v20.0/dialog/oauth) |
-| `META_TOKEN_EXPIRY_DAYS` | Días expiración tokens Meta (60 días máximo) | `60` | ❌ (default: 60) |
-| `META_REFRESH_THRESHOLD_DAYS` | Días antes de expiración para refrescar token | `7` | ❌ (default: 7) |
-| `MARKETING_DATA_RETENTION_DAYS` | Días retención datos marketing en DB | `365` | ❌ (default: 365) |
-| `HSM_TEMPLATE_APPROVAL_TIMEOUT_HOURS` | Timeout aprobación plantillas HSM | `72` | ❌ (default: 72) |
-| `META_API_RATE_LIMIT_PER_HOUR` | Límite calls Meta API por hora | `200` | ❌ (default: 200) |
-| `MARKETING_CACHE_TTL_MINUTES` | TTL cache métricas marketing (minutos) | `15` | ❌ (default: 15) |
+| `LOG_LEVEL` | Nivel de logging | `INFO`, `DEBUG`, `WARNING` | ❌ |
+| `SENTRY_DSN` | DSN de Sentry para error tracking | `https://xxx@sentry.io/xxx` | ❌ |
+| `METRICS_PORT` | Puerto para métricas Prometheus | `9090` | ❌ |
 
-**Notas de configuración Meta OAuth:**
-1. **META_APP_ID / META_APP_SECRET**: Obtener de [Meta Developers](https://developers.facebook.com/)
-2. **META_REDIRECT_URI**: Debe coincidir EXACTAMENTE con URI configurada en Meta Developers
-3. **App Review**: Requiere aprobación Meta para permisos `ads_management`, `business_management`
-4. **HSM Templates**: Requiere aprobación separada para plantillas WhatsApp Business
-5. **Production**: En producción, `META_REDIRECT_URI` debe usar HTTPS
-6. **Privacy Policy & Terms URLs**: Requeridas para aprobación Meta OAuth:
-   - Privacy Policy URL: `https://tu-crmventas.com/privacy`
-   - Terms of Service URL: `https://tu-crmventas.com/terms`
+## 3. WhatsApp Service (8002)
 
-### Variables para Debugging & Diagnóstico (Nuevo - Febrero 2026)
+### 3.1 YCloud Integration
 
 | Variable | Descripción | Ejemplo | Requerida |
 | :--- | :--- | :--- | :--- |
-| `DEBUG_MARKETING_STATS` | Activar debugging estadísticas marketing | `true` | ❌ (default: false) |
-| `LOG_META_API_CALLS` | Log detallado llamadas API Meta | `true` | ❌ (default: false) |
-| `ENABLE_AUTOMATION_DIAGNOSTICS` | Activar diagnósticos automatización | `true` | ❌ (default: false) |
-| `META_API_DEBUG_MODE` | Modo debug API Meta (respuestas raw) | `true` | ❌ (default: false) |
+| `YCLOUD_API_KEY` | API Key de YCloud | `ycloud_xxxxx` | ✅ |
+| `YCLOUD_WEBHOOK_SECRET` | Secreto para validar webhooks | `webhook_secret_123` | ✅ |
+| `YCLOUD_BOT_PHONE_NUMBER` | Número de teléfono del bot en YCloud | `+5493756123456` | ✅ |
 
-### Herramientas de Diagnóstico Implementadas
+### 3.2 Transcripción de Audio
 
-#### **1. debug_marketing_stats.py**
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `WHISPER_MODEL` | Modelo de Whisper a usar | `whisper-1` | ❌ |
+| `MAX_AUDIO_SIZE_MB` | Tamaño máximo de audio a transcribir | `25` | ❌ |
+
+## 4. Frontend React (5173)
+
+### 4.1 Configuración de API
+
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `VITE_API_URL` | URL base del Orchestrator | `http://localhost:8000` | ✅ |
+| `VITE_WS_URL` | URL WebSocket para Socket.IO | `ws://localhost:8000` | ✅ |
+| `VITE_ADMIN_TOKEN` | Token para rutas admin (X-Admin-Token) | `admin-super-secret-token` | ✅ |
+
+### 4.2 Internacionalización
+
+| Variable | Descripción | Ejemplo | Requerida |
+| :--- | :--- | :--- | :--- |
+| `VITE_DEFAULT_LANGUAGE` | Idioma por defecto | `es`, `en`, `fr` | ❌ |
+| `VITE_SUPPORTED_LANGUAGES` | Idiomas soportados | `es,en,fr` | ❌ |
+
+## 5. Sprint 2 - Tracking Avanzado (Nuevas Variables)
+
+### 5.1 Background Jobs Configuration
+
+| Variable | Descripción | Default | Requerida |
+| :--- | :--- | :--- | :--- |
+| `ENABLE_SCHEDULED_TASKS` | Habilita/deshabilita background jobs | `true` | ❌ |
+| `NOTIFICATION_CHECK_INTERVAL_MINUTES` | Intervalo verificaciones notificaciones | `5` | ❌ |
+| `METRICS_REFRESH_INTERVAL_MINUTES` | Intervalo refresh métricas | `15` | ❌ |
+| `CLEANUP_INTERVAL_HOURS` | Intervalo limpieza datos | `1` | ❌ |
+| `ENABLE_TASK_LOGGING` | Log detallado de ejecución tasks | `true` | ❌ |
+| `MAX_TASK_RETRIES` | Intentos máximos por task fallido | `3` | ❌ |
+
+### 5.2 Redis Configuration (Optimizado)
+
+| Variable | Descripción | Default | Requerida |
+| :--- | :--- | :--- | :--- |
+| `REDIS_HOST` | Host de Redis | `localhost` | ✅ |
+| `REDIS_PORT` | Puerto de Redis | `6379` | ✅ |
+| `REDIS_PASSWORD` | Password de Redis (si aplica) | ` ` | ❌ |
+| `REDIS_DB` | Database de Redis a usar | `0` | ❌ |
+| `REDIS_CACHE_TTL_MINUTES` | TTL para cache de métricas | `5` | ❌ |
+| `REDIS_NOTIFICATION_QUEUE` | Nombre de queue para notificaciones | `notifications` | ❌ |
+
+### 5.3 Socket.IO Configuration
+
+| Variable | Descripción | Default | Requerida |
+| :--- | :--- | :--- | :--- |
+| `SOCKETIO_CORS_ORIGINS` | Orígenes permitidos Socket.IO | `*` | ❌ |
+| `SOCKETIO_PING_TIMEOUT` | Timeout ping WebSocket (ms) | `20000` | ❌ |
+| `SOCKETIO_PING_INTERVAL` | Intervalo ping WebSocket (ms) | `25000` | ❌ |
+| `SOCKETIO_MAX_HTTP_BUFFER_SIZE` | Tamaño máximo buffer (MB) | `1e6` | ❌ |
+
+### 5.4 Notification System
+
+| Variable | Descripción | Default | Requerida |
+| :--- | :--- | :--- | :--- |
+| `NOTIFICATION_RETENTION_DAYS` | Días retención notificaciones | `7` | ❌ |
+| `UNANSWERED_CONVERSATION_HOURS` | Horas para considerar sin respuesta | `1` | ❌ |
+| `HOT_LEAD_PROBABILITY_THRESHOLD` | Umbral probabilidad lead caliente | `0.8` | ❌ |
+| `FOLLOWUP_REMINDER_HOURS` | Horas para recordatorio follow-up | `24` | ❌ |
+| `PERFORMANCE_ALERT_THRESHOLD` | Umbral alertas performance | `0.5` | ❌ |
+
+### 5.5 Metrics System
+
+| Variable | Descripción | Default | Requerida |
+| :--- | :--- | :--- | :--- |
+| `METRICS_RETENTION_DAYS` | Días retención métricas | `30` | ❌ |
+| `REAL_TIME_METRICS_ENABLED` | Habilita métricas tiempo real | `true` | ❌ |
+| `LEADERBOARD_UPDATE_INTERVAL` | Intervalo update leaderboard (min) | `5` | ❌ |
+| `CEO_REPORT_TIME` | Hora reporte diario CEO | `08:00` | ❌ |
+
+## 6. Configuración de Producción
+
+### 6.1 Entorno de Producción Mínimo
+
 ```bash
-# Uso: python debug_marketing_stats.py
-# Requiere: POSTGRES_DSN configurado
-# Propósito: Debugging estadísticas marketing tenant 1
+# PostgreSQL
+POSTGRES_DSN=postgresql://user:strongpassword@postgres-host:5432/crmventas
+
+# Redis
+REDIS_HOST=redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=redis-password
+
+# OpenAI
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx
+
+# Security
+JWT_SECRET_KEY=supersecretkeychangemeinproduction
+ADMIN_TOKEN=admin-super-secret-token-changeme
+INTERNAL_API_TOKEN=internal-token-changeme
+
+# YCloud
+YCLOUD_API_KEY=ycloud_xxxxxxxxxxxxxxxx
+YCLOUD_WEBHOOK_SECRET=webhook-secret-changeme
+YCLOUD_BOT_PHONE_NUMBER=+5491111111111
+
+# Sprint 2 - Background Jobs
+ENABLE_SCHEDULED_TASKS=true
+NOTIFICATION_CHECK_INTERVAL_MINUTES=5
+METRICS_REFRESH_INTERVAL_MINUTES=15
+CLEANUP_INTERVAL_HOURS=1
+
+# Frontend
+VITE_API_URL=https://api.empresa.com
+VITE_WS_URL=wss://api.empresa.com
+VITE_ADMIN_TOKEN=admin-super-secret-token-changeme
 ```
 
-#### **2. check_automation.py**
+### 6.2 Configuración por Entorno
+
+#### **Desarrollo:**
 ```bash
-# Uso: python check_automation.py
-# Requiere: POSTGRES_DSN configurado
-# Propósito: Diagnóstico reglas automatización + logs recientes
+NODE_ENV=development
+LOG_LEVEL=DEBUG
+ENABLE_SCHEDULED_TASKS=true
+NOTIFICATION_CHECK_INTERVAL_MINUTES=2  # Más frecuente para testing
 ```
 
-#### **3. check_leads.py**
+#### **Staging:**
 ```bash
-# Uso: python check_leads.py
-# Requiere: POSTGRES_DSN configurado
-# Propósito: Verificación leads base datos + números chat
+NODE_ENV=staging
+LOG_LEVEL=INFO
+ENABLE_SCHEDULED_TASKS=true
+ENABLE_TASK_LOGGING=true
 ```
 
-### Configuración Webhooks (Nuevo - Febrero 2026)
+#### **Producción:**
+```bash
+NODE_ENV=production
+LOG_LEVEL=WARNING
+ENABLE_SCHEDULED_TASKS=true
+ENABLE_TASK_LOGGING=false  # Menos logs en producción
+SENTRY_DSN=https://xxx@sentry.io/xxx  # Error tracking
+```
 
-#### **URLs Webhook Disponibles:**
-- **YCloud Webhook**: `{base_url}/webhook/ycloud`
-- **Meta Webhook**: `{base_url}/crm/webhook/meta`
-
-#### **Variables Específicas Webhook:**
-| Variable | Descripción | Ejemplo | Requerida |
-| :--- | :--- | :--- | :--- |
-| `WEBHOOK_META_VERIFY_TOKEN` | Token verificación webhook Meta | `meta_verify_token_123` | ❌ |
-| `WEBHOOK_META_SECRET` | Secreto webhook Meta | `meta_secret_456` | ❌ |
-| `WEBHOOK_YCLOUD_SECRET` | Secreto webhook YCloud | `ycloud_secret_789` | ❌ |
-
-**Nota:** Las URLs webhook completas están disponibles via API `GET /admin/config/deployment`
-
-## 4. WhatsApp Service (8002)
-
-| Variable | Descripción | Ejemplo | Requerida |
-| :--- | :--- | :--- | :--- |
-| `YCLOUD_API_KEY` | API Key de YCloud (Fallback) | `api_key_xxxxx` | ❌ (Usa "The Vault") |
-| `YCLOUD_WEBHOOK_SECRET` | Secreto webhooks (Fallback) | `webhook_secret_xxxxx` | ❌ (Usa "The Vault") |
-| `ORCHESTRATOR_SERVICE_URL` | URL del Orchestrator (interna) | `http://orchestrator_service:8000` | ✅ |
-| `INTERNAL_API_TOKEN` | Token para comunicarse con Orchestrator | (mismo que global) | ✅ |
-
-> [!NOTE]
-> **Nexus v7.8 (Sovereign Credentials)**: Las claves de YCloud ahora se gestionan primordialmente a través de la tabla `credentials` ("The Vault") asociada a cada `tenant_id`. Las variables de entorno solo se usan como respaldo (fallback) inicial.
-
-## 5. Platform UI (80)
-
-| Variable | Descripción | Ejemplo | Requerida |
-| :--- | :--- | :--- | :--- |
-| `ORCHESTRATOR_URL` | URL del Orchestrator (para admin panel) | (auto-detecta) | ❌ |
-| `VITE_ADMIN_TOKEN` | Token de administrador (inyectado en build) | `admin-secret-token` | ✅ |
-| `VITE_API_BASE_URL` | URL base para la API del orquestador | (auto-detecta) | ❌ |
-
-## 6. Ejemplo de .env (Desarrollo Local)
+### 6.3 Configuración de Alta Carga
 
 ```bash
-# --- Globales ---
-INTERNAL_API_TOKEN=super-secret-dev-token
-OPENAI_API_KEY=sk-proj-xxxxx
-REDIS_URL=redis://redis:6379
-POSTGRES_DSN=postgres://postgres:password@localhost:5432/nexus_db
+# Optimización Redis
+REDIS_CACHE_TTL_MINUTES=2  # Cache más fresco
+REDIS_MAX_CONNECTIONS=50
 
-# --- Auth & Platform ---
-JWT_SECRET_KEY=mi-llave-maestra-dental
-PLATFORM_URL=https://dentalogic-frontend.ugwrjq.easypanel.host
-ACCESS_TOKEN_EXPIRE_MINUTES=43200
-ADMIN_TOKEN=admin-dev-token
-# Opcional: para POST /admin/calendar/connect-sovereign (token Auth0 cifrado)
-# CREDENTIALS_FERNET_KEY=<generar con: py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
+# Background Jobs optimizados
+NOTIFICATION_CHECK_INTERVAL_MINUTES=10  # Menos frecuente
+METRICS_REFRESH_INTERVAL_MINUTES=30     # Menos frecuente
+CLEANUP_INTERVAL_HOURS=2                # Menos frecuente
 
-# --- Orchestrator ---
-STORE_NAME=Dentalogic
-BOT_PHONE_NUMBER=+5493756123456
-CORS_ALLOWED_ORIGINS=http://localhost:3000
+# Socket.IO optimizado
+SOCKETIO_PING_TIMEOUT=30000
+SOCKETIO_PING_INTERVAL=30000
+SOCKETIO_MAX_HTTP_BUFFER_SIZE=5e6
+```
 
-# --- WhatsApp ---
-YCLOUD_API_KEY=yc_api_xxxxx
-YCLOUD_WEBHOOK_SECRET=yc_webhook_xxxxx
-ORCHESTRATOR_SERVICE_URL=http://orchestrator_service:8000
+## 7. Ejemplo .env Completo
 
-# --- Frontend (Build Time) ---
-VITE_ADMIN_TOKEN=admin-dev-token
-VITE_API_URL=http://localhost:8000
+```bash
+# ============================================
+# CRM VENTAS - CONFIGURACIÓN COMPLETA
+# Sprint 2 - Tracking Avanzado Implementado
+# ============================================
+
+# ENVIRONMENT
+NODE_ENV=production
+
+# DATABASE
+POSTGRES_DSN=postgresql://crmuser:StrongPass123@postgres-host:5432/crmventas
+
+# REDIS
+REDIS_HOST=redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=RedisPass123
+REDIS_CACHE_TTL_MINUTES=5
+REDIS_NOTIFICATION_QUEUE=notifications
+
+# OPENAI
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# SECURITY
+JWT_SECRET_KEY=jwt-super-secret-key-change-in-production
+ADMIN_TOKEN=admin-token-change-in-production
+INTERNAL_API_TOKEN=internal-api-token-change
+CREDENTIALS_FERNET_KEY=fernet-key-base64-32-bytes==
+CORS_ORIGINS=https://app.empresa.com,https://admin.empresa.com
+
+# YCLOUD
+YCLOUD_API_KEY=ycloud_xxxxxxxxxxxxxxxxxxxxxxxx
+YCLOUD_WEBHOOK_SECRET=webhook-secret-change-in-production
+YCLOUD_BOT_PHONE_NUMBER=+5491111111111
+
+# SPRINT 2 - BACKGROUND JOBS
+ENABLE_SCHEDULED_TASKS=true
+NOTIFICATION_CHECK_INTERVAL_MINUTES=5
+METRICS_REFRESH_INTERVAL_MINUTES=15
+CLEANUP_INTERVAL_HOURS=1
+ENABLE_TASK_LOGGING=true
+MAX_TASK_RETRIES=3
+
+# SPRINT 2 - NOTIFICATION SYSTEM
+NOTIFICATION_RETENTION_DAYS=7
+UNANSWERED_CONVERSATION_HOURS=1
+HOT_LEAD_PROBABILITY_THRESHOLD=0.8
+FOLLOWUP_REMINDER_HOURS=24
+PERFORMANCE_ALERT_THRESHOLD=0.5
+
+# SPRINT 2 - METRICS SYSTEM
+METRICS_RETENTION_DAYS=30
+REAL_TIME_METRICS_ENABLED=true
+LEADERBOARD_UPDATE_INTERVAL=5
+CEO_REPORT_TIME=08:00
+
+# SOCKET.IO
+SOCKETIO_CORS_ORIGINS=*
+SOCKETIO_PING_TIMEOUT=20000
+SOCKETIO_PING_INTERVAL=25000
+SOCKETIO_MAX_HTTP_BUFFER_SIZE=1e6
+
+# FRONTEND
+VITE_API_URL=https://api.empresa.com
+VITE_WS_URL=wss://api.empresa.com
+VITE_ADMIN_TOKEN=admin-token-change-in-production
+VITE_DEFAULT_LANGUAGE=es
+VITE_SUPPORTED_LANGUAGES=es,en,fr
+
+# LOGGING & MONITORING
+LOG_LEVEL=INFO
+SENTRY_DSN=https://xxx@sentry.io/xxx
+METRICS_PORT=9090
+
+# GOOGLE CALENDAR (Opcional)
+GOOGLE_CREDENTIALS=eyJ0eXBlIjoic2VydmljZV9hY2NvdW50IiwiY2xpZW50X2lkIjoi...
+GOOGLE_CALENDAR_ID=primary
+
+# BRANDING
+COMPANY_NAME=Empresa de Ventas
+STORE_LOCATION=Buenos Aires, Argentina
+STORE_WEBSITE=https://www.empresa.com
+```
+
+## 8. Verificación de Configuración
+
+### 8.1 Script de Verificación
+
+```bash
+#!/bin/bash
+# verify_env.sh
+
+echo "🔍 Verificando variables de entorno..."
+
+# Variables requeridas
+required_vars=(
+  "POSTGRES_DSN"
+  "REDIS_HOST"
+  "OPENAI_API_KEY"
+  "JWT_SECRET_KEY"
+  "ADMIN_TOKEN"
+  "YCLOUD_API_KEY"
+)
+
+for var in "${required_vars[@]}"; do
+  if [ -z "${!var}" ]; then
+    echo "❌ Variable requerida faltante: $var"
+    exit 1
+  else
+    echo "✅ $var: Configurada"
+  fi
+done
+
+# Variables Sprint 2
+sprint2_vars=(
+  "ENABLE_SCHEDULED_TASKS"
+  "NOTIFICATION_CHECK_INTERVAL_MINUTES"
+  "METRICS_REFRESH_INTERVAL_MINUTES"
+)
+
+for var in "${sprint2_vars[@]}"; do
+  if [ -z "${!var}" ]; then
+    echo "⚠️  Variable Sprint 2 faltante: $var (usando default)"
+  else
+    echo "✅ $var: ${!var}"
+  fi
+done
+
+echo "🎯 Configuración verificada exitosamente!"
+```
+
+### 8.2 Health Check Endpoints
+
+Después de configurar las variables, puedes verificar el sistema con:
+
+```bash
+# Health check completo
+curl https://api.empresa.com/health
+
+# Estado de background jobs
+curl https://api.empresa.com/health/tasks
+
+# Readiness probe (Kubernetes)
+curl https://api.empresa.com/health/readiness
+
+# Liveness probe (Kubernetes)
+curl https://api.empresa.com/health/liveness
+```
+
+## 9. Troubleshooting
+
+### 9.1 Problemas Comunes
+
+#### **Background Jobs No Inician:**
+```bash
+# Verificar variable
+echo $ENABLE_SCHEDULED_TASKS
+
+# Verificar logs
+docker logs orchestrator | grep "Scheduled tasks"
+
+# Probar manualmente
+curl -X POST https://api.empresa.com/health/tasks/start
+```
+
+#### **Redis Connection Issues:**
+```bash
+# Verificar conexión
+redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD ping
+
+# Verificar en health check
+curl https://api.empresa.com/health | jq '.redis'
+```
+
+#### **Socket.IO Connection Issues:**
+```bash
+# Verificar CORS origins
+echo $SOCKETIO_CORS_ORIGINS
+
+# Verificar frontend config
+echo $VITE_WS_URL
+
+# Probar conexión WebSocket
+wscat -c wss://api.empresa.com
+```
+
+### 9.2 Performance Optimization
+
+#### **Para Alta Carga:**
+```bash
+# Aumentar Redis connections
+REDIS_MAX_CONNECTIONS=100
+
+# Reducir frecuencia de tasks
+NOTIFICATION_CHECK_INTERVAL_MINUTES=10
+METRICS_REFRESH_INTERVAL_MINUTES=30
+
+# Optimizar cache TTL
+REDIS_CACHE_TTL_MINUTES=2
+```
+
+#### **Para Desarrollo:**
+```bash
+# Más logs
+LOG_LEVEL=DEBUG
+ENABLE_TASK_LOGGING=true
+
+# Tasks más frecuentes
+NOTIFICATION_CHECK_INTERVAL_MINUTES=2
+METRICS_REFRESH_INTERVAL_MINUTES=5
+```
+
+## 10. Actualización de Variables
+
+### 10.1 Migración desde Versión Anterior
+
+Si actualizas desde una versión anterior del CRM Ventas:
+
+1. **Agregar nuevas variables Sprint 2:**
+```bash
+ENABLE_SCHEDULED_TASKS=true
+NOTIFICATION_CHECK_INTERVAL_MINUTES=5
+METRICS_REFRESH_INTERVAL_MINUTES=15
+CLEANUP_INTERVAL_HOURS=1
+```
+
+2. **Configurar Redis (si no estaba):**
+```bash
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+```
+
+3. **Actualizar frontend:**
+```bash
+VITE_WS_URL=ws://localhost:8000  # Agregar WebSocket URL
+```
+
+### 10.2 Rollback Procedure
+
+Si hay problemas con las nuevas variables:
+
+```bash
+# Deshabilitar Sprint 2 features
+ENABLE_SCHEDULED_TASKS=false
+
+# O usar configuraciones conservadoras
+NOTIFICATION_CHECK_INTERVAL_MINUTES=30
+METRICS_REFRESH_INTERVAL_MINUTES=60
+CLEANUP_INTERVAL_HOURS=4
 ```
 
 ---
 
-*Guía de Variables © 2026*
-泛
+## 📋 **RESUMEN DE CAMBIOS SPRINT 2**
+
+### **Nuevas Variables Agregadas:**
+1. **Background Jobs**: 6 nuevas variables para scheduled tasks
+2. **Redis Optimization**: 4 nuevas variables para cache y performance
+3. **Socket.IO**: 4 nuevas variables para WebSocket configuration
+4. **Notification System**: 5 nuevas variables para umbrales y retención
+5. **Metrics System**: 4 nuevas variables para analytics en tiempo real
+
+### **Variables Actualizadas:**
+1. **`REDIS_URL`** → Separado en `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+2. **Frontend**: Agregado `VITE_WS_URL` para WebSocket connection
+
+### **Recomendaciones de Producción:**
+1. **Habilitar background jobs**: `ENABLE_SCHEDULED_TASKS=true`
+2. **Configurar Redis**: Requerido para optimal performance
+3. **Health checks**: Usar endpoints `/health/*` para monitoring
+4. **Logging**: Configurar según entorno (DEBUG dev, WARNING prod)
+
+---
+
+**¡Configuración completa lista para producción con Sprint 2 features!** 🚀
+
+*Última actualización: 27 de Febrero 2026 - Sprint 2 Completado*
+*Documentación para CRM Ventas v2.0 - Tracking Avanzado*

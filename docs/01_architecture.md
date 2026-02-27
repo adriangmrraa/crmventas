@@ -1,11 +1,11 @@
-# Arquitectura del Sistema - Dentalogic
+# Arquitectura del Sistema - CRM Ventas (Actualizado Sprint 2)
 
-Este documento describe la estructura técnica, el flujo de datos y la interacción entre los componentes de la plataforma de gestión clínica Dentalogic.
+Este documento describe la estructura técnica, el flujo de datos y la interacción entre los componentes de la plataforma CRM Ventas, incluyendo las nuevas funcionalidades del **Sprint 2 - Tracking Avanzado**.
 
 ## 1. Diagrama de Bloques (Conceptual)
 
 ```
-Usuario WhatsApp (Paciente)
+Usuario WhatsApp (Lead/Cliente)
         |
         | Audio/Texto
         v
@@ -17,331 +17,428 @@ WhatsApp Service (8002)
         | POST /chat
         v
 Orchestrator Service (8000)
-  - LangChain Agent (Asistente Dental)
-  - Tools Clínicas (Agenda, Triaje)
+  - LangChain Agent (Asistente de Ventas)
+  - Tools CRM (Agenda, Lead Scoring, Asignación)
   - Memoria Histórica (Postgres)
-  - Lockout (24h)
   - Socket.IO Server (Real-time)
+  - Background Jobs (APScheduler)
         |
     ____|____
    /    |    \
   v     v     v
 PostgreSQL Redis OpenAI
-(Historias)(Locks)(LLM)
+(Leads, Métricas)(Cache, Notificaciones)(LLM)
    |
    v
 Frontend React (5173)
-Centro de Operaciones Dental
+Centro de Operaciones CRM
    |
    | WebSocket (Socket.IO)
    v
-AgendaView / Odontograma
-   - FullCalendar
+Dashboard CEO / ChatsView / Métricas
    - Real-time updates
+   - Notificaciones inteligentes
+   - Background jobs monitoring
 ```
 
-## 2. Estructura de Microservicios (Dentalogic)
+## 2. Estructura de Microservicios (CRM Ventas)
 
 ### A. WhatsApp Service (Puerto 8002)
 
 **Tecnología:** FastAPI + httpx + Redis
 
-**Función:** Interfaz de comunicación con pacientes vía YCloud.
+**Función:** Interfaz de comunicación con leads vía YCloud.
 
-**Responsabilidades:**
-- **Transcripción Whisper:** Convierte audios de síntomas en texto para el análisis de la IA.
-- **Deduplicación:** Evita procesar el mismo mensaje de WhatsApp múltiples veces.
-- **Buffering:** Agrupa mensajes enviados en ráfaga para dar un contexto completo.
-- **Relay de Audio:** Permite que los audios sean escuchados por humanos en el dashboard.
+**Componentes:**
+- `ycloud_client.py`: Cliente para YCloud API
+- `whisper_service.py`: Transcripción de audios (OpenAI Whisper)
+- `deduplication.py`: Prevención de mensajes duplicados (Redis)
 
-### B. Orchestrator Service (Puerto 8000) - **Coordinador Clínico**
+**Flujo:**
+1. YCloud envía webhook → `/webhooks/ycloud`
+2. Validación de firma HMAC
+3. Deduplicación (Redis SETEX)
+4. Si es audio → transcripción con Whisper
+5. POST a `/chat` (Orchestrator)
 
-**Tecnología:** FastAPI + LangChain + OpenAI + PostgreSQL
+### B. Orchestrator Service (Puerto 8000)
 
-**Función:** Procesamiento de lenguaje natural, clasificación de urgencias y gestión de agenda.
+**Tecnología:** FastAPI + LangChain + Socket.IO + APScheduler
 
-**Tools Clínicas Integradas:**
-- `check_availability(date_query, [professional_name], [treatment_name], [time_preference])`: Implementa lógica **Just-in-Time (JIT)** y **cerebro híbrido** por sede.
-  1. **Cerebro híbrido:** Lee `tenants.config.calendar_provider` (`local` o `google`). Si es local, solo usa tabla `appointments` y horarios de profesionales; si es google, para cada profesional con `google_calendar_id` consulta eventos GCal y los persiste en `google_calendar_blocks`.
-  2. **Limpieza de Identidad:** Normaliza nombres de profesionales (elimina títulos como "Dr."/"Dra.").
-  3. **Duración por tratamiento:** Si se pasa `treatment_name`, usa `default_duration_minutes` del tratamiento para calcular huecos.
-  4. **Working hours:** Si el profesional no tiene horarios configurados para ese día, se considera disponible en horario clínica (evita "no hay huecos" cuando la semana está libre).
-  5. **Cálculo de Huecos:** Combina `appointments` + bloqueos GCal (si aplica) y genera slots donde al menos un profesional esté libre.
-- `book_appointment(...)`: 
-  - **Protocolo Service-First**: La IA debe tener definido el servicio (tratamiento) antes de agendar; la duración se toma de `treatment_types.default_duration_minutes`.
-  - Valida datos obligatorios para leads (DNI, Obra Social).
-  - Registra turno en PG; si la sede usa Google y el profesional tiene `google_calendar_id`, crea evento en GCal.
-  - Emite eventos WebSocket (`NEW_APPOINTMENT`) para actualizar UI.
+**Función:** Cerebro central del CRM. Gestiona leads, conversaciones, agenda, métricas y notificaciones.
 
-**Gestión de Datos:**
-- **Memoria Persistente:** Vincula cada chat con el `patient_id`.
-- **Sincronización Real-Time (Omnipresente v3):** 
-  - Server Socket.IO (namespace `/`) emite eventos: `NEW_APPOINTMENT`, `APPOINTMENT_UPDATED`, `APPOINTMENT_DELETED`.
-  - **Frontend Listeners Optimizados (2026-02-08)**:
-    - Ambos eventos `NEW_APPOINTMENT` y `APPOINTMENT_UPDATED` ahora ejecutan `calendarApi.refetchEvents()` 
-    - Este método re-carga todos los eventos desde las sources configuradas (DB + Google Calendar blocks)
-    - Garantiza sincronización total y consistencia en todas las sesiones activas
-    - Elimina riesgo de duplicados o estados desincronizados del método manual anterior (`addEvent()`, `setProp()`)
-  - **Auto-Sync Silencioso**: 
-    - La sincronización con Google Calendar ocurre automáticamente al cargar `AgendaView`
-    - No requiere intervención manual del usuario (botón "Sync" removido en v3 hito 2026-02-08)
-    - Delay de 800ms post-sync garantiza que los writes en DB se completen antes del fetch
-- **Urgencia y Triaje (Clinical Triage v1):**
-  - Los pacientes ahora poseen un `urgency_level` (`low`, `medium`, `high`, `emergency`).
-  - La UI de la agenda resalta automáticamente los turnos con urgencia `high` o superior mediante bordes y efectos pulsantes.
-- **UUID Serialization Fix (Backend):**
-  - Endpoints de actualización de estado (`PUT /admin/appointments/{id}/status`) ahora convierten UUID a string antes de JSON response
-  - Eliminado error `TypeError: Object of type UUID is not JSON serializable`
-- **Multi-Tenancy:** Soporte para múltiples consultorios/clínicas; datos aislados por `tenant_id`. La configuración por sede (idioma de UI, proveedor de calendario) se guarda en `tenants.config` y se expone vía GET/PATCH `/admin/settings/clinic` (`ui_language`: es|en|fr).
-- **Sovereign Analytics Engine (v1 2026-02-08):**
-  - **Propósito**: Consolidar métricas operativas y financieras en un dashboard centralizado.
-  - **Lógica de Ingresos**: Basada estrictamente en asistencia confirmada (`attended` o `completed`).
-  - **Eficiencia de IA**: Las "Conversaciones IA" se calculan como hilos únicos por paciente (`COUNT(DISTINCT from_number)`), no por volumen de mensajes individuales.
-  - **Filtrado Dinámico**: Soporte nativo para rangos `weekly` (7 días) y `monthly` (30 días).
-  - **Triage Monitoring**: Integración directa con el flujo de detección de urgencias IA.
+**Componentes Principales:**
 
-### D. Sistema de Layout y Scroll (SaaS-style)
+#### **Core Services (Sprint 2):**
+1. **`SellerMetricsService`**: Cálculo de 15+ métricas en tiempo real con Redis cache
+2. **`SellerNotificationService`**: Sistema de notificaciones inteligentes (4 tipos)
+3. **`ScheduledTasksService`**: Background jobs programados con auto-start
+4. **`SellerAssignmentService`**: Lógica de asignación de leads a vendedores
 
-**Tecnología:** Flexbox + `min-h-0` + Overflow Isolation
+#### **Real-time Components:**
+1. **`SocketNotificationService`**: WebSocket handlers para notificaciones en tiempo real
+2. **`SocketManager`**: Configuración central de Socket.IO
+3. **Health Checks**: Endpoints de monitoreo del sistema
 
-**Arquitectura de Visualización:**
-- **Layout Global Rígido:** El contenedor principal (`Layout.tsx`) utiliza `h-screen` y `overflow-hidden` para eliminar el scroll de la página completa, siguiendo el estándar **Sovereign Glass**.
-- **Aislamiento de Scroll:** Cada vista maestra gestiona su propio desplazamiento interno mediante `flex-1 min-h-0 overflow-auto`.
-- **ProfessionalsView (Vista Maestra):** Implementa un sistema de **Overflow Isolation** donde el grid fluye de forma independiente.
-- **Mobile-First Evolution (Hito Agenda 2.0):**
-    - **`MobileAgenda`**: Nueva capa de visualización vertical optimizada para pantallas pequeñas, activada automáticamente vía `@media` queries o JS detection.
-    - **`DateStrip`**: Navegador de fechas horizontal táctil que permite cambiar el foco del calendario sin recargar la página.
-- **Odontograma y Pantallas de Alta Densidad:** Utilizan el patrón de **Sub-Scrolling**, permitiendo que herramientas complejas mantengan sus controles visibles mientras los diagramas scrollean.
-- **ChatsView Rígido:** Implementa una jerarquía flex con `min-h-0` que fuerza el scroll únicamente en el área de mensajes.
+#### **API Routes (Nuevas - Sprint 2):**
+1. **`/admin/core/sellers/*`**: Gestión de vendedores y métricas
+2. **`/notifications/*`**: Sistema de notificaciones
+3. **`/scheduled-tasks/*`**: Gestión de background jobs
+4. **`/health/*`**: Health checks y monitoring
 
-## 6. Paginación y Carga Incremental
+### C. Frontend React (Puerto 5173)
 
-Para optimizar el rendimiento en conversaciones extensas, Dentalogic utiliza un sistema de carga bajo demanda:
-- **Backend (Admin API)**: Soporta parámetros `limit` y `offset` para consultas SQL (`LIMIT $2 OFFSET $3`).
-- **Frontend (ChatsView)**:
-    - Carga inicial: Últimos 50 mensajes.
-    - Botón "Cargar más": Recupera bloques anteriores y los concatena al estado, manteniendo la posición visual.
-    - Estado `hasMoreMessages`: Controla la disponibilidad de historial en el servidor.
+**Tecnología:** React 18 + TypeScript + Vite + Socket.IO Client
 
-### C. Frontend React (Puerto 5173 dev / 80 prod) - **Centro de Operaciones**
+**Función:** Centro de Operaciones CRM con interface moderna y real-time updates.
 
-**Tecnología:** React 18 + TypeScript + Vite + Tailwind CSS + FullCalendar + Socket.IO client + Recharts
+**Componentes Nuevos (Sprint 2):**
 
-**Carpeta:** `frontend_react/`
+#### **Real-time Context:**
+- **`SocketContext.tsx`**: Contexto React para Socket.IO con auto-connect
+- **`useSocketNotifications`**: Hook personalizado para notificaciones
 
-**Rutas principales (App.tsx):** Rutas **públicas** (sin Layout ni ProtectedRoute): `/login` (LoginView), `/demo` (LandingView – landing de conversión con Probar app / Probar Agente IA / Iniciar sesión; única página accesible sin login junto con login). Rutas **protegidas** (dentro de Layout + ProtectedRoute): `/` (DashboardView), `/agenda` (AgendaView), `/pacientes` y `/pacientes/:id` (PatientsView, PatientDetail), `/chats` (ChatsView), `/analytics/professionals` (ProfessionalAnalyticsView, solo CEO), `/tratamientos` (TreatmentsView), `/perfil` (ProfileView), `/aprobaciones` (UserApprovalView – Personal Activo, modal detalle, Vincular a sede, Editar Perfil), `/sedes` (ClinicsView, solo CEO), `/configuracion` (ConfigView – selector de idioma). La ruta `/profesionales` redirige a `/aprobaciones`. El flujo de login demo: `/login?demo=1` prellena credenciales y muestra botón "Entrar a la demo" que ejecuta login y redirige al dashboard.
+#### **UI Components:**
+1. **`NotificationBell.tsx`**: Badge con count de notificaciones
+2. **`NotificationCenter.tsx`**: Centro completo de gestión de notificaciones
+3. **`SellerBadge.tsx`**: Badge de vendedor en conversaciones
+4. **`SellerSelector.tsx`**: Modal para asignación de vendedores
+5. **`SellerMetricsDashboard.tsx`**: Dashboard CEO con métricas avanzadas
+6. **`MetaLeadsView.tsx`**: Vista especializada para leads de Meta Ads
 
-**Idiomas (i18n):** El selector de idioma (Español / English / Français) está en **Configuración** (solo CEO). Se persiste en `tenants.config.ui_language` vía GET/PATCH `/admin/settings/clinic`. `LanguageProvider` envuelve toda la app; todas las vistas y componentes compartidos usan `useTranslation()` y `t('clave')` con archivos `src/locales/es.json`, `en.json`, `fr.json`. El cambio de idioma aplica de inmediato a toda la plataforma.
+#### **Views Actualizadas:**
+- **`ChatsView.tsx`**: Integración completa con sistema de vendedores
+- **`Layout.tsx`**: Integración de NotificationBell en header
 
-**Vistas Principales:**
-- **Landing (LandingView):** Página pública en `/demo` para campañas y leads: hero, beneficios, credenciales de prueba (colapsables), CTA "Probar app" (→ `/login?demo=1`), "Probar Agente IA" (WhatsApp con mensaje predefinido), "Iniciar sesión con mi cuenta" (→ `/login`). Diseño móvil-first y orientado a conversión; estética alineada con la plataforma (medical, glass, botones).
-- **Agenda Inteligente:** Calendario interactivo con sincronización de Google Calendar; leyenda de origen (IA, Manual, GCal) y tooltips traducidos. **Filtro por profesional** en vistas semanal y mensual (CEO y secretaria pueden elegir profesional); **profesionales solo ven su propio calendario** (una columna en vista día, sin selector de profesional). Actualización en tiempo real vía Socket.IO.
-- **Perfil 360° del Paciente:** Acceso a historias clínicas, antecedentes y notas de evolución.
-- **Monitor de Triaje:** Alertas inmediatas cuando la IA detecta una urgencia grave.
-- **Modales IA-Aware:** Los modales de edición (especialmente en Personal Activo / Profesionales) están sincronizados con la lógica de la IA, permitiendo configurar `working_hours` que el agente respeta estrictamente durante la reserva de turnos.
+## 3. Arquitectura de Background Jobs (Nuevo - Sprint 2)
 
-## 3. Base de Datos (PostgreSQL)
+### **🏗️ Sistema de Tareas Programadas:**
 
-**Configuración por sede:** La tabla `tenants` incluye un campo JSONB `config` donde se guardan, entre otros: `ui_language` (es|en|fr) para el idioma de la plataforma, y `calendar_provider` ('local' | 'google') para el tipo de calendario de esa sede. El backend expone `ui_language` en GET/PATCH `/admin/settings/clinic`.
+```
+Orchestrator Startup
+        |
+        v
+startup_event() → scheduled_tasks_service.start_all_tasks()
+        |
+        v
+[4 Tareas Programadas]
+├── Notification Checks (cada 5 minutos)
+│   ├── Conversaciones sin respuesta (> 1h)
+│   ├── Leads calientes (alta probabilidad)
+│   ├── Recordatorios de follow-up
+│   └── Alertas de performance
+│
+├── Metrics Refresh (cada 15 minutos)
+│   ├── Actualización métricas vendedores
+│   ├── Cache Redis actualizado
+│   └── Socket.IO updates enviados
+│
+├── Data Cleanup (cada 1 hora)
+│   ├── Notificaciones expiradas (> 7 días)
+│   ├── Métricas antiguas (> 30 días)
+│   └── Sesiones inactivas (> 7 días)
+│
+└── Daily Reports (8:00 AM cada día)
+    ├── Resumen actividad diaria
+    ├── Métricas del equipo
+    └── Notificación a CEO
+```
 
-### Tablas Principales (Esquema Dental)
+### **🔧 Configuración:**
+```bash
+# Variables de entorno
+ENABLE_SCHEDULED_TASKS=true
+NOTIFICATION_CHECK_INTERVAL_MINUTES=5
+METRICS_REFRESH_INTERVAL_MINUTES=15
+CLEANUP_INTERVAL_HOURS=1
+```
 
-| Tabla | Función |
-| :--- | :--- |
-| **professionals** | Datos de los odontólogos y sus especialidades. |
-| **patients** | Registro demográfico y antecedentes médicos (JSONB). |
-| **clinical_records** | Evoluciones clínicas, diagnósticos y odontogramas. |
-| **appointments** | Gestión de turnos, estados y sincronización GCalendar. |
-| **accounting_transactions** | Liquidaciones y cobros de prestaciones. |
-| **users** | Credenciales, roles y estado de aprobación. |
-| **tenants** | Sedes/clínicas; `config` (JSONB) con `ui_language`, `calendar_provider`, etc. |
-| **chat_messages** | Mensajes de chat por conversación; incluye `tenant_id` para aislamiento por sede. |
+### **📊 Health Monitoring:**
+```
+GET /health              # Health check completo
+GET /health/tasks        # Estado de background jobs
+GET /health/readiness    # Readiness probe (Kubernetes)
+GET /health/liveness     # Liveness probe (Kubernetes)
+POST /health/tasks/start # Iniciar tasks manualmente
+POST /health/tasks/stop  # Detener tasks manualmente
+```
 
-### 3.2 Maintenance Robot (Self-Healing)
-El sistema utiliza un **Robot de Mantenimiento** integrado en `orchestrator_service/db.py` que garantiza la integridad del esquema en cada arranque:
-- **Foundation**: Si no existe la tabla `tenants`, aplica el esquema base completo.
-- **Evolution Pipeline**: Una lista de parches (`patches`) en Python que ejecutan bloques `DO $$` para agregar columnas o tablas nuevas de forma idempotente y segura.
-- **Resiliencia**: El motor SQL ignora comentarios y respeta bloques de código complejos, evitando errores de sintaxis comunes en despliegues automatizados.
+## 4. Arquitectura de Notificaciones en Tiempo Real (Nuevo - Sprint 2)
 
-## 4. Seguridad e Identidad (Auth Layer)
+### **⚡ Sistema Socket.IO:**
 
-Dentalogic implementa una arquitectura de **Seguridad de Triple Capa**:
+```
+Frontend (React)
+        |
+        | WebSocket Connection
+        v
+Socket.IO Server (Orchestrator)
+        |
+        | Event Handlers
+        v
+[5 Eventos Principales]
+├── notification_connected     # Conexión establecida
+├── notification_subscribed    # Usuario suscrito
+├── new_notification          # Nueva notificación
+├── notification_count_update # Count actualizado
+└── notification_marked_read  # Notificación leída
+```
 
-1.  **Capa de Identidad (JWT)**: Gestión de sesiones de usuario con tokens firmados (HS256). Define el rol (`ceo`, `professional`, `secretary`) y el `tenant_id`.
-2.  **Capa de Infraestructura (X-Admin-Token)**: Las rutas administrativas críticas requieren un token estático (`INTERNAL_SECRET_KEY`) para prevenir accesos no autorizados incluso si la sesión del usuario es válida.
-3.  **Capa de Gatekeeper (Aprobación)**: Todo registro nuevo entra en estado `pending`. Solo un usuario con rol `ceo` puede activar cuentas desde el panel de control.
+### **🔗 Integración Frontend:**
+```typescript
+// SocketContext.tsx
+const SocketProvider = ({ children }) => {
+  const socket = useSocket(); // Auto-connect con exponential backoff
+  
+  return (
+    <SocketContext.Provider value={socket}>
+      {children}
+    </SocketContext.Provider>
+  );
+};
 
-### 4.2 Sovereign Credentials (The Vault)
-Nexus v7.8 introduce **The Vault**, un sistema de gestión de credenciales multi-tenant encriptadas:
-- **Persistencia**: Las claves de integración (YCloud API Key, Webhook Secret, OpenAI por tenant) se almacenan en la tabla `credentials`.
-- **Encriptación**: Uso de **Fernet (AES-256)** para proteger los valores en reposo.
-- **Jerarquía**: El sistema prioriza las credenciales de la base de datos (The Vault) sobre las variables de entorno, permitiendo configuraciones únicas por sede.
-- **Aislamiento**: Cada par de credenciales está estrictamente vinculado a un `tenant_id`.
+// NotificationBell.tsx
+const NotificationBell = () => {
+  const { socketConnected, notifications } = useSocketNotifications();
+  
+  return (
+    <div>
+      {socketConnected ? '🔔' : '📡'}
+      <span>{notifications.length}</span>
+    </div>
+  );
+};
+```
 
-## 5. Flujo de una Urgencia
+### **🔄 Fallback Mechanism:**
+1. **Primary**: Socket.IO WebSocket connection
+2. **Fallback**: API polling cada 30 segundos
+3. **Status Indicators**: UI muestra estado de conexión
+
+## 5. Arquitectura de Métricas en Tiempo Real (Nuevo - Sprint 2)
+
+### **📈 Sistema de Métricas:**
+
+```
+Data Sources
+├── Conversaciones (PostgreSQL)
+├── Leads (PostgreSQL)
+├── Asignaciones (PostgreSQL)
+└── Actividad (Redis)
+
+        |
+        v
+SellerMetricsService
+├── Cálculo 15+ métricas
+├── Redis Cache (5 minutos)
+└── Background refresh (15 minutos)
+
+        |
+        v
+API Endpoints
+├── GET /admin/core/sellers/metrics
+├── GET /admin/core/sellers/leaderboard
+└── GET /admin/core/sellers/dashboard
+
+        |
+        v
+Frontend Dashboard
+├── Gráficos en tiempo real
+├── Leaderboard ranking
+└── Filtros por fecha/tenant
+```
+
+### **🔍 Métricas Calculadas:**
+1. **Conversaciones**: Totales, activas, hoy, por vendedor
+2. **Tiempos**: Respuesta promedio, tiempo en chat
+3. **Conversiones**: Leads generados, convertidos, tasa
+4. **Performance**: Engagement, actividad, productividad
+5. **Team Metrics**: Totales equipo, comparativas
+
+## 6. Flujo de Datos Multi-Tenant
+
+### **🔐 Aislamiento de Datos:**
+
+```python
+# Todas las queries incluyen tenant_id
+async def get_seller_metrics(tenant_id: int, seller_id: int):
+    query = """
+        SELECT * FROM seller_metrics 
+        WHERE tenant_id = $1 AND seller_id = $2
+    """
+    return await db.fetchrow(query, tenant_id, seller_id)
+
+# JWT validation incluye tenant
+def get_current_tenant(request: Request):
+    token = request.headers.get("Authorization")
+    payload = decode_jwt(token)
+    return payload.get("tenant_id")
+```
+
+### **👥 Roles y Permisos:**
+1. **CEO**: Acceso completo a todos los tenants
+2. **Seller**: Solo su tenant asignado, solo sus métricas
+3. **Secretary**: Solo lectura, no modificación
+4. **Professional**: Acceso limitado según configuración
+
+## 7. Base de Datos (Actualizado Sprint 2)
+
+### **🗄️ Tablas Nuevas:**
+
+```sql
+-- Notificaciones (Sprint 2)
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    user_id INTEGER REFERENCES users(id) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'unanswered', 'hot_lead', 'follow_up', 'performance'
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB DEFAULT '{}',
+    read BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Configuración notificaciones
+CREATE TABLE notification_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    user_id INTEGER REFERENCES users(id) NOT NULL,
+    notification_types JSONB DEFAULT '["unanswered", "hot_lead", "follow_up", "performance"]',
+    email_notifications BOOLEAN DEFAULT FALSE,
+    push_notifications BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Métricas vendedores (Sprint 2)
+CREATE TABLE seller_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id INTEGER REFERENCES tenants(id) NOT NULL,
+    seller_id INTEGER REFERENCES users(id) NOT NULL,
+    period DATE NOT NULL, -- Fecha de las métricas
+    metrics JSONB NOT NULL, -- 15+ métricas en JSON
+    calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, seller_id, period)
+);
+```
+
+### **📊 Índices de Performance:**
+```sql
+CREATE INDEX idx_notifications_tenant_user ON notifications(tenant_id, user_id);
+CREATE INDEX idx_notifications_unread ON notifications(tenant_id, user_id, read) WHERE read = FALSE;
+CREATE INDEX idx_seller_metrics_period ON seller_metrics(tenant_id, period);
+CREATE INDEX idx_seller_metrics_seller ON seller_metrics(tenant_id, seller_id, period DESC);
+```
+
+## 8. Deployment y Escalabilidad
+
+### **🐳 Docker Compose (Actualizado):**
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: crmventas
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+
+  orchestrator:
+    build: ./orchestrator_service
+    environment:
+      - POSTGRES_DSN=postgresql://user:password@postgres:5432/crmventas
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - ENABLE_SCHEDULED_TASKS=true
+      - NOTIFICATION_CHECK_INTERVAL_MINUTES=5
+      - METRICS_REFRESH_INTERVAL_MINUTES=15
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build: ./frontend_react
+    ports:
+      - "5173:5173"
+    depends_on:
+      - orchestrator
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### **📈 Consideraciones de Escalabilidad:**
+
+1. **Redis Cluster**: Para alta carga de métricas en tiempo real
+2. **WebSocket Load Balancer**: Sticky sessions para Socket.IO
+3. **Background Workers**: Separación de scheduled tasks a workers dedicados
+4. **Database Read Replicas**: Para reporting y analytics
+
+## 9. Monitoreo y Alerting (Nuevo - Sprint 2)
+
+### **🔍 Health Checks:**
+
+```python
+# Health check endpoints
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {
+            "database": await check_database(),
+            "redis": await check_redis(),
+            "scheduled_tasks": scheduled_tasks_service.get_status(),
+            "socket_io": socket_manager.get_connection_count()
+        }
+    }
+```
+
+### **🚨 Alertas Configurables:**
+
+1. **Critical**: Scheduler down > 5 minutos
+2. **Warning**: Task failure rate > 20%
+3. **Info**: High notification volume detected
+
+## 10. Conclusión
+
+La arquitectura de CRM Ventas después del **Sprint 2 - Tracking Avanzado** incluye:
+
+### **✅ Nuevas Capacidades:**
+1. **Sistema completo de control CEO** sobre equipo de ventas
+2. **Notificaciones inteligentes** en tiempo real con Socket.IO
+3. **Background jobs automáticos** con health monitoring
+4. **Métricas avanzadas** con Redis caching
+5. **Dashboard profesional** con analytics en tiempo real
+
+### **✅ Beneficios Arquitectónicos:**
+1. **Escalabilidad**: Redis para caching, WebSockets para real-time
+2. **Resiliencia**: Fallback mechanisms, auto-recovery
+3. **Monitoreo**: Comprehensive health checks y alerting
+4. **Mantenibilidad**: Code modular, documentation completa
+5. **Performance**: Optimized queries, background processing
+
+### **✅ Listo para Producción:**
+- Docker Compose configurado
+- Health checks implementados
+- Monitoring endpoints disponibles
+- Documentation completa
+- Testing automatizado
+
+**La plataforma está 100% implementada y lista para deployment a producción.** 🚀
 
 ---
 
-## 5. Flujo de una Urgencia
-
-1. **Paciente** envía audio: "Me duele mucho la muela, está hinchado".
-2. **WhatsApp Service** transcribe vía Whisper.
-3. **Orchestrator** recibe texto y ejecuta `triage_urgency()`.
-4. **IA** clasifica como `high` (Urgencia) y sugiere turnos próximos.
-5. **Platform UI** muestra una notificación visual roja al administrativo.
-6. **Agente** responde: "Entiendo que es un dolor fuerte. Tengo un hueco hoy a las 16hs, ¿te sirve?".
-
----
-
-*Documentación Dentalogic © 2026*
-泛
-
-## Marketing Hub & Meta Ads Integration
-
-Nueva capa de marketing implementada en Febrero 2026 que extiende el CRM con capacidades de publicidad digital y automatización.
-
-### Arquitectura del Módulo
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Marketing Hub Layer                      │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend React Components:                                 │
-│  • MarketingHubView.tsx     - Dashboard principal           │
-│  • MetaTemplatesView.tsx    - Gestión HSM WhatsApp          │
-│  • MetaConnectionWizard.tsx - Wizard conexión OAuth         │
-│  • MarketingPerformanceCard.tsx - Card métricas             │
-│  • MetaTokenBanner.tsx      - Banner estado conexión        │
-└─────────────────────────────────────────────────────────────┘
-                                    │
-┌─────────────────────────────────────────────────────────────┐
-│                    Backend Services Layer                   │
-├─────────────────────────────────────────────────────────────┤
-│  MetaOAuthService:                                          │
-│  • exchange_code_for_token() - OAuth flow                   │
-│  • get_long_lived_token()    - Token de 60 días             │
-│  • get_business_managers()   - Gestión cuentas              │
-│  • store_meta_token()        - Almacenamiento seguro        │
-│  • validate_token()          - Validación tokens            │
-│                                                             │
-│  MarketingService:                                          │
-│  • get_marketing_stats()     - Métricas ROI                 │
-│  • get_campaigns()           - Campañas Meta Ads            │
-│  • get_hsm_templates()       - Plantillas WhatsApp          │
-│  • get_automation_rules()    - Reglas automatización        │
-└─────────────────────────────────────────────────────────────┘
-                                    │
-┌─────────────────────────────────────────────────────────────┐
-│                    Database Layer                           │
-├─────────────────────────────────────────────────────────────┤
-│  Marketing Tables:                                          │
-│  • meta_tokens              - Tokens OAuth por tenant       │
-│  • meta_ads_campaigns       - Campañas publicitarias        │
-│  • meta_ads_insights        - Métricas campañas            │
-│  • meta_templates           - Plantillas HSM WhatsApp       │
-│  • automation_rules         - Reglas automatización         │
-│  • automation_logs          - Logs ejecución                │
-│  • opportunities            - Oportunidades de venta        │
-│  • sales_transactions       - Transacciones completadas     │
-└─────────────────────────────────────────────────────────────┘
-                                    │
-┌─────────────────────────────────────────────────────────────┐
-│                    External APIs                            │
-├─────────────────────────────────────────────────────────────┤
-│  • Meta Graph API (Facebook) - OAuth, Ads, HSM             │
-│  • WhatsApp Business API     - Envío mensajes HSM          │
-│  • YCloud API               - WhatsApp Service integration │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Flujo de Datos
-
-1. **OAuth Flow**: Usuario → Meta Login → Callback → Token almacenado
-2. **Campañas Ads**: Meta API → Sincronización periódica → DB → Dashboard
-3. **HSM Automation**: Plantilla creada → Aprobación Meta → Envío automático
-4. **ROI Tracking**: Leads → Opportunities → Sales → Métricas ROI
-
-### Seguridad Implementada
-
-- **State Validation**: Previene CSRF attacks en OAuth flow
-- **Token Encryption**: Almacenamiento seguro en PostgreSQL
-- **Rate Limiting**: 20 requests/minute por endpoint
-- **Audit Logging**: Todas las acciones registradas
-- **Multi-tenant Isolation**: Filtrado automático por `tenant_id`
-
-### Integración con CRM Existente
-
-- **Leads**: Fuente para tracking ROI de campañas
-- **Opportunities**: Conversiones atribuidas a campañas
-- **Sales Transactions**: Revenue tracking por campaña
-- **Chat Integration**: HSM templates para follow-up automático
-
-### Stack Tecnológico
-
-- **Backend**: FastAPI + async/await + PostgreSQL
-- **Frontend**: React 18 + TypeScript + Vite + Tailwind
-- **OAuth**: Meta Graph API (Facebook Login)
-- **Database**: 8 nuevas tablas marketing
-- **Security**: Nexus v7.7.1 (audit, rate limiting, multi-tenant)
-
-### Deployment Considerations
-
-- **Environment Variables**: `META_APP_ID`, `META_APP_SECRET`, `META_REDIRECT_URI`
-- **Database Migrations**: Script `run_meta_ads_migrations.py`
-- **API Rate Limits**: Considerar límites Meta API (200 calls/hour)
-- **Monitoring**: Logs OAuth, errores API, métricas ROI
-
-### Debugging & Diagnostic Tools (Febrero 2026)
-
-Nuevas herramientas implementadas para troubleshooting y diagnóstico:
-
-#### **1. debug_marketing_stats.py**
-```python
-# Propósito: Debugging estadísticas marketing
-# Uso: python debug_marketing_stats.py
-# Funcionalidad: Consulta stats campañas tenant 1
-```
-
-#### **2. check_automation.py**
-```python
-# Propósito: Diagnóstico automatización
-# Uso: python check_automation.py
-# Funcionalidad: Verifica reglas activas, logs recientes, status leads
-```
-
-#### **3. check_leads.py**
-```python
-# Propósito: Verificación leads base datos
-# Uso: python check_leads.py
-# Funcionalidad: Lista leads tenant 1 + números chat
-```
-
-### Mejoras Recientes (Febrero 2026)
-
-#### **Frontend:**
-- **MetaConnectionWizard.tsx**: UI/UX mejorada, flujo paso a paso optimizado
-- **ConfigView.tsx**: Refactorización completa con gestión credenciales CRUD
-- **MarketingHubView.tsx**: Dashboard mejorado, tablas creativos con filtros
-- **Webhook Configuration**: URLs copiables mejoradas en dashboard marketing
-
-#### **Backend:**
-- **admin_routes.py**: Nuevas rutas administrativas, configuración deployment
-- **meta_ads_service.py**: Manejo errores robusto, filtros status expandidos
-- **whatsapp_service/main.py**: Refactorización completa, logging mejorado
-- **Credentials Management**: Sistema centralizado credenciales multi-tenant
-
-#### **Security:**
-- **Webhook Meta URL**: Incluida en configuración deployment (`/crm/webhook/meta`)
-- **Rate Limiting**: Endpoints marketing con límites específicos
-- **Audit Logging**: Todas las acciones OAuth y marketing registradas
-- **Token Encryption**: Almacenamiento seguro tokens Meta con rotación automática
-
-### Webhook Configuration
-
-Sistema dual de webhooks implementado:
-
-1. **YCloud Webhook**: `{base_url}/webhook/ycloud`
-2. **Meta Webhook**: `{base_url}/crm/webhook/meta`
-
-Ambas URLs disponibles via API `GET /admin/config/deployment` para configuración fácil en paneles de proveedores.
-
+*Última actualización: 27 de Febrero 2026 - Sprint 2 Completado*
+*Versión: CRM Ventas v2.0 - Tracking Avanzado*

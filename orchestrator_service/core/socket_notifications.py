@@ -4,8 +4,9 @@ Real-time notification delivery via WebSockets
 """
 
 import logging
+import sys
+import os
 from typing import Dict, Any
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -13,52 +14,42 @@ from .socket_manager import sio
 
 # Importación de notification_service - manejar diferentes contextos
 notification_service = None
+
 try:
     # Try absolute import first (when running from orchestrator_service root)
     from services.seller_notification_service import notification_service as ns
     notification_service = ns
+    logger.info("✅ Notification service imported via absolute path")
 except ImportError:
     try:
         # Try relative import (when running from core/ directory)
-        # Importación corregida para deployment
-try:
-    # Intentar importación absoluta primero
-    from services.seller_notification_service import notification_service
-except ImportError:
-    try:
-        # Intentar importación relativa
-        from ..services.seller_notification_service import notification_service
-    except ImportError:
-        # Fallback: crear servicio dummy
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning("Notification service not available, using dummy")
-        class DummyNotificationService:
-            async def create_notification(self, *args, **kwargs):
-                return {"id": "dummy", "success": False}
-        notification_service = DummyNotificationService() as ns
+        from ..services.seller_notification_service import notification_service as ns
         notification_service = ns
+        logger.info("✅ Notification service imported via relative path")
     except ImportError:
-        # Last resort - import with full path
-        import sys
-        import os
-        # Add services directory to path
-        services_path = os.path.join(os.path.dirname(__file__), '..', 'services')
-        if services_path not in sys.path:
-            sys.path.insert(0, services_path)
         try:
+            # Last resort - import with full path
+            services_path = os.path.join(os.path.dirname(__file__), '..', 'services')
+            if services_path not in sys.path:
+                sys.path.insert(0, services_path)
             from seller_notification_service import notification_service as ns
             notification_service = ns
+            logger.info("✅ Notification service imported via sys.path manipulation")
         except ImportError:
             # If all imports fail, create a dummy service
-            logger.warning("Could not import notification_service, using dummy implementation")
+            logger.warning("⚠️ Could not import notification_service, using dummy implementation")
             class DummyNotificationService:
                 async def create_notification(self, *args, **kwargs):
                     return {"id": "dummy", "success": False}
+                
+                async def mark_as_read(self, notification_id, user_id):
+                    return True
+                
+                async def get_unread_count(self, user_id):
+                    return 0
             
             notification_service = DummyNotificationService()
-
-logger = logging.getLogger(__name__)
+            logger.info("✅ Dummy notification service created")
 
 def register_notification_socket_handlers():
     """Registrar handlers de Socket.IO para notificaciones"""

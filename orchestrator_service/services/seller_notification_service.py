@@ -18,15 +18,6 @@ try:
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    # Setup logger first
-import logging
-logger = logging.getLogger(__name__)
-
-try:
-    import redis.asyncio as redis
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
     logger.warning("Redis not available, using in-memory fallback")
 
 from sqlalchemy import text

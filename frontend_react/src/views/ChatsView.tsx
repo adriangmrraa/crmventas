@@ -3,11 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MessageCircle, Send, Calendar, User, Activity,
   Pause, Play, AlertCircle, Clock, ChevronLeft,
-  Search, XCircle, Bell, Volume2, VolumeX
+  Search, XCircle, Bell, Volume2, VolumeX,
+  UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw
 } from 'lucide-react';
 import api, { BACKEND_URL } from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
+import SellerBadge from '../components/SellerBadge';
+import SellerSelector from '../components/SellerSelector';
+import AssignmentHistory from '../components/AssignmentHistory';
 
 // ============================================
 // INTERFACES
@@ -52,6 +57,8 @@ interface LeadContext {
     phone_number?: string;
     status?: string;
     email?: string;
+    assigned_seller_id?: string;
+    assignment_history?: any[];
   } | null;
   upcoming_event: {
     id: string;
@@ -67,6 +74,18 @@ interface LeadContext {
     status?: string;
   } | null;
   is_guest: boolean;
+}
+
+interface SellerAssignment {
+  assigned_seller_id?: string;
+  assigned_at?: string;
+  assigned_by?: string;
+  assignment_source?: string;
+  seller_first_name?: string;
+  seller_last_name?: string;
+  seller_role?: string;
+  assigned_by_first_name?: string;
+  assigned_by_last_name?: string;
 }
 
 interface Toast {
@@ -97,6 +116,12 @@ export default function ChatsView() {
   const [messageOffset, setMessageOffset] = useState(0);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  
+  // Seller assignment states
+  const [sellerAssignment, setSellerAssignment] = useState<SellerAssignment | null>(null);
+  const [showSellerSelector, setShowSellerSelector] = useState(false);
+  const [assigningSeller, setAssigningSeller] = useState(false);
+  const { user } = useAuth();
 
   // Estados de UI
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -132,6 +157,40 @@ export default function ChatsView() {
       ));
 
       // Resaltar el chat en la lista
+
+    // Evento: Asignación de vendedor actualizada
+    socketRef.current.on('SELLER_ASSIGNMENT_UPDATED', (data: { 
+      phone_number: string; 
+      seller_id: string; 
+      seller_name: string;
+      seller_role: string;
+      assigned_by: string;
+      source: string;
+      tenant_id?: number 
+    }) => {
+      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+      
+      // Si es la conversación actual, actualizar la asignación
+      if (selectedSession?.phone_number === data.phone_number) {
+        setSellerAssignment({
+          assigned_seller_id: data.seller_id,
+          seller_first_name: data.seller_name.split(' ')[0],
+          seller_last_name: data.seller_name.split(' ').slice(1).join(' '),
+          seller_role: data.seller_role,
+          assigned_by: data.assigned_by,
+          assignment_source: data.source,
+          assigned_at: new Date().toISOString()
+        });
+      }
+      
+      // Mostrar notificación
+      showToast({
+        id: Date.now().toString(),
+        type: 'info',
+        title: 'Asignación actualizada',
+        message: `${data.phone_number} asignado a ${data.seller_name}`
+      });
+    });
       setHighlightedSession(data.phone_number);
       setTimeout(() => setHighlightedSession(null), 5000);
 
@@ -305,14 +364,122 @@ export default function ChatsView() {
       fetchMessages(selectedSession.phone_number, selectedSession.tenant_id);
       fetchLeadContext(selectedSession.phone_number, selectedSession.tenant_id);
       markAsRead(selectedSession.phone_number, selectedSession.tenant_id);
+      // Cargar asignación de vendedor
+      loadSellerAssignment(selectedSession.phone_number);
     } else {
       setLeadContext(null);
+      setSellerAssignment(null);
     }
   }, [selectedSession]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // ============================================
+  // FUNCIONES DE DATOS - ASIGNACIÓN DE VENDEDORES
+  // ============================================
+
+  /** Carga la asignación de vendedor para una conversación */
+  const loadSellerAssignment = async (phone: string) => {
+    if (!selectedTenantId) return;
+    
+    try {
+      const response = await api.get(`/admin/core/sellers/conversations/${phone}/assignment`);
+      
+      if (response.data.success && response.data.assignment) {
+        setSellerAssignment(response.data.assignment);
+      } else {
+        setSellerAssignment(null);
+      }
+    } catch (err: any) {
+      console.error('Error loading seller assignment:', err);
+      setSellerAssignment(null);
+    }
+  };
+
+  /** Asigna un vendedor a la conversación actual */
+  const handleAssignSeller = async (sellerId: string, sellerName: string) => {
+    if (!selectedSession || !selectedTenantId || !user?.id) return;
+    
+    try {
+      setAssigningSeller(true);
+      
+      const response = await api.post('/admin/core/sellers/conversations/assign', {
+        phone: selectedSession.phone_number,
+        seller_id: sellerId,
+        source: 'manual'
+      });
+      
+      if (response.data.success) {
+        // Actualizar la asignación localmente
+        await loadSellerAssignment(selectedSession.phone_number);
+        
+        // Actualizar lead context si existe
+        if (leadContext?.lead) {
+          const updatedLead = { ...leadContext.lead, assigned_seller_id: sellerId };
+          setLeadContext({ ...leadContext, lead: updatedLead });
+        }
+        
+        // Cerrar el selector
+        setShowSellerSelector(false);
+        
+        // Mostrar notificación
+        showToast({
+          id: Date.now().toString(),
+          type: 'success',
+          title: 'Asignación exitosa',
+          message: `Conversación asignada a: ${sellerName}`
+        });
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (err: any) {
+      console.error('Error assigning seller:', err);
+      showToast({
+        id: Date.now().toString(),
+        type: 'error',
+        title: 'Error de asignación',
+        message: err.response?.data?.detail || err.message
+      });
+    } finally {
+      setAssigningSeller(false);
+    }
+  };
+
+  /** Asignación automática */
+  const handleAutoAssign = async () => {
+    if (!selectedSession || !selectedTenantId) return;
+    
+    try {
+      setAssigningSeller(true);
+      
+      const response = await api.post(`/admin/core/sellers/conversations/${selectedSession.phone_number}/auto-assign`);
+      
+      if (response.data.success) {
+        await loadSellerAssignment(selectedSession.phone_number);
+        
+        showToast({
+          id: Date.now().toString(),
+          type: 'success',
+          title: 'Asignación automática',
+          message: 'Conversación asignada automáticamente'
+        });
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (err: any) {
+      console.error('Error auto assigning:', err);
+      showToast({
+        id: Date.now().toString(),
+        type: 'error',
+        title: 'Error de asignación',
+        message: err.response?.data?.detail || err.message
+      });
+    } finally {
+      setAssigningSeller(false);
+    }
+  };
 
   // ============================================
   // FUNCIONES DE DATOS
@@ -716,12 +883,70 @@ export default function ChatsView() {
                     {(selectedSession.patient_name || selectedSession.phone_number).charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => window.innerWidth < 1280 && setShowMobileContext(!showMobileContext)}>
-                    <h3 className="font-bold text-gray-900 truncate leading-tight">
-                      {selectedSession.patient_name || t('chats.no_name')}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900 truncate leading-tight">
+                        {selectedSession.patient_name || t('chats.no_name')}
+                      </h3>
+                      {/* Seller Badge */}
+                      {sellerAssignment && (
+                        <SellerBadge
+                          sellerId={sellerAssignment.assigned_seller_id}
+                          sellerName={sellerAssignment.seller_first_name ? 
+                            `${sellerAssignment.seller_first_name} ${sellerAssignment.seller_last_name}` : undefined}
+                          sellerRole={sellerAssignment.seller_role}
+                          assignedAt={sellerAssignment.assigned_at}
+                          source={sellerAssignment.assignment_source}
+                          size="sm"
+                          showLabel={true}
+                          onClick={() => setShowSellerSelector(true)}
+                        />
+                      )}
+                      {!sellerAssignment?.assigned_seller_id && (
+                        <div 
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200 text-xs cursor-pointer hover:bg-gray-200"
+                          onClick={() => setShowSellerSelector(true)}
+                        >
+                          <Bot size={12} />
+                          <span>AGENTE IA</span>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 truncate">{selectedSession.phone_number}</p>
                   </div>
                 </div>
+
+                {/* Header Actions - Seller Assignment */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {/* Assign Seller Button */}
+                  <button
+                    onClick={() => setShowSellerSelector(!showSellerSelector)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-sm
+                      ${sellerAssignment?.assigned_seller_id
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                    title={sellerAssignment?.assigned_seller_id ? "Reasignar vendedor" : "Asignar vendedor"}
+                  >
+                    {sellerAssignment?.assigned_seller_id ? (
+                      <><User size={14} /> <span className="hidden sm:inline">Reasignar</span></>
+                    ) : (
+                      <><UserPlus size={14} /> <span className="hidden sm:inline">Asignar</span></>
+                    )}
+                  </button>
+
+                  {/* Auto Assign Button */}
+                  <button
+                    onClick={handleAutoAssign}
+                    disabled={assigningSeller}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 transition-all shadow-sm disabled:opacity-50"
+                    title="Asignación automática"
+                  >
+                    {assigningSeller ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <><span>🤖</span> <span className="hidden sm:inline">Auto</span></>
+                    )}
+                  </button>
 
                 {/* Header Actions */}
                 <div className="flex items-center gap-1 sm:gap-2">
@@ -993,6 +1218,18 @@ export default function ChatsView() {
                         <p className="text-sm text-gray-500 italic">{t('chats.no_clinical_history')}</p>
                       </div>
                     )}
+
+                    {/* Assignment History */}
+                    {selectedSession && (
+                      <div className="p-3">
+                        <AssignmentHistory
+                          phone={selectedSession.phone_number}
+                          leadId={leadContext?.lead?.id}
+                          maxItems={3}
+                          showTitle={true}
+                        />
+                      </div>
+                    )}
                   </>
                 );
               })()}
@@ -1004,6 +1241,27 @@ export default function ChatsView() {
           <MessageCircle size={64} className="opacity-20" />
           <p className="text-lg font-medium text-gray-400">{t('chats.select_conversation')}</p>
           <p className="text-sm text-gray-400">{t('chats.to_start_chatting')}</p>
+        </div>
+      )}
+
+      {/* ======================================== */}
+      {/* Seller Selector Modal */}
+      {/* ======================================== */}
+      {showSellerSelector && selectedSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="relative max-w-md w-full">
+            <SellerSelector
+              phone={selectedSession.phone_number}
+              currentSellerId={sellerAssignment?.assigned_seller_id}
+              currentSellerName={sellerAssignment?.seller_first_name ? 
+                `${sellerAssignment.seller_first_name} ${sellerAssignment.seller_last_name}` : undefined}
+              currentSellerRole={sellerAssignment?.seller_role}
+              onSellerSelected={handleAssignSeller}
+              onCancel={() => setShowSellerSelector(false)}
+              showAssignToMe={true}
+              showAutoAssign={true}
+            />
+          </div>
         </div>
       )}
 

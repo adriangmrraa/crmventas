@@ -6,10 +6,11 @@ import LoginView from './views/LoginView';
 import LandingView from './views/LandingView';
 import UserApprovalView from './views/UserApprovalView';
 import ProfileView from './views/ProfileView';
-import ClinicsView from './views/ClinicsView';
+import CompaniesView from './views/CompaniesView';
 import ConfigView from './views/ConfigView';
 import LeadsView from './modules/crm_sales/views/LeadsView';
 import LeadDetailView from './modules/crm_sales/views/LeadDetailView';
+import MetaLeadsView from './views/MetaLeadsView';
 import SellersView from './modules/crm_sales/views/SellersView';
 import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
@@ -22,6 +23,7 @@ import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import PrivacyTermsView from './views/PrivacyTermsView';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -29,7 +31,8 @@ function App() {
     <Router>
       <AuthProvider>
         <LanguageProvider>
-          <Routes>
+          <SocketProvider>
+            <Routes>
             <Route path="/login" element={<LoginView />} />
             <Route path="/demo" element={<LandingView />} />
             <Route path="/legal" element={<PrivacyTermsView />} />
@@ -50,9 +53,9 @@ function App() {
                         <UserApprovalView />
                       </ProtectedRoute>
                     } />
-                    <Route path="sedes" element={
+                    <Route path="empresas" element={
                       <ProtectedRoute allowedRoles={['ceo']}>
-                        <ClinicsView />
+                        <CompaniesView />
                       </ProtectedRoute>
                     } />
                     <Route path="configuracion" element={
@@ -63,6 +66,11 @@ function App() {
                     <Route path="crm/agenda" element={<CrmAgendaView />} />
                     <Route path="crm/leads" element={<LeadsView />} />
                     <Route path="crm/leads/:id" element={<LeadDetailView />} />
+                    <Route path="crm/meta-leads" element={
+                      <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer', 'secretary']}>
+                        <MetaLeadsView />
+                      </ProtectedRoute>
+                    } />
                     <Route path="crm/clientes" element={<ClientsView />} />
                     <Route path="crm/clientes/:id" element={<ClientDetailView />} />
                     <Route path="crm/prospeccion" element={
@@ -93,8 +101,9 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
-        </LanguageProvider>
-      </AuthProvider>
+        </SocketProvider>
+      </LanguageProvider>
+    </AuthProvider>
     </Router>
   );
 }

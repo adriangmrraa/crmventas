@@ -28,6 +28,7 @@ from admin_routes import router as admin_router
 from auth_routes import router as auth_router
 import modules.crm_sales.tools_provider  # Import to register CRM Sales tools (single-niche: CRM only)
 from core.socket_manager import sio
+from core.socket_notifications import register_notification_socket_handlers
 from core.context import current_customer_phone, current_patient_id, current_tenant_id
 from core.tools import tool_registry
 from core.niche_manager import NicheManager
@@ -81,6 +82,38 @@ sio_app = socketio.ASGIApp(sio, app)
 # --- ROUTERS ---
 app.include_router(auth_router)
 app.include_router(admin_router)
+
+# Seller Assignment Routes
+try:
+    from routes.seller_routes import router as seller_router
+    app.include_router(seller_router, tags=["Seller Management"])
+    logger.info("✅ Seller Management API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Seller Management routes: {e}", exc_info=True)
+
+# Notification Routes
+try:
+    from routes.notification_routes import router as notification_router
+    app.include_router(notification_router, tags=["Notifications"])
+    logger.info("✅ Notification API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Notification routes: {e}", exc_info=True)
+
+# Scheduled Tasks Routes
+try:
+    from routes.scheduled_tasks_routes import router as scheduled_tasks_router
+    app.include_router(scheduled_tasks_router, tags=["Scheduled Tasks"])
+    logger.info("✅ Scheduled Tasks API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Scheduled Tasks routes: {e}", exc_info=True)
+
+# Health Check Routes
+try:
+    from routes.health_routes import router as health_router
+    app.include_router(health_router, tags=["Health"])
+    logger.info("✅ Health Check API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Health Check routes: {e}", exc_info=True)
 
 # Single-niche: CRM Sales only (no sales)
 SUPPORTED_NICHES = ["crm_sales"]
@@ -289,9 +322,67 @@ async def chat_inbound(
 async def startup_event():
     await db.connect()
     logger.info("🚀 Nexus Orchestrator v7.6 Started")
+    
+    # Initialize notification socket handlers
+    try:
+        from core.socket_notifications import register_notification_socket_handlers
+        register_notification_socket_handlers()
+        logger.info("✅ Notification socket handlers registered")
+    except Exception as e:
+        logger.error(f"❌ Error registering notification socket handlers: {e}")
+    
+    # Start scheduled tasks if enabled
+    try:
+        from services.scheduled_tasks import scheduled_tasks_service
+        
+        # Check if scheduled tasks should be enabled
+        enable_tasks = os.getenv("ENABLE_SCHEDULED_TASKS", "true").lower() == "true"
+        
+        if enable_tasks:
+            # Configurar intervalos personalizados si están definidos
+            notification_interval = int(os.getenv("NOTIFICATION_CHECK_INTERVAL_MINUTES", "5"))
+            metrics_interval = int(os.getenv("METRICS_REFRESH_INTERVAL_MINUTES", "15"))
+            cleanup_interval = int(os.getenv("CLEANUP_INTERVAL_HOURS", "1"))
+            
+            logger.info(f"📅 Scheduled tasks configuration:")
+            logger.info(f"   • Notification checks: every {notification_interval} minutes")
+            logger.info(f"   • Metrics refresh: every {metrics_interval} minutes")
+            logger.info(f"   • Data cleanup: every {cleanup_interval} hours")
+            
+            # Iniciar tareas
+            scheduled_tasks_service.start_all_tasks()
+            
+            # Verificar que se iniciaron correctamente
+            task_status = scheduled_tasks_service.get_task_status()
+            if task_status.get("scheduler_running", False):
+                logger.info(f"✅ Scheduled tasks started ({task_status.get('total_tasks', 0)} tasks)")
+                
+                # Log de tareas programadas
+                for task in task_status.get("tasks", []):
+                    logger.info(f"   • {task.get('name')}: {task.get('trigger')}")
+            else:
+                logger.warning("⚠️  Scheduler started but not running")
+        else:
+            logger.info("⚠️  Scheduled tasks disabled by environment variable (ENABLE_SCHEDULED_TASKS=false)")
+            
+    except ImportError as e:
+        logger.error(f"❌ Could not import scheduled tasks service: {e}")
+        logger.info("💡 Install apscheduler: pip install apscheduler")
+    except Exception as e:
+        logger.error(f"❌ Error starting scheduled tasks: {e}")
+        import traceback
+        traceback.print_exc()
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    # Stop scheduled tasks
+    try:
+        from services.scheduled_tasks import scheduled_tasks_service
+        scheduled_tasks_service.stop_all_tasks()
+        logger.info("✅ Scheduled tasks stopped")
+    except Exception as e:
+        logger.error(f"❌ Error stopping scheduled tasks: {e}")
+    
     await db.disconnect()
     await engine.dispose()
 

@@ -1242,7 +1242,6 @@ export default function ChatsView() {
           <p className="text-lg font-medium text-gray-400">{t('chats.select_conversation')}</p>
           <p className="text-sm text-gray-400">{t('chats.to_start_chatting')}</p>
         </div>
-      )}
 
       {/* ======================================== */}
       {/* Seller Selector Modal */}

@@ -716,7 +716,7 @@ export default function ChatsView() {
   // ============================================
 
   return (
-    <div className="flex h-screen bg-medical-50 overflow-hidden font-sans">
+    <div className="flex h-full min-h-0 bg-medical-50 overflow-hidden font-sans">
       {/* Selector de Vendedor Modal */}
       {showSellerSelector && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">

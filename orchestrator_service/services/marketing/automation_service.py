@@ -24,6 +24,8 @@ class AutomationService:
     def __init__(self):
         self.is_running = False
         self._task = None
+        # Circuit Breaker: {tenant_id: {"failures": 0, "suspended_until": datetime}}
+        self.tenant_status = {}
 
     async def start(self):
         if self.is_running:
@@ -65,6 +67,13 @@ class AutomationService:
 
     async def process_tenant_triggers(self, tenant: Dict[str, Any]):
         tenant_id = tenant['id']
+        
+        # Check Circuit Breaker
+        status = self.tenant_status.get(tenant_id, {"failures": 0, "suspended_until": None})
+        if status["suspended_until"] and datetime.now(timezone.utc) < status["suspended_until"]:
+            logger.warning(f"⚠️ Tenant {tenant_id} suspendido hasta {status['suspended_until']}. Saltando ciclo.")
+            return
+
         tz_name = tenant.get('timezone') or 'America/Argentina/Buenos_Aires'
         try:
             tz = ZoneInfo(tz_name)
@@ -220,6 +229,8 @@ class AutomationService:
                 tenant_id=tenant_id
             )
             
+            # Reset Circuit Breaker on success
+            self.tenant_status[tenant_id] = {"failures": 0, "suspended_until": None}
             return True
 
         except Exception as e:
@@ -229,6 +240,15 @@ class AutomationService:
                 INSERT INTO automation_logs (tenant_id, patient_id, trigger_type, target_id, status, error_details)
                 VALUES ($1, $2, $3, $4, 'failed', $5)
             """, tenant_id, patient_id, trigger_type, target_id, str(e))
+            
+            # Update Circuit Breaker on failure
+            status = self.tenant_status.get(tenant_id, {"failures": 0, "suspended_until": None})
+            status["failures"] += 1
+            if status["failures"] >= 5:
+                status["suspended_until"] = datetime.now(timezone.utc) + timedelta(hours=1)
+                logger.error(f"🛑 Tenant {tenant_id} ha alcanzado 5 fallos. Suspendiendo por 1 hora.")
+            self.tenant_status[tenant_id] = status
+            
             return False
             
     @staticmethod

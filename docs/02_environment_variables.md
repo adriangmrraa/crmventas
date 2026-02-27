@@ -61,7 +61,7 @@ Este proyecto se configura completamente mediante variables de entorno. En despl
 | `METRICS_PORT` | Puerto para métricas Prometheus | `9090` | ❌ |
 
 ## 3. WhatsApp Service (8002)
-
+  
 ### 3.1 YCloud Integration
 
 | Variable | Descripción | Ejemplo | Requerida |

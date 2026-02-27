@@ -142,6 +142,27 @@ CREATE TABLE IF NOT EXISTS professionals (
 CREATE INDEX IF NOT EXISTS idx_professionals_tenant ON professionals(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_professionals_user_id ON professionals(user_id);
 
+CREATE TABLE IF NOT EXISTS sellers (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(255),
+    phone_number VARCHAR(50),
+    
+    is_active BOOLEAN DEFAULT FALSE,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sellers_tenant ON sellers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sellers_user_id ON sellers(user_id);
+
 -- ==================== CLIENTS & LEADS (CRM CORE) ====================
 
 -- Table for Leads (Consolidated Marketing Inbound)

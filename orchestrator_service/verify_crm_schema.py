@@ -10,7 +10,7 @@ async def verify_schema():
     engine = create_async_engine(POSTGRES_DSN)
     async with engine.connect() as conn:
         print("Checking tables...")
-        tables = ["leads", "whatsapp_connections", "templates", "campaigns"]
+        tables = ["leads", "whatsapp_connections", "templates", "campaigns", "sellers"]
         for table in tables:
             result = await conn.execute(text(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table}')"))
             exists = result.scalar()

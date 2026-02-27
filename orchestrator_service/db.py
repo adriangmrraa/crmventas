@@ -440,6 +440,30 @@ class Database:
             EXCEPTION WHEN others THEN 
                 RAISE NOTICE 'Parche 11: Error en sistema de asignación de vendedores: %', SQLERRM;
             END $$;
+            """,
+            # Parche 12: Asegurar tabla 'sellers' y columna 'phone_number' (Nexus CRM)
+            """
+            DO $$ BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sellers') THEN
+                    CREATE TABLE sellers (
+                        id SERIAL PRIMARY KEY,
+                        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        first_name VARCHAR(100),
+                        last_name VARCHAR(100),
+                        email VARCHAR(255),
+                        phone_number VARCHAR(50),
+                        is_active BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW(),
+                        UNIQUE(user_id)
+                    );
+                END IF;
+                -- Asegurar columna phone_number si la tabla existía pero era antigua
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sellers' AND column_name='phone_number') THEN
+                    ALTER TABLE sellers ADD COLUMN phone_number VARCHAR(50);
+                END IF;
+            END $$;
             """
         ]
 

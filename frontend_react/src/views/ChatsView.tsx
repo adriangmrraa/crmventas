@@ -116,7 +116,7 @@ export default function ChatsView() {
   const [messageOffset, setMessageOffset] = useState(0);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  
+
   // Seller assignment states
   const [sellerAssignment, setSellerAssignment] = useState<SellerAssignment | null>(null);
   const [showSellerSelector, setShowSellerSelector] = useState(false);
@@ -158,39 +158,39 @@ export default function ChatsView() {
 
       // Resaltar el chat en la lista
 
-    // Evento: Asignación de vendedor actualizada
-    socketRef.current.on('SELLER_ASSIGNMENT_UPDATED', (data: { 
-      phone_number: string; 
-      seller_id: string; 
-      seller_name: string;
-      seller_role: string;
-      assigned_by: string;
-      source: string;
-      tenant_id?: number 
-    }) => {
-      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
-      
-      // Si es la conversación actual, actualizar la asignación
-      if (selectedSession?.phone_number === data.phone_number) {
-        setSellerAssignment({
-          assigned_seller_id: data.seller_id,
-          seller_first_name: data.seller_name.split(' ')[0],
-          seller_last_name: data.seller_name.split(' ').slice(1).join(' '),
-          seller_role: data.seller_role,
-          assigned_by: data.assigned_by,
-          assignment_source: data.source,
-          assigned_at: new Date().toISOString()
+      // Evento: Asignación de vendedor actualizada
+      socketRef.current.on('SELLER_ASSIGNMENT_UPDATED', (data: {
+        phone_number: string;
+        seller_id: string;
+        seller_name: string;
+        seller_role: string;
+        assigned_by: string;
+        source: string;
+        tenant_id?: number
+      }) => {
+        if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+
+        // Si es la conversación actual, actualizar la asignación
+        if (selectedSession?.phone_number === data.phone_number) {
+          setSellerAssignment({
+            assigned_seller_id: data.seller_id,
+            seller_first_name: data.seller_name.split(' ')[0],
+            seller_last_name: data.seller_name.split(' ').slice(1).join(' '),
+            seller_role: data.seller_role,
+            assigned_by: data.assigned_by,
+            assignment_source: data.source,
+            assigned_at: new Date().toISOString()
+          });
+        }
+
+        // Mostrar notificación
+        setShowToast({
+          id: Date.now().toString(),
+          type: 'info',
+          title: 'Asignación actualizada',
+          message: `${data.phone_number} asignado a ${data.seller_name}`
         });
-      }
-      
-      // Mostrar notificación
-      showToast({
-        id: Date.now().toString(),
-        type: 'info',
-        title: 'Asignación actualizada',
-        message: `${data.phone_number} asignado a ${data.seller_name}`
       });
-    });
       setHighlightedSession(data.phone_number);
       setTimeout(() => setHighlightedSession(null), 5000);
 
@@ -383,10 +383,10 @@ export default function ChatsView() {
   /** Carga la asignación de vendedor para una conversación */
   const loadSellerAssignment = async (phone: string) => {
     if (!selectedTenantId) return;
-    
+
     try {
       const response = await api.get(`/admin/core/sellers/conversations/${phone}/assignment`);
-      
+
       if (response.data.success && response.data.assignment) {
         setSellerAssignment(response.data.assignment);
       } else {
@@ -401,31 +401,31 @@ export default function ChatsView() {
   /** Asigna un vendedor a la conversación actual */
   const handleAssignSeller = async (sellerId: string, sellerName: string) => {
     if (!selectedSession || !selectedTenantId || !user?.id) return;
-    
+
     try {
       setAssigningSeller(true);
-      
+
       const response = await api.post('/admin/core/sellers/conversations/assign', {
         phone: selectedSession.phone_number,
         seller_id: sellerId,
         source: 'manual'
       });
-      
+
       if (response.data.success) {
         // Actualizar la asignación localmente
         await loadSellerAssignment(selectedSession.phone_number);
-        
+
         // Actualizar lead context si existe
         if (leadContext?.lead) {
           const updatedLead = { ...leadContext.lead, assigned_seller_id: sellerId };
           setLeadContext({ ...leadContext, lead: updatedLead });
         }
-        
+
         // Cerrar el selector
         setShowSellerSelector(false);
-        
+
         // Mostrar notificación
-        showToast({
+        setShowToast({
           id: Date.now().toString(),
           type: 'success',
           title: 'Asignación exitosa',
@@ -436,7 +436,7 @@ export default function ChatsView() {
       }
     } catch (err: any) {
       console.error('Error assigning seller:', err);
-      showToast({
+      setShowToast({
         id: Date.now().toString(),
         type: 'error',
         title: 'Error de asignación',
@@ -450,16 +450,16 @@ export default function ChatsView() {
   /** Asignación automática */
   const handleAutoAssign = async () => {
     if (!selectedSession || !selectedTenantId) return;
-    
+
     try {
       setAssigningSeller(true);
-      
+
       const response = await api.post(`/admin/core/sellers/conversations/${selectedSession.phone_number}/auto-assign`);
-      
+
       if (response.data.success) {
         await loadSellerAssignment(selectedSession.phone_number);
-        
-        showToast({
+
+        setShowToast({
           id: Date.now().toString(),
           type: 'success',
           title: 'Asignación automática',
@@ -470,7 +470,7 @@ export default function ChatsView() {
       }
     } catch (err: any) {
       console.error('Error auto assigning:', err);
-      showToast({
+      setShowToast({
         id: Date.now().toString(),
         type: 'error',
         title: 'Error de asignación',
@@ -891,7 +891,7 @@ export default function ChatsView() {
                       {sellerAssignment && (
                         <SellerBadge
                           sellerId={sellerAssignment.assigned_seller_id}
-                          sellerName={sellerAssignment.seller_first_name ? 
+                          sellerName={sellerAssignment.seller_first_name ?
                             `${sellerAssignment.seller_first_name} ${sellerAssignment.seller_last_name}` : undefined}
                           sellerRole={sellerAssignment.seller_role}
                           assignedAt={sellerAssignment.assigned_at}
@@ -902,7 +902,7 @@ export default function ChatsView() {
                         />
                       )}
                       {!sellerAssignment?.assigned_seller_id && (
-                        <div 
+                        <div
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200 text-xs cursor-pointer hover:bg-gray-200"
                           onClick={() => setShowSellerSelector(true)}
                         >
@@ -947,6 +947,7 @@ export default function ChatsView() {
                       <><span>🤖</span> <span className="hidden sm:inline">Auto</span></>
                     )}
                   </button>
+                </div>
 
                 {/* Header Actions */}
                 <div className="flex items-center gap-1 sm:gap-2">
@@ -1242,8 +1243,9 @@ export default function ChatsView() {
           <p className="text-lg font-medium text-gray-400">{t('chats.select_conversation')}</p>
           <p className="text-sm text-gray-400">{t('chats.to_start_chatting')}</p>
         </div>
+      )}
 
-      {/* ======================================== */}
+          {/* ======================================== */}
       {/* Seller Selector Modal */}
       {/* ======================================== */}
       {showSellerSelector && selectedSession && (
@@ -1252,7 +1254,7 @@ export default function ChatsView() {
             <SellerSelector
               phone={selectedSession.phone_number}
               currentSellerId={sellerAssignment?.assigned_seller_id}
-              currentSellerName={sellerAssignment?.seller_first_name ? 
+              currentSellerName={sellerAssignment?.seller_first_name ?
                 `${sellerAssignment.seller_first_name} ${sellerAssignment.seller_last_name}` : undefined}
               currentSellerRole={sellerAssignment?.seller_role}
               onSellerSelected={handleAssignSeller}
@@ -1267,10 +1269,6 @@ export default function ChatsView() {
       {/* ======================================== */}
       {/* CSS for animations - Removed to fix build error */}
       {/* ======================================== */}
-    </div>
-    </div>
-    </div>
-    </div>
     </div>
   );
 }

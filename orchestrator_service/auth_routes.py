@@ -54,10 +54,10 @@ def _default_working_hours():
     return wh
 
 
-@router.get("/clinics")
-async def list_clinics_public():
+@router.get("/companies")
+async def list_companies_public():
     """
-    Lista de sedes/entidades para el selector del formulario de registro.
+    Lista de empresas para el selector del formulario de registro.
     Público (sin autenticación). Solo id y nombre.
     """
     try:
@@ -66,7 +66,7 @@ async def list_clinics_public():
         )
         return [{"id": r["id"], "clinic_name": r["clinic_name"]} for r in rows]
     except Exception as e:
-        logger.warning(f"list_clinics_public failed: {e}")
+        logger.warning(f"list_companies_public failed: {e}")
         return []
 
 

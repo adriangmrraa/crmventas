@@ -391,4 +391,484 @@ class StatusConfigService:
     async def create_trigger(self, tenant_id: int, trigger_data: Dict) -> Dict:
         """Crea un nuevo trigger de automatización"""
     
-    async def
+    async def import_workflow_template(self, tenant_id: int, template_name: str) -> Dict:
+        """Importa un workflow predefinido"""
+```
+
+### **5. StatusValidationService:**
+```python
+class StatusValidationService:
+    """Servicio para validaciones complejas de estados"""
+    
+    async def validate_status_change(self, lead_id: UUID, new_status: str, 
+                                     user_id: UUID) -> ValidationResult:
+        """Valida todos los aspectos de un cambio de estado"""
+    
+    async def check_pre_conditions(self, lead_id: UUID, transition_data: Dict) -> bool:
+        """Verifica condiciones previas para una transición"""
+    
+    async def validate_bulk_operation(self, lead_ids: List[UUID], new_status: str) -> BulkValidationResult:
+        """Valida operación masiva de cambio de estado"""
+    
+    async def get_validation_rules(self, tenant_id: int, status_code: str) -> Dict:
+        """Obtiene reglas de validación para un estado"""
+```
+
+---
+
+## 🌐 **FRONTEND - ARQUITECTURA DE COMPONENTES**
+
+### **1. LeadStatusBadge Component:**
+```typescript
+interface LeadStatusBadgeProps {
+  statusCode: string;
+  statusName?: string;
+  color?: string;
+  icon?: string;
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
+  onClick?: () => void;
+}
+
+// Características:
+// - Badge coloreado con tooltip
+// - Icono dinámico basado en estado
+// - Tamaños responsivos
+// - Click para abrir selector
+```
+
+### **2. LeadStatusSelector Component:**
+```typescript
+interface LeadStatusSelectorProps {
+  leadId: string;
+  currentStatusCode: string;
+  onStatusChange: (newStatus: string, comment?: string) => Promise<void>;
+  showCommentField?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+// Características:
+// - Dropdown con transiciones disponibles
+// - Validación en tiempo real
+// - Campo de comentario opcional
+// - Loading states durante cambios
+// - Error handling con rollback visual
+```
+
+### **3. LeadStatusTimeline Component:**
+```typescript
+interface LeadStatusTimelineProps {
+  leadId: string;
+  limit?: number;
+  showDetails?: boolean;
+  onItemClick?: (historyItem: StatusHistory) => void;
+}
+
+// Características:
+// - Timeline visual de cambios
+// - Filtros por fecha/usuario
+// - Export a PDF/CSV
+// - Integración con sistema de auditoría
+```
+
+### **4. BulkStatusUpdate Component:**
+```typescript
+interface BulkStatusUpdateProps {
+  selectedLeadIds: string[];
+  onComplete: (results: BulkUpdateResult[]) => void;
+  onCancel: () => void;
+}
+
+// Características:
+// - Modal para operaciones masivas
+// - Progress bar durante procesamiento
+// - Resultados detallados (éxitos/fallos)
+// - Retry para operaciones fallidas
+```
+
+### **5. StatusConfigView Component:**
+```typescript
+interface StatusConfigViewProps {
+  tenantId: number;
+  onSave: (config: StatusConfig) => Promise<void>;
+  onTest: (config: StatusConfig) => Promise<void>;
+}
+
+// Características:
+// - Drag & drop para workflow builder
+// - Preview de estados y transiciones
+// - Testing de triggers
+// - Import/export de configuraciones
+```
+
+---
+
+## 🔗 **INTEGRACIONES Y DEPENDENCIAS**
+
+### **1. Con Sistema Existente:**
+- **Nexus Security v7.7.1** - Para audit logging y rate limiting
+- **Multi-tenant Architecture** - Aislamiento de datos por `tenant_id`
+- **Existing User System** - Para `changed_by_user_id` tracking
+- **Email/Notification System** - Para triggers de notificación
+
+### **2. Servicios Externos:**
+- **WhatsApp Service** - Para triggers de mensajes automáticos
+- **Email Service** - Para triggers de correos automáticos
+- **Task Management** - Para creación automática de tareas
+- **Webhook System** - Para integraciones con herramientas externas
+
+### **3. Infraestructura:**
+- **PostgreSQL 14+** - Para tablas relacionales
+- **Redis** - Para cache de estados frecuentes
+- **Message Queue** - Para procesamiento async de triggers
+- **Monitoring Stack** - Para métricas y alertas
+
+---
+
+## 📊 **CONSIDERACIONES DE PERFORMANCE**
+
+### **1. Estrategias de Caching:**
+```python
+# Cache de estados por tenant (TTL: 1 hora)
+STATUS_CACHE_KEY = f"lead_statuses:{tenant_id}"
+statuses = await cache.get(STATUS_CACHE_KEY)
+if not statuses:
+    statuses = await db.get_statuses(tenant_id)
+    await cache.set(STATUS_CACHE_KEY, statuses, ttl=3600)
+
+# Cache de transiciones por estado (TTL: 30 minutos)
+TRANSITIONS_CACHE_KEY = f"transitions:{tenant_id}:{current_status}"
+```
+
+### **2. Optimización de Consultas:**
+```sql
+-- Usar vistas materializadas para reports frecuentes
+CREATE MATERIALIZED VIEW mv_lead_status_daily AS
+SELECT 
+    tenant_id,
+    DATE(created_at) as date,
+    to_status_code,
+    COUNT(*) as change_count
+FROM lead_status_history
+GROUP BY tenant_id, DATE(created_at), to_status_code;
+
+-- Refresh cada hora
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_lead_status_daily;
+```
+
+### **3. Particionamiento de Datos:**
+```sql
+-- Particionar histórico por mes para grandes volúmenes
+CREATE TABLE lead_status_history PARTITION BY RANGE (created_at);
+
+CREATE TABLE lead_status_history_2026_02 
+PARTITION OF lead_status_history
+FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+```
+
+### **4. Índices Críticos:**
+```sql
+-- Para queries de dashboard
+CREATE INDEX idx_dashboard ON leads(tenant_id, status, created_at);
+
+-- Para búsquedas por usuario
+CREATE INDEX idx_user_changes ON lead_status_history(changed_by_user_id, created_at DESC);
+
+-- Para analytics
+CREATE INDEX idx_analytics ON lead_status_history(tenant_id, to_status_code, created_at);
+```
+
+---
+
+## 🛡️ **CONSIDERACIONES DE SEGURIDAD**
+
+### **1. Tenant Isolation:**
+```python
+# TODAS las queries deben incluir tenant_id
+async def get_lead_status(self, tenant_id: int, lead_id: UUID):
+    query = """
+        SELECT * FROM lead_status_history 
+        WHERE lead_id = $1 AND tenant_id = $2
+        ORDER BY created_at DESC
+    """
+    return await self.db.fetch(query, lead_id, tenant_id)
+```
+
+### **2. Role-Based Access Control:**
+```python
+# Definir permisos por rol
+STATUS_CHANGE_PERMISSIONS = {
+    'sales_rep': ['new', 'contacted', 'qualified'],
+    'sales_manager': ['new', 'contacted', 'qualified', 'proposal_sent', 'negotiation'],
+    'ceo': ALL_STATUSES,
+    'admin': ALL_STATUSES
+}
+```
+
+### **3. Rate Limiting:**
+```python
+# Limitar cambios masivos
+RATE_LIMITS = {
+    'status_change': {'limit': 100, 'period': 60},  # 100 cambios/minuto
+    'bulk_status_change': {'limit': 5, 'period': 300},  # 5 operaciones masivas/5min
+}
+```
+
+### **4. Audit Logging:**
+```python
+# Log detallado de todos los cambios
+audit_logger.log({
+    'event': 'lead_status_change',
+    'lead_id': str(lead_id),
+    'from_status': from_status,
+    'to_status': to_status,
+    'user_id': str(user_id),
+    'user_ip': request.client.host,
+    'user_agent': request.headers.get('user-agent'),
+    'timestamp': datetime.utcnow().isoformat(),
+    'metadata': metadata
+})
+```
+
+---
+
+## 🚀 **PLAN DE IMPLEMENTACIÓN TÉCNICO**
+
+### **Fase 1: Infraestructura (Días 1-3)**
+1. **Día 1:** Diseño DB + scripts migración
+2. **Día 2:** Implementación tablas + índices
+3. **Día 3:** Servicios core + validaciones básicas
+
+### **Fase 2: Compatibilidad (Días 4-6)**
+4. **Día 4:** Migración datos existentes
+5. **Día 5:** Testing compatibilidad completa
+6. **Día 6:** Endpoints API + integración existente
+
+### **Fase 3: Funcionalidad Nueva (Días 7-9)**
+7. **Día 7:** Componentes frontend básicos
+8. **Día 8:** Integración UI existente
+9. **Día 9:** Testing end-to-end
+
+### **Fase 4: Automatización (Días 10-11)**
+10. **Día 10:** Sistema triggers + queue
+11. **Día 11:** Configuración UI + testing
+
+### **Fase 5: Polish (Días 12-13)**
+12. **Día 12:** Performance optimizations
+13. **Día 13:** Monitoring + alerting + docs
+
+---
+
+## 🎯 **RECOMENDACIONES ARQUITECTÓNICAS PARA DEVS**
+
+### **🔧 **PATRONES ARQUITECTÓNICOS RECOMENDADOS:**
+
+#### **1. Event-Driven Architecture para Triggers:**
+```python
+# Emitir eventos en lugar de llamadas directas
+async def change_lead_status(lead_id, new_status, user_id):
+    # 1. Validar y ejecutar cambio
+    await validate_and_execute_change(lead_id, new_status, user_id)
+    
+    # 2. Emitir evento
+    await event_bus.publish('lead.status.changed', {
+        'lead_id': lead_id,
+        'from_status': old_status,
+        'to_status': new_status,
+        'user_id': user_id,
+        'timestamp': datetime.utcnow()
+    })
+    
+    # 3. Handlers escuchan evento y ejecutan triggers
+    #    → Email handler envía notificación
+    #    → WhatsApp handler envía mensaje
+    #    → Task handler crea tarea
+```
+
+#### **2. CQRS para Histórico y Analytics:**
+```python
+# Separar comandos (write) de queries (read)
+class LeadStatusCommandHandler:
+    async def handle_change_status(self, command: ChangeStatusCommand):
+        # Write side: validar + actualizar DB
+        # Emitir eventos de dominio
+
+class LeadStatusQueryHandler:
+    async def handle_get_status_history(self, query: GetStatusHistoryQuery):
+        # Read side: consultar vistas optimizadas
+        # Usar cache, vistas materializadas
+```
+
+#### **3. Circuit Breaker para Integraciones Externas:**
+```python
+# Proteger contra fallos de servicios externos
+class TriggerExecutor:
+    def __init__(self):
+        self.email_circuit = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=300
+        )
+        self.whatsapp_circuit = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=600
+        )
+    
+    async def execute_email_trigger(self, trigger, lead_data):
+        async with self.email_circuit:
+            return await email_service.send(trigger.template, lead_data)
+```
+
+### **💡 **DECISIONES ARQUITECTÓNICAS CRÍTICAS:**
+
+#### **1. Base de Datos: Normalización vs Performance**
+```sql
+-- ❌ SOBRE-NORMALIZACIÓN: Demasiadas joins para consultas frecuentes
+SELECT l.*, ls.name, ls.color, ls.icon
+FROM leads l
+JOIN lead_statuses ls ON l.tenant_id = ls.tenant_id AND l.status = ls.code
+JOIN lead_status_history lsh ON l.id = lsh.lead_id
+WHERE l.tenant_id = 1;
+
+-- ✅ BALANCEADO: Denormalización estratégica
+-- lead_status_history almacena nombres/colores en el momento del cambio
+-- leads tiene cache de status_changed_at, status_changed_by
+```
+
+#### **2. Cache Strategy: Invalidation Complex**
+```python
+# ❌ CACHE NAIVE: Invalidación manual propensa a errores
+cache.delete(f"lead:{lead_id}")
+
+# ✅ CACHE PATTERN: Tags-based invalidation
+cache.set(f"lead:{lead_id}", lead_data, tags=[f"tenant:{tenant_id}", "leads"])
+# Invalidar todo cache de tenant cuando cambia configuración
+cache.delete_by_tag(f"tenant:{tenant_id}")
+```
+
+#### **3. Async Processing: Queue vs Direct**
+```python
+# ❌ SYNCHRONOUS: Bloquea respuesta HTTP
+async def change_status(lead_id, new_status):
+    # Operación larga...
+    await send_email_notification()  # 2-5 segundos
+    await create_followup_task()     # 1-2 segundos
+    return response  # Usuario espera 3-7 segundos
+
+# ✅ ASYNC: Respuesta inmediata, procesamiento en background
+async def change_status(lead_id, new_status):
+    # Cambio inmediato
+    await db.execute(...)
+    
+    # Encolar tareas async
+    await queue.enqueue('send_status_change_email', lead_id, new_status)
+    await queue.enqueue('create_followup_task', lead_id, new_status)
+    
+    return response  # Usuario recibe respuesta en < 200ms
+```
+
+### **🔍 **CONSIDERACIONES DE ESCALABILIDAD:**
+
+#### **1. Particionamiento Horizontal:**
+```sql
+-- Plan para > 1 millón de leads por tenant
+-- 1. Particionar por tenant_id (sharding)
+-- 2. Particionar histórico por tiempo (monthly partitions)
+-- 3. Usar read replicas para queries de reporting
+```
+
+#### **2. Carga de Trabajo Separada:**
+```python
+# Separar servicios por tipo de carga
+class RealTimeStatusService:  # Low latency, high throughput
+    async def change_status(self, lead_id, new_status):
+        # Operaciones críticas de baja latencia
+        
+class BackgroundProcessingService:  # High latency, batch processing
+    async def process_bulk_updates(self, lead_ids, new_status):
+        # Operaciones masivas, puede tomar minutos
+        
+class AnalyticsService:  # Read-heavy, complex queries
+    async def generate_status_report(self, tenant_id, date_range):
+        # Consultas complejas, puede usar vistas materializadas
+```
+
+#### **3. Monitoring de Capacity Planning:**
+```yaml
+# Alertas de capacidad
+alerts:
+  - name: HighStatusHistoryGrowth
+    expr: rate(pg_table_size_bytes{table="lead_status_history"}[24h]) > 10GB
+    for: 1h
+    
+  - name: HighTriggerQueueBacklog
+    expr: redis_queue_length{queue="status_triggers"} > 10000
+    for: 30m
+    
+  - name: DatabaseConnectionPoolExhausted
+    expr: pg_connection_pool_used{pool="status_service"} > 0.9
+    for: 5m
+```
+
+### **🔧 **HERRAMIENTAS Y CONFIGURACIÓN RECOMENDADA:**
+
+#### **1. Database Configuration:**
+```sql
+-- PostgreSQL tuning para este workload
+ALTER DATABASE crmventas SET work_mem = '64MB';
+ALTER DATABASE crmventas SET maintenance_work_mem = '1GB';
+ALTER DATABASE crmventas SET effective_cache_size = '8GB';
+
+-- Extensions útiles
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+CREATE EXTENSION IF NOT EXISTS "pg_partman" FOR PARTITION MANAGEMENT;
+```
+
+#### **2. Application Configuration:**
+```yaml
+# config/status_service.yaml
+database:
+  pool_size: 20
+  max_overflow: 10
+  pool_recycle: 3600
+
+cache:
+  redis:
+    host: redis-cluster
+    ttl_default: 3600
+    ttl_statuses: 7200
+
+queue:
+  workers: 10
+  max_retries: 3
+  retry_delay: 60
+
+rate_limits:
+  status_changes_per_user_per_minute: 100
+  bulk_operations_per_user_per_hour: 10
+```
+
+#### **3. Deployment Configuration:**
+```dockerfile
+# Dockerfile para status service
+FROM python:3.11-slim
+
+# Instalar dependencias de performance
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar para low latency
+ENV PYTHONUNBUFFERED=1
+ENV UVICORN_WORKERS=4
+ENV UVICORN_TIMEOUT=30
+
+# Health checks específicos
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+```
+
+### **🎯 **CHECKLIST DE IMPLEMENTACIÓN ARQUITECTÓNICA:**
+
+#### **✅ PRE-IMPLEMENTACIÓN:**
+- [ ] **Capacity planning** basado

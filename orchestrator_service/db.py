@@ -315,6 +315,131 @@ class Database:
                     ALTER TABLE users ADD COLUMN tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE;
                 END IF;
             EXCEPTION WHEN others THEN NULL; END $$;
+            """,
+
+            # Parche 11: Sistema de Asignación de Vendedores (CEO Control)
+            """
+            DO $$ BEGIN 
+                -- 1. Add seller assignment columns to chat_messages
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='assigned_seller_id') THEN
+                    ALTER TABLE chat_messages 
+                    ADD COLUMN assigned_seller_id UUID REFERENCES users(id),
+                    ADD COLUMN assigned_at TIMESTAMPTZ,
+                    ADD COLUMN assigned_by UUID REFERENCES users(id),
+                    ADD COLUMN assignment_source TEXT DEFAULT 'manual';
+                END IF;
+                
+                -- 2. Create seller_metrics table for performance tracking
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'seller_metrics') THEN
+                    CREATE TABLE seller_metrics (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        seller_id UUID NOT NULL REFERENCES users(id),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+                        
+                        -- Conversaciones
+                        total_conversations INTEGER DEFAULT 0,
+                        active_conversations INTEGER DEFAULT 0,
+                        conversations_assigned_today INTEGER DEFAULT 0,
+                        
+                        -- Mensajes
+                        total_messages_sent INTEGER DEFAULT 0,
+                        total_messages_received INTEGER DEFAULT 0,
+                        avg_response_time_seconds INTEGER,
+                        
+                        -- Leads
+                        leads_assigned INTEGER DEFAULT 0,
+                        leads_converted INTEGER DEFAULT 0,
+                        conversion_rate DECIMAL(5,2),
+                        
+                        -- Prospección
+                        prospects_generated INTEGER DEFAULT 0,
+                        prospects_converted INTEGER DEFAULT 0,
+                        
+                        -- Tiempo
+                        total_chat_minutes INTEGER DEFAULT 0,
+                        avg_session_duration_minutes INTEGER,
+                        
+                        -- Metadata
+                        last_activity_at TIMESTAMPTZ,
+                        metrics_calculated_at TIMESTAMPTZ DEFAULT NOW(),
+                        metrics_period_start TIMESTAMPTZ,
+                        metrics_period_end TIMESTAMPTZ,
+                        
+                        -- Constraints
+                        UNIQUE(seller_id, tenant_id, metrics_period_start),
+                        CHECK (conversion_rate >= 0 AND conversion_rate <= 100)
+                    );
+                END IF;
+                
+                -- 3. Create assignment_rules table for auto-assignment configuration
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assignment_rules') THEN
+                    CREATE TABLE assignment_rules (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+                        
+                        -- Regla
+                        rule_name TEXT NOT NULL,
+                        rule_type TEXT NOT NULL CHECK (rule_type IN ('round_robin', 'performance', 'specialty', 'load_balance')),
+                        is_active BOOLEAN DEFAULT TRUE,
+                        priority INTEGER DEFAULT 0,
+                        
+                        -- Configuración
+                        config JSONB NOT NULL DEFAULT '{}',
+                        
+                        -- Filtros
+                        apply_to_lead_source TEXT[],
+                        apply_to_lead_status TEXT[],
+                        apply_to_seller_roles TEXT[],
+                        
+                        -- Límites
+                        max_conversations_per_seller INTEGER,
+                        min_response_time_seconds INTEGER,
+                        
+                        -- Metadata
+                        description TEXT,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW(),
+                        
+                        UNIQUE(tenant_id, rule_name)
+                    );
+                END IF;
+                
+                -- 4. Add assignment tracking to leads table
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='initial_assignment_source') THEN
+                    ALTER TABLE leads 
+                    ADD COLUMN initial_assignment_source TEXT,
+                    ADD COLUMN assignment_history JSONB DEFAULT '[]';
+                END IF;
+                
+                -- 5. Create indexes for performance
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_assigned_seller 
+                ON chat_messages(assigned_seller_id);
+                
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_assignment_source 
+                ON chat_messages(assignment_source);
+                
+                CREATE INDEX IF NOT EXISTS idx_seller_metrics_tenant 
+                ON seller_metrics(tenant_id);
+                
+                CREATE INDEX IF NOT EXISTS idx_seller_metrics_seller 
+                ON seller_metrics(seller_id);
+                
+                CREATE INDEX IF NOT EXISTS idx_seller_metrics_period 
+                ON seller_metrics(metrics_period_start DESC);
+                
+                -- 6. Insert default round-robin rule for each tenant
+                INSERT INTO assignment_rules 
+                (tenant_id, rule_name, rule_type, config, description, priority)
+                SELECT id, 'Round Robin Default', 'round_robin', 
+                       '{"enabled": true, "exclude_inactive": true}', 
+                       'Default round-robin assignment for new conversations',
+                       0
+                FROM tenants
+                ON CONFLICT (tenant_id, rule_name) DO NOTHING;
+                
+            EXCEPTION WHEN others THEN 
+                RAISE NOTICE 'Parche 11: Error en sistema de asignación de vendedores: %', SQLERRM;
+            END $$;
             """
         ]
 

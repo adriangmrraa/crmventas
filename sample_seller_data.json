@@ -1,0 +1,63 @@
+{
+  "sellers": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "first_name": "Juan",
+      "last_name": "P\u00e9rez",
+      "role": "setter",
+      "email": "juan@empresa.com",
+      "active_conversations": 12,
+      "conversion_rate": 25.5
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "first_name": "Mar\u00eda",
+      "last_name": "G\u00f3mez",
+      "role": "closer",
+      "email": "maria@empresa.com",
+      "active_conversations": 8,
+      "conversion_rate": 62.3
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "first_name": "Carlos",
+      "last_name": "Rodr\u00edguez",
+      "role": "ceo",
+      "email": "carlos@empresa.com",
+      "active_conversations": 3,
+      "conversion_rate": 45.0
+    }
+  ],
+  "assignment": {
+    "assigned_seller_id": "550e8400-e29b-41d4-a716-446655440000",
+    "assigned_at": "2026-02-27T03:59:40.432227",
+    "assigned_by": "550e8400-e29b-41d4-a716-446655440002",
+    "assignment_source": "manual",
+    "seller_first_name": "Juan",
+    "seller_last_name": "P\u00e9rez",
+    "seller_role": "setter",
+    "assigned_by_first_name": "Carlos",
+    "assigned_by_last_name": "Rodr\u00edguez"
+  },
+  "metrics": {
+    "seller_id": "550e8400-e29b-41d4-a716-446655440000",
+    "tenant_id": 1,
+    "total_conversations": 42,
+    "active_conversations": 12,
+    "conversations_assigned_today": 3,
+    "total_messages_sent": 156,
+    "total_messages_received": 189,
+    "avg_response_time_seconds": 127,
+    "leads_assigned": 24,
+    "leads_converted": 6,
+    "conversion_rate": 25.0,
+    "prospects_generated": 8,
+    "prospects_converted": 2,
+    "total_chat_minutes": 342,
+    "avg_conversation_duration_minutes": 28,
+    "last_activity_at": "2026-02-27T03:59:40.432641",
+    "metrics_calculated_at": "2026-02-27T03:59:40.432644",
+    "metrics_period_start": "2026-02-20T03:59:40.432652",
+    "metrics_period_end": "2026-02-27T03:59:40.432811"
+  }
+}

@@ -36,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   const menuItems = [
     { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary'] },
+    { id: 'meta_leads', labelKey: 'nav.meta_leads' as const, icon: <Megaphone size={20} />, path: '/crm/meta-leads', roles: ['ceo', 'setter', 'closer', 'secretary'] },
     { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={20} />, path: '/crm/prospeccion', roles: ['ceo'] },
@@ -45,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={20} />, path: '/crm/hsm', roles: ['ceo', 'admin'] },
     // Admin Items
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'] },
-    { id: 'tenants', labelKey: 'nav.entities' as const, icon: <ShieldCheck size={20} />, path: '/sedes', roles: ['ceo'] },
+    { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={20} />, path: '/empresas', roles: ['ceo'] },
     { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={20} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary'] },
     { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={20} />, path: '/configuracion', roles: ['ceo'] },
   ];

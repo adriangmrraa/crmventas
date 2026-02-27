@@ -448,4 +448,352 @@ DELETE /admin/core/crm/lead-triggers/{id}      # Eliminar trigger
 
 ## 🎯 **PRÓXIMOS PASOS (PLANIFICACIÓN)**
 
-### **Documentación Adicional a Cre
+### **Documentación Adicional a Crear:**
+1. **API Reference** - Endpoints nuevos con ejemplos
+2. **User Guide** - Cómo usar el sistema desde UI
+3. **Admin Guide** - Cómo configurar estados y workflows
+4. **Migration Guide** - Paso a paso para migración producción
+
+---
+
+## 🎯 **RECOMENDACIONES PARA DEVS (MEJORES PRÁCTICAS)**
+
+### **🔧 **ANTES DE COMENZAR:**
+
+#### **1. Setup de Desarrollo:**
+```bash
+# 1. Crear branch específico
+git checkout -b feature/lead-status-system
+
+# 2. Configurar entorno testing
+cp .env.example .env.test
+# Configurar DB testing separada
+
+# 3. Instalar herramientas diagnóstico
+npm install --save-dev @testing-library/react @testing-library/user-event
+pip install pytest-asyncio pytest-cov
+```
+
+#### **2. Code Review Checklist:**
+- [ ] **Foreign keys** correctamente definidas con `ON DELETE CASCADE`
+- [ ] **Índices** optimizados para consultas frecuentes
+- [ ] **Validaciones** tanto frontend como backend
+- [ ] **Error handling** granular con mensajes específicos
+- [ ] **Logging** estructurado para debugging
+- [ ] **i18n** completo para todos textos UI
+- [ ] **TypeScript** types estrictos sin `any`
+
+### **💡 **PITFALLS COMUNES A EVITAR:**
+
+#### **1. Deadlocks en Base de Datos:**
+```sql
+-- ❌ EVITAR: Transacciones largas con múltiples updates
+BEGIN;
+UPDATE leads SET status = 'contacted' WHERE tenant_id = 1;
+-- Operaciones largas aquí...
+COMMIT;
+
+-- ✅ PREFERIR: Transacciones cortas y específicas
+BEGIN;
+UPDATE leads SET status = 'contacted', updated_at = NOW() 
+WHERE id = $1 AND tenant_id = $2;
+INSERT INTO lead_status_history (...) VALUES (...);
+COMMIT;
+```
+
+#### **2. N+1 Queries:**
+```python
+# ❌ EVITAR: Consultas dentro de loops
+for lead in leads:
+    status_info = await get_status_info(lead.status)  # N+1 query!
+
+# ✅ PREFERIR: Batch queries o joins
+status_codes = [lead.status for lead in leads]
+statuses_map = await get_statuses_batch(status_codes)
+```
+
+#### **3. UI State Management:**
+```typescript
+// ❌ EVITAR: Estado local no sincronizado con backend
+const [localStatus, setLocalStatus] = useState(lead.status);
+// Cambiar localmente sin validar backend...
+
+// ✅ PREFERIR: Estado optimista con rollback
+const [optimisticStatus, setOptimisticStatus] = useState(lead.status);
+try {
+  await api.changeStatus(lead.id, newStatus);
+  // Actualizar estado real después de éxito
+} catch (error) {
+  setOptimisticStatus(lead.status); // Rollback visual
+  showError(error);
+}
+```
+
+### **🚀 **PATRONES RECOMENDADOS:**
+
+#### **1. CQRS para Histórico:**
+```python
+# Separar comandos (cambios) de consultas (lecturas)
+class LeadStatusCommandService:
+    async def change_status(self, lead_id, new_status, user_id, comment):
+        # Validar + ejecutar cambio
+        # Emitir evento: StatusChangedEvent
+        
+class LeadStatusQueryService:
+    async def get_status_history(self, lead_id, limit=50):
+        # Consultar histórico (read-optimized)
+        # Usar vistas materializadas si necesario
+```
+
+#### **2. Event Sourcing Lite:**
+```python
+# Guardar cada cambio como evento inmutable
+class StatusChangeEvent:
+    lead_id: UUID
+    from_status: Optional[str]
+    to_status: str
+    changed_by: UUID
+    timestamp: datetime
+    metadata: Dict
+    
+# Reconstruir estado actual desde eventos
+# Ventaja: Audit trail completo, fácil debugging
+```
+
+#### **3. Circuit Breaker para Integraciones:**
+```python
+# Cuando triggers llaman servicios externos (email, WhatsApp)
+class TriggerExecutorWithCircuitBreaker:
+    def __init__(self):
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=60
+        )
+    
+    async def execute_trigger(self, trigger, lead_data):
+        try:
+            return await self.circuit_breaker.call(
+                self._execute_external_service,
+                trigger, lead_data
+            )
+        except CircuitBreakerOpen:
+            # Log y queue para retry posterior
+            await queue_for_retry(trigger, lead_data)
+```
+
+### **🔍 **TESTING STRATEGY:**
+
+#### **1. Unit Tests (Aislamiento):**
+```python
+# Test servicios individualmente
+@pytest.mark.asyncio
+async def test_status_change_validation():
+    service = LeadStatusService(db_pool)
+    
+    # Test transiciones válidas
+    result = await service.change_status(lead_id, 'contacted', user_id)
+    assert result.success == True
+    
+    # Test transiciones inválidas
+    with pytest.raises(ValidationError):
+        await service.change_status(lead_id, 'invalid_status', user_id)
+```
+
+#### **2. Integration Tests (Flujos completos):**
+```python
+# Test flujo completo: UI → API → DB → Response
+@pytest.mark.asyncio
+async def test_complete_status_flow():
+    # 1. Crear lead via API
+    lead = await create_lead_via_api()
+    
+    # 2. Cambiar estado via UI (simulado)
+    response = await change_status_via_api(lead.id, 'qualified')
+    
+    # 3. Verificar cambios en DB
+    history = await get_status_history_from_db(lead.id)
+    assert len(history) == 1
+    
+    # 4. Verificar notificaciones (si aplica)
+    notifications = await check_notifications_queue()
+    assert len(notifications) > 0
+```
+
+#### **3. Performance Tests:**
+```python
+# Test carga con datos realistas
+@pytest.mark.asyncio
+async def test_bulk_status_change_performance():
+    # Crear 1000 leads
+    leads = await create_bulk_leads(1000)
+    
+    start_time = time.time()
+    
+    # Cambiar estado en batch
+    results = await bulk_change_status(
+        [lead.id for lead in leads],
+        'contacted'
+    )
+    
+    elapsed = time.time() - start_time
+    assert elapsed < 5.0  # Máximo 5 segundos para 1000 leads
+    assert all(r.success for r in results)
+```
+
+### **📊 **MONITORING Y ALERTING:**
+
+#### **1. Métricas Clave a Monitorear:**
+```python
+# En servicios backend
+from prometheus_client import Counter, Histogram
+
+STATUS_CHANGES = Counter('lead_status_changes_total', 'Total status changes')
+STATUS_CHANGE_DURATION = Histogram('lead_status_change_duration_seconds', 'Duration of status changes')
+STATUS_CHANGE_ERRORS = Counter('lead_status_change_errors_total', 'Total status change errors')
+
+# En frontend (Sentry/LogRocket)
+// Track UX metrics
+analytics.track('status_change', {
+  from_status: oldStatus,
+  to_status: newStatus,
+  duration: changeDuration,
+  success: true
+});
+```
+
+#### **2. Alertas Configurar:**
+- **Error rate > 5%** en cambios de estado
+- **Latencia p95 > 1s** para cambios de estado
+- **Deadlocks detectados** en base de datos
+- **Circuit breakers abiertos** por > 5 minutos
+
+### **🔧 **TOOLING RECOMENDADO:**
+
+#### **1. Para Desarrollo:**
+```bash
+# Database migrations
+npm install -g knex  # ORM migrations
+# OR usar SQL puro con versioning
+
+# API testing
+npm install -g newman  # Postman collections
+pip install httpx pytest-httpx
+
+# Performance profiling
+pip install py-spy  # Python profiler
+npm install @sentry/react @sentry/tracing  # Frontend monitoring
+```
+
+#### **2. Para Debugging:**
+```python
+# Scripts diagnóstico incluidos en proyecto
+python scripts/debug_status_system.py --tenant=1 --lead-id=xxx
+python scripts/check_status_integrity.py --fix
+python scripts/generate_status_report.py --format=csv
+```
+
+### **🎯 **CONSEJOS DE IMPLEMENTACIÓN PRÁCTICOS:**
+
+#### **1. Implementar por Capas:**
+```
+1. ✅ Capa DB (migraciones + índices)
+2. ✅ Capa Backend (servicios + validaciones)  
+3. ✅ Capa API (endpoints + seguridad)
+4. ✅ Capa Frontend (componentes + UX)
+5. ⚡ Capa Automatización (triggers + acciones)
+```
+
+#### **2. Feature Flags para Rollout Gradual:**
+```typescript
+// Configurar feature flags
+const FEATURE_FLAGS = {
+  ADVANCED_LEAD_STATUS: process.env.REACT_APP_ENABLE_ADVANCED_STATUS === 'true',
+  BULK_STATUS_ACTIONS: process.env.REACT_APP_ENABLE_BULK_STATUS === 'true',
+};
+
+// Usar en componentes
+{FEATURE_FLAGS.ADVANCED_LEAD_STATUS && (
+  <LeadStatusSelector ... />
+)}
+```
+
+#### **3. Documentation-Driven Development:**
+- **Antes de codificar:** Actualizar `API_REFERENCE.md`
+- **Durante desarrollo:** Comentar decisiones en PRs
+- **Después de implementar:** Actualizar `USER_GUIDE.md`
+
+#### **4. Pair Programming para Componentes Críticos:**
+- **Componente:** `LeadStatusSelector` - Lógica compleja de validación
+- **Componente:** `BulkStatusUpdate` - Manejo de errores batch
+- **Servicio:** `LeadAutomationService` - Circuit breakers y retry logic
+
+#### **5. Performance desde Día 1:**
+- **DB:** Índices en `(tenant_id, status)`, `(lead_id, created_at)`
+- **Cache:** Redis para estados frecuentemente consultados
+- **Paginación:** Histórico paginado desde inicio
+- **Lazy loading:** Carga progresiva de datos en UI
+
+#### **6. Security Considerations:**
+- **Tenant isolation:** Verificar `tenant_id` en todas las queries
+- **Role-based access:** Solo ciertos roles pueden cambiar estados
+- **Audit logging:** Loggear todos los cambios con contexto
+- **Rate limiting:** Limitar cambios masivos por usuario
+
+#### **7. UX Best Practices:**
+- **Feedback inmediato:** Spinners durante cambios
+- **Undo actions:** Posibilidad de revertir cambios recientes
+- **Keyboard shortcuts:** Atajos para cambios frecuentes
+- **Bulk operations:** UI intuitiva para acciones masivas
+- **Confirmation dialogs:** Para cambios críticos o irreversibles
+
+---
+
+## 🚀 **PLAN DE IMPLEMENTACIÓN**
+
+### **Fase 1: Base de Datos (3 días)**
+- **Día 1:** Diseño esquema + scripts migración
+- **Día 2:** Implementación tablas nuevas
+- **Día 3:** Migración datos existentes + testing
+
+### **Fase 2: Backend (3 días)**
+- **Día 4:** Servicios core + validaciones
+- **Día 5:** Endpoints API + integración existente
+- **Día 6:** Testing backend + performance
+
+### **Fase 3: Frontend (3 días)**
+- **Día 7:** Componentes UI básicos
+- **Día 8:** Integración vistas existentes
+- **Día 9:** Testing UI + UX refinamiento
+
+### **Fase 4: Automatización (2 días)**
+- **Día 10:** Sistema triggers + acciones
+- **Día 11:** Configuración UI + testing
+
+### **Fase 5: Polish y Deploy (2 días)**
+- **Día 12:** Performance optimizations
+- **Día 13:** Deploy gradual + monitoring
+
+**Total estimado:** 13 días hábiles (2.5 semanas)
+
+---
+
+## 📋 **CHECKLIST DE ENTREGA**
+
+### **Pre-implementación:**
+- [ ] Backup completo base de datos
+- [ ] Plan de rollback documentado
+- [ ] Testing environment configurado
+- [ ] Comunicación a equipo
+
+### **Post-implementación:**
+- [ ] Verificación funcionalidades existentes
+- [ ] Testing performance
+- [ ] Documentación actualizada
+- [ ] Training usuarios
+- [ ] Monitoring producción
+
+---
+
+**📝 Nota:** Este documento es planificación estratégica. La implementación debe seguir guías técnicas detalladas en documentos complementarios.
+
+**Estado:** 📋 **PLANIFICACIÓN COMPLETA** - Lista para revisión y aprobación

@@ -14,17 +14,17 @@ export default function LandingView() {
         <div className="w-full max-w-md sm:max-w-lg mx-auto space-y-6 sm:space-y-8">
           {/* Hero */}
           <header className="text-center pt-2 sm:pt-0">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-medical-600 text-white shadow-xl shadow-medical-600/25 mb-4 sm:mb-5 ring-4 ring-medical-600/10">
-              <Shield size={28} className="sm:w-8 sm:h-8" strokeWidth={2} />
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/25 mb-4 sm:mb-5 ring-4 ring-blue-600/10">
+              <BarChart3 size={28} className="sm:w-8 sm:h-8" strokeWidth={2} />
             </div>
-            <p className="text-xs sm:text-sm font-semibold text-medical-600 uppercase tracking-widest mb-2">
-              Plataforma para clínicas dentales
+            <p className="text-xs sm:text-sm font-semibold text-blue-600 uppercase tracking-widest mb-2">
+              CRM de Ventas con Automatización Meta Ads
             </p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
-              Agenda, pacientes e IA en una sola app
+              Gestiona leads, automatiza ventas y mide ROI
             </h1>
             <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600 max-w-sm mx-auto leading-relaxed">
-              Probá la plataforma en un clic. Sin tarjeta. Acceso inmediato a la demo.
+              Probá el CRM en un clic. Sin tarjeta. Acceso inmediato a la demo.
             </p>
           </header>
 
@@ -32,10 +32,10 @@ export default function LandingView() {
           <div className="space-y-3 sm:space-y-4">
             <Link
               to="/login?demo=1"
-              className="landing-cta-primary flex items-center justify-center gap-3 w-full rounded-2xl py-4 sm:py-5 text-base sm:text-lg font-bold text-white bg-medical-600 hover:bg-medical-700 active:scale-[0.98] transition-all shadow-xl shadow-medical-600/25 hover:shadow-medical-600/30 min-h-[52px] sm:min-h-[56px] touch-manipulation"
+              className="landing-cta-primary flex items-center justify-center gap-3 w-full rounded-2xl py-4 sm:py-5 text-base sm:text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-600/30 min-h-[52px] sm:min-h-[56px] touch-manipulation"
             >
               <Zap size={22} className="shrink-0" />
-              Probar app
+              Probar CRM
             </Link>
             <p className="text-center text-xs text-gray-500 px-2">
               Te logueamos automáticamente en la cuenta demo (sin exponer credenciales en la interfaz)
@@ -46,8 +46,8 @@ export default function LandingView() {
           <section className="landing-glass rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-card overflow-hidden">
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Sparkles className="text-medical-600 shrink-0" size={20} />
-                Qué incluye la demo
+                <Sparkles className="text-blue-600 shrink-0" size={20} />
+                Qué incluye la demo del CRM
               </h2>
               <ul className="space-y-2.5 sm:space-y-3 text-gray-700 text-sm sm:text-base">
                 <li className="flex items-start gap-3">

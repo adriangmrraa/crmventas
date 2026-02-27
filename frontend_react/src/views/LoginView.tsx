@@ -8,19 +8,9 @@ import { Lock, Mail, Shield, AlertCircle, CheckCircle } from 'lucide-react';
 const DEMO_EMAIL = 'gamarraadrian200@gmail.com';
 const DEMO_PASSWORD = 'Wstg1793.';
 
-const SPECIALTIES: { value: string; key: string }[] = [
-  { value: 'Odontología General', key: 'specialty_general' },
-  { value: 'Ortodoncia', key: 'specialty_orthodontics' },
-  { value: 'Endodoncia', key: 'specialty_endodontics' },
-  { value: 'Periodoncia', key: 'specialty_periodontics' },
-  { value: 'Cirugía Oral', key: 'specialty_oral_surgery' },
-  { value: 'Prótesis Dental', key: 'specialty_prosthodontics' },
-  { value: 'Odontopediatría', key: 'specialty_pediatric' },
-  { value: 'Implantología', key: 'specialty_implantology' },
-  { value: 'Estética Dental', key: 'specialty_aesthetic' },
-];
+// Eliminado specialties ya que no aplica para CRM de Ventas
 
-interface ClinicOption {
+interface CompanyOption {
   id: number;
   clinic_name: string;
 }
@@ -41,7 +31,7 @@ const LoginView: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [registrationId, setRegistrationId] = useState('');
   const [googleCalendarId, setGoogleCalendarId] = useState('');
-  const [clinics, setClinics] = useState<ClinicOption[]>([]);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,9 +48,9 @@ const LoginView: React.FC = () => {
 
   useEffect(() => {
     if (isRegistering) {
-      api.get<ClinicOption[]>('/auth/clinics')
-        .then((res) => setClinics(res.data || []))
-        .catch(() => setClinics([]));
+      api.get<ClinicOption[]>('/auth/companies')
+        .then((res) => setCompanies(res.data || []))
+        .catch(() => setCompanies([]));
     }
   }, [isRegistering]);
 
@@ -229,7 +219,6 @@ const LoginView: React.FC = () => {
             <div className="input-group">
               <label>{t('login.role')}</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="professional">{t('login.role_professional')}</option>
                 <option value="secretary">{t('login.role_secretary')}</option>
                 <option value="setter">{t('login.role_setter')}</option>
                 <option value="closer">{t('login.role_closer')}</option>
@@ -238,38 +227,29 @@ const LoginView: React.FC = () => {
             </div>
           )}
 
-          {isRegistering && (role === 'professional' || role === 'secretary' || role === 'setter' || role === 'closer') && (
+          {isRegistering && (role === 'secretary' || role === 'setter' || role === 'closer') && (
             <div className="input-group">
-              <label>{(role === 'setter' || role === 'closer') ? t('login.entity') : t('login.clinic')} <span className="required-dot">*</span></label>
+              <label>{t('login.company')} <span className="required-dot">*</span></label>
               <select
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value === '' ? '' : Number(e.target.value))}
-                required={role === 'professional' || role === 'secretary' || role === 'setter' || role === 'closer'}
+                required={role === 'secretary' || role === 'setter' || role === 'closer'}
               >
-                <option value="">{(role === 'setter' || role === 'closer') ? t('login.choose_entity') : t('login.choose_clinic')}</option>
-                {clinics.map((c) => (
+                <option value="">{t('login.choose_company')}</option>
+                {companies.map((c) => (
                   <option key={c.id} value={c.id}>{c.clinic_name}</option>
                 ))}
               </select>
-              {clinics.length === 0 && (
+              {companies.length === 0 && (
                 <p className="text-sm mt-1.5 text-white/80">
-                  {t('login.no_clinics')}
+                  {t('login.no_companies')}
                 </p>
               )}
             </div>
           )}
 
-          {isRegistering && role === 'professional' && (
+          {isRegistering && role === 'ceo' && (
             <>
-              <div className="input-group">
-                <label>{t('login.specialty')}</label>
-                <select value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
-                  <option value="">{t('login.select_specialty')}</option>
-                  {SPECIALTIES.map((s) => (
-                    <option key={s.value} value={s.value}>{t('approvals.' + s.key)}</option>
-                  ))}
-                </select>
-              </div>
               <div className="input-group">
                 <label>{t('login.phone')}</label>
                 <div className="input-wrapper">
@@ -282,24 +262,13 @@ const LoginView: React.FC = () => {
                 </div>
               </div>
               <div className="input-group">
-                <label>{t('login.registration_id')}</label>
+                <label>{t('login.company_name')}</label>
                 <div className="input-wrapper">
                   <input
                     type="text"
                     value={registrationId}
                     onChange={(e) => setRegistrationId(e.target.value)}
-                    placeholder={t('login.placeholder_optional')}
-                  />
-                </div>
-              </div>
-              <div className="input-group">
-                <label>Google Calendar ID</label>
-                <div className="input-wrapper">
-                  <input
-                    type="text"
-                    value={googleCalendarId}
-                    onChange={(e) => setGoogleCalendarId(e.target.value)}
-                    placeholder={t('login.placeholder_calendar')}
+                    placeholder="Nombre de tu empresa"
                   />
                 </div>
               </div>

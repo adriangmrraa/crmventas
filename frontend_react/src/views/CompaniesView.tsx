@@ -5,8 +5,8 @@ import { useTranslation } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 
-/** Sede/Entidad = Tenant en backend. Incluye config.calendar_provider: 'local' | 'google'. */
-export interface Clinica {
+/** Empresa = Tenant en backend. Incluye config.calendar_provider: 'local' | 'google'. */
+export interface Company {
     id: number;
     clinic_name: string;
     bot_phone_number: string;
@@ -16,18 +16,18 @@ export interface Clinica {
 }
 
 const CALENDAR_PROVIDER_OPTIONS = (t: (k: string) => string) => [
-    { value: 'local' as const, label: t('clinics.calendar_local') },
-    { value: 'google' as const, label: t('clinics.calendar_google') },
+    { value: 'local' as const, label: t('companies.calendar_local') },
+    { value: 'google' as const, label: t('companies.calendar_google') },
 ];
 
-export default function ClinicsView() {
+export default function CompaniesView() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const isEntity = true; // Single-niche: solo CRM Ventas
-    const [clinicas, setClinicas] = useState<Clinica[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingClinica, setEditingClinica] = useState<Clinica | null>(null);
+    const [editingCompany, setEditingCompany] = useState<Company | null>(null);
     const [formData, setFormData] = useState({
         clinic_name: '',
         bot_phone_number: '',
@@ -38,14 +38,14 @@ export default function ClinicsView() {
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchClinicas();
+        fetchCompanys();
     }, []);
 
-    const fetchClinicas = async () => {
+    const fetchCompanys = async () => {
         try {
             setLoading(true);
             const resp = await api.get('/admin/core/tenants');
-            setClinicas(resp.data);
+            setCompanys(resp.data);
         } catch (err) {
             console.error('Error cargando clínicas:', err);
         } finally {
@@ -53,16 +53,16 @@ export default function ClinicsView() {
         }
     };
 
-    const handleOpenModal = (clinica: Clinica | null = null) => {
+    const handleOpenModal = (clinica: Company | null = null) => {
         if (clinica) {
-            setEditingClinica(clinica);
+            setEditingCompany(clinica);
             setFormData({
                 clinic_name: clinica.clinic_name,
                 bot_phone_number: clinica.bot_phone_number,
                 calendar_provider: (clinica.config?.calendar_provider === 'google' ? 'google' : 'local') as 'local' | 'google',
             });
         } else {
-            setEditingClinica(null);
+            setEditingCompany(null);
             setFormData({ clinic_name: '', bot_phone_number: '', calendar_provider: 'local' });
         }
         setError(null);
@@ -74,8 +74,8 @@ export default function ClinicsView() {
         setSaving(true);
         setError(null);
         try {
-            if (editingClinica) {
-                await api.put(`/admin/core/tenants/${editingClinica.id}`, {
+            if (editingCompany) {
+                await api.put(`/admin/core/tenants/${editingCompany.id}`, {
                     clinic_name: formData.clinic_name,
                     bot_phone_number: formData.bot_phone_number,
                     calendar_provider: formData.calendar_provider,
@@ -89,7 +89,7 @@ export default function ClinicsView() {
                 });
                 setSuccess(t(isEntity ? 'clinics.toast_created_entity' : 'clinics.toast_created'));
             }
-            await fetchClinicas();
+            await fetchCompanys();
             setIsModalOpen(false);
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
@@ -103,7 +103,7 @@ export default function ClinicsView() {
         if (!window.confirm(t(isEntity ? 'alerts.confirm_delete_entity' : 'alerts.confirm_delete_clinic'))) return;
         try {
             await api.delete(`/admin/core/tenants/${id}`);
-            fetchClinicas();
+            fetchCompanys();
         } catch (err) {
             console.error('Error eliminando clínica:', err);
         }
@@ -144,7 +144,7 @@ export default function ClinicsView() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {clinicas.map((clinica) => (
+                {companies.map((clinica) => (
                     <div
                         key={clinica.id}
                         className="bg-white rounded-xl shadow-sm border border-medical-100 overflow-hidden hover:shadow-md transition-shadow group"
@@ -196,8 +196,8 @@ export default function ClinicsView() {
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-scale-in">
                         <div className="p-6 border-b">
                             <h2 className="text-xl font-bold flex items-center gap-2">
-                                {editingClinica ? <Edit className="text-medical-600" /> : <Plus className="text-medical-600" />}
-                                {editingClinica ? t(isEntity ? 'clinics.edit_entity' : 'clinics.edit_clinic') : t(isEntity ? 'clinics.create_entity' : 'clinics.create_clinic')}
+                                {editingCompany ? <Edit className="text-medical-600" /> : <Plus className="text-medical-600" />}
+                                {editingCompany ? t(isEntity ? 'clinics.edit_entity' : 'clinics.edit_clinic') : t(isEntity ? 'clinics.create_entity' : 'clinics.create_clinic')}
                             </h2>
                         </div>
 

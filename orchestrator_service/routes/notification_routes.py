@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from ..auth import get_current_user
-from ..services.seller_notification_service import notification_service
-from ..db import get_db
+from core.security import get_current_user
+from services.seller_notification_service import notification_service
+from db import get_db
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

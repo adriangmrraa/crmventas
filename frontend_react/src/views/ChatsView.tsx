@@ -4,7 +4,7 @@ import {
   MessageCircle, Send, Calendar, User, Activity,
   Pause, Play, AlertCircle, Clock, ChevronLeft,
   Search, XCircle, Bell, Volume2, VolumeX,
-  UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw
+  UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw, X
 } from 'lucide-react';
 import api, { BACKEND_URL } from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -716,7 +716,46 @@ export default function ChatsView() {
   // ============================================
 
   return (
-    <div className="h-full flex relative overflow-hidden bg-white">
+    <div className="flex h-screen bg-medical-50 overflow-hidden font-sans">
+      {/* Selector de Vendedor Modal */}
+      {showSellerSelector && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    <UserPlus size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {sellerAssignment?.assigned_seller_id ? 'Reasignar Vendedor' : 'Asignar Vendedor'}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Selecciona un vendedor para esta conversación
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSellerSelector(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* <SellerSelector
+                phone={selectedSession?.phone_number || ''}
+                currentSellerId={sellerAssignment?.assigned_seller_id}
+                onSellerSelected={handleAssignSeller}
+                onCancel={() => setShowSellerSelector(false)}
+                showAssignToMe={true}
+                showAutoAssign={true}
+              /> */}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Audio para notificaciones */}
       <audio ref={audioRef} src="/notification.mp3" preload="auto" />
 
@@ -1245,7 +1284,7 @@ export default function ChatsView() {
         </div>
       )}
 
-          {/* ======================================== */}
+      {/* ======================================== */}
       {/* Seller Selector Modal */}
       {/* ======================================== */}
       {showSellerSelector && selectedSession && (

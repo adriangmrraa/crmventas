@@ -8,8 +8,8 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ..services.scheduled_tasks import scheduled_tasks_service
-from ..db import get_db
+from services.scheduled_tasks import scheduled_tasks_service
+from db import get_db
 
 router = APIRouter(prefix="/health", tags=["health"])
 

@@ -3,7 +3,7 @@ import {
   Filter, Search, Download, Upload, UserPlus, MessageSquare,
   Phone, Mail, Calendar, Target, TrendingUp, Users,
   CheckCircle, XCircle, Clock, AlertCircle, Loader2,
-  BarChart3, Facebook, ExternalLink, RefreshCw
+  BarChart3, Facebook, ExternalLink, RefreshCw, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -471,7 +471,10 @@ const MetaLeadsView: React.FC = () => {
 
               {selectedLeads.length > 0 && (
                 <button
-                  onClick={() => setShowSellerSelector(true)}
+                  onClick={() => {
+                    setSelectedLeadForAssignment(null); // Ensure bulk mode
+                    setShowSellerSelector(true);
+                  }}
                   className="col-span-2 lg:col-span-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
                 >
                   <UserPlus size={18} />
@@ -824,6 +827,58 @@ const MetaLeadsView: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Modal de Selección de Vendedor */}
+      {showSellerSelector && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    <UserPlus size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {selectedLeadForAssignment ? 'Asignar Lead' : 'Asignación Masiva'}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {selectedLeadForAssignment
+                        ? 'Selecciona el vendedor responsable para este lead'
+                        : `Selecciona el vendedor para ${selectedLeads.length} leads`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowSellerSelector(false);
+                    setSelectedLeadForAssignment(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <SellerSelector
+                phone="" // No aplica para bulk/lead list simple aquí
+                onSellerSelected={async (sellerId, sellerName) => {
+                  if (selectedLeadForAssignment) {
+                    await handleAssignSeller(selectedLeadForAssignment, sellerId, sellerName);
+                  } else {
+                    await handleBulkAssign(sellerId, sellerName);
+                  }
+                }}
+                onCancel={() => {
+                  setShowSellerSelector(false);
+                  setSelectedLeadForAssignment(null);
+                }}
+                showAssignToMe={true}
+                showAutoAssign={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

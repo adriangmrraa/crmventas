@@ -103,7 +103,18 @@ async def get_all_users(user_data = Depends(verify_admin_token)):
 @audit_access("update_user_status", resource_param="user_id")
 async def update_user_status(user_id: str, payload: StatusUpdate, user_data = Depends(verify_admin_token)):
     if user_data.role != 'ceo': raise HTTPException(status_code=403, detail="CEO only")
+    
+    # Update user status
     await db.execute("UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2", payload.status, user_id)
+    
+    # Activation logic for Sellers/Professionals
+    if payload.status == 'active':
+        uid = uuid.UUID(user_id)
+        # Activate in sellers (CRM)
+        await db.pool.execute("UPDATE sellers SET is_active = TRUE, updated_at = NOW() WHERE user_id = $1", uid)
+        # Activate in professionals (Legacy/Dental fallback)
+        await db.pool.execute("UPDATE professionals SET is_active = TRUE, updated_at = NOW() WHERE user_id = $1", uid)
+        
     return {"status": "updated"}
 
 # --- RUTAS DE CHAT ---

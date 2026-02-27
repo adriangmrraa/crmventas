@@ -167,6 +167,8 @@ class SellerAssignmentService:
                 WHERE u.tenant_id = $1 
                 AND u.status = 'active'
                 AND u.role IN ('setter', 'closer', 'professional', 'ceo')
+                -- Ensure they have a record in sellers table (B-01 requirement)
+                AND EXISTS (SELECT 1 FROM sellers s WHERE s.user_id = u.id)
             """
             
             params = [tenant_id]

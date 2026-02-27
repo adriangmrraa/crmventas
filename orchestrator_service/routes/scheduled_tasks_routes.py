@@ -8,8 +8,8 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..auth import get_current_user
-from ..services.scheduled_tasks import scheduled_tasks_service
+from core.security import get_current_user
+from services.scheduled_tasks import scheduled_tasks_service
 
 router = APIRouter(prefix="/scheduled-tasks", tags=["scheduled-tasks"])
 

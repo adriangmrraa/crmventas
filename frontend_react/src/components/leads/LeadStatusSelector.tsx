@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../../context/LanguageContext';
 import { useLeadStatus } from '../../hooks/useLeadStatus';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { ChevronDown, Loader2 } from 'lucide-react';
@@ -25,6 +26,7 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
     const [pendingStatusCode, setPendingStatusCode] = useState<string | null>(null);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const { t } = useTranslation();
 
     const {
         statuses,
@@ -92,34 +94,34 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
                 >
                     {commentRequired ? (
                         <div className="p-3">
-                            <p className="text-xs font-semibold text-gray-600 mb-2">Este estado requiere un comentario obligatorio:</p>
+                            <p className="text-xs font-semibold text-gray-600 mb-2">{t('leads.status_selector.comment_required')}</p>
                             <textarea
                                 className="w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-2 shadow-sm mb-2 resize-none"
                                 rows={2}
                                 value={commentValue}
                                 onChange={(e) => setCommentValue(e.target.value)}
-                                placeholder="Escribe la razón..."
+                                placeholder={t('leads.status_selector.reason_placeholder')}
                             />
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setCommentRequired(false)} className="text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">Cancelar</button>
+                                <button onClick={() => setCommentRequired(false)} className="text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">{t('common.cancel')}</button>
                                 <button
                                     disabled={!commentValue.trim() || isUpdating}
                                     onClick={() => pendingStatusCode && submitStatusChange(pendingStatusCode)}
                                     className="text-xs text-white bg-blue-600 px-3 py-1 rounded shadow-sm hover:bg-blue-700 disabled:opacity-50"
                                 >
-                                    Confirmar
+                                    {t('common.confirm') || 'Confirmar'}
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <div className="py-1 max-h-60 overflow-y-auto custom-scrollbar" role="menu">
                             <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                Cambiar de estado
+                                {t('leads.status_selector.change_status')}
                             </div>
 
                             {isLoadingTransitions ? (
                                 <div className="px-4 py-3 flex items-center justify-center text-gray-400 text-sm">
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Evaluando workflow...
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('leads.status_selector.evaluating_workflow')}
                                 </div>
                             ) : transitions && transitions.length > 0 ? (
                                 transitions.map((transition: LeadStatusTransition) => (
@@ -146,7 +148,7 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
                                 ))
                             ) : (
                                 <div className="px-4 py-3 text-sm text-gray-500 italic">
-                                    No hay transiciones válidas desde su estado actual.
+                                    {t('leads.status_selector.no_valid_transitions')}
                                 </div>
                             )}
                         </div>

@@ -85,7 +85,7 @@ function App() {
                         <Route path="crm/clientes" element={<ClientsView />} />
                         <Route path="crm/clientes/:id" element={<ClientDetailView />} />
                         <Route path="crm/prospeccion" element={
-                          <ProtectedRoute allowedRoles={['ceo']}>
+                          <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
                             <ProspectingView />
                           </ProtectedRoute>
                         } />
@@ -101,7 +101,7 @@ function App() {
                           </ProtectedRoute>
                         } />
                         <Route path="crm/hsm" element={
-                          <ProtectedRoute allowedRoles={['ceo', 'admin']}>
+                          <ProtectedRoute allowedRoles={['ceo', 'admin', 'setter', 'closer']}>
                             <MetaTemplatesView />
                           </ProtectedRoute>
                         } />

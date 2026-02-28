@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, BellRing, Check, X, Settings, Filter, Clock, 
+import {
+  Bell, BellRing, Check, X, Settings, Filter, Clock,
   AlertCircle, TrendingUp, MessageSquare, User, Zap,
   ChevronRight, ExternalLink, MoreVertical, RefreshCw,
   Wifi, WifiOff, Radio
@@ -55,7 +55,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   const { user } = useAuth();
   const { socket, isConnected: socketConnected } = useSocket();
   const { newNotifications: socketNotifications } = useSocketNotifications();
-  
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,15 +66,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
   // Determinar si usar Socket.IO o API
   useEffect(() => {
-    if (socket && socketConnected) {
-      setUsingSocket(true);
-      // Socket.IO maneja actualizaciones automáticas via useSocketNotifications
-      setLoading(false);
-    } else {
-      setUsingSocket(false);
-      fetchNotifications();
-    }
-  }, [socket, socketConnected]);
+    setUsingSocket(!!(socket && socketConnected));
+    // Siempre obtener las notificaciones iniciales independientemente de Socket.IO,
+    // ya que Socket.IO solo envía las nuevas (historico / persistencia es por API)
+    fetchNotifications();
+  }, [socketConnected, filter]);
 
   // Sincronizar notificaciones de Socket.IO
   useEffect(() => {
@@ -93,20 +89,20 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get('/notifications', {
         params: {
           limit: 50,
           unread_only: filter === 'unread'
         }
       });
-      
+
       setNotifications(response.data);
-      
+
       // Also update count
       const countResponse = await api.get('/notifications/count');
       setNotificationCount(countResponse.data);
-      
+
     } catch (err: any) {
       console.error('Error fetching notifications:', err);
       setError(err.response?.data?.detail || t('common.error'));
@@ -141,24 +137,24 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           notification_id: notificationId
         });
       }
-      
+
       // Update local state
-      setNotifications(prev => prev.map(n => 
+      setNotifications(prev => prev.map(n =>
         n.id === notificationId ? { ...n, read: true } : n
       ));
-      
+
       // Update count
       setNotificationCount(prev => ({
         ...prev,
         total: Math.max(0, prev.total - 1),
-        [notificationPriorityCountKey(notificationId)]: Math.max(0, 
+        [notificationPriorityCountKey(notificationId)]: Math.max(0,
           notificationCount[notificationPriorityCountKey(notificationId)] - 1
         )
       }));
-      
+
       // Notify parent
       onNotificationRead(notificationId);
-      
+
     } catch (err: any) {
       console.error('Error marking notification as read:', err);
     }
@@ -229,9 +225,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
   const formatTime = (dateString: string) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { 
+      return formatDistanceToNow(new Date(dateString), {
         addSuffix: true,
-        locale: es 
+        locale: es
       });
     } catch (err) {
       return dateString;
@@ -243,7 +239,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    
+
     // Navigate to related entity if applicable
     if (notification.related_entity_type && notification.related_entity_id) {
       switch (notification.related_entity_type) {
@@ -261,7 +257,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           break;
       }
     }
-    
+
     // Close notification center
     onClose();
   };
@@ -269,7 +265,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   const notificationPriorityCountKey = (notificationId: string) => {
     const notification = notifications.find(n => n.id === notificationId);
     if (!notification) return 'total';
-    
+
     switch (notification.priority) {
       case 'critical': return 'critical';
       case 'high': return 'high';
@@ -283,7 +279,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     fetchNotifications();
   }, [filter]);
 
-  const filteredNotifications = notifications.filter(n => 
+  const filteredNotifications = notifications.filter(n =>
     filter === 'all' || !n.read
   );
 
@@ -295,9 +291,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <div className="relative">
             <BellRing size={20} className="text-gray-700 dark:text-gray-300" />
             {usingSocket && (
-              <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${
-                socketConnected ? 'bg-green-500' : 'bg-red-500'
-              }`} />
+              <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'
+                }`} />
             )}
           </div>
           <div>
@@ -310,11 +305,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                 {notificationCount.critical > 0 && ` • ${notificationCount.critical} ${t('notifications.critical')}`}
               </p>
               {usingSocket && (
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
-                  socketConnected 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${socketConnected
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                     : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                }`}>
+                  }`}>
                   {socketConnected ? <Wifi size={10} /> : <WifiOff size={10} />}
                   {socketConnected ? t('notifications.real_time_updates') : t('notifications.socket_disconnected')}
                 </span>
@@ -322,14 +316,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {usingSocket && (
             <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
               {socketConnected ? 'Socket.IO' : 'API'}
             </div>
           )}
-          
+
           <button
             onClick={refreshNotifications}
             disabled={refreshing}
@@ -338,7 +332,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
-          
+
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -354,26 +348,24 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         <div className="flex gap-1">
           <button
             onClick={() => setFilter('unread')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-              filter === 'unread'
+            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'unread'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
+              }`}
           >
             {t('notifications.unread')} ({notificationCount.total})
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-              filter === 'all'
+            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'all'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
+              }`}
           >
             {t('notifications.all')}
           </button>
         </div>
-        
+
         {notificationCount.total > 0 && (
           <button
             onClick={handleMarkAllRead}
@@ -409,7 +401,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <div className="p-8 text-center">
             <Bell className="inline-block text-gray-400 mb-2" size={32} />
             <p className="text-gray-500 dark:text-gray-400">
-              {filter === 'unread' 
+              {filter === 'unread'
                 ? t('notifications.no_unread_notifications')
                 : t('notifications.no_notifications')
               }
@@ -420,9 +412,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${
-                  !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                }`}
+                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                  }`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex gap-3">
@@ -430,7 +421,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   <div className="flex-shrink-0 mt-0.5">
                     {getTypeIcon(notification.type)}
                   </div>
-                  
+
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
@@ -442,7 +433,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                           {notification.message}
                         </p>
                       </div>
-                      
+
                       {!notification.read && (
                         <button
                           onClick={(e) => {
@@ -456,23 +447,23 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         </button>
                       )}
                     </div>
-                    
+
                     {/* Metadata */}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${getPriorityColor(notification.priority)}`}>
                         {getPriorityText(notification.priority)}
                       </span>
-                      
+
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {formatTime(notification.created_at)}
                       </span>
-                      
+
                       {notification.sender_name && (
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           • {notification.sender_name}
                         </span>
                       )}
-                      
+
                       {notification.related_entity_type && (
                         <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
                           <ChevronRight size={10} />
@@ -480,7 +471,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Actions */}
                     <div className="mt-3 flex gap-2">
                       {notification.related_entity_id && (
@@ -513,7 +504,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           {t('notifications.view_all')}
           <ChevronRight size={14} />
         </button>
-        
+
         <button
           onClick={() => window.location.href = '/notifications/settings'}
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"

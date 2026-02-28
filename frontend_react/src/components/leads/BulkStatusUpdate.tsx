@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Layers, Loader2, Info } from 'lucide-react';
+import { useTranslation } from '../../context/LanguageContext';
 import { useLeadStatus } from '../../hooks/useLeadStatus';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import type { LeadStatus } from '../../api/leadStatus';
@@ -18,6 +19,7 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
     const [targetStatus, setTargetStatus] = useState<string>('');
     const [comment, setComment] = useState<string>('');
     const { statuses, isLoadingStatuses, bulkChangeStatus, isUpdating } = useLeadStatus();
+    const { t } = useTranslation();
 
     // Obtenemos solo los activos para el Dropdown
     const activeStatuses = statuses?.filter((s: LeadStatus) => s.is_active) || [];
@@ -48,10 +50,10 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-2 text-slate-800 font-semibold">
                         <Layers className="w-5 h-5 text-blue-600" />
-                        Actualización Masiva
+                        {t('leads.bulk_update.title')}
                     </div>
                     <span className="bg-blue-100 text-blue-700 py-0.5 px-2.5 rounded-full text-xs font-bold">
-                        {selectedLeadIds.length} seleccionados
+                        {selectedLeadIds.length} {t('leads.bulk_update.selected')}
                     </span>
                 </div>
 
@@ -62,14 +64,14 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                         {/* Disclaimer */}
                         <div className="bg-blue-50 text-blue-800 p-3 rounded-xl flex gap-3 text-sm border border-blue-100 items-start">
                             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                            <p>Estás a punto de forzar el cambio de estado a múltiples leads simultáneamente. Las automatizaciones pueden dispararse en masa.</p>
+                            <p>{t('leads.bulk_update.warning')}</p>
                         </div>
 
                         {/* Selector de Nuevo Estado */}
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nuevo Estado Destino</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('leads.bulk_update.new_status')}</label>
                             {isLoadingStatuses ? (
-                                <div className="text-sm text-slate-400 flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" />Cargando motores...</div>
+                                <div className="text-sm text-slate-400 flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" />{t('leads.bulk_update.loading_motors')}</div>
                             ) : (
                                 <select
                                     className="w-full text-sm border-slate-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-slate-50 hover:bg-white transition-colors cursor-pointer"
@@ -77,7 +79,7 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                                     onChange={(e) => setTargetStatus(e.target.value)}
                                     required
                                 >
-                                    <option value="" disabled>-- Selecciona un estado --</option>
+                                    <option value="" disabled>{t('leads.bulk_update.select_status')}</option>
                                     {activeStatuses.map((status: LeadStatus) => (
                                         <option key={status.id} value={status.code}>{status.name}</option>
                                     ))}
@@ -85,7 +87,7 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                             )}
                             {selectedStatusDef && (
                                 <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 border-l-2 border-slate-200 pl-2 ml-1">
-                                    Previsualización: <LeadStatusBadge statusCode={selectedStatusDef.code} />
+                                    {t('leads.bulk_update.preview')} <LeadStatusBadge statusCode={selectedStatusDef.code} />
                                 </div>
                             )}
                         </div>
@@ -93,12 +95,12 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                         {/* Comentario (Opcional/Obligatorio) */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                                Razón o Comentario {selectedStatusDef?.requires_comment ? <span className="text-red-500">*</span> : <span className="text-slate-400 font-normal">(Opcional)</span>}
+                                {t('leads.bulk_update.reason_or_comment')} {selectedStatusDef?.requires_comment ? <span className="text-red-500">*</span> : <span className="text-slate-400 font-normal">{t('leads.bulk_update.optional')}</span>}
                             </label>
                             <textarea
                                 className="w-full text-sm border-slate-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 p-3 bg-slate-50 hover:bg-white transition-colors custom-scrollbar resize-none"
                                 rows={3}
-                                placeholder="Razón de cambio masivo o nota interna..."
+                                placeholder={t('leads.bulk_update.reason_placeholder')}
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 required={selectedStatusDef?.requires_comment}
@@ -115,7 +117,7 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                             disabled={isUpdating}
                             className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
                         >
-                            Cancelar
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -123,9 +125,9 @@ export const BulkStatusUpdate: React.FC<BulkStatusUpdateProps> = ({
                             className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm rounded-xl transition-all disabled:opacity-50 flex items-center"
                         >
                             {isUpdating ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Procesando Lote...</>
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('leads.bulk_update.processing')}</>
                             ) : (
-                                'Aplicar a Todos'
+                                t('leads.bulk_update.apply_all')
                             )}
                         </button>
                     </div>

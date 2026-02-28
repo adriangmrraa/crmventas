@@ -346,7 +346,7 @@ async def get_clinic_settings(resolved_tenant_id: int = Depends(get_resolved_ten
 @audit_access("update_settings")
 async def update_clinic_settings(payload: ClinicSettingsUpdate, resolved_tenant_id: int = Depends(get_resolved_tenant_id)):
     if payload.ui_language:
-        await db.pool.execute("UPDATE tenants SET config = jsonb_set(COALESCE(config, '{}'), '{ui_language}', to_jsonb($1::text)) WHERE id = $2", payload.ui_language, resolved_tenant_id)
+        await db.pool.execute("UPDATE tenants SET config = jsonb_set(COALESCE(config, '{}'::jsonb), '{ui_language}', to_jsonb($1::text)) WHERE id = $2", payload.ui_language, resolved_tenant_id)
     # Single-niche: only crm_sales; ignore niche_type changes from client
     out = {"status": "ok"}
     return out

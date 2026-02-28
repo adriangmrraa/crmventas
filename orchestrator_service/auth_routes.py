@@ -82,7 +82,7 @@ async def register(request: Request, payload: UserRegister):
     if existing:
         raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado.")
 
-    CRM_TENANT_ROLES = ("seller", "closer", "setter", "secretary")
+    CRM_TENANT_ROLES = ("seller", "closer", "setter", "secretary", "ceo", "professional")
 
     if payload.role in CRM_TENANT_ROLES:
         if payload.tenant_id is None:

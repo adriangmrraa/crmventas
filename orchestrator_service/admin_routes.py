@@ -110,10 +110,28 @@ async def update_user_status(user_id: str, payload: StatusUpdate, user_data = De
     # Activation logic for Sellers/Professionals
     if payload.status == 'active':
         uid = uuid.UUID(user_id)
-        # Activate in sellers (CRM)
-        await db.pool.execute("UPDATE sellers SET is_active = TRUE, updated_at = NOW() WHERE user_id = $1", uid)
-        # Activate in professionals (Legacy/Dental fallback)
-        await db.pool.execute("UPDATE professionals SET is_active = TRUE, updated_at = NOW() WHERE user_id = $1", uid)
+        user = await db.fetchrow("SELECT first_name, last_name, email, role, tenant_id FROM users WHERE id = $1", user_id)
+        
+        if user:
+            # Roles elegibles para el módulo de ventas
+            SELLER_ROLES = ('seller', 'closer', 'setter', 'secretary', 'ceo', 'professional')
+            
+            if user['role'] in SELLER_ROLES:
+                # Upsert en sellers
+                await db.pool.execute("""
+                    INSERT INTO sellers (user_id, tenant_id, first_name, last_name, email, is_active, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, TRUE, NOW())
+                    ON CONFLICT (user_id) DO UPDATE 
+                    SET is_active = TRUE, 
+                        updated_at = NOW(),
+                        first_name = EXCLUDED.first_name,
+                        last_name = EXCLUDED.last_name,
+                        email = EXCLUDED.email
+                """, uid, user['tenant_id'], user['first_name'], user['last_name'], user['email'])
+            
+            # Activate in professionals (Legacy/Dental fallback)
+            if user['role'] == 'professional':
+                await db.pool.execute("UPDATE professionals SET is_active = TRUE, updated_at = NOW() WHERE user_id = $1", uid)
         
     return {"status": "updated"}
 

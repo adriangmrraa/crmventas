@@ -530,6 +530,17 @@ class Database:
                     ALTER TABLE sellers ADD COLUMN phone_number VARCHAR(50);
                 END IF;
             END $$;
+            """,
+            # Parche 14: Backfill 'sellers' table for existing active users with relevant roles
+            """
+            DO $$ BEGIN 
+                INSERT INTO sellers (user_id, tenant_id, first_name, last_name, email, is_active, created_at, updated_at)
+                SELECT id, tenant_id, first_name, last_name, email, TRUE, NOW(), NOW()
+                FROM users 
+                WHERE status = 'active' 
+                AND role IN ('setter', 'closer', 'professional', 'ceo')
+                ON CONFLICT (user_id) DO NOTHING;
+            END $$;
             """
         ]
 

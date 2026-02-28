@@ -4,11 +4,18 @@ import json
 from datetime import datetime
 from typing import List, Tuple, Optional, Dict, Any
 
+from contextlib import asynccontextmanager
+
 POSTGRES_DSN = os.getenv("POSTGRES_DSN")
 
 class Database:
     def __init__(self):
         self.pool: Optional[asyncpg.Pool] = None
+
+    @asynccontextmanager
+    async def get_connection(self):
+        async with self.pool.acquire() as conn:
+            yield conn
 
     async def _init_connection(self, conn):
         """Registra codecs para JSON/JSONB en cada conexión del pool para soporte nativo de tipos Python."""
@@ -619,3 +626,16 @@ class Database:
             return await conn.execute(query, *args)
 
 db = Database()
+
+# SQLAlchemy AsyncSession for routes that require it (like notifications)
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+
+if POSTGRES_DSN:
+    engine = create_async_engine(POSTGRES_DSN, echo=False)
+    AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+@asynccontextmanager
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session

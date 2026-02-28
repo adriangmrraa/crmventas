@@ -16,9 +16,10 @@ import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
 import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
 import ProspectingView from './modules/crm_sales/views/ProspectingView';
-// Marketing Views
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
+// Optional Notifications Pages
+import NotificationsView from './views/NotificationsView';
 // Legal Pages
 import PrivacyTermsView from './views/PrivacyTermsView';
 import { AuthProvider } from './context/AuthContext';
@@ -105,6 +106,7 @@ function App() {
                             <MetaTemplatesView />
                           </ProtectedRoute>
                         } />
+                        <Route path="notificaciones" element={<NotificationsView />} />
                         <Route path="perfil" element={<ProfileView />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>

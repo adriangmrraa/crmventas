@@ -498,7 +498,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       {/* Footer */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <button
-          onClick={() => window.location.href = '/admin/core/notifications'}
+          onClick={() => window.location.href = '/notificaciones'}
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
         >
           {t('notifications.view_all')}
@@ -506,7 +506,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         </button>
 
         <button
-          onClick={() => window.location.href = '/admin/core/notifications/settings'}
+          onClick={() => window.location.href = '/configuracion?tab=notifications'}
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
         >
           <Settings size={14} />

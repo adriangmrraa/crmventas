@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, User, Plus, Info, Database, AlertTriangle, Clock } from 'lucide-react';
+import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, User, Plus, Info, Database, AlertTriangle, Clock, Bell } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
@@ -55,7 +56,9 @@ interface IntegrationConfig {
 export default function ConfigView() {
     const { t, setLanguage } = useTranslation();
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance'>('general');
+    const [searchParams] = useSearchParams();
+    const initialTab = (searchParams.get('tab') as any) || 'general';
+    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance' | 'notifications'>(initialTab);
 
     // General Settings State
     const [settings, setSettings] = useState<ClinicSettings | null>(null);
@@ -593,6 +596,25 @@ export default function ConfigView() {
         </div>
     );
 
+    const renderNotificationsTab = () => (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                    <Bell size={20} className="text-gray-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">Notificaciones</h2>
+                </div>
+                <p className="text-sm text-gray-500 mb-6">
+                    Módulo de configuraciones UI para notificaciones del sistema. (En construcción)
+                </p>
+                <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center min-h-[200px]">
+                    <Bell size={32} className="text-gray-300 mb-3" />
+                    <p className="text-gray-500 font-medium text-sm">Próximamente</p>
+                    <p className="text-gray-400 text-xs mt-1">Aquí se incluirán los ajustes globales de notificaciones para los agentes.</p>
+                </div>
+            </div>
+        </div>
+    );
+
     if (loading && !settings) {
         return (
             <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -652,6 +674,12 @@ export default function ConfigView() {
                                 <Key size={18} /> Otras
                             </button>
                             <button
+                                onClick={() => setActiveTab('notifications')}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'notifications' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-gray-500 hover:text-indigo-500 hover:border-indigo-200'}`}
+                            >
+                                <Bell size={18} /> Notificaciones
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('maintenance')}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'maintenance' ? 'border-amber-600 text-amber-600 font-semibold' : 'border-transparent text-gray-500 hover:text-amber-600 hover:border-amber-200'}`}
                             >
@@ -669,6 +697,7 @@ export default function ConfigView() {
                     {activeTab === 'ycloud' && user?.role === 'ceo' && renderYCloudTab()}
                     {activeTab === 'meta' && user?.role === 'ceo' && renderMetaTab()}
                     {activeTab === 'others' && user?.role === 'ceo' && renderOthersTab()}
+                    {activeTab === 'notifications' && user?.role === 'ceo' && renderNotificationsTab()}
                     {activeTab === 'maintenance' && user?.role === 'ceo' && renderMaintenanceTab()}
                 </div>
             </div>
@@ -743,6 +772,6 @@ export default function ConfigView() {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 }

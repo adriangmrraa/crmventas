@@ -7,6 +7,7 @@ from uuid import UUID
 from datetime import datetime, timedelta
 from db import db
 from core.security import get_resolved_tenant_id
+from services.seller_notification_service import seller_notification_service, Notification
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +73,13 @@ class SellerAssignmentService:
                 WHERE phone_number = $4 AND tenant_id = $5
             """, seller_id, source, str(assigned_by), phone, tenant_id)
             
-            # 5. Update seller metrics
+            # 5. Notify seller and CEO
+            await self._notify_assignment(phone, seller_id, seller.get('first_name', 'Vendedor'), tenant_id, source)
+            
+            # 6. Update seller metrics
             await self._update_seller_metrics(seller_id, tenant_id)
             
-            # 6. Log assignment event
+            # 7. Log assignment event
             await db.execute("""
                 INSERT INTO system_events 
                 (tenant_id, user_id, event_type, severity, message, payload)
@@ -492,6 +496,54 @@ class SellerAssignmentService:
         except Exception as e:
             logger.error(f"Error reassigning conversation: {e}")
             return {"success": False, "message": f"Error: {str(e)}"}
+
+    async def _notify_assignment(self, phone: str, seller_id: UUID, seller_name: str, tenant_id: int, source: str):
+        """
+        Send notification to the assigned seller and a global copy to the CEO.
+        """
+        try:
+            from datetime import datetime
+            timestamp = datetime.utcnow().timestamp()
+            
+            # 1. Notification for the Seller
+            seller_notif = Notification(
+                id=f"assign_{phone}_{seller_id}_{timestamp}",
+                tenant_id=tenant_id,
+                type="assignment",
+                title="🔔 Nuevo Lead Asignado",
+                message=f"Se te ha asignado un nuevo lead ({phone}) vía {source}",
+                priority="high",
+                recipient_id=str(seller_id),
+                related_entity_type="conversation",
+                related_entity_id=phone,
+                metadata={"phone": phone, "source": source}
+            )
+            
+            # 2. Notification for the CEO (Global Visibility)
+            ceo = await db.fetchrow("SELECT id FROM users WHERE tenant_id = $1 AND role = 'ceo' AND status = 'active' LIMIT 1", tenant_id)
+            notifications = [seller_notif]
+            
+            if ceo and str(ceo['id']) != str(seller_id):
+                ceo_notif = Notification(
+                    id=f"assign_ceo_{phone}_{seller_id}_{timestamp}",
+                    tenant_id=tenant_id,
+                    type="assignment",
+                    title="📢 Nueva Asignación (Global)",
+                    message=f"Lead {phone} asignado a {seller_name}",
+                    priority="medium",
+                    recipient_id=str(ceo['id']),
+                    related_entity_type="conversation",
+                    related_entity_id=phone,
+                    metadata={"phone": phone, "seller_id": str(seller_id), "seller_name": seller_name}
+                )
+                notifications.append(ceo_notif)
+            
+            # Save and Broadcast
+            await seller_notification_service.save_notifications(notifications)
+            await seller_notification_service.broadcast_notifications(notifications)
+            
+        except Exception as e:
+            logger.error(f"Error triggering assignment notifications: {e}")
 
 # Singleton instance
 seller_assignment_service = SellerAssignmentService()

@@ -29,6 +29,7 @@ from config import settings
 class Notification:
     """Estructura de una notificación"""
     id: str
+    tenant_id: int
     type: str  # 'unanswered', 'hot_lead', 'followup', 'assignment', 'metric_alert'
     title: str
     message: str
@@ -63,13 +64,16 @@ class SellerNotificationService:
             return
             
         try:
-            self.redis_client = redis.Redis(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT,
-                password=settings.REDIS_PASSWORD,
-                decode_responses=True
-            )
-            logger.info("Redis client initialized for notifications")
+            if getattr(settings, 'REDIS_URL', None):
+                self.redis_client = redis.Redis.from_url(
+                    settings.REDIS_URL,
+                    password=getattr(settings, 'REDIS_PASSWORD', None),
+                    decode_responses=True
+                )
+                logger.info("Redis client initialized from REDIS_URL")
+            else:
+                logger.warning("No REDIS_URL found in settings, using in-memory fallback")
+                self.redis_client = None
         except Exception as e:
             logger.warning(f"Could not connect to Redis: {e}. Using in-memory cache.")
             self.redis_client = None
@@ -113,6 +117,7 @@ class SellerNotificationService:
                 for row in rows:
                     notification = Notification(
                         id=f"unanswered_{row.conversation_id}_{datetime.utcnow().timestamp()}",
+                        tenant_id=tenant_id,
                         type="unanswered",
                         title="Conversación sin respuesta",
                         message=f"La conversación con {row.from_number} no tiene respuesta desde hace más de 1 hora",
@@ -143,6 +148,7 @@ class SellerNotificationService:
                         if ceo:
                             ceo_notification = Notification(
                                 id=f"unanswered_ceo_{row.conversation_id}_{datetime.utcnow().timestamp()}",
+                                tenant_id=tenant_id,
                                 type="unanswered",
                                 title="Conversación crítica sin respuesta",
                                 message=f"Conversación con {row.from_number} sin respuesta por más de 4 horas. Vendedor: {row.seller_name or 'Desconocido'}",
@@ -231,6 +237,7 @@ class SellerNotificationService:
                     if row.assigned_seller_id:
                         notification = Notification(
                             id=f"hot_lead_{row.lead_id}_{datetime.utcnow().timestamp()}",
+                            tenant_id=tenant_id,
                             type="hot_lead",
                             title="🔥 Lead Caliente",
                             message=f"{lead_name} muestra alto interés ({row.message_count} mensajes en 24h)",
@@ -262,6 +269,7 @@ class SellerNotificationService:
                         if ceo:
                             ceo_notification = Notification(
                                 id=f"hot_lead_ceo_{row.lead_id}_{datetime.utcnow().timestamp()}",
+                                tenant_id=tenant_id,
                                 type="hot_lead",
                                 title="🔥🔥 Lead Muy Caliente",
                                 message=f"{lead_name} ({row.phone_number}) - Score: {row.hot_score:.1f}",
@@ -344,6 +352,7 @@ class SellerNotificationService:
                     
                     notification = Notification(
                         id=f"followup_{row.conversation_id}_{datetime.utcnow().timestamp()}",
+                        tenant_id=tenant_id,
                         type="followup",
                         title="📅 Recordatorio de Follow-up",
                         message=f"Conversación con {row.from_number} - {days_since} día(s) sin contacto",
@@ -419,6 +428,7 @@ class SellerNotificationService:
                         # Notificar al vendedor
                         notification = Notification(
                             id=f"performance_{row.seller_id}_{datetime.utcnow().timestamp()}",
+                            tenant_id=tenant_id,
                             type="performance_alert",
                             title="📊 Alerta de Performance",
                             message=f"Áreas a mejorar: {', '.join(alerts)}",
@@ -447,6 +457,7 @@ class SellerNotificationService:
                             if ceo:
                                 ceo_notification = Notification(
                                     id=f"performance_ceo_{row.seller_id}_{datetime.utcnow().timestamp()}",
+                                    tenant_id=tenant_id,
                                     type="performance_alert",
                                     title="🚨 Performance Crítica",
                                     message=f"{seller_name}: Tiempo de respuesta > 1 hora ({row.response_time_avg:.1f} min)",
@@ -509,7 +520,7 @@ class SellerNotificationService:
     
     async def save_notifications(self, notifications: List[Notification]):
         """
-        Guardar notificaciones en base de datos
+        Guardar notificaciones en base de datos con límite de 1000 por usuario
         """
         if not notifications:
             return
@@ -520,11 +531,11 @@ class SellerNotificationService:
                     # Insertar en tabla de notificaciones
                     query = text("""
                         INSERT INTO notifications (
-                            id, type, title, message, priority, recipient_id, sender_id,
+                            id, tenant_id, type, title, message, priority, recipient_id, sender_id,
                             related_entity_type, related_entity_id, metadata, read,
                             created_at, expires_at
                         ) VALUES (
-                            :id, :type, :title, :message, :priority, :recipient_id, :sender_id,
+                            :id, :tenant_id, :type, :title, :message, :priority, :recipient_id, :sender_id,
                             :related_entity_type, :related_entity_id, :metadata, :read,
                             :created_at, :expires_at
                         )
@@ -535,6 +546,7 @@ class SellerNotificationService:
                     
                     await db.execute(query, {
                         "id": notification.id,
+                        "tenant_id": notification.tenant_id,
                         "type": notification.type,
                         "title": notification.title,
                         "message": notification.message,
@@ -548,9 +560,21 @@ class SellerNotificationService:
                         "created_at": notification.created_at,
                         "expires_at": notification.expires_at
                     })
+
+                    # Enforce 1000 message limit (FIFO)
+                    limit_query = text("""
+                        DELETE FROM notifications
+                        WHERE id IN (
+                            SELECT id FROM notifications
+                            WHERE recipient_id = :user_id
+                            ORDER BY created_at DESC
+                            OFFSET 1000
+                        )
+                    """)
+                    await db.execute(limit_query, {"user_id": notification.recipient_id})
                 
                 await db.commit()
-                logger.info(f"Saved {len(notifications)} notifications to database")
+                logger.info(f"Saved {len(notifications)} notifications to database (FIFO check applied)")
                 
         except Exception as e:
             logger.error(f"Error saving notifications: {e}")
@@ -597,14 +621,32 @@ class SellerNotificationService:
         except Exception as e:
             logger.error(f"Error broadcasting notifications: {e}")
     
-    async def get_user_notifications(self, user_id: str, limit: int = 50, unread_only: bool = False) -> List[Dict]:
+    async def get_user_notifications(
+        self, 
+        user_id: str, 
+        role: str = 'setter',
+        tenant_id: int = 1,
+        limit: int = 50, 
+        offset: int = 0,
+        unread_only: bool = False,
+        filter_seller_id: Optional[str] = None
+    ) -> List[Dict]:
         """
-        Obtener notificaciones para un usuario
+        Obtener notificaciones para un usuario con soporte para CEO global view y paginación
         """
         try:
             async with get_db() as db:
-                where_clause = "WHERE recipient_id = :user_id"
-                params = {"user_id": user_id, "limit": limit}
+                # Si es CEO, puede ver todas las notificaciones del tenant
+                if role == 'ceo':
+                    where_clause = "WHERE tenant_id = :tenant_id"
+                    params = {"tenant_id": tenant_id, "limit": limit, "offset": offset}
+                    
+                    if filter_seller_id:
+                        where_clause += " AND recipient_id = :filter_seller_id"
+                        params["filter_seller_id"] = filter_seller_id
+                else:
+                    where_clause = "WHERE recipient_id = :user_id"
+                    params = {"user_id": user_id, "limit": limit, "offset": offset}
                 
                 if unread_only:
                     where_clause += " AND read = false"
@@ -624,7 +666,7 @@ class SellerNotificationService:
                             WHEN 'low' THEN 4
                         END,
                         created_at DESC
-                    LIMIT :limit
+                    LIMIT :limit OFFSET :offset
                 """)
                 
                 result = await db.execute(query, params)
@@ -791,6 +833,7 @@ class SellerNotificationService:
                     
                     notification = Notification(
                         id=f"daily_report_{tenant_id}_{datetime.utcnow().strftime('%Y%m%d')}",
+                        tenant_id=tenant_id,
                         type="metric_alert",
                         title="📈 Reporte Diario CEO",
                         message=message,

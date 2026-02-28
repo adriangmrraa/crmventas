@@ -58,17 +58,23 @@ class RunChecksResponse(BaseModel):
 async def get_notifications(
     current_user: dict = Depends(get_current_user),
     limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     unread_only: bool = False,
+    seller_id: Optional[str] = None,
     db=Depends(get_db)
 ):
     """
-    Obtener notificaciones del usuario actual
+    Obtener notificaciones del usuario actual (o de otro vendedor si es CEO)
     """
     try:
         notifications = await notification_service.get_user_notifications(
             user_id=current_user["id"],
+            role=current_user.get("role", "setter"),
+            tenant_id=current_user.get("tenant_id", 1),
             limit=limit,
-            unread_only=unread_only
+            offset=offset,
+            unread_only=unread_only,
+            filter_seller_id=seller_id
         )
         return notifications
     except Exception as e:
@@ -80,12 +86,14 @@ async def get_notification_count(
     db=Depends(get_db)
 ):
     """
-    Obtener conteo de notificaciones no leídas
+    Obtener conteo de notificaciones no leídas (aislado por tenant_id)
     """
     try:
-        async with db as database:
-            result = await database.execute(
-                "SELECT * FROM unread_notifications_count WHERE user_id = :user_id",
+        # Usamos el tenant_id del usuario para el conteo si es que la vista no lo filtra
+        # Pero la vista 'unread_notifications_count' agrupa por recipient_id, que es único globalmente (UUID)
+        async with db.begin():
+            result = await db.execute(
+                text("SELECT * FROM unread_notifications_count WHERE user_id = :user_id"),
                 {"user_id": current_user["id"]}
             )
             row = result.fetchone()
@@ -98,10 +106,7 @@ async def get_notification_count(
                     medium=row.medium_count,
                     low=row.low_count
                 )
-            else:
-                return NotificationCountResponse(
-                    total=0, critical=0, high=0, medium=0, low=0
-                )
+            return NotificationCountResponse(total=0, critical=0, high=0, medium=0, low=0)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting notification count: {str(e)}")
 

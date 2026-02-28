@@ -249,7 +249,49 @@ class Database:
             END $$;
             """,
 
-            # Parche 8: Pipeline de Ventas (Opportunities, Transactions & Clients)
+            # Parche 8: Notifications 2.0 Schema
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'notifications') THEN
+                    CREATE TABLE notifications (
+                        id VARCHAR(255) PRIMARY KEY,
+                        tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+                        type VARCHAR(100) NOT NULL,
+                        title VARCHAR(255) NOT NULL,
+                        message TEXT NOT NULL,
+                        priority VARCHAR(50) DEFAULT 'medium',
+                        recipient_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                        sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                        related_entity_type VARCHAR(100),
+                        related_entity_id VARCHAR(255),
+                        metadata JSONB,
+                        read BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        expires_at TIMESTAMPTZ
+                    );
+                    CREATE INDEX idx_notifications_recipient_tenant ON notifications(recipient_id, tenant_id, created_at DESC);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='notifications' AND column_name='tenant_id') THEN
+                    ALTER TABLE notifications ADD COLUMN tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE;
+                END IF;
+
+                -- View for unread counts
+                IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_name = 'unread_notifications_count') THEN
+                    CREATE VIEW unread_notifications_count AS
+                    SELECT 
+                        recipient_id as user_id,
+                        COUNT(*) as count,
+                        COUNT(*) FILTER (WHERE priority = 'critical') as critical_count,
+                        COUNT(*) FILTER (WHERE priority = 'high') as high_count,
+                        COUNT(*) FILTER (WHERE priority = 'medium') as medium_count,
+                        COUNT(*) FILTER (WHERE priority = 'low') as low_count
+                    FROM notifications
+                    WHERE read = FALSE
+                    GROUP BY recipient_id;
+                END IF;
+            END $$;
+            """,
+            # Parche 9: Pipeline de Ventas (Opportunities, Transactions & Clients)
             """
             DO $$ BEGIN
                 IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'clients') THEN
@@ -527,9 +569,68 @@ class Database:
             await conn.execute(query, provider, provider_message_id, error)
 
     async def append_chat_message(self, from_number: str, role: str, content: str, correlation_id: str, tenant_id: int = 1):
-        query = "INSERT INTO chat_messages (from_number, role, content, correlation_id, tenant_id) VALUES ($1, $2, $3, $4, $5)"
+        """Append a chat message and trigger notifications for leads."""
         async with self.pool.acquire() as conn:
+            # 1. Insert message
+            query = "INSERT INTO chat_messages (from_number, role, content, correlation_id, tenant_id) VALUES ($1, $2, $3, $4, $5)"
             await conn.execute(query, from_number, role, content, correlation_id, tenant_id)
+            
+            # 2. Trigger Notification if it's a message FROM the USER (lead)
+            if role == "user":
+                try:
+                    # Get assigned seller and lead info
+                    row = await conn.fetchrow("""
+                        SELECT assigned_seller_id, first_name, last_name 
+                        FROM chat_messages cm
+                        LEFT JOIN leads l ON cm.from_number = l.phone_number AND cm.tenant_id = l.tenant_id
+                        WHERE cm.from_number = $1 AND cm.tenant_id = $2
+                        AND cm.assigned_seller_id IS NOT NULL
+                        ORDER BY cm.created_at DESC LIMIT 1
+                    """, from_number, tenant_id)
+                    
+                    if row:
+                        from services.seller_notification_service import seller_notification_service, Notification
+                        import datetime
+                        timestamp = datetime.datetime.utcnow().timestamp()
+                        lead_name = f"{row['first_name'] or ''} {row['last_name'] or ''}".strip() or from_number
+                        
+                        # Notification for Seller
+                        notif_seller = Notification(
+                            id=f"msg_{from_number}_{timestamp}",
+                            tenant_id=tenant_id,
+                            type="unanswered",
+                            title="💬 Nuevo mensaje de Lead",
+                            message=f"{lead_name}: {content[:50]}...",
+                            priority="high",
+                            recipient_id=str(row['assigned_seller_id']),
+                            related_entity_type="conversation",
+                            related_entity_id=from_number,
+                            metadata={"phone": from_number, "preview": content[:100]}
+                        )
+                        
+                        # Notification for CEO
+                        ceo = await conn.fetchrow("SELECT id FROM users WHERE tenant_id = $1 AND role = 'ceo' AND status = 'active' LIMIT 1", tenant_id)
+                        notifications = [notif_seller]
+                        
+                        if ceo and str(ceo['id']) != str(row['assigned_seller_id']):
+                            notif_ceo = Notification(
+                                id=f"msg_ceo_{from_number}_{timestamp}",
+                                tenant_id=tenant_id,
+                                type="unanswered",
+                                title="📢 Actividad Lead (Global)",
+                                message=f"{lead_name} envió un mensaje. Asignado a: (Seller ID: {row['assigned_seller_id']})",
+                                priority="medium",
+                                recipient_id=str(ceo['id']),
+                                related_entity_type="conversation",
+                                related_entity_id=from_number,
+                                metadata={"phone": from_number, "seller_id": str(row['assigned_seller_id'])}
+                            )
+                            notifications.append(notif_ceo)
+                            
+                        await seller_notification_service.save_notifications(notifications)
+                        await seller_notification_service.broadcast_notifications(notifications)
+                except Exception as e:
+                    logger.error(f"Error triggering message notification: {e}")
 
     async def ensure_lead_exists(
         self,

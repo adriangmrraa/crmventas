@@ -75,7 +75,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await api.get('/notifications/count');
+      const response = await api.get('/admin/core/notifications/count');
       setNotificationCount(response.data);
       setLastUpdated(new Date());
 
@@ -89,7 +89,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const markAllAsRead = async () => {
     try {
-      await api.post('/notifications/read-all');
+      await api.post('/admin/core/notifications/read-all');
 
       // Refresh count según el método que estemos usando
       if (usingSocket && socketConnected) {
@@ -250,7 +250,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
           />
 
           {/* Center Container */}
-          <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[80vh] overflow-hidden">
+          <div className="fixed sm:absolute top-16 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[calc(100vh-5rem)] sm:max-h-[80vh] flex flex-col overflow-hidden">
             <NotificationCenter
               onClose={handleCloseCenter}
               onNotificationRead={handleNotificationRead}

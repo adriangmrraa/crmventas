@@ -137,8 +137,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3">
               {/* Notification Bell */}
-              <NotificationBell className="hidden sm:block" />
-              
+              <NotificationBell className="block" />
+
               <div className="hidden xs:flex flex-col items-end">
                 <span className="text-xs lg:text-sm font-medium text-medical-900">{user?.email?.split('@')[0]}</span>
                 <span className="text-[10px] lg:text-xs text-secondary uppercase leading-none">{user?.role}</span>

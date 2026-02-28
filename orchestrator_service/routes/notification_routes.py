@@ -12,7 +12,7 @@ from core.security import get_current_user
 from services.seller_notification_service import notification_service
 from db import get_db
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(prefix="/admin/core/notifications", tags=["notifications"])
 
 # Models
 class NotificationResponse(BaseModel):

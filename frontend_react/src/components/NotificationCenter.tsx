@@ -90,7 +90,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await api.get('/notifications', {
+      const response = await api.get('/admin/core/notifications', {
         params: {
           limit: 50,
           unread_only: filter === 'unread'
@@ -100,7 +100,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       setNotifications(response.data);
 
       // Also update count
-      const countResponse = await api.get('/notifications/count');
+      const countResponse = await api.get('/admin/core/notifications/count');
       setNotificationCount(countResponse.data);
 
     } catch (err: any) {
@@ -133,7 +133,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         });
       } else {
         // Usar API tradicional
-        await api.post('/notifications/read', {
+        await api.post('/admin/core/notifications/read', {
           notification_id: notificationId
         });
       }
@@ -306,8 +306,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
               </p>
               {usingSocket && (
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${socketConnected
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                   }`}>
                   {socketConnected ? <Wifi size={10} /> : <WifiOff size={10} />}
                   {socketConnected ? t('notifications.real_time_updates') : t('notifications.socket_disconnected')}
@@ -349,8 +349,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={() => setFilter('unread')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'unread'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
           >
             {t('notifications.unread')} ({notificationCount.total})
@@ -358,8 +358,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'all'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
           >
             {t('notifications.all')}
@@ -498,7 +498,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       {/* Footer */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <button
-          onClick={() => window.location.href = '/notifications'}
+          onClick={() => window.location.href = '/admin/core/notifications'}
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
         >
           {t('notifications.view_all')}
@@ -506,7 +506,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         </button>
 
         <button
-          onClick={() => window.location.href = '/notifications/settings'}
+          onClick={() => window.location.href = '/admin/core/notifications/settings'}
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
         >
           <Settings size={14} />

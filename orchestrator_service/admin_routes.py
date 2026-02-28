@@ -419,8 +419,11 @@ async def get_credentials(tenant_id_filter: Optional[int] = None, include_integr
     return [dict(r) for r in rows]
 
 @router.post("/credentials", dependencies=[Depends(verify_admin_token)], tags=["Configuración"])
-async def save_credential(payload: CredentialItem, tenant_id: int = Depends(get_resolved_tenant_id)):
+async def save_credential(payload: CredentialItem, tenant_id: int = Depends(get_resolved_tenant_id), user_data=Depends(verify_admin_token)):
     """Guarda o actualiza una credencial cruda para un tenant. Solo para la pestaña 'Otras'."""
+    if user_data.role != "ceo":
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
     try:
         await save_tenant_credential(tenant_id, payload.name, payload.value, payload.category)
         return {"status": "ok"}

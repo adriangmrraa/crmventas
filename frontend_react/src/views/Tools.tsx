@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import { Modal } from '../components/Modal';
-import { Wrench, Plus, Settings } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Tool {
     name: string;
@@ -12,6 +13,7 @@ interface Tool {
 
 export const Tools: React.FC = () => {
     const { fetchApi } = useApi();
+    const { t } = useTranslation();
     const [tools, setTools] = useState<Tool[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState<Tool>({ name: '', type: 'http', service_url: '', config: {} });
@@ -105,7 +107,7 @@ export const Tools: React.FC = () => {
                         </div>
                     )}
                     <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                        <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                        <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>{t('common.cancel')}</button>
                         <button type="submit" className="btn-primary">Crear Herramienta</button>
                     </div>
                 </form>

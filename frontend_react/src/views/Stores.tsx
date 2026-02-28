@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import { Modal } from '../components/Modal';
-import { Store, ShoppingBag, Plus, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingBag, Plus, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Tenant {
     id?: number;
@@ -15,6 +16,7 @@ interface Tenant {
 
 export const Stores: React.FC = () => {
     const { fetchApi } = useApi();
+    const { t } = useTranslation();
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -32,7 +34,7 @@ export const Stores: React.FC = () => {
         try {
             const data = await fetchApi('/admin/core/tenants');
             setTenants(data);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
         }
     };
@@ -47,7 +49,7 @@ export const Stores: React.FC = () => {
             await fetchApi('/admin/core/tenants', { method: 'POST', body: formData });
             setIsModalOpen(false);
             loadTenants();
-        } catch (e) {
+        } catch (e: any) {
             alert('Error al guardar tienda: ' + e.message);
         }
     };
@@ -57,7 +59,7 @@ export const Stores: React.FC = () => {
         try {
             await fetchApi(`/admin/core/tenants/${phone}`, { method: 'DELETE' });
             loadTenants();
-        } catch (e) {
+        } catch (e: any) {
             alert('Error al eliminar: ' + e.message);
         }
     }
@@ -178,7 +180,7 @@ export const Stores: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                        <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                        <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>{t('common.cancel')}</button>
                         <button type="submit" className="btn-primary">Guardar Tienda</button>
                     </div>
                 </form>

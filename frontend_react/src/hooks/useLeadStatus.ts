@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { leadStatusApi, LeadStatus, LeadStatusTransition, LeadStatusHistoryItem } from '../api/leadStatus';
+import { leadStatusApi } from '../api/leadStatus';
+import type { LeadStatus, LeadStatusTransition, LeadStatusHistoryItem } from '../api/leadStatus';
 import toast from 'react-hot-toast';
 
 /**

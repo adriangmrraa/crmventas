@@ -215,6 +215,21 @@ async def update_lead(
 ):
     """Update a lead's information"""
     tenant_id = context["tenant_id"]
+    role = context.get("role") or context.get("user_role") or ""
+    user_id = context.get("user_id") or context.get("id")
+    
+    # Ownership Check: Setters and Closers can only edit their assigned leads
+    if role in ["setter", "closer"]:
+        existing_lead = await db.pool.fetchrow(
+            "SELECT assigned_seller_id FROM leads WHERE id = $1 AND tenant_id = $2",
+            lead_id, tenant_id
+        )
+        if not existing_lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
+            
+        assigned_id = existing_lead["assigned_seller_id"]
+        if not assigned_id or str(assigned_id) != str(user_id):
+            raise HTTPException(status_code=403, detail="No tienes permiso para editar este Lead")
     
     # Build dynamic UPDATE query
     updates = []

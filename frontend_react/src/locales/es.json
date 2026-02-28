@@ -17,8 +17,6 @@
     "expand": "Expandir",
     "collapse": "Contraer",
     "app_name": "CRM Ventas",
-    "app_name_crm": "CRM Ventas",
-    "companies": "Empresas",
     "sellers": "Vendedores",
     "clients": "Clientes",
     "prospecting": "Prospección",
@@ -220,13 +218,9 @@
     "datetime_required": "Indicá fecha y hora de inicio y fin",
     "end_after_start": "La hora de fin debe ser posterior a la de inicio",
     "save_error": "Error al guardar",
-    "title": "Título",
     "title_placeholder": "Ej: Llamada con cliente, Reunión",
     "start": "Inicio",
     "end": "Fin",
-    "notes": "Notas",
-    "notes_placeholder": "Notas opcionales...",
-    "save": "Guardar",
     "cancel_event": "Cancelar evento",
     "alert_past_date": "No se pueden crear eventos en fechas u horarios pasados."
   },
@@ -338,7 +332,6 @@
     "save_and_link": "Guardar y vincular",
     "error_process": "Error al procesar la solicitud.",
     "error_load_pro": "No se pudieron cargar los datos del profesional.",
-    "error_save": "Error al guardar.",
     "select_sede": "Seleccioná una sede.",
     "error_link_sede": "Error al vincular a sede.",
     "error_load_users": "No se pudieron cargar los usuarios. Asegurarse de tener permisos de CEO.",
@@ -401,9 +394,7 @@
     "no_name": "Sin Nombre",
     "edit_profile_schedules": "Editar perfil y horarios",
     "license_placeholder": "MN 12345",
-    "phone_edit_placeholder": "+54 9...",
-    "google_calendar_id": "ID Calendario (Google)",
-    "google_calendar_id_placeholder": "Ej: primary o email@resource.calendar.google.com"
+    "phone_edit_placeholder": "+54 9..."
   },
   "roles": {
     "ceo": "Director / CEO",
@@ -538,7 +529,6 @@
     "all_statuses": "Todos los estados",
     "status_active": "Activo",
     "status_inactive": "Inactivo",
-    "client": "Cliente",
     "contact": "Contacto",
     "status": "Estado",
     "date_added": "Fecha alta",
@@ -898,9 +888,7 @@
       "s2_body": "La integración con Meta Ads y WhatsApp depende de los términos y condiciones de Meta Platforms, Inc. No nos hacemos responsables por interrupciones de servicio causadas por plataformas externas.",
       "s3_title": "3. Terminación",
       "s3_body": "Puedes revocar el acceso a tus datos en cualquier momento a través del panel de configuración de Meta o dentro de nuestra plataforma en la sección de Marketing."
-    }
-  },
-  "leads": {
+    },
     "status_selector": {
       "comment_required": "Este estado requiere un comentario obligatorio:",
       "reason_placeholder": "Escribe la razón...",

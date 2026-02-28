@@ -15,6 +15,8 @@
     "expand": "Expandir",
     "collapse": "Contraer",
     "app_name": "CRM Ventas",
+    "app_name_crm": "CRM Sales",
+    "app_name_Crm": "CRM Sales",
     "prospecting": "Prospección",
     "marketing": "Marketing Hub",
     "hsm_automation": "HSM Automation"
@@ -386,7 +388,6 @@
     "availability": "Disponibilidad",
     "availability_help": "Intervalos para el bot de IA por WhatsApp.",
     "remove": "Quitar",
-    "add_schedule": "Agregar horario",
     "slots": "slots",
     "close_aria": "Cerrar",
     "suspended": "Suspendido",
@@ -725,7 +726,7 @@
   },
   "layout": {
     "app_title": "Sistema Dental",
-    "app_title_crm": "CRM Ventas",
+    "app_title_crm": "CRM Sales",
     "branch": "Sucursal",
     "branch_principal": "Principal",
     "entity": "Entidad",

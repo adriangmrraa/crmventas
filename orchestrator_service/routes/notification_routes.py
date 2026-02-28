@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
+from sqlalchemy import text
 
 from core.security import get_current_user
 from services.seller_notification_service import notification_service

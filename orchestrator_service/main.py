@@ -141,6 +141,17 @@ try:
 except Exception as e:
     logger.error(f"❌ Could not mount Meta Ads Marketing routes: {e}", exc_info=True)
 
+# Google Ads Marketing Routes
+try:
+    from routes.google_auth import router as google_auth_router
+    from routes.google_ads_routes import router as google_ads_routes_router
+    
+    app.include_router(google_auth_router, prefix="/crm/auth/google", tags=["Google OAuth"])
+    app.include_router(google_ads_routes_router, prefix="/crm/marketing", tags=["Google Ads"])
+    logger.info("✅ Google Ads Marketing API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Google Ads Marketing routes: {e}", exc_info=True)
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 

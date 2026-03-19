@@ -134,7 +134,7 @@ Capa 3: tenant_id (aislamiento de datos)
 
 ### Cómo funcionan las migraciones
 
-**No hay Alembic ni nada raro.** Las migraciones están en `orchestrator_service/db.py` como bloques `DO $$` idempotentes. Cuando el backend arranca:
+**No hay Alembic, pero deberias implementarlo.** Las migraciones están en `orchestrator_service/db.py` como bloques `DO $$` idempotentes. Cuando el backend arranca:
 
 1. Crea el pool de conexiones
 2. Verifica si existen las tablas core
@@ -253,7 +253,7 @@ Capa 3: tenant_id (aislamiento de datos)
 Toda query SQL tiene que tener `WHERE tenant_id = $x`. Sin excepciones. Es la base del multi-tenancy. Si te lo olvidás, un tenant ve datos de otro.
 
 ### 2. NUNCA ejecutar SQL directo
-Los cambios de schema van como patches idempotentes en `db.py`. Usás bloques `DO $$ BEGIN IF NOT EXISTS... END $$`. Así el sistema se auto-migra al arrancar sin romper nada.
+Los cambios de schema van como patches idempotentes en `db.py`. Usás bloques `DO $$ BEGIN IF NOT EXISTS... END $$`. Así el sistema se auto-migra al arrancar sin romper nada. AQUI DEBERIAS USAR ALEMBIC, OSEA IMPLEMENTARLO.
 
 ### 3. SIEMPRE usar t('key') para textos
 El frontend soporta español, inglés y francés. Cualquier string visible al usuario tiene que usar `useTranslation()` y `t('namespace.key')`. Agregás la clave en los 3 archivos JSON.
@@ -262,7 +262,7 @@ El frontend soporta español, inglés y francés. Cualquier string visible al us
 El layout usa `h-screen overflow-hidden` en el root. Las vistas usan `flex-1 min-h-0 overflow-y-auto`. Si no respetás esto, el scroll se rompe en mobile.
 
 ### 5. No commitear secretos
-Nada de `.env`, API keys, tokens ni credenciales en el repo. Las credenciales van en el Vault (tabla `credentials`, encriptadas con Fernet).
+Nada de `.env`, API keys, tokens ni credenciales en el repo. Las credenciales van en el Vault (tabla `credentials`, encriptadas con Fernet) y se cargan desde la ui.
 
 ---
 
@@ -338,4 +338,4 @@ Si necesitás más detalle (cada endpoint con sus params, cada tabla con sus col
 
 ---
 
-*Cualquier duda, preguntale a la IA con el contexto cargado. Para eso están las skills.*
+*Cualquier duda, preguntale a la IA con el contexto cargado. Para eso están las skills. Cuando hagas una modificacion estructural como ALEMBIC, tenes que actualizar skills, workflows y documentacion relacionada a la base de datos*

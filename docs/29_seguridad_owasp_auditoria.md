@@ -1,6 +1,6 @@
 # Auditoría de seguridad según OWASP Top 10 (referencia 2025)
 
-Este documento mapea el estado de seguridad del proyecto Dentalogic frente al estándar **OWASP Top 10** (edición 2025) y describe las medidas aplicadas o recomendadas. No sustituye una auditoría externa; sirve como línea base y checklist interno.
+Este documento mapea el estado de seguridad del proyecto CRM Ventas frente al estándar **OWASP Top 10** (edición 2025) y describe las medidas aplicadas o recomendadas. No sustituye una auditoría externa; sirve como línea base y checklist interno.
 
 **Referencia:** [OWASP Top 10:2025](https://owasp.org/Top10/2025/)
 
@@ -139,7 +139,7 @@ La tabla `credentials` ahora usa encriptación simétrica **AES-256 (Fernet)** c
 
 ---
 
-## Estado por categoría (Dentalogic)
+## Estado por categoría (CRM Ventas)
 
 ### 1. Sesión y Autenticación (Nexus v7.7.1)
 - **Cookies HttpOnly**: El JWT no es accesible vía JS.

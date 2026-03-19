@@ -44,9 +44,8 @@ def sync():
         # Simple table reconstruction
         new_table = ["| Skill Name | Trigger | Descripción |\n", "| :--- | :--- | :--- |\n"]
         for name, desc, trigger, path in sorted(skills):
-            rel_path = path.replace("\\", "/") # Normalize for markdown links
-            abs_path = os.path.abspath(path).replace("\\", "/")
-            new_table.append(f"| **[{name}](file:///{abs_path})** | `{trigger}` | {desc} |\n")
+            rel_path = os.path.relpath(path, os.path.dirname(AGENTS_FILE)).replace("\\", "/")
+            new_table.append(f"| **[{name}]({rel_path})** | `{trigger}` | {desc} |\n")
         
         # Replace the old table (assuming it ends at a horizontal rule or end of file)
         for i in range(start_idx, len(lines)):

@@ -6,16 +6,17 @@ description: Scaffolding automático para nuevos proyectos Antigravity. Vincula 
 
 1.  **Preguntar Nombre**: Solicita el nombre del proyecto.
 2.  **Crear Directorio**: `mkdir [NombreProyecto]`.
-3.  **Vinculación Híbrida (Local + Global)**:
-    - // turbo
-      `mkdir .agent\workflows, .agent\skills -Force`
-    - // turbo
-      `New-Item -ItemType Junction -Path ".agent\workflows\global" -Value "$GLOBAL_AGENT_PATH\workflows" -Force`
-    - // turbo
-      `New-Item -ItemType Junction -Path ".agent\skills\global" -Value "$GLOBAL_AGENT_PATH\skills" -Force`
-4.  **Constitución Global (Vínculo Directo)**:
-    - // turbo
-      `New-Item -ItemType HardLink -Path ".antigravity_rules" -Value "$GLOBAL_AGENT_PATH\.antigravity_rules" -Force`
+3.  **Crear estructura de directorios**:
+    ```bash
+    mkdir -p .agent/workflows .agent/skills
+    ```
+4.  **Copiar reglas globales (si existen)**:
+    ```bash
+    # Copiar desde el proyecto base si se dispone de uno
+    cp -r ../base_agent/workflows/* .agent/workflows/ 2>/dev/null || echo "No global workflows found, starting fresh."
+    cp -r ../base_agent/skills/* .agent/skills/ 2>/dev/null || echo "No global skills found, starting fresh."
+    cp ../base_agent/.antigravity_rules .antigravity_rules 2>/dev/null || echo "No global rules found."
+    ```
 5.  **Contextualización Inmediata**:
     - **Acción del Agente**: Debes leer e interpretar obligatoriamente los archivos de reglas globales para asegurar consistencia arquitectónica.
 6.  **Estructura de Carpetas**:

@@ -6,7 +6,7 @@ scope: "AGENTS"
 auto-invoke: true
 ---
 
-# Agent Configuration Architect - Dentalogic (v7.1.2)
+# Agent Configuration Architect - CRM Ventas (v7.1.2)
 
 ## 1. Concepto: La Arquitectura de Agentes Nexus
 
@@ -23,7 +23,7 @@ Nexus no usa un único system prompt estático. Utiliza una arquitectura de **3 
 
 Los valores predeterminados para el Wizard se definen en `orchestrator_service/app/api/agents.py` → `AGENT_TEMPLATES`.
 
-### Ejemplo: Sales Agent (Pointe Coach inspired)
+### Ejemplo: Sales Agent (Real Estate CRM)
 ```python
 AGENT_TEMPLATES = {
     "sales": {
@@ -32,11 +32,11 @@ AGENT_TEMPLATES = {
         "model_version": "gpt-4o",
         "temperature": 0.7,
         "defaultValue": {
-            "agent_tone": "Sos una asesora experta en danza clásica... usamos voseo argentino...",
-            "synonym_dictionary": "mallas: Leotardos\ncancanes: Medias...",
-            "business_rules": "1. Prioridad: Venta asistida...\n2. Fitting: Ofrecer siempre para puntas...",
-            "catalog_knowledge": "Categorías: Zapatillas, Medias, Leotardos, Accesorios.",
-            "store_website": "https://pointecoach.com"
+            "agent_tone": "Sos un asesor comercial experto en ventas... usamos voseo argentino, tono profesional y cercano...",
+            "synonym_dictionary": "propiedad: Inmueble\ncotización: Presupuesto...",
+            "business_rules": "1. Prioridad: Calificación del lead antes de agendar reunión...\n2. Seguimiento: Contactar dentro de las primeras 2 horas...",
+            "catalog_knowledge": "Servicios: Consultoría, Demos, Planes Enterprise, Soporte Premium.",
+            "store_website": "https://crm-ventas.com"
         }
     }
 }
@@ -91,7 +91,7 @@ El Orchestrator inyecta variables en el prompt antes de enviarlo al `agent_servi
 
 ## 5. El Proceso de "Trasplante" de Templates
 
-Cuando integres un agente de un proyecto legacy o una configuración compleja (como Pointe Coach), utilizá la técnica de **Distribución Multi-Capa**:
+Cuando integres un agente de un proyecto legacy o una configuración compleja, utilizá la técnica de **Distribución Multi-Capa**:
 
 | Componente | Ubicación en Código | Propósito |
 | :--- | :--- | :--- |

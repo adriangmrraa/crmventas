@@ -6,7 +6,7 @@ scope: "SECURITY"
 auto-invoke: true
 ---
 
-# Credential Vault Specialist - Dentalogic
+# Credential Vault Specialist - CRM Ventas
 
 ## 1. Concepto: The Sovereign Vault
 

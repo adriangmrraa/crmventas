@@ -1,6 +1,6 @@
 # Guía de Flujo de Trabajo y Colaboración
 
-Este documento detalla cómo trabajar efectivamente en el proyecto **Dentalogic** (Nexus v7.6), asegurando éxito, estabilidad y escalabilidad.
+Este documento detalla cómo trabajar efectivamente en el proyecto **CRM Ventas** (Nexus Core), asegurando éxito, estabilidad y escalabilidad.
 
 ## 1. Ciclo de Vida de una Tarea
 
@@ -63,10 +63,10 @@ git push origin feature/nueva-funcionalidad
 - **Arquitectura:** actualiza `docs/01_architecture.md`
 - **Configuración:** actualiza `docs/02_environment_variables.md`
 - **Despliegue:** actualiza `docs/03_deployment_guide.md`
-- **Persona/Reglas:** actualiza `docs/04_agent_logic_and_persona.md`
 - **Desarrollo:** actualiza `docs/05_developer_notes.md`
-- **Prompt:** actualiza `docs/06_ai_prompt_template.md`
-- **Estado detallado (endpoints, frontend, BD):** actualiza `docs/AUDIT_ESTADO_PROYECTO.md`
+- **Background Jobs:** actualiza `docs/08_background_jobs_guide.md`
+- **Notificaciones:** actualiza `docs/09_real_time_notifications.md`
+- **Dashboard CEO:** actualiza `docs/10_ceo_dashboard_guide.md`
 - **Idioma UI y agente:** ver README (Idiomas) y `docs/SPECS_IMPLEMENTADOS_INDICE.md`
 - **Landing / demo pública:** ver README (Landing / Demo) y `docs/SPECS_IMPLEMENTADOS_INDICE.md`
 - **Contexto para otra IA:** actualiza `docs/CONTEXTO_AGENTE_IA.md` (punto de entrada para agentes en otra conversación)
@@ -157,4 +157,4 @@ Usuario recibe mensajes
 
 ---
 
-*Guía de Flujo de Trabajo Dentalogic © 2026*
+*Guía de Flujo de Trabajo CRM Ventas © 2026*

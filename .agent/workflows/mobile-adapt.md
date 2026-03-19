@@ -1,5 +1,5 @@
 ---
-description: "Workflow para adaptar páginas de Dentalogic a mobile de forma segura y estética."
+description: "Workflow para adaptar páginas de CRM Ventas a mobile de forma segura y estética."
 ---
 
 # Workflow: /mobile-adapt (Nexus Standardization)
@@ -23,7 +23,6 @@ Este workflow guía al agente para transformar una vista de escritorio en una ex
 - Transformar tablas de datos en "Cards" apilables para mobile.
 
 ### 4. Verificación Non-Destructive
-// turbo
 - Comprobar que todos los cambios en mobile usen clases base y que los estilos originales de escritorio tengan el prefijo `lg:`.
 - Simular vista mobile (375px) y desktop (1440px).
 

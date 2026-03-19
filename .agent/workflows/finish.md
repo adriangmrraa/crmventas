@@ -9,7 +9,7 @@ Protocolo de cierre profesional para cada feature implementada.
 1.  **Limpieza de Workspace**:
     - Elimina archivos temporales o logs de depuración.
 2.  **Registro de Memoria**:
-    - Invoca a `@agent-memory-mcp` para archivar el éxito del proyecto.
+    - Registra el resultado del sprint en `.agent/memory/project_history.json` (o crea el archivo si no existe).
     - Actualiza el historial de hitos en `.project_memory.json`.
 3.  **Resumen de Entrega**:
     - Muestra al usuario el impacto: "Feature X implementada con [X] tests pasados y [X] de deuda técnica corregida".

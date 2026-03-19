@@ -1,6 +1,6 @@
 # Guía para Desarrolladores - Mantenimiento y Extensión
 
-Este documento contiene tips técnicos para mantener, debugear y extender **Dentalogic**, la plataforma de gestión clínica dental.
+Este documento contiene tips técnicos para mantener, debugear y extender **CRM Ventas** (Nexus Core), la plataforma multi-tenant de CRM de ventas.
 
 ## 1. Agregar una Nueva Herramienta (Tool)
 
@@ -26,7 +26,7 @@ Busca la lista `tools` y agrega la referencia.
 
 ## 2. Paginación y Carga Incremental de Mensajes
 
-Para optimizar el rendimiento en conversaciones extensas, Dentalogic utiliza un sistema de carga bajo demanda en `ChatsView.tsx`:
+Para optimizar el rendimiento en conversaciones extensas, CRM Ventas utiliza un sistema de carga bajo demanda en `ChatsView.tsx`:
 - **Backend (Admin API)**: Soporta parámetros `limit` (default 50) y `offset` para consultas SQL (`LIMIT $2 OFFSET $3`).
 - **Frontend**: Utiliza el estado `messageOffset` para gestionar qué bloque de mensajes solicitar. Los nuevos mensajes se concatenan al principio del array `messages` preservando la cronología.
 
@@ -86,7 +86,7 @@ En despliegues iniciales, el sistema auto-activa al primer `ceo` registrado para
 
 ---
 
-*Guía de Desarrolladores Dentalogic © 2026*
+*Guía de Desarrolladores CRM Ventas © 2026*
 
 ---
 
@@ -185,4 +185,4 @@ Ver **README** (sección Landing / Demo pública) y **`docs/SPECS_IMPLEMENTADOS_
 
 ---
 
-*Guía de Desarrolladores Dentalogic © 2026*
+*Guía de Desarrolladores CRM Ventas © 2026*

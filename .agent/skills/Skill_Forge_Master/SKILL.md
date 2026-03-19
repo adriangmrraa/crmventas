@@ -6,7 +6,7 @@ scope: "META"
 auto-invoke: true
 ---
 
-# Skill Forge Master - Dentalogic
+# Skill Forge Master - CRM Ventas
 
 ## 1. Concepto: Meta-Cognición Estructurada
 

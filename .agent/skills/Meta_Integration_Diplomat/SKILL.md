@@ -6,7 +6,7 @@ scope: "INTEGRATIONS"
 auto-invoke: true
 ---
 
-# Meta Integration Diplomat - Dentalogic
+# Meta Integration Diplomat - CRM Ventas
 
 ## 1. El Protocolo "Meta Diplomat"
 
@@ -152,9 +152,12 @@ async def connect_meta(
         )
     
     data = response.json()
-    
+
+    return {
+        "status": "success",
+        "assets": data.get("assets", {})
     }
-    
+
 ## 5. Lead Form Webhooks (Marketing Hub)
 
 ### Protocolo de Recepción
@@ -166,20 +169,16 @@ Para soportar formularios de Meta Ads, el Diplomat debe asegurar:
 
 ### Notificaciones v7.8
 Al recibir un lead de formulario, se debe emitir un evento `META_LEAD_RECEIVED` vía Socket.IO para alerta inmediata en el Dashboard.
-```
 
-
-    # ...
-
-### 🛠️ Omnichannel Routing v6.1 (Triangular)
-A partir de v6.1, el Orchestrator centraliza el ruteo. 
+### Omnichannel Routing v6.1 (Triangular)
+A partir de v6.1, el Orchestrator centraliza el ruteo.
 - **Meta Direct**: Prioridad si hay tokens de Meta.
 - **Chatwoot**: Gateway secundario para FB/IG si IDs están presentes.
 - **YCloud**: Gateway exclusivo para WhatsApp.
 
 Toda comunicación hacia FB/IG/WA debe pasar por `unified_message_delivery` en el Orchestrator.
 
-## 5. Meta Service: Token Exchange & Discovery
+## 6. Meta Service: Token Exchange & Discovery
 
 
 ### Exchange Code por Token
@@ -308,7 +307,7 @@ async def discover_assets(access_token: str) -> dict:
     }
 ```
 
-## 6. Wizard de Selección (Frontend)
+## 7. Wizard de Selección (Frontend)
 
 ### MetaOnboardingWizard Component
 ```tsx
@@ -372,7 +371,7 @@ const MetaOnboardingWizard: React.FC<MetaOnboardingWizardProps> = ({
 };
 ```
 
-## 7. Persistir Assets (Backend)
+## 8. Persistir Assets (Backend)
 
 ### Guardar en Tenants Table
 ```python
@@ -399,7 +398,7 @@ async def configure_meta_assets(
     return {"status": "configured"}
 ```
 
-## 8. Estado "Connected" (UI)
+## 9. Estado "Connected" (UI)
 
 ### Verificar Conexión
 ```typescript
@@ -450,7 +449,7 @@ const MetaStatus: React.FC = () => {
 };
 ```
 
-## 9. Redirect URI (Critical Configuration)
+## 10. Redirect URI (Critical Configuration)
 
 ### Configuración en Meta Developers
 ```
@@ -480,7 +479,7 @@ Solución:
 3. window.location.origin + '/' debe coincidir
 ```
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### "App not configured" en Popup
 ```
@@ -515,7 +514,7 @@ Solución:
 3. Registrar WhatsApp Business Account
 ```
 
-## 11. Security Best Practices
+## 12. Security Best Practices
 
 ### Never Expose Tokens en Frontend
 ```typescript
@@ -533,7 +532,7 @@ if x_internal_secret != INTERNAL_SECRET_KEY:
     raise HTTPException(status_code=403)
 ```
 
-## 12. Token Refresh Strategy
+## 13. Token Refresh Strategy
 
 ### Long-Lived Token Lifecycle
 - **Duración**: 60 días
@@ -555,7 +554,7 @@ cred = Credential(
 )
 ```
 
-## 13. Checklist de Implementación
+## 14. Checklist de Implementación
 
 ### Frontend
 - [ ] SDK Loader implementado (useFacebookSdk)

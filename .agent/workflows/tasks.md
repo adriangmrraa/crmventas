@@ -13,4 +13,4 @@ Gestión de granularidad para proyectos grandes.
 3.  **Generación de Tickets**:
     - Crea un archivo JSON o Markdown checklist con estados: `[ ]`, `[IN_PROGRESS]`, `[DONE]`.
 4.  **Asignación**:
-    - Sugiere qué agente (Sonnet vs Haiku) es mejor para cada tarea.
+    - Sugiere el nivel de complejidad de cada tarea (simple, moderada, compleja) para priorización.

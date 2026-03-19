@@ -6,7 +6,7 @@ scope: "MAGIC"
 auto-invoke: true
 ---
 
-# Magic Onboarding Orchestrator - Dentalogic
+# Magic Onboarding Orchestrator - CRM Ventas
 
 ## 1. Concepto: "Hacer Magia" (The Ignition)
 

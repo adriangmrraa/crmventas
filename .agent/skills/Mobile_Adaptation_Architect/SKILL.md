@@ -12,9 +12,9 @@ auto-invoke: true
 
 ### Filosofía de Interpretación Clínica
 Antes de proponer o replicar un diseño, se debe identificar el **'Dato Clave de Gestión' (DKG)** del contexto:
-- **Profesionales**: Horarios de actividad (Sincronización IA).
-- **Pacientes**: Alertas médicas y antecedentes (Seguridad Clínica).
-- **Agenda**: Huecos JIT (Prevención de Colisiones).
+- **Sellers**: Horarios de actividad (Asignación de leads).
+- **Leads**: Estado del pipeline y datos de contacto (Calificación de ventas).
+- **Pipeline**: Etapas y conversión (Prevención de Colisiones).
 
 **Regla de Oro**: El DKG siempre tiene prioridad visual y debe estar vinculado directamente a una Tool de IA o a un estado de base de datos.
 
@@ -46,7 +46,7 @@ Integrar la capacidad de transformar la vista operativa en un dashboard analíti
 1. **Analizar el Contexto**: Identificar el DKG (Dato Clave de Gestión).
 2. **Aplicar Scroll Isolation**: Asegurar que los contenedores `div` tengan las clases correctas.
 3. **Refactorizar Modales**: Asegurar botones sticky y targets de 44px.
-4. **Sincronizar con IA**: Los campos de disponibilidad o criterios médicos deben alimentar los parámetros de las Tools de IA correspondientes.
+4. **Sincronizar con IA**: Los campos de disponibilidad o criterios de ventas deben alimentar los parámetros de las Tools de IA correspondientes.
 
 ---
 *Nexus v8.0 - Senior UI/UX Architecture & AI Pattern Specialist Protocol*

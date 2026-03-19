@@ -6,7 +6,7 @@ scope: "FORGE"
 auto-invoke: true
 ---
 
-# Business Forge Engineer - Dentalogic
+# Business Forge Engineer - CRM Ventas
 
 ## 1. Concepto: The Business Forge
 

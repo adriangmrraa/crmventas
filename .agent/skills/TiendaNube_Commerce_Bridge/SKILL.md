@@ -6,7 +6,7 @@ scope: "ECOMMERCE"
 auto-invoke: true
 ---
 
-# TiendaNube Commerce Bridge - Dentalogic
+# TiendaNube Commerce Bridge - CRM Ventas
 
 ## 1. Concepto: E-Commerce Integration
 

@@ -42,7 +42,7 @@ El Motor de Autonomía transforma solicitudes vagas en software funcional siguie
 **Skills Críticas Verificadas:**
 - ✅ **Sovereign Backend Engineer**: Multi-tenancy, JIT logic, idempotent migrations
 - ✅ **Nexus UI Architect**: Scroll Isolation, Mobile-First, DKG (Design Knowledge Graph)
-- ✅ **DB Schema Surgeon**: Evolución segura de esquemas, JSONB clínico
+- ✅ **DB Schema Surgeon**: Evolución segura de esquemas, JSONB de configuración
 - ✅ **Spec Architect**: Generación y validación de `.spec.md`
 - ✅ **Deep Researcher**: Validación en documentación oficial antes de implementar
 
@@ -63,7 +63,7 @@ El Motor de Autonomía transforma solicitudes vagas en software funcional siguie
 ```
 **Análisis Obligatorio:**
 - **Ciencia**: ¿Es técnicamente posible con el stack actual?
-- **Mercado**: ¿Resuelve un pain point real del usuario dental?
+- **Mercado**: ¿Resuelve un pain point real del usuario de CRM (CEO, vendedor, setter)?
 - **Comunidad**: ¿Hay precedentes/patrones documentados?
 
 **Salida:** Score de viabilidad (0-100). Si < 60, **STOP** y ejecutar `/clarify`.

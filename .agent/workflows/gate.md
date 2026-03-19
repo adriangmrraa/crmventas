@@ -14,4 +14,4 @@ Punto de control crítico para evitar el "Vibe Coding" de alto riesgo.
 3.  **Acción**:
     - Si es **Baja**: El agente se bloquea y sugiere ejecutar `/clarify` o `/refine`.
     - Si es **Media/Alta**: Presenta los riesgos y pide un "Go" explícito del usuario para `/implement`.
-4.  **Habilitación de Skill**: Invoca a `@ai-agents-architect` para validar la estrategia de ejecución.
+4.  **Habilitación de Skill**: Consulta las skills disponibles en `.agent/agents.md` y valida que la estrategia de ejecución cuenta con las capacidades necesarias (Backend_Sovereign, Frontend_Nexus, DB_Evolution, etc.).

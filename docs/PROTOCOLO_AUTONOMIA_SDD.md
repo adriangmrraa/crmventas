@@ -1,7 +1,7 @@
 # 📜 Protocolo de Autonomía SDD (v2.0)
 ## Lógica de Decisión Transversal del Agente Antigravity
 
-Este documento establece las reglas de gobernanza y autonomía para el Agente Antigravity dentro del ecosistema **Dentalogic**. Define cuándo el agente debe actuar, cuándo debe detenerse y cómo debe garantizar la integridad de la arquitectura.
+Este documento establece las reglas de gobernanza y autonomía para el Agente Antigravity dentro del ecosistema **CRM Ventas**. Define cuándo el agente debe actuar, cuándo debe detenerse y cómo debe garantizar la integridad de la arquitectura.
 
 ---
 

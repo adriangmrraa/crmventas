@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================
-   MEDICAL PREMIUM THEME - Clean & Professional
+   CLINICFORGE PREMIUM DARK THEME
    ============================================ */
 
 :root {
@@ -15,23 +15,17 @@
   --medical-500: #0066cc;
   --medical-400: #0073e6;
   --medical-300: #3385ff;
-  
-  /* Clean Whites & Grays */
-  --white-50: #ffffff;
-  --white-100: #f8f9fa;
-  --white-200: #f4f7f6;
-  --white-300: #e9ecef;
-  
+
   /* Semantic Colors */
   --success: #28a745;
   --warning: #ffc107;
   --danger: #dc3545;
   --info: #17a2b8;
-  
-  /* Shadows */
-  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Shadows (dark-optimized) */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
 }
 
 * {
@@ -42,8 +36,8 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--white-100);
-  color: #1a1a1a;
+  background-color: #06060e;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -58,28 +52,28 @@ body {
   min-height: 100vh;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar — Dark */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--white-100);
+  background: #0a0e1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c4c4c4;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Focus States */
 *:focus-visible {
-  outline: 2px solid var(--medical-600);
+  outline: 2px solid var(--medical-500);
   outline-offset: 2px;
 }
 
@@ -89,11 +83,11 @@ body {
 }
 
 /* ============================================
-   CARD STYLES
+   CARD STYLES — Glass Surface
    ============================================ */
 
 .card {
-  @apply bg-white rounded-xl shadow-card p-6;
+  @apply bg-white/[0.03] rounded-xl p-6 border border-white/[0.06];
 }
 
 .card-header {
@@ -101,23 +95,23 @@ body {
 }
 
 .card-title {
-  @apply text-lg font-semibold text-gray-800;
+  @apply text-lg font-semibold text-white;
 }
 
 /* ============================================
-   BUTTON STYLES
+   BUTTON STYLES — Dark Theme
    ============================================ */
 
 .btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
 }
 
 .btn-primary {
-  @apply bg-medical-600 text-white hover:bg-medical-700 active:bg-medical-800;
+  @apply bg-medical-600 text-white hover:bg-medical-500 active:bg-medical-700;
 }
 
 .btn-secondary {
-  @apply bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300;
+  @apply bg-white/[0.06] text-white/70 hover:bg-white/[0.10] active:bg-white/[0.14] border border-white/[0.08];
 }
 
 .btn-success {
@@ -129,11 +123,11 @@ body {
 }
 
 /* ============================================
-   INPUT STYLES
+   INPUT STYLES — Dark Theme
    ============================================ */
 
 .input {
-  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all;
+  @apply w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-medical-500 focus:border-transparent focus:bg-white/[0.06] transition-all placeholder-white/30;
 }
 
 .input-error {
@@ -141,11 +135,11 @@ body {
 }
 
 /* ============================================
-   TABLE STYLES
+   TABLE STYLES — Dark Theme
    ============================================ */
 
 .table-container {
-  @apply overflow-x-auto rounded-xl border border-gray-200;
+  @apply overflow-x-auto rounded-xl border border-white/[0.06];
 }
 
 .table {
@@ -153,19 +147,19 @@ body {
 }
 
 .table th {
-  @apply px-4 py-3 text-left font-medium text-gray-600 bg-gray-50 border-b;
+  @apply px-4 py-3 text-left font-medium text-white/50 bg-white/[0.03] border-b border-white/[0.06];
 }
 
 .table td {
-  @apply px-4 py-3 border-b border-gray-100;
+  @apply px-4 py-3 border-b border-white/[0.04] text-white/70;
 }
 
 .table tr:hover td {
-  @apply bg-gray-50;
+  @apply bg-white/[0.04];
 }
 
 /* ============================================
-   BADGE STYLES
+   BADGE STYLES — Dark Theme
    ============================================ */
 
 .badge {
@@ -173,19 +167,19 @@ body {
 }
 
 .badge-success {
-  @apply bg-green-100 text-green-800;
+  @apply bg-green-500/10 text-green-400;
 }
 
 .badge-warning {
-  @apply bg-yellow-100 text-yellow-800;
+  @apply bg-yellow-500/10 text-yellow-400;
 }
 
 .badge-danger {
-  @apply bg-red-100 text-red-800;
+  @apply bg-red-500/10 text-red-400;
 }
 
 .badge-info {
-  @apply bg-blue-100 text-blue-800;
+  @apply bg-blue-500/10 text-blue-400;
 }
 
 /* ============================================
@@ -220,27 +214,27 @@ body {
 }
 
 /* ============================================
-   LOADING STATES
+   LOADING STATES — Dark Theme
    ============================================ */
 
 .skeleton {
-  @apply bg-gray-200 animate-pulse rounded;
+  @apply bg-white/[0.06] animate-pulse rounded;
 }
 
 /* ============================================
-   MODAL STYLES
+   MODAL STYLES — Dark Theme
    ============================================ */
 
 .modal-overlay {
-  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4;
 }
 
 .modal-content {
-  @apply bg-white rounded-2xl shadow-elevated max-w-lg w-full max-h-[90vh] overflow-y-auto;
+  @apply bg-[#0d1117] rounded-2xl shadow-elevated max-w-lg w-full max-h-[90vh] overflow-y-auto border border-white/[0.08];
 }
 
 .modal-header {
-  @apply flex items-center justify-between p-4 border-b;
+  @apply flex items-center justify-between p-4 border-b border-white/[0.06];
 }
 
 .modal-body {
@@ -248,11 +242,11 @@ body {
 }
 
 .modal-footer {
-  @apply flex justify-end gap-3 p-4 border-t bg-gray-50 rounded-b-2xl;
+  @apply flex justify-end gap-3 p-4 border-t border-white/[0.06] bg-white/[0.02] rounded-b-2xl;
 }
 
 /* ============================================
-   TOAST NOTIFICATIONS
+   TOAST NOTIFICATIONS — Dark Theme
    ============================================ */
 
 .toast-container {
@@ -264,17 +258,32 @@ body {
 }
 
 .toast-success {
-  @apply bg-green-50 border-green-500 text-green-800;
+  @apply bg-green-500/10 border-green-500 text-green-400;
 }
 
 .toast-warning {
-  @apply bg-yellow-50 border-yellow-500 text-yellow-800;
+  @apply bg-yellow-500/10 border-yellow-500 text-yellow-400;
 }
 
 .toast-error {
-  @apply bg-red-50 border-red-500 text-red-800;
+  @apply bg-red-500/10 border-red-500 text-red-400;
 }
 
 .toast-info {
-  @apply bg-blue-50 border-blue-500 text-blue-800;
+  @apply bg-blue-500/10 border-blue-500 text-blue-400;
+}
+
+/* ============================================
+   MOBILE SAFE AREA HELPERS
+   ============================================ */
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }

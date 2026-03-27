@@ -81,7 +81,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden">
+    <div className="flex h-screen bg-[#06060e] relative overflow-hidden">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -109,12 +109,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 w-full min-w-0`}
       >
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm sticky top-0 z-30">
+        <header className="h-14 bg-[#0a0e1a]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-3 lg:gap-4">
             {/* Hamburger Button for Mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+              className="lg:hidden p-2 hover:bg-white/[0.06] rounded-lg text-white/50"
             >
               <div className="w-6 h-5 flex flex-col justify-between">
                 <span className="w-full h-0.5 bg-current rounded-full"></span>
@@ -122,16 +122,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span className="w-full h-0.5 bg-current rounded-full"></span>
               </div>
             </button>
-            <h1 className="text-lg lg:text-xl font-semibold text-medical-900 truncate max-w-[150px] md:max-w-none">
+            <h1 className="text-lg lg:text-xl font-semibold text-white truncate max-w-[150px] md:max-w-none">
               {t('layout.app_title_crm')}
             </h1>
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
             {/* Tenant/Entity Selector - Hidden on small mobile */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm">
-              <span className="text-gray-500">{t('layout.entity')}:</span>
-              <span className="font-medium text-medical-900">{t('layout.entity_principal')}</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-lg text-sm border border-white/[0.06]">
+              <span className="text-white/40">{t('layout.entity')}:</span>
+              <span className="font-medium text-white/80">{t('layout.entity_principal')}</span>
             </div>
 
             {/* User Menu */}
@@ -140,10 +140,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <NotificationBell className="block" />
 
               <div className="hidden xs:flex flex-col items-end">
-                <span className="text-xs lg:text-sm font-medium text-medical-900">{user?.email?.split('@')[0]}</span>
-                <span className="text-[10px] lg:text-xs text-secondary uppercase leading-none">{user?.role}</span>
+                <span className="text-xs lg:text-sm font-medium text-white/80">{user?.email?.split('@')[0]}</span>
+                <span className="text-[10px] lg:text-xs text-white/40 uppercase leading-none">{user?.role}</span>
               </div>
-              <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-medical-600 flex items-center justify-center text-white font-semibold text-sm lg:text-lg border-2 border-white shadow-sm">
+              <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/[0.08] flex items-center justify-center text-white/70 font-semibold text-sm lg:text-base">
                 {user?.email?.[0].toUpperCase() || 'U'}
               </div>
             </div>
@@ -159,7 +159,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* GLOBAL NOTIFICATION TOAST */}
       {notification && (
         <div
-          className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white rounded-lg shadow-xl border-l-4 border-orange-500 p-4 transform transition-all duration-300 ease-in-out cursor-pointer hover:bg-gray-50"
+          className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-[#0d1117] rounded-xl shadow-xl border border-white/[0.08] border-l-4 border-l-orange-500 p-4 transform transition-all duration-300 ease-in-out cursor-pointer hover:bg-white/[0.04]"
           onClick={handleNotificationClick}
         >
           <div className="flex items-start gap-3">
@@ -167,17 +167,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <AlertCircle className="h-6 w-6 text-orange-500" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-gray-900">🔔 {t('layout.notification_handoff')}</h3>
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+              <h3 className="text-sm font-medium text-white">🔔 {t('layout.notification_handoff')}</h3>
+              <p className="mt-1 text-sm text-white/50 line-clamp-2">
                 {notification.phone}. {t('layout.notification_reason')}: {notification.reason}
               </p>
-              <div className="mt-2 text-xs text-orange-600 font-medium">
+              <div className="mt-2 text-xs text-orange-400 font-medium">
                 {t('layout.click_to_open_chat')}
               </div>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); setNotification(null); }}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-white/30 hover:text-white/60"
             >
               <X size={16} />
             </button>

@@ -6,6 +6,7 @@ import { useTranslation } from '../../../context/LanguageContext';
 import type { Lead } from './LeadsView';
 import { LeadStatusSelector } from '../../../components/leads/LeadStatusSelector';
 import { LeadHistoryTimeline } from '../../../components/leads/LeadHistoryTimeline';
+import TaskSection from '../../../components/leads/TaskSection';
 
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
 
@@ -237,6 +238,13 @@ export default function LeadDetailView() {
               {saving ? t('common.saving') : isNew ? 'Create lead' : t('common.save_changes')}
             </button>
           </form>
+        )}
+
+        {/* Tareas section — only for existing leads */}
+        {!isNew && id && !loading && (
+          <div className="max-w-lg mt-8 pt-6 border-t border-white/[0.06]">
+            <TaskSection leadId={id} />
+          </div>
         )}
       </div>
 

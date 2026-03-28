@@ -237,6 +237,54 @@ export default function CrmAgendaView() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-transparent">
+      <style>{`
+        .fc {
+          --fc-border-color: rgba(255,255,255,0.06);
+          --fc-page-bg-color: transparent;
+          --fc-neutral-bg-color: rgba(255,255,255,0.04);
+          --fc-list-event-hover-bg-color: rgba(255,255,255,0.04);
+          --fc-today-bg-color: rgba(59,130,246,0.08);
+          --fc-highlight-color: rgba(59,130,246,0.12);
+          --fc-non-business-color: rgba(255,255,255,0.02);
+          --fc-neutral-text-color: rgba(255,255,255,0.5);
+          --fc-event-text-color: #fff;
+          color: rgba(255,255,255,0.85);
+        }
+        .fc .fc-button-primary {
+          background-color: rgba(255,255,255,0.04) !important;
+          border-color: rgba(255,255,255,0.08) !important;
+          color: rgba(255,255,255,0.7) !important;
+        }
+        .fc .fc-button-primary:hover {
+          background-color: rgba(255,255,255,0.08) !important;
+          color: #fff !important;
+        }
+        .fc .fc-button-primary.fc-button-active {
+          background-color: #fff !important;
+          color: #0a0e1a !important;
+          border-color: #fff !important;
+        }
+        .fc .fc-toolbar-title { color: #fff !important; }
+        .fc .fc-col-header-cell {
+          background-color: rgba(255,255,255,0.04) !important;
+          border-color: rgba(255,255,255,0.06) !important;
+        }
+        .fc .fc-col-header-cell-cushion { color: rgba(255,255,255,0.7) !important; }
+        .fc .fc-timegrid-slot-label-cushion { color: rgba(255,255,255,0.5) !important; }
+        .fc .fc-daygrid-day-number { color: rgba(255,255,255,0.7) !important; }
+        .fc .fc-day-past { background-color: rgba(255,255,255,0.02) !important; opacity: 0.5 !important; }
+        .fc .fc-timegrid-slot { height: 60px !important; }
+        .fc .fc-timegrid-event { border-radius: 8px !important; padding: 4px !important; }
+        .fc .fc-now-indicator-line { border-color: #ef4444 !important; border-width: 2px !important; }
+        .fc .fc-list-day-cushion { background-color: rgba(255,255,255,0.04) !important; }
+        .fc .fc-list-day-cushion a { color: #fff !important; }
+        .fc .fc-list-event:hover td { background-color: rgba(255,255,255,0.04) !important; }
+        .fc .fc-list-event-title a { color: rgba(255,255,255,0.85) !important; }
+        .fc .fc-list-event-time { color: rgba(255,255,255,0.5) !important; }
+        .fc ::-webkit-scrollbar { width: 6px; }
+        .fc ::-webkit-scrollbar-track { background: transparent; }
+        .fc ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+      `}</style>
       <div className="flex-shrink-0 px-4 lg:px-6 pt-4 lg:pt-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full lg:w-auto gap-4">
@@ -289,7 +337,7 @@ export default function CrmAgendaView() {
           </div>
         ) : (
           <div className="flex-1 min-h-0 px-4 lg:px-6 pb-4 lg:pb-6">
-            <div className="h-[calc(100vh-140px)] bg-white/60 backdrop-blur-lg border border-white/40 shadow-xl rounded-2xl p-2 sm:p-4 overflow-y-auto">
+            <div className="h-[calc(100vh-140px)] bg-white/[0.03] backdrop-blur-lg border border-white/[0.06] shadow-xl rounded-2xl p-2 sm:p-4 overflow-y-auto">
               {loading && events.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <RefreshCw className="w-12 h-12 text-blue-500 animate-spin" />

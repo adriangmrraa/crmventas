@@ -4,6 +4,7 @@ import { Users, Clock, DollarSign, User, GripVertical, RefreshCw, Filter, Layout
 import api from '../../../api/axios';
 import PageHeader from '../../../components/PageHeader';
 import { useTranslation } from '../../../context/LanguageContext';
+import ScoreBadge from '../../../components/leads/ScoreBadge';
 
 interface LeadStatus {
   id: number;
@@ -33,6 +34,7 @@ interface Lead {
   tags?: string[];
   notes?: string;
   estimated_value?: number;
+  score?: number;
 }
 
 export default function KanbanPipelineView() {
@@ -252,9 +254,12 @@ export default function KanbanPipelineView() {
                           </div>
 
                           {/* Lead name */}
-                          <h4 className="text-sm font-semibold text-white truncate pr-6">
-                            {lead.first_name} {lead.last_name}
-                          </h4>
+                          <div className="flex items-center gap-1.5 pr-6">
+                            <h4 className="text-sm font-semibold text-white truncate">
+                              {lead.first_name} {lead.last_name}
+                            </h4>
+                            <ScoreBadge score={lead.score} size="sm" />
+                          </div>
 
                           {/* Company */}
                           {lead.company && (

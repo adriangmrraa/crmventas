@@ -10,6 +10,7 @@ import { useTranslation } from '../../../context/LanguageContext';
 import { LeadStatusSelector } from '../../../components/leads/LeadStatusSelector';
 import { LeadStatusBadge } from '../../../components/leads/LeadStatusBadge';
 import { BulkStatusUpdate } from '../../../components/leads/BulkStatusUpdate';
+import ScoreBadge from '../../../components/leads/ScoreBadge';
 
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
@@ -38,6 +39,7 @@ export interface Lead {
   outreach_message_content?: string;
   outreach_last_sent_at?: string;
   outreach_message_sent?: boolean;
+  score?: number;
   created_at: string;
   updated_at: string;
 }
@@ -396,9 +398,12 @@ function LeadsViewInner() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-white truncate text-base">
-                          {displayName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-white truncate text-base">
+                            {displayName}
+                          </p>
+                          <ScoreBadge score={lead.score} />
+                        </div>
                         {businessName && (
                           <p className="text-xs text-blue-400 font-medium truncate mb-0.5">
                             {safeName !== businessName ? safeName : String(lead.phone_number || '')}

@@ -24,10 +24,10 @@ class LeadStatusBase(BaseModel):
 
 class LeadStatusResponse(LeadStatusBase):
     id: UUID
-    tenant_id: int
-    created_at: datetime
-    updated_at: datetime
-    
+    tenant_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 

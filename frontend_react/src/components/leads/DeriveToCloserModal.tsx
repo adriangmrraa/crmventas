@@ -120,9 +120,9 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
                 onChange={(e) => setSelectedCloser(e.target.value)}
                 className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
               >
-                <option value="">Seleccionar closer...</option>
+                <option value="" className="bg-[#1a1a2e] text-white">Seleccionar closer...</option>
                 {closers.map((c) => (
-                  <option key={c.id} value={c.id}>{getCloserLabel(c)}</option>
+                  <option key={c.id} value={c.id} className="bg-[#1a1a2e] text-white">{getCloserLabel(c)}</option>
                 ))}
               </select>
             )}

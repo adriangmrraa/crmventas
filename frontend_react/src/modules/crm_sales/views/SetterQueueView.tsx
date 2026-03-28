@@ -208,9 +208,9 @@ export default function SetterQueueView() {
                   onChange={(e) => setTagFilter(e.target.value || null)}
                   className="appearance-none bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 pr-7 text-xs text-white/70 focus:ring-2 focus:ring-blue-500/40"
                 >
-                  <option value="">Todas las etiquetas</option>
+                  <option value="" className="bg-[#1a1a2e] text-white">Todas las etiquetas</option>
                   {allTags.map((tag) => (
-                    <option key={tag} value={tag}>{tag}</option>
+                    <option key={tag} value={tag} className="bg-[#1a1a2e] text-white">{tag}</option>
                   ))}
                 </select>
                 <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />

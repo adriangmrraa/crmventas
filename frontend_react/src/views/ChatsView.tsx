@@ -21,16 +21,16 @@ import HsmTemplatePanel from '../components/chat/HsmTemplatePanel';
 // INTERFACES
 // ============================================
 
-interface ClinicOption {
+interface TenantOption {
   id: number;
-  clinic_name: string;
+  clinic_name: string; // kept as clinic_name for API compatibility
 }
 
 interface ChatSession {
   phone_number: string;
   tenant_id: number;
-  patient_id?: number;
-  patient_name?: string;
+  lead_id?: number;
+  lead_name?: string;
   last_message: string;
   last_message_time: string;
   unread_count: number;
@@ -55,7 +55,7 @@ interface ChatMessage {
   is_derivhumano?: boolean;
 }
 
-/** Contexto de lead para panel CRM (GET /admin/core/crm/leads/phone/{phone}/context) */
+/** Contexto del lead para panel CRM (GET /admin/core/crm/leads/phone/{phone}/context) */
 interface LeadContext {
   lead: {
     id: string;
@@ -156,8 +156,8 @@ export default function ChatsView() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  // Clínicas (CEO puede tener varias; secretary/professional una)
-  const [clinics, setClinics] = useState<ClinicOption[]>([]);
+  // Empresas / Sedes (CEO puede tener varias; vendedor una)
+  const [clinics, setClinics] = useState<TenantOption[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<number | null>(null);
   // Estados principales
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -201,7 +201,7 @@ export default function ChatsView() {
     // Conectar al WebSocket
     socketRef.current = io(BACKEND_URL);
 
-    // Evento: Nueva derivación humana (derivhumano) — solo para la clínica seleccionada
+    // Evento: Nueva derivación humana (derivhumano) — solo para la empresa seleccionada
     socketRef.current.on('HUMAN_HANDOFF', (data: { phone_number: string; reason: string; tenant_id?: number }) => {
       if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
       setSessions(prev => prev.map(s =>
@@ -267,7 +267,7 @@ export default function ChatsView() {
       }
     });
 
-    // Evento: Nuevo mensaje en chat (tenant_id opcional; si viene, solo actualizar si es la clínica seleccionada)
+    // Evento: Nuevo mensaje en chat (tenant_id opcional; si viene, solo actualizar si es la empresa seleccionada)
     socketRef.current.on('NEW_MESSAGE', (data: { phone_number: string; message: string; role: string; tenant_id?: number }) => {
       if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
       setSessions(prev => {
@@ -324,7 +324,7 @@ export default function ChatsView() {
       }
     });
 
-    // Evento: Estado de override cambiado (por clínica: solo actualizar si es la clínica seleccionada)
+    // Evento: Estado de override cambiado (por empresa: solo actualizar si es la empresa seleccionada)
     socketRef.current.on('HUMAN_OVERRIDE_CHANGED', (data: { phone_number: string; enabled: boolean; until?: string; tenant_id?: number }) => {
       if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
       setSessions(prev => {
@@ -365,7 +365,7 @@ export default function ChatsView() {
       });
     });
 
-    // Evento: Paciente actualizado (urgencia, etc)
+    // Evento: Lead actualizado (urgencia, etc)
     socketRef.current.on('PATIENT_UPDATED', (data: { phone_number: string; urgency_level: string }) => {
       if (selectedSession?.phone_number === data.phone_number) {
         fetchLeadContext(data.phone_number);
@@ -485,11 +485,11 @@ export default function ChatsView() {
   }, [selectedSession, soundEnabled, selectedTenantId, t]);
 
   // ============================================
-  // DATOS - CARGAR CLÍNICAS, SESIONES Y MENSAJES
+  // DATOS - CARGAR EMPRESAS, SESIONES Y MENSAJES
   // ============================================
 
   useEffect(() => {
-    api.get<ClinicOption[]>('/admin/core/chat/tenants').then((res) => {
+    api.get<TenantOption[]>('/admin/core/chat/tenants').then((res) => {
       setClinics(res.data);
       if (res.data.length >= 1) setSelectedTenantId(res.data[0].id);
     }).catch(() => setClinics([]));
@@ -807,7 +807,7 @@ export default function ChatsView() {
   // ============================================
 
   const filteredSessions = sessions.filter(session =>
-    session.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    session.lead_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     session.phone_number.includes(searchTerm)
   );
 
@@ -901,7 +901,7 @@ export default function ChatsView() {
           </div>
           {clinics.length > 1 && (
             <div className="mb-3">
-              <label className="block text-xs font-medium text-white/40 mb-1">{t('chats.clinic_label')}</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">{t('chats.tenant_label')}</label>
               <select
                 value={selectedTenantId ?? ''}
                 onChange={(e) => setSelectedTenantId(Number(e.target.value))}
@@ -952,7 +952,7 @@ export default function ChatsView() {
                     {/* Avatar with Status Ring */}
                     <div className="relative shrink-0">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${avatarBg}`}>
-                        {(session.patient_name || session.phone_number).charAt(0)}
+                        {(session.lead_name || session.phone_number).charAt(0)}
                       </div>
                       {session.status === 'human_handling' && (
                         <div className="absolute -bottom-1 -right-1 bg-white/[0.03] p-0.5 rounded-full">
@@ -977,7 +977,7 @@ export default function ChatsView() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-0.5">
                         <span className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-white'}`}>
-                          {session.patient_name || session.phone_number}
+                          {session.lead_name || session.phone_number}
                         </span>
                         <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-blue-400 font-bold' : 'text-white/30'}`}>
                           {formatTime(session.last_message_time)}
@@ -1050,12 +1050,12 @@ export default function ChatsView() {
                       : 'bg-medical-600'
                       }`}
                   >
-                    {(selectedSession.patient_name || selectedSession.phone_number).charAt(0)}
+                    {(selectedSession.lead_name || selectedSession.phone_number).charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => window.innerWidth < 1280 && setShowMobileContext(!showMobileContext)}>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-white truncate leading-tight">
-                        {selectedSession.patient_name || t('chats.no_name')}
+                        {selectedSession.lead_name || t('chats.no_name')}
                       </h3>
                       {/* Seller Badge */}
                       {sellerAssignment && (
@@ -1124,7 +1124,7 @@ export default function ChatsView() {
                   <button
                     onClick={() => setShowMobileContext(!showMobileContext)}
                     className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-full lg:hidden transition-colors"
-                    title={t('chats.view_clinical_chart')}
+                    title={t('chats.view_lead_info')}
                   >
                     <Activity size={20} />
                   </button>
@@ -1300,7 +1300,7 @@ export default function ChatsView() {
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={selectedSession.is_window_open === false ? "Ventana cerrada - Esperando paciente..." : "Escribe un mensaje..."}
+                    placeholder={selectedSession.is_window_open === false ? "Ventana cerrada - Esperando respuesta del prospecto..." : "Escribe un mensaje..."}
                     disabled={selectedSession.is_window_open === false}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -1342,7 +1342,7 @@ export default function ChatsView() {
             </div>
           </div>
 
-          {/* Clinical Context Panel - WhatsApp Style Overlay on Mobile / Sidebar on Desktop */}
+          {/* Lead Context Panel - WhatsApp Style Overlay on Mobile / Sidebar on Desktop */}
           <div className={`
             ${showMobileContext ? 'flex' : 'hidden'}
             xl:flex flex-col
@@ -1354,7 +1354,7 @@ export default function ChatsView() {
             <div className="p-4 border-b flex justify-between items-center xl:hidden">
               <div className="flex items-center gap-2">
                 <User className="text-blue-400" size={20} />
-                <h3 className="font-bold">{t('chats.patient_profile_title')}</h3>
+                <h3 className="font-bold">{t('chats.lead_profile_title')}</h3>
               </div>
               <button
                 onClick={() => setShowMobileContext(false)}
@@ -1367,7 +1367,7 @@ export default function ChatsView() {
             {/* Desktop Context Header */}
             <div className="hidden xl:flex p-4 border-b items-center gap-2">
               <Activity size={18} className="text-primary" />
-              <h3 className="font-medium">{t('chats.clinical_context')}</h3>
+              <h3 className="font-medium">{t('chats.lead_context')}</h3>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -1501,37 +1501,37 @@ export default function ChatsView() {
                 )}
               </div>
 
-              {/* Patient / Contact Info — Lead vs Paciente (solo con turno = ficha con historial) */}
+              {/* Lead / Contact Info — con o sin reuniones previas */}
               {(() => {
                 const hasEvents = !!(leadContext?.last_event || leadContext?.upcoming_event);
                 const displayName = leadContext?.lead
-                  ? [leadContext.lead.first_name, leadContext.lead.last_name].filter(Boolean).join(' ').trim() || selectedSession.patient_name || selectedSession.phone_number
-                  : selectedSession.patient_name || selectedSession.phone_number;
+                  ? [leadContext.lead.first_name, leadContext.lead.last_name].filter(Boolean).join(' ').trim() || selectedSession.lead_name || selectedSession.phone_number
+                  : selectedSession.lead_name || selectedSession.phone_number;
                 return (
                   <>
                     <div className={`p-3 rounded-lg ${hasEvents ? 'bg-white/[0.02]' : 'bg-amber-50 border border-amber-200'}`}>
                       {hasEvents ? (
                         <>
-                          <h4 className="text-xs font-medium text-white/40 mb-2">{t('chats.patient_label')}</h4>
+                          <h4 className="text-xs font-medium text-white/40 mb-2">{t('chats.lead_label')}</h4>
                           <p className="font-medium">{displayName}</p>
                           <p className="text-sm text-white/40">{selectedSession.phone_number}</p>
                         </>
                       ) : (
                         <>
-                          <h4 className="text-xs font-medium text-amber-700 mb-2">{t('chats.contact_no_appointments')}</h4>
+                          <h4 className="text-xs font-medium text-amber-700 mb-2">{t('chats.contact_no_meetings')}</h4>
                           <p className="font-medium">{displayName}</p>
                           <p className="text-sm text-white/40">{selectedSession.phone_number}</p>
-                          <p className="text-xs text-amber-700 mt-2">{t('chats.no_appointments_yet')}</p>
+                          <p className="text-xs text-amber-700 mt-2">{t('chats.no_meetings_yet')}</p>
                         </>
                       )}
                     </div>
 
                     {hasEvents ? (
                       <>
-                        {/* Last Appointment */}
+                        {/* Last Meeting */}
                         <div className="p-3 bg-white/[0.02] rounded-lg">
                           <h4 className="text-xs font-medium text-white/40 mb-2 flex items-center gap-1">
-                            <Calendar size={12} /> {t('chats.last_appointment')}
+                            <Calendar size={12} /> {t('chats.last_meeting')}
                           </h4>
                           {leadContext?.last_event ? (
                             <div className="space-y-1">
@@ -1541,14 +1541,14 @@ export default function ChatsView() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm text-white/30">{t('chats.no_previous_appointments')}</p>
+                            <p className="text-sm text-white/30">{t('chats.no_previous_meetings')}</p>
                           )}
                         </div>
 
-                        {/* Upcoming Appointment */}
+                        {/* Upcoming Meeting */}
                         <div className="p-3 bg-white/[0.02] rounded-lg">
                           <h4 className="text-xs font-medium text-white/40 mb-2 flex items-center gap-1">
-                            <Clock size={12} /> {t('chats.upcoming_appointment')}
+                            <Clock size={12} /> {t('chats.upcoming_meeting')}
                           </h4>
                           {leadContext?.upcoming_event ? (
                             <div className="space-y-1">
@@ -1558,19 +1558,15 @@ export default function ChatsView() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm text-white/30">{t('chats.no_scheduled_appointments')}</p>
+                            <p className="text-sm text-white/30">{t('chats.no_scheduled_meetings')}</p>
                           )}
                         </div>
 
-                        {/* Tratamiento (CRM: no aplica) */}
-                        <div className="p-3 bg-white/[0.02] rounded-lg">
-                          <h4 className="text-xs font-medium text-white/40 mb-2">{t('chats.current_treatment')}</h4>
-                          <p className="text-sm text-white/30 italic">{t('chats.no_treatment_plan')}</p>
-                        </div>
+                        {/* Historial de interacciones placeholder */}
                       </>
                     ) : (
                       <div className="p-3 bg-white/[0.02] rounded-lg">
-                        <p className="text-sm text-white/40 italic">{t('chats.no_clinical_history')}</p>
+                        <p className="text-sm text-white/40 italic">{t('chats.no_interaction_history')}</p>
                       </div>
                     )}
 

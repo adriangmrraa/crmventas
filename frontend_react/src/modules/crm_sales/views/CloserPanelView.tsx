@@ -354,9 +354,9 @@ export default function CloserPanelView() {
                   onChange={(e) => setPostCallForm((f) => ({ ...f, result: e.target.value }))}
                   className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
                 >
-                  <option value="">Seleccionar resultado...</option>
+                  <option value="" className="bg-[#1a1a2e] text-white">Seleccionar resultado...</option>
                   {CALL_RESULTS.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
+                    <option key={r.value} value={r.value} className="bg-[#1a1a2e] text-white">{r.label}</option>
                   ))}
                 </select>
               </div>

@@ -396,9 +396,9 @@ export default function FollowUpQueueView() {
       {/* Complete Follow-Up Modal */}
       {showModal && selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl w-full max-w-lg shadow-2xl">
+          <div className="bg-[#1a1a2e] border border-white/[0.08] rounded-2xl w-full max-w-lg shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
               <div>
                 <h3 className="text-lg font-bold text-white">Completar Seguimiento</h3>
                 <p className="text-sm text-white/40 mt-0.5">{getLeadName(selectedLead)} - {selectedLead.phone_number}</p>
@@ -418,11 +418,11 @@ export default function FollowUpQueueView() {
                   onChange={(e) => setForm({ ...form, result: e.target.value })}
                   className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-medical-500/50"
                 >
-                  <option value="contacted">Contactado</option>
-                  <option value="no_answer">No contesto</option>
-                  <option value="rescheduled">Reagendado</option>
-                  <option value="completed">Completado (cerrado ganado)</option>
-                  <option value="lost">Perdido</option>
+                  <option value="contacted" className="bg-[#1a1a2e] text-white">Contactado</option>
+                  <option value="no_answer" className="bg-[#1a1a2e] text-white">No contesto</option>
+                  <option value="rescheduled" className="bg-[#1a1a2e] text-white">Reagendado</option>
+                  <option value="completed" className="bg-[#1a1a2e] text-white">Completado (cerrado ganado)</option>
+                  <option value="lost" className="bg-[#1a1a2e] text-white">Perdido</option>
                 </select>
               </div>
 
@@ -456,7 +456,7 @@ export default function FollowUpQueueView() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 p-5 border-t border-white/5">
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-white/[0.06]">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 text-sm text-white/50 hover:text-white transition-all"

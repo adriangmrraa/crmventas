@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Clock, DollarSign, User, GripVertical, RefreshCw, Filter, LayoutGrid, List } from 'lucide-react';
 import api from '../../../api/axios';
+import { parseTags } from '../../../utils/parseTags';
 import PageHeader from '../../../components/PageHeader';
 import { useTranslation } from '../../../context/LanguageContext';
 import ScoreBadge from '../../../components/leads/ScoreBadge';
@@ -303,9 +304,9 @@ export default function KanbanPipelineView() {
                           )}
 
                           {/* Tags */}
-                          {lead.tags && lead.tags.length > 0 && (
+                          {parseTags(lead.tags).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
-                              {lead.tags.slice(0, 2).map(tag => (
+                              {parseTags(lead.tags).slice(0, 2).map(tag => (
                                 <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400/60">
                                   {tag}
                                 </span>

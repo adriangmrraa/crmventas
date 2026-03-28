@@ -8,6 +8,7 @@ import {
   Tag, Star, HandMetal, Shield, FileText, Instagram, Facebook
 } from 'lucide-react';
 import api, { BACKEND_URL } from '../api/axios';
+import { parseTags } from '../utils/parseTags';
 import { useTranslation } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
@@ -1076,9 +1077,9 @@ export default function ChatsView() {
                         )}
                       </div>
                       {/* Tag colored dots row */}
-                      {session.tags && session.tags.length > 0 && (
+                      {parseTags(session.tags).length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
-                          {session.tags.slice(0, 5).map(tag => (
+                          {parseTags(session.tags).slice(0, 5).map(tag => (
                             <span
                               key={tag}
                               className="w-2 h-2 rounded-full shrink-0"

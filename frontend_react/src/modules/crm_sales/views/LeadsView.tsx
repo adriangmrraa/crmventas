@@ -6,6 +6,7 @@ import {
   History, MessageCircle, CheckCircle2, Layers, Check, Tag, X, Upload
 } from 'lucide-react';
 import api, { apiGet } from '../../../api/axios';
+import { parseTags } from '../../../utils/parseTags';
 import { useTranslation } from '../../../context/LanguageContext';
 import { LeadStatusSelector } from '../../../components/leads/LeadStatusSelector';
 import { LeadStatusBadge } from '../../../components/leads/LeadStatusBadge';
@@ -526,9 +527,9 @@ function LeadsViewInner() {
                           </p>
                         )}
                         <p className="text-sm text-white/40 truncate">{String(lead.phone_number || '')}</p>
-                        {lead.tags && lead.tags.length > 0 && (
+                        {parseTags(lead.tags).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {lead.tags.slice(0, 3).map((tagName) => {
+                            {parseTags(lead.tags).slice(0, 3).map((tagName) => {
                               const tagDef = availableTags.find((t) => t.name === tagName) || { name: tagName, color: '#6B7280' };
                               return <TagBadge key={tagName} tag={tagDef} />;
                             })}

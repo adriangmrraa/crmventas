@@ -138,9 +138,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   };
 
   const getPriorityIcon = () => {
-    if (notificationCount.critical > 0) return <BellRing className="text-red-500" />;
-    if (notificationCount.total > 0) return <BellRing className="text-orange-500" />;
-    return <Bell className="text-gray-400" />;
+    if (notificationCount.critical > 0) return <BellRing className="text-red-400" />;
+    if (notificationCount.total > 0) return <BellRing className="text-orange-400" />;
+    return <Bell className="text-white/30" />;
   };
 
   const getTooltipText = () => {
@@ -200,7 +200,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Notification Bell Button */}
       <button
         onClick={handleBellClick}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+        className="relative p-2 rounded-lg hover:bg-white/[0.06] transition-colors group"
         aria-label={t('notifications.bell_aria_label')}
         title={`${getTooltipText()} (${getConnectionTooltip()})`}
       >
@@ -232,7 +232,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
       {/* Label if enabled */}
       {showLabel && (
-        <div className="mt-1 text-xs text-gray-500 text-center">
+        <div className="mt-1 text-xs text-white/40 text-center">
           {notificationCount.total === 0
             ? t('notifications.no_notifications')
             : `${notificationCount.total} ${t('notifications.notifications')}`
@@ -250,7 +250,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
           />
 
           {/* Center Container */}
-          <div className="fixed sm:absolute top-16 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[calc(100vh-5rem)] sm:max-h-[80vh] flex flex-col overflow-hidden">
+          <div className="fixed sm:absolute top-16 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-[#0d1117] rounded-lg shadow-xl shadow-black/20 border border-white/[0.06] z-50 max-h-[calc(100vh-5rem)] sm:max-h-[80vh] flex flex-col overflow-hidden">
             <NotificationCenter
               onClose={handleCloseCenter}
               onNotificationRead={handleNotificationRead}
@@ -263,7 +263,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
       {/* Error message (hidden by default, shows on hover if there's an error) */}
       {error && (
-        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-red-500/10 text-red-400 text-sm rounded-lg shadow-lg shadow-black/20 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
           <div className="flex items-center gap-2">
             <X size={14} />
             <span>{error}</span>
@@ -273,7 +273,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
       {/* Last updated time (debug) */}
       {process.env.NODE_ENV === 'development' && lastUpdated && (
-        <div className="absolute -bottom-6 right-0 text-[10px] text-gray-400">
+        <div className="absolute -bottom-6 right-0 text-[10px] text-white/30">
           {t('notifications.last_updated')}: {lastUpdated.toLocaleTimeString()}
         </div>
       )}

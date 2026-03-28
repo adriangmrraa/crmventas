@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
         {onCloseMobile && (
           <button
             onClick={onCloseMobile}
-            className="lg:hidden p-2 ml-auto text-gray-400 hover:text-white transition-colors"
+            className="lg:hidden p-2 ml-auto text-white/40 hover:text-white transition-colors"
             aria-label={t('nav.close_menu')}
           >
             <X size={24} />
@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
       {!onCloseMobile && (
         <button
           onClick={onToggle}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white rounded-full shadow-lg items-center justify-center text-medical-900 hover:bg-gray-100 transition-all z-20"
+          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white/[0.08] rounded-full shadow-lg items-center justify-center text-white/70 hover:bg-white/[0.15] transition-all z-20 border border-white/[0.10]"
           aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 group ${isActive(item.path)
                 ? 'bg-white/10 text-white'
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                : 'text-white/40 hover:bg-white/[0.06] hover:text-white'
                 }`}
               title={collapsed && !onCloseMobile ? t(labelKey) : undefined}
             >
@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-white">{user?.email}</p>
-              <p className="text-[10px] text-gray-400 truncate uppercase tracking-wider font-semibold">{user?.role}</p>
+              <p className="text-[10px] text-white/40 truncate uppercase tracking-wider font-semibold">{user?.role}</p>
             </div>
           </div>
         </div>

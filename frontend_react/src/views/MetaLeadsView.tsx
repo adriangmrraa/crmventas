@@ -297,13 +297,13 @@ const MetaLeadsView: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-700';
-      case 'contacted': return 'bg-yellow-100 text-yellow-700';
-      case 'qualified': return 'bg-purple-100 text-purple-700';
-      case 'converted': return 'bg-green-100 text-green-700';
-      case 'closed_won': return 'bg-green-100 text-green-700';
-      case 'lost': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'new': return 'bg-blue-500/10 text-blue-400';
+      case 'contacted': return 'bg-yellow-500/10 text-yellow-700';
+      case 'qualified': return 'bg-purple-500/10 text-purple-700';
+      case 'converted': return 'bg-green-500/10 text-green-400';
+      case 'closed_won': return 'bg-green-500/10 text-green-400';
+      case 'lost': return 'bg-red-500/10 text-red-400';
+      default: return 'bg-white/[0.04] text-white/70';
     }
   };
 
@@ -322,31 +322,31 @@ const MetaLeadsView: React.FC = () => {
   if (loading && leads.length === 0) {
     return (
       <div className="p-8 text-center">
-        <Loader2 className="animate-spin mx-auto text-gray-400" size={32} />
-        <p className="text-gray-500 text-sm mt-3">Cargando leads de Meta Ads...</p>
+        <Loader2 className="animate-spin mx-auto text-white/30" size={32} />
+        <p className="text-white/40 text-sm mt-3">Cargando leads de Meta Ads...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-white/[0.02] overflow-hidden">
       {/* Header - Fixed */}
-      <div className="p-4 md:p-6 bg-white border-b border-gray-200 flex-shrink-0">
+      <div className="p-4 md:p-6 bg-white/[0.03] border-b border-white/[0.06] flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
               <Facebook size={24} />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">FORMULARIO META</h1>
-              <p className="text-sm text-gray-600">Leads generados desde Meta Ads</p>
+              <h1 className="text-xl md:text-2xl font-bold text-white leading-tight">FORMULARIO META</h1>
+              <p className="text-sm text-white/50">Leads generados desde Meta Ads</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={fetchMetaLeads}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 text-white/30 hover:text-white/50 rounded-lg hover:bg-white/[0.04] transition-colors"
               title="Actualizar"
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -354,7 +354,7 @@ const MetaLeadsView: React.FC = () => {
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-sm"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
             >
               <Download size={18} />
               <span className="hidden sm:inline">Exportar CSV</span>
@@ -367,23 +367,23 @@ const MetaLeadsView: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
         {/* Stats Cards - Adaptive Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Leads</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Total Leads</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
               </div>
-              <div className="p-2 bg-blue-50 rounded-lg">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
                 <BarChart3 className="text-blue-500" size={20} />
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Nuevos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.new}</p>
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Nuevos</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.new}</p>
               </div>
               <div className="p-2 bg-indigo-50 rounded-lg">
                 <AlertCircle className="text-indigo-500" size={20} />
@@ -391,37 +391,37 @@ const MetaLeadsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm text-yellow-700">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 text-yellow-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contactados</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.contacted}</p>
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Contactados</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.contacted}</p>
               </div>
-              <div className="p-2 bg-yellow-50 rounded-lg">
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
                 <MessageSquare className="text-yellow-500" size={20} />
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Convertidos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.converted}</p>
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Convertidos</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.converted}</p>
               </div>
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="p-2 bg-green-500/10 rounded-lg">
                 <CheckCircle className="text-green-500" size={20} />
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm col-span-2 lg:col-span-1">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 col-span-2 lg:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Hoy</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.today}</p>
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Hoy</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.today}</p>
               </div>
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="p-2 bg-purple-500/10 rounded-lg">
                 <Calendar className="text-purple-500" size={20} />
               </div>
             </div>
@@ -429,17 +429,17 @@ const MetaLeadsView: React.FC = () => {
         </div>
 
         {/* Filters and Actions - Responsive */}
-        <div className="bg-white border border-gray-200 rounded-xl p-3 md:p-4 mb-6 shadow-sm">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 md:p-4 mb-6">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div className="flex-1">
               <div className="relative group">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
                   type="text"
                   placeholder="Buscar por nombre, teléfono, campaña..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-white/[0.02] border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white/[0.06]/[0.03] transition-all outline-none"
                 />
               </div>
             </div>
@@ -448,7 +448,7 @@ const MetaLeadsView: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="col-span-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="col-span-1 px-3 py-2 bg-white/[0.02] border border-white/[0.06] rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="all">Todos los estados</option>
                 <option value="new">Nuevo</option>
@@ -461,7 +461,7 @@ const MetaLeadsView: React.FC = () => {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="col-span-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="col-span-1 px-3 py-2 bg-white/[0.02] border border-white/[0.06] rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="all">Todo el tiempo</option>
                 <option value="today">Hoy</option>
@@ -486,26 +486,26 @@ const MetaLeadsView: React.FC = () => {
         </div>
 
         {/* Data View */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
           {error ? (
             <div className="p-12 text-center">
-              <div className="inline-flex p-4 rounded-full bg-red-50 text-red-400 mb-4">
+              <div className="inline-flex p-4 rounded-full bg-red-500/10 text-red-400 mb-4">
                 <AlertCircle size={48} />
               </div>
-              <p className="text-gray-900 font-semibold">{error}</p>
+              <p className="text-white font-semibold">{error}</p>
               <button
                 onClick={fetchMetaLeads}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Reintentar
               </button>
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="inline-flex p-4 rounded-full bg-gray-50 text-gray-300 mb-4">
+              <div className="inline-flex p-4 rounded-full bg-white/[0.02] text-white/20 mb-4">
                 <Users size={48} />
               </div>
-              <p className="text-gray-500 font-medium">
+              <p className="text-white/40 font-medium">
                 {searchQuery || statusFilter !== 'all' || dateFilter !== 'all'
                   ? 'No hay leads que coincidan con los filtros'
                   : 'No hay leads de Meta Ads aún'}
@@ -513,7 +513,7 @@ const MetaLeadsView: React.FC = () => {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="mt-3 text-blue-600 hover:text-blue-700 font-medium"
+                  className="mt-3 text-blue-400 hover:text-blue-400 font-medium"
                 >
                   Limpiar búsqueda
                 </button>
@@ -524,7 +524,7 @@ const MetaLeadsView: React.FC = () => {
               {/* Desktop Table View */}
               <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50/50 border-b border-gray-200">
+                  <thead className="bg-white/[0.02]/50 border-b border-white/[0.06]">
                     <tr>
                       <th className="px-6 py-4 text-left">
                         <input
@@ -537,32 +537,32 @@ const MetaLeadsView: React.FC = () => {
                               setSelectedLeads([]);
                             }
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
                         />
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Lead / Contacto
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Campaña / Formulario
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Estado
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Responsable
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Fecha
                       </th>
-                      <th className="px-6 py-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-center text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         Acciones
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredLeads.map((lead) => (
-                      <tr key={lead.id} className="group hover:bg-gray-50/80 transition-colors">
+                      <tr key={lead.id} className="group hover:bg-white/[0.02]/80 transition-colors">
                         <td className="px-6 py-4">
                           <input
                             type="checkbox"
@@ -574,27 +574,27 @@ const MetaLeadsView: React.FC = () => {
                                 setSelectedLeads(prev => prev.filter(id => id !== lead.id));
                               }
                             }}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
                           />
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-bold text-gray-900 flex items-center gap-2">
+                            <p className="font-bold text-white flex items-center gap-2">
                               {lead.first_name || lead.last_name
                                 ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
                                 : 'Sin nombre'}
                               {lead.is_demo && (
-                                <span className="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-black rounded-full border border-purple-100 uppercase tracking-tighter">
+                                <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 text-[9px] font-black rounded-full border border-purple-100 uppercase tracking-tighter">
                                   Demo
                                 </span>
                               )}
                             </p>
-                            <div className="flex items-center gap-1.5 mt-1 text-gray-500">
+                            <div className="flex items-center gap-1.5 mt-1 text-white/40">
                               <Phone size={11} />
                               <span className="text-xs font-medium tracking-tight">{lead.phone_number}</span>
                             </div>
                             {lead.email && (
-                              <div className="flex items-center gap-1.5 mt-0.5 text-gray-400">
+                              <div className="flex items-center gap-1.5 mt-0.5 text-white/30">
                                 <Mail size={11} />
                                 <span className="text-[11px] truncate max-w-[150px]">{lead.email}</span>
                               </div>
@@ -603,10 +603,10 @@ const MetaLeadsView: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="max-w-[200px]">
-                            <p className="text-xs font-bold text-gray-700 truncate">
+                            <p className="text-xs font-bold text-white/70 truncate">
                               {lead.campaign_name || 'Sin campaña'}
                             </p>
-                            <p className="text-[10px] text-gray-400 truncate mt-0.5 uppercase tracking-wide">
+                            <p className="text-[10px] text-white/30 truncate mt-0.5 uppercase tracking-wide">
                               {lead.form_name || 'Sin formulario'}
                             </p>
                           </div>
@@ -641,15 +641,15 @@ const MetaLeadsView: React.FC = () => {
                                 setSelectedLeadForAssignment(lead.id);
                                 setShowSellerSelector(true);
                               }}
-                              className="px-3 py-1.5 text-xs font-bold bg-gray-50 text-gray-500 rounded-lg hover:bg-blue-50 hover:text-blue-600 border border-transparent hover:border-blue-100 transition-all border-dashed"
+                              className="px-3 py-1.5 text-xs font-bold bg-white/[0.02] text-white/40 rounded-lg hover:bg-blue-500/10 hover:text-blue-400 border border-transparent hover:border-blue-500/20 transition-all border-dashed"
                             >
                               Asignar
                             </button>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs font-medium text-gray-500 whitespace-nowrap">
+                        <td className="px-6 py-4 text-xs font-medium text-white/40 whitespace-nowrap">
                           {new Date(lead.created_at).toLocaleDateString()}
-                          <span className="block text-[10px] text-gray-300 font-normal">
+                          <span className="block text-[10px] text-white/20 font-normal">
                             {new Date(lead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </td>
@@ -657,14 +657,14 @@ const MetaLeadsView: React.FC = () => {
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => navigate(`/chats?phone=${encodeURIComponent(lead.phone_number)}`)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                               title="Ir al chat"
                             >
                               <MessageSquare size={16} />
                             </button>
                             <button
                               onClick={() => handleStatusChange(lead.id, 'contacted')}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
                               title="Marcar como contactado"
                             >
                               <CheckCircle size={16} />
@@ -680,7 +680,7 @@ const MetaLeadsView: React.FC = () => {
               {/* Mobile Card Layout */}
               <div className="lg:hidden divide-y divide-gray-100">
                 {filteredLeads.map((lead) => (
-                  <div key={lead.id} className="p-4 active:bg-gray-50 transition-colors">
+                  <div key={lead.id} className="p-4 active:bg-white/[0.02] transition-colors">
                     <div className="flex items-start gap-4">
                       <div className="pt-1">
                         <input
@@ -693,25 +693,25 @@ const MetaLeadsView: React.FC = () => {
                               setSelectedLeads(prev => prev.filter(id => id !== lead.id));
                             }
                           }}
-                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-5 h-5 rounded border-white/[0.06] text-blue-400 focus:ring-blue-500"
                         />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                            <h3 className="font-bold text-white text-base flex items-center gap-2">
                               {lead.first_name || lead.last_name
                                 ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
                                 : 'Sin nombre'}
                               {lead.is_demo && (
-                                <span className="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-black rounded-full border border-purple-100 uppercase">
+                                <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 text-[9px] font-black rounded-full border border-purple-100 uppercase">
                                   Demo
                                 </span>
                               )}
                             </h3>
-                            <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5 mt-1">
-                              <Phone size={14} className="text-gray-400" />
+                            <p className="text-sm font-medium text-white/40 flex items-center gap-1.5 mt-1">
+                              <Phone size={14} className="text-white/30" />
                               {lead.phone_number}
                             </p>
                           </div>
@@ -720,9 +720,9 @@ const MetaLeadsView: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg space-y-2">
+                        <div className="mt-4 p-3 bg-white/[0.02] rounded-lg space-y-2">
                           <div className="flex justify-between items-start">
-                            <span className="text-[10px] font-extrabold text-gray-400 uppercase">Responsable</span>
+                            <span className="text-[10px] font-extrabold text-white/30 uppercase">Responsable</span>
                             {lead.assigned_seller_id ? (
                               <SellerBadge
                                 sellerId={lead.assigned_seller_id}
@@ -736,28 +736,28 @@ const MetaLeadsView: React.FC = () => {
                                   setSelectedLeadForAssignment(lead.id);
                                   setShowSellerSelector(true);
                                 }}
-                                className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100"
+                                className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20"
                               >
                                 Asignar
                               </button>
                             )}
                           </div>
                           <div className="flex justify-between items-center text-xs">
-                            <span className="font-semibold text-gray-500">Campaña:</span>
-                            <span className="text-gray-900 font-medium truncate ml-2">
+                            <span className="font-semibold text-white/40">Campaña:</span>
+                            <span className="text-white font-medium truncate ml-2">
                               {lead.campaign_name || 'Sin nombre'}
                             </span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-end gap-3 mt-4">
-                          <span className="text-[11px] text-gray-400 font-medium mr-auto">
+                          <span className="text-[11px] text-white/30 font-medium mr-auto">
                             {new Date(lead.created_at).toLocaleDateString()}
                           </span>
 
                           <button
                             onClick={() => navigate(`/chats?phone=${encodeURIComponent(lead.phone_number)}`)}
-                            className="flex items-center gap-2 px-4 py-2 border border-blue-100 text-blue-600 bg-blue-50/30 rounded-lg text-sm font-bold active:scale-95 transition-transform"
+                            className="flex items-center gap-2 px-4 py-2 border border-blue-500/20 text-blue-400 bg-blue-500/10/30 rounded-lg text-sm font-bold active:scale-95 transition-transform"
                           >
                             <MessageSquare size={16} />
                             Chat
@@ -765,7 +765,7 @@ const MetaLeadsView: React.FC = () => {
 
                           <button
                             onClick={() => handleStatusChange(lead.id, 'contacted')}
-                            className="flex items-center gap-2 px-4 py-2 border border-green-100 text-green-600 bg-green-50/30 rounded-lg text-sm font-bold active:scale-95 transition-transform"
+                            className="flex items-center gap-2 px-4 py-2 border border-green-500/20 text-green-400 bg-green-500/10/30 rounded-lg text-sm font-bold active:scale-95 transition-transform"
                           >
                             <CheckCircle size={16} />
                             Listo
@@ -783,18 +783,18 @@ const MetaLeadsView: React.FC = () => {
         {/* Pagination - Responsive */}
         {filteredLeads.length > 0 && (
           <div className="mt-8 mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm font-medium text-gray-400">
-              Mostrando <span className="text-gray-900">{filteredLeads.length}</span> de <span className="text-gray-900">{leads.length}</span> contactos
+            <p className="text-sm font-medium text-white/30">
+              Mostrando <span className="text-white">{filteredLeads.length}</span> de <span className="text-white">{leads.length}</span> contactos
             </p>
             <div className="flex items-center gap-1.5">
-              <button className="p-2 text-xs font-bold text-gray-400 hover:text-gray-900 disabled:opacity-30" disabled>
+              <button className="p-2 text-xs font-bold text-white/30 hover:text-white disabled:opacity-30" disabled>
                 ANTERIOR
               </button>
               <div className="flex gap-1 px-2">
-                <span className="w-8 h-8 flex items-center justify-center text-sm font-bold bg-blue-600 text-white rounded-lg shadow-sm">1</span>
+                <span className="w-8 h-8 flex items-center justify-center text-sm font-bold bg-blue-600 text-white rounded-lg">1</span>
                 {/* Simulated remaining pages */}
               </div>
-              <button className="p-2 text-xs font-bold text-gray-400 hover:text-gray-900 disabled:opacity-30" disabled>
+              <button className="p-2 text-xs font-bold text-white/30 hover:text-white disabled:opacity-30" disabled>
                 SIGUIENTE
               </button>
             </div>
@@ -830,18 +830,18 @@ const MetaLeadsView: React.FC = () => {
       {/* Modal de Selección de Vendedor */}
       {showSellerSelector && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg bg-white/[0.03] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                  <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
                     <UserPlus size={24} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-xl font-bold text-white">
                       {selectedLeadForAssignment ? 'Asignar Lead' : 'Asignación Masiva'}
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-white/40">
                       {selectedLeadForAssignment
                         ? 'Selecciona el vendedor responsable para este lead'
                         : `Selecciona el vendedor para ${selectedLeads.length} leads`}
@@ -853,7 +853,7 @@ const MetaLeadsView: React.FC = () => {
                     setShowSellerSelector(false);
                     setSelectedLeadForAssignment(null);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                  className="p-2 hover:bg-white/[0.04] rounded-lg text-white/30 hover:text-white/50 transition-colors"
                 >
                   <X size={20} />
                 </button>

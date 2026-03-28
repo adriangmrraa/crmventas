@@ -64,8 +64,8 @@ class LeadsErrorBoundary extends Component<{ children: ReactNode }, { error: str
       return (
         <div className="h-full flex flex-col items-center justify-center p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-          <h2 className="text-lg font-bold text-gray-800 mb-2">Error al cargar Leads</h2>
-          <p className="text-sm text-gray-500 max-w-md font-mono bg-red-50 p-3 rounded-lg border border-red-100">{this.state.error}</p>
+          <h2 className="text-lg font-bold text-white mb-2">Error al cargar Leads</h2>
+          <p className="text-sm text-white/40 max-w-md font-mono bg-red-500/10 p-3 rounded-lg border border-red-500/20">{this.state.error}</p>
           <button
             className="mt-4 px-4 py-2 bg-medical-600 text-white rounded-lg text-sm font-bold hover:bg-medical-700"
             onClick={() => window.location.reload()}
@@ -227,14 +227,14 @@ function LeadsViewInner() {
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
       {/* FIXED TITLE BAR */}
-      <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center justify-between p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-medical-100 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5 text-medical-700" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('nav.leads')}</h1>
-            <p className="text-sm text-gray-500">{leads.length} {leads.length === 1 ? 'lead' : 'leads'}</p>
+            <h1 className="text-xl font-semibold text-white">{t('nav.leads')}</h1>
+            <p className="text-sm text-white/40">{leads.length} {leads.length === 1 ? 'lead' : 'leads'}</p>
           </div>
         </div>
         <button
@@ -247,19 +247,19 @@ function LeadsViewInner() {
       </div>
 
       {/* SCROLLABLE CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/30">
+      <div className="flex-1 overflow-y-auto min-h-0 bg-white/[0.02]/30">
         <div className="p-4 lg:p-6 space-y-6">
           {/* SEARCH & FILTERS BAR (Scrolls with content) */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
               <div className="relative flex-1 lg:max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
                   type="text"
                   placeholder={t('common.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-medical-500 transition-all shadow-sm"
+                  className="w-full pl-9 pr-3 py-2 border border-white/[0.06] rounded-xl text-sm outline-none focus:ring-2 focus:ring-medical-500 transition-all"
                 />
               </div>
             </div>
@@ -280,7 +280,7 @@ function LeadsViewInner() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white outline-none focus:ring-2 focus:ring-medical-500 transition-all font-medium text-gray-700 shadow-sm"
+                className="flex-1 px-3 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] outline-none focus:ring-2 focus:ring-medical-500 transition-all font-medium text-white/70"
               >
                 <option value="">Todos los estados</option>
                 {STATUS_OPTIONS.map(s => (
@@ -300,25 +300,25 @@ function LeadsViewInner() {
         </div>
 
         {/* TABS (integrated into scroll) */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="flex overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('all')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Todos
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Mensajes
             </button>
             <button
               onClick={() => setActiveTab('prospecting')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-medical-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Prospección
@@ -326,11 +326,11 @@ function LeadsViewInner() {
           </div>
 
           {activeTab === 'prospecting' && (
-            <div className="p-3 bg-medical-50/50 border-t border-gray-100 flex items-center justify-between">
+            <div className="p-3 bg-blue-500/10/50 border-t border-white/[0.04] flex items-center justify-between">
               <span className="text-xs font-bold text-medical-700 uppercase tracking-tight">Opciones de prospección</span>
               <button
                 onClick={() => navigate('/crm/prospeccion')}
-                className="text-[10px] font-bold uppercase tracking-wider text-white bg-medical-600 hover:bg-medical-700 px-4 py-2 rounded-lg transition-all shadow-sm"
+                className="text-[10px] font-bold uppercase tracking-wider text-white bg-medical-600 hover:bg-medical-700 px-4 py-2 rounded-lg transition-all"
               >
                 Ir a Prospección →
               </button>
@@ -341,20 +341,20 @@ function LeadsViewInner() {
         {/* LEAD LIST SECTION */}
         <div>
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
               {error}
             </div>
           )}
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-gray-500">{t('common.loading')}</div>
+            <div className="flex items-center justify-center py-12 text-white/40">{t('common.loading')}</div>
           ) : filteredLeads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500 bg-white border border-gray-200 rounded-xl">
+            <div className="flex flex-col items-center justify-center py-12 text-white/40 bg-white/[0.03] border border-white/[0.06] rounded-xl">
               <Users className="w-12 h-12 text-gray-200 mb-3" />
               <p>No leads yet.</p>
               <button
                 type="button"
                 onClick={() => handleOpenModal(null)}
-                className="mt-3 text-medical-600 hover:underline font-medium"
+                className="mt-3 text-blue-400 hover:underline font-medium"
               >
                 Add your first lead
               </button>
@@ -371,13 +371,13 @@ function LeadsViewInner() {
                 return (
                   <li
                     key={lead.id}
-                    className={`group bg-white border ${selectedLeads.includes(lead.id) ? 'border-blue-300 ring-2 ring-blue-50 shadow-md' : 'border-gray-200'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-gray-50 relative overflow-visible`}
+                    className={`group bg-white/[0.03] border ${selectedLeads.includes(lead.id) ? 'border-blue-300 ring-2 ring-blue-50 shadow-md' : 'border-white/[0.06]'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-white/[0.02] relative overflow-visible`}
                     onClick={() => handleOpenModal(lead)}
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       {/* Selection Checkbox */}
                       <div
-                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedLeads.includes(lead.id) ? 'bg-blue-600 border-blue-600 opacity-100' : 'bg-white border-gray-300 opacity-0 group-hover:opacity-100'}`}
+                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedLeads.includes(lead.id) ? 'bg-blue-600 border-blue-600 opacity-100' : 'bg-white/[0.03] border-white/[0.06] opacity-0 group-hover:opacity-100'}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedLeads(prev =>
@@ -390,27 +390,27 @@ function LeadsViewInner() {
                         {selectedLeads.includes(lead.id) && <Check className="w-3 h-3 text-white" />}
                       </div>
 
-                      <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center shrink-0 border border-medical-100">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-white/[0.06]">
                         <span className="text-medical-700 font-bold text-base">
                           {firstChar}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-gray-900 truncate text-base">
+                        <p className="font-bold text-white truncate text-base">
                           {displayName}
                         </p>
                         {businessName && (
-                          <p className="text-xs text-medical-600 font-medium truncate mb-0.5">
+                          <p className="text-xs text-blue-400 font-medium truncate mb-0.5">
                             {safeName !== businessName ? safeName : String(lead.phone_number || '')}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate">{String(lead.phone_number || '')}</p>
+                        <p className="text-sm text-white/40 truncate">{String(lead.phone_number || '')}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
                       <div className="flex flex-col items-start sm:items-end mr-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Status</span>
+                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest leading-none mb-1">Status</span>
                         <LeadStatusSelector
                           leadId={lead.id}
                           currentStatusCode={lead.status}
@@ -434,7 +434,7 @@ function LeadsViewInner() {
                             e.stopPropagation();
                             navigate('/chats');
                           }}
-                          className="p-3 bg-medical-50 text-medical-600 rounded-xl hover:bg-medical-100 transition-colors"
+                          className="p-3 bg-blue-500/10 text-blue-400 rounded-xl hover:bg-blue-500/15 transition-colors"
                           title="Open chat"
                         >
                           <MessageSquare size={20} />
@@ -450,13 +450,13 @@ function LeadsViewInner() {
 
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className={`bg-white rounded-xl shadow-2xl w-full ${editingLead?.source === 'apify_scrape' ? 'max-w-4xl' : 'max-w-md'} max-h-[90vh] flex flex-col`}>
-              <div className="p-6 border-b border-gray-200 shrink-0 flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
-                  {editingLead ? <Edit className="text-medical-600" size={22} /> : <Plus className="text-medical-600" size={22} />}
+            <div className={`bg-white/[0.03] rounded-xl shadow-2xl w-full ${editingLead?.source === 'apify_scrape' ? 'max-w-4xl' : 'max-w-md'} max-h-[90vh] flex flex-col`}>
+              <div className="p-6 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                  {editingLead ? <Edit className="text-blue-400" size={22} /> : <Plus className="text-blue-400" size={22} />}
                   {editingLead ? (editingLead.source === 'apify_scrape' ? 'Business Detail' : 'Edit lead') : 'New lead'}
                 </h2>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setIsModalOpen(false)} className="text-white/30 hover:text-white/50">
                   <span className="sr-only">Close</span>
                   <History size={20} className="rotate-90" />
                 </button>
@@ -467,21 +467,21 @@ function LeadsViewInner() {
                   {/* LEFT COLUMN: Basic Form */}
                   <div className="space-y-4">
                     {modalError && (
-                      <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
+                      <div className="bg-red-500/10 text-red-400 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-500/20">
                         <AlertCircle size={16} /> {modalError}
                       </div>
                     )}
 
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-medical-50 flex items-center justify-center text-medical-700 font-bold text-lg">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-medical-700 font-bold text-lg">
                         {(formData.first_name || editingLead?.apify_title || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900">
+                        <h3 className="font-bold text-white">
                           {editingLead?.apify_title || (formData.first_name ? `${formData.first_name} ${formData.last_name}` : editingLead?.phone_number)}
                         </h3>
                         {editingLead?.source === 'apify_scrape' && (
-                          <span className="text-xs bg-medical-50 text-medical-700 px-2 py-0.5 rounded-full font-medium">Prospección</span>
+                          <span className="text-xs bg-blue-500/10 text-medical-700 px-2 py-0.5 rounded-full font-medium">Prospección</span>
                         )}
                       </div>
                     </div>
@@ -489,11 +489,11 @@ function LeadsViewInner() {
                     <form id="lead-form" onSubmit={handleModalSubmit} className="space-y-4">
                       {!editingLead && (
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone number *</label>
+                          <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Phone number *</label>
                           <input
                             required
                             type="tel"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none transition-all"
+                            className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none transition-all"
                             value={formData.phone_number}
                             onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                           />
@@ -502,19 +502,19 @@ function LeadsViewInner() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">First name</label>
+                          <label className="text-xs font-bold text-white/40 uppercase tracking-wider">First name</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
                             value={formData.first_name}
                             onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Last name</label>
+                          <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Last name</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
                             value={formData.last_name}
                             onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                           />
@@ -522,12 +522,12 @@ function LeadsViewInner() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
+                        <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Email</label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <input
                             type="email"
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           />
@@ -535,9 +535,9 @@ function LeadsViewInner() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Status</label>
+                        <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Status</label>
                         <select
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-white font-medium"
+                          className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-white/[0.03] font-medium"
                           value={formData.status}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof defaultForm.status })}
                         >
@@ -552,33 +552,33 @@ function LeadsViewInner() {
                   {/* RIGHT COLUMN: Business Intelligence (Only for apify_scrape) */}
                   {editingLead?.source === 'apify_scrape' && (
                     <div className="space-y-6">
-                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-4">
-                        <h4 className="text-sm font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
-                          <Building2 size={18} className="text-medical-600" />
+                      <div className="bg-white/[0.02] rounded-xl p-5 border border-white/[0.04] space-y-4">
+                        <h4 className="text-sm font-bold text-white border-b border-white/[0.06] pb-2 flex items-center gap-2">
+                          <Building2 size={18} className="text-blue-400" />
                           Business Insights
                         </h4>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Rating</p>
+                            <p className="text-[10px] text-white/30 uppercase font-bold tracking-tight">Rating</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <Star size={16} className="text-amber-500 fill-current" />
-                              <span className="text-lg font-bold text-gray-800">{editingLead.apify_rating?.toFixed(1) || '—'}</span>
-                              <span className="text-xs text-gray-400">({editingLead.apify_reviews || 0} reviews)</span>
+                              <span className="text-lg font-bold text-white">{editingLead.apify_rating?.toFixed(1) || '—'}</span>
+                              <span className="text-xs text-white/30">({editingLead.apify_reviews || 0} reviews)</span>
                             </div>
                           </div>
                           <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Categoría</p>
-                            <p className="text-sm font-medium text-gray-700 mt-1">{editingLead.apify_category_name || '—'}</p>
+                            <p className="text-[10px] text-white/30 uppercase font-bold tracking-tight">Categoría</p>
+                            <p className="text-sm font-medium text-white/70 mt-1">{editingLead.apify_category_name || '—'}</p>
                           </div>
                         </div>
 
                         <div className="space-y-3">
                           <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Dirección</p>
+                            <p className="text-[10px] text-white/30 uppercase font-bold tracking-tight mb-1">Dirección</p>
                             <div className="flex items-start gap-2">
-                              <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
-                              <p className="text-sm text-gray-600 leading-tight">
+                              <MapPin size={16} className="text-white/30 mt-0.5 shrink-0" />
+                              <p className="text-sm text-white/50 leading-tight">
                                 {editingLead.apify_address || `${editingLead.apify_city || '—'}, ${editingLead.apify_state || ''}`}
                               </p>
                             </div>
@@ -586,12 +586,12 @@ function LeadsViewInner() {
 
                           {editingLead.apify_website && (
                             <div>
-                              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Sitio Web</p>
+                              <p className="text-[10px] text-white/30 uppercase font-bold tracking-tight mb-1">Sitio Web</p>
                               <a
                                 href={editingLead.apify_website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-medical-600 font-medium flex items-center gap-1.5 hover:underline"
+                                className="text-sm text-blue-400 font-medium flex items-center gap-1.5 hover:underline"
                               >
                                 <Globe size={16} />
                                 {editingLead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
@@ -601,20 +601,20 @@ function LeadsViewInner() {
                           )}
 
                           <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1">Redes Sociales</p>
-                            <div className="flex gap-3 text-gray-400">
+                            <p className="text-[10px] text-white/30 uppercase font-bold tracking-tight mb-1">Redes Sociales</p>
+                            <div className="flex gap-3 text-white/30">
                               {editingLead.social_links?.instagram ? (
                                 <a href={editingLead.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600">
                                   <Instagram size={20} />
                                 </a>
                               ) : <Instagram size={20} className="opacity-25" />}
                               {editingLead.social_links?.facebook ? (
-                                <a href={editingLead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+                                <a href={editingLead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
                                   <Facebook size={20} />
                                 </a>
                               ) : <Facebook size={20} className="opacity-25" />}
                               {editingLead.social_links?.linkedin ? (
-                                <a href={editingLead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700">
+                                <a href={editingLead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
                                   <Linkedin size={20} />
                                 </a>
                               ) : <Linkedin size={20} className="opacity-25" />}
@@ -661,11 +661,11 @@ function LeadsViewInner() {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 bg-gray-50 shrink-0 flex flex-col sm:flex-row gap-3">
+              <div className="p-6 border-t border-white/[0.06] bg-white/[0.02] shrink-0 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="w-full sm:flex-1 py-3 text-gray-700 font-bold hover:bg-gray-100 rounded-xl transition-all border border-gray-200"
+                  className="w-full sm:flex-1 py-3 text-white/70 font-bold hover:bg-white/[0.04] rounded-xl transition-all border border-white/[0.06]"
                 >
                   {t('common.cancel')}
                 </button>

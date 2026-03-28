@@ -105,12 +105,12 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white rounded-[28px] w-full max-w-lg overflow-hidden shadow-2xl my-auto">
+            <div className="bg-[#0d1117] rounded-[28px] w-full max-w-lg overflow-hidden shadow-2xl shadow-black/20 my-auto">
 
                 {/* Header */}
-                <div className="p-7 border-b border-gray-100 bg-gradient-to-br from-green-600 to-green-700">
+                <div className="p-7 border-b border-white/[0.04] bg-gradient-to-br from-green-600 to-green-700">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
+                        <div className="w-12 h-12 bg-white/[0.03]/20 rounded-2xl flex items-center justify-center text-white">
                             <Globe size={24} />
                         </div>
                         <div>
@@ -125,13 +125,13 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                             {[1, 2].map((s) => (
                                 <React.Fragment key={s}>
                                     <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${step > s ? 'bg-green-400 text-white' :
-                                        step === s ? 'bg-white text-green-700' :
-                                            'bg-white/20 text-white/60'
+                                        step === s ? 'bg-white/[0.03] text-green-400' :
+                                            'bg-white/[0.03]/20 text-white/60'
                                         }`}>
                                         {step > s ? <CheckCircle2 size={16} /> : s}
                                     </div>
                                     {s < totalSteps && (
-                                        <div className={`flex-1 h-0.5 transition-all ${step > s ? 'bg-green-400' : 'bg-white/20'}`} />
+                                        <div className={`flex-1 h-0.5 transition-all ${step > s ? 'bg-green-400' : 'bg-white/[0.03]/20'}`} />
                                     )}
                                 </React.Fragment>
                             ))}
@@ -142,15 +142,15 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                 {/* Content */}
                 <div className="p-7">
                     {error && (
-                        <div className="mb-5 p-4 bg-red-50 text-red-700 rounded-2xl text-sm font-medium border border-red-100">
+                        <div className="mb-5 p-4 bg-red-500/100/10 text-red-400 rounded-2xl text-sm font-medium border border-red-500/20">
                             {error}
                         </div>
                     )}
 
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-12 gap-4">
-                            <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
-                            <p className="text-gray-500 font-medium">{t('marketing.google_wizard.loading')}</p>
+                            <Loader2 className="w-10 h-10 text-green-400 animate-spin" />
+                            <p className="text-white/40 font-medium">{t('marketing.google_wizard.loading')}</p>
                         </div>
                     ) : (
                         <>
@@ -158,38 +158,38 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                             {step === 1 && (
                                 <div className="space-y-6">
                                     <div className="text-center space-y-2">
-                                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider">
+                                        <p className="text-xs font-bold text-green-400 uppercase tracking-wider">
                                             {t('marketing.google_wizard.step', { current: 1, total: 2 })}
                                         </p>
-                                        <h3 className="text-xl font-bold text-gray-900">
+                                        <h3 className="text-xl font-bold text-white">
                                             {t('marketing.google_wizard.confirm_entity_title')}
                                         </h3>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-white/40">
                                             {t('marketing.google_wizard.confirm_entity_description')}
                                         </p>
                                     </div>
 
-                                    <div className="bg-green-50 border border-green-100 p-6 rounded-3xl flex flex-col items-center gap-3">
-                                        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-green-600">
+                                    <div className="bg-green-500/100/10 border border-green-500/20 p-6 rounded-3xl flex flex-col items-center gap-3">
+                                        <div className="w-16 h-16 bg-white/[0.03]/[0.06] rounded-2xl flex items-center justify-center text-green-400">
                                             <ShieldCheck size={32} />
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-lg font-bold text-gray-900">{entityName}</div>
-                                            <div className="text-xs text-green-600 font-semibold uppercase tracking-widest mt-1">
+                                            <div className="text-lg font-bold text-white">{entityName}</div>
+                                            <div className="text-xs text-green-400 font-semibold uppercase tracking-widest mt-1">
                                                 {t('marketing.google_wizard.selected_tenant')}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
+                                        <div className="bg-blue-500/100/10 border border-blue-500/20 p-4 rounded-2xl">
                                             <div className="flex items-start gap-3">
-                                                <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+                                                <Zap className="w-5 h-5 text-blue-400 mt-0.5" />
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900">
+                                                    <p className="text-sm font-medium text-white">
                                                         {t('marketing.google_wizard.oauth_completed')}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 mt-1">
+                                                    <p className="text-xs text-white/40 mt-1">
                                                         {t('marketing.google_wizard.oauth_completed_description')}
                                                     </p>
                                                 </div>
@@ -198,7 +198,7 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
 
                                         <button
                                             onClick={handleTestConnection}
-                                            className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2"
+                                            className="w-full py-4 bg-white/[0.03] text-[#0a0e1a] rounded-2xl font-bold hover:bg-white/[0.06]/[0.03]/90 transition-all shadow-lg flex items-center justify-center gap-2"
                                         >
                                             {t('marketing.google_wizard.test_connection')}
                                             <ChevronRight size={18} />
@@ -211,13 +211,13 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                             {step === 2 && (
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">
+                                        <p className="text-xs font-bold text-green-400 uppercase tracking-wider mb-1">
                                             {t('marketing.google_wizard.step', { current: 2, total: 2 })}
                                         </p>
-                                        <h3 className="text-lg font-bold text-gray-900">
+                                        <h3 className="text-lg font-bold text-white">
                                             {t('marketing.google_wizard.select_account_title')}
                                         </h3>
-                                        <p className="text-sm text-gray-500 mt-1">
+                                        <p className="text-sm text-white/40 mt-1">
                                             {t('marketing.google_wizard.select_account_description')}
                                         </p>
                                     </div>
@@ -228,24 +228,24 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                                                 key={account.id}
                                                 onClick={() => setSelectedAccount(account)}
                                                 className={`w-full p-4 rounded-2xl border-2 transition-all text-left flex items-center justify-between ${selectedAccount?.id === account.id
-                                                    ? 'border-green-600 bg-green-50'
-                                                    : 'border-gray-100 hover:border-green-400 hover:bg-green-50/50'
+                                                    ? 'border-green-600 bg-green-500/10'
+                                                    : 'border-white/[0.04] hover:border-green-400 hover:bg-green-500/10/50'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selectedAccount?.id === account.id ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'
+                                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selectedAccount?.id === account.id ? 'bg-green-500/10 text-green-400' : 'bg-white/[0.03]/[0.04] text-white/40'
                                                         }`}>
                                                         <CreditCard size={18} />
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-gray-900">{account.name}</div>
-                                                        <div className="text-xs text-gray-400">ID: {account.id}</div>
+                                                        <div className="font-bold text-white">{account.name}</div>
+                                                        <div className="text-xs text-white/30">ID: {account.id}</div>
                                                     </div>
                                                 </div>
                                                 {selectedAccount?.id === account.id ? (
-                                                    <CheckCircle2 className="text-green-600" size={18} />
+                                                    <CheckCircle2 className="text-green-400" size={18} />
                                                 ) : (
-                                                    <ChevronRight className="text-gray-300" size={18} />
+                                                    <ChevronRight className="text-white/20" size={18} />
                                                 )}
                                             </button>
                                         ))}
@@ -254,7 +254,7 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                                     <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={() => setStep(1)}
-                                            className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all"
+                                            className="flex-1 py-3 border border-white/[0.06] text-white/50 rounded-xl font-bold hover:bg-white/[0.06]/[0.03]/[0.04] transition-all"
                                         >
                                             {t('marketing.google_wizard.back')}
                                         </button>
@@ -263,7 +263,7 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                                             disabled={!selectedAccount}
                                             className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${selectedAccount
                                                 ? 'bg-green-600 text-white hover:bg-green-700'
-                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-white/[0.03]/[0.04] text-white/30 cursor-not-allowed'
                                                 }`}
                                         >
                                             {t('marketing.google_wizard.finish')}
@@ -276,25 +276,25 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                             {/* STEP 3: Success */}
                             {step === 3 && (
                                 <div className="text-center space-y-6 py-4">
-                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                                        <CheckCircle2 className="w-12 h-12 text-green-600" />
+                                    <div className="w-20 h-20 bg-green-500/100/10 rounded-full flex items-center justify-center mx-auto">
+                                        <CheckCircle2 className="w-12 h-12 text-green-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">
+                                        <h3 className="text-2xl font-bold text-white/90">
                                             {t('marketing.google_wizard.success_title')}
                                         </h3>
-                                        <p className="text-gray-500 mt-2">
+                                        <p className="text-white/40 mt-2">
                                             {t('marketing.google_wizard.success_description')}
                                         </p>
                                         {selectedAccount && (
-                                            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium">
+                                            <div className="mt-4 inline-flex items-center gap-2 bg-green-500/100/10 text-green-400 px-4 py-2 rounded-full text-sm font-medium">
                                                 <Globe size={14} />
                                                 {selectedAccount.name}
                                             </div>
                                         )}
                                     </div>
                                     <div className="pt-4">
-                                        <div className="text-xs text-gray-400 font-medium">
+                                        <div className="text-xs text-white/30 font-medium">
                                             {t('marketing.google_wizard.redirecting')}
                                         </div>
                                     </div>

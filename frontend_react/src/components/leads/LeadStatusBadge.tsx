@@ -20,7 +20,7 @@ export const LeadStatusBadge: React.FC<LeadStatusBadgeProps> = ({
     const { statuses, isLoadingStatuses } = useLeadStatus();
 
     if (isLoadingStatuses && !statuses) {
-        return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 animate-pulse ${className}`}>Cargando...</span>;
+        return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/[0.03]/[0.04] text-white animate-pulse ${className}`}>Cargando...</span>;
     }
 
     // Fallback si no está el estado (o el cache no cargó)
@@ -47,7 +47,7 @@ export const LeadStatusBadge: React.FC<LeadStatusBadgeProps> = ({
 
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm ${className}`}
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${className}`}
             style={{
                 backgroundColor: `rgba(${hexToRgb(statusDef.color)}, 0.1)`,
                 color: statusDef.color,

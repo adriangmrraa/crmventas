@@ -189,22 +189,22 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'assignment':
         return <User size={16} className="text-green-500" />;
       default:
-        return <Bell size={16} className="text-gray-500" />;
+        return <Bell size={16} className="text-white/40" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return 'border-red-500 bg-red-50 dark:bg-red-900/20';
+        return 'border-red-500 bg-red-500/10';
       case 'high':
-        return 'border-orange-500 bg-orange-50 dark:bg-orange-900/20';
+        return 'border-orange-500 bg-orange-500/10';
       case 'medium':
-        return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+        return 'border-yellow-500 bg-yellow-500/10';
       case 'low':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+        return 'border-blue-500 bg-blue-500/10';
       default:
-        return 'border-gray-500 bg-gray-50 dark:bg-gray-900/20';
+        return 'border-gray-500 bg-white/[0.02]';
     }
   };
 
@@ -286,28 +286,28 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <BellRing size={20} className="text-gray-700 dark:text-gray-300" />
+            <BellRing size={20} className="text-white/70" />
             {usingSocket && (
               <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'
                 }`} />
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-white">
               {t('notifications.center_title')}
             </h3>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-white/40">
                 {notificationCount.total} {t('notifications.notifications')}
                 {notificationCount.critical > 0 && ` • ${notificationCount.critical} ${t('notifications.critical')}`}
               </p>
               {usingSocket && (
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${socketConnected
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  ? 'bg-green-500/10 text-green-400'
+                  : 'bg-red-500/10 text-red-400'
                   }`}>
                   {socketConnected ? <Wifi size={10} /> : <WifiOff size={10} />}
                   {socketConnected ? t('notifications.real_time_updates') : t('notifications.socket_disconnected')}
@@ -319,7 +319,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
         <div className="flex items-center gap-2">
           {usingSocket && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
+            <div className="text-xs text-white/40 px-2 py-1 rounded bg-white/[0.04]">
               {socketConnected ? 'Socket.IO' : 'API'}
             </div>
           )}
@@ -327,7 +327,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={refreshNotifications}
             disabled={refreshing}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors disabled:opacity-50"
             title={t('notifications.refresh')}
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -335,7 +335,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
             title={t('common.close')}
           >
             <X size={16} />
@@ -344,13 +344,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Filters */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div className="p-3 border-b border-white/[0.06] flex items-center justify-between">
         <div className="flex gap-1">
           <button
             onClick={() => setFilter('unread')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'unread'
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-blue-500/10 text-blue-400'
+              : 'text-white/50 hover:bg-white/[0.06]'
               }`}
           >
             {t('notifications.unread')} ({notificationCount.total})
@@ -358,8 +358,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'all'
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-blue-500/10 text-blue-400'
+              : 'text-white/50 hover:bg-white/[0.06]'
               }`}
           >
             {t('notifications.all')}
@@ -369,7 +369,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         {notificationCount.total > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
+            className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
           >
             <Check size={14} />
             {t('notifications.mark_all_read')}
@@ -382,25 +382,25 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         {loading ? (
           <div className="p-8 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-white/40">
               {t('notifications.loading')}
             </p>
           </div>
         ) : error ? (
           <div className="p-4 text-center">
             <AlertCircle className="inline-block text-red-500 mb-2" size={24} />
-            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-red-400">{error}</p>
             <button
               onClick={refreshNotifications}
-              className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="mt-2 text-sm text-blue-400 hover:underline"
             >
               {t('notifications.retry')}
             </button>
           </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="p-8 text-center">
-            <Bell className="inline-block text-gray-400 mb-2" size={32} />
-            <p className="text-gray-500 dark:text-gray-400">
+            <Bell className="inline-block text-white/30 mb-2" size={32} />
+            <p className="text-white/40">
               {filter === 'unread'
                 ? t('notifications.no_unread_notifications')
                 : t('notifications.no_notifications')
@@ -408,11 +408,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-white/[0.04]">
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                className={`p-4 hover:bg-white/[0.04] transition-colors cursor-pointer ${!notification.read ? 'bg-blue-500/5' : ''
                   }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -426,10 +426,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                        <h4 className="font-medium text-white">
                           {notification.title}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-sm text-white/50 mt-1">
                           {notification.message}
                         </p>
                       </div>
@@ -440,10 +440,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                             e.stopPropagation();
                             markAsRead(notification.id);
                           }}
-                          className="flex-shrink-0 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          className="flex-shrink-0 p-1 rounded-full hover:bg-white/[0.08] transition-colors"
                           title={t('notifications.mark_as_read')}
                         >
-                          <Check size={14} className="text-gray-500" />
+                          <Check size={14} className="text-white/40" />
                         </button>
                       )}
                     </div>
@@ -454,18 +454,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         {getPriorityText(notification.priority)}
                       </span>
 
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-white/40">
                         {formatTime(notification.created_at)}
                       </span>
 
                       {notification.sender_name && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-white/40">
                           • {notification.sender_name}
                         </span>
                       )}
 
                       {notification.related_entity_type && (
-                        <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <span className="text-xs text-blue-400 flex items-center gap-1">
                           <ChevronRight size={10} />
                           {t(`notifications.entity_${notification.related_entity_type}`)}
                         </span>
@@ -480,7 +480,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                             e.stopPropagation();
                             handleNotificationClick(notification);
                           }}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
+                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
                         >
                           <ExternalLink size={12} />
                           {t('notifications.view_entity')}
@@ -496,10 +496,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div className="p-3 border-t border-white/[0.06] flex items-center justify-between">
         <button
           onClick={() => window.location.href = '/notificaciones'}
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
+          className="text-sm text-white/50 hover:text-white/70 flex items-center gap-1"
         >
           {t('notifications.view_all')}
           <ChevronRight size={14} />
@@ -507,7 +507,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
         <button
           onClick={() => window.location.href = '/configuracion?tab=notifications'}
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 flex items-center gap-1"
+          className="text-sm text-white/50 hover:text-white/70 flex items-center gap-1"
         >
           <Settings size={14} />
           {t('notifications.settings')}

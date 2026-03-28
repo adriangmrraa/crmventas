@@ -171,7 +171,7 @@ export default function MarketingHubView() {
     };
 
     return (
-        <div className="h-full w-full overflow-y-auto bg-gray-50/50">
+        <div className="h-full w-full overflow-y-auto bg-white/[0.02]/50">
             <div className="p-4 sm:p-6 pb-24 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <PageHeader
@@ -180,7 +180,7 @@ export default function MarketingHubView() {
                         icon={<Megaphone size={24} />}
                     />
 
-                    <div className="flex flex-wrap items-center gap-3 bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3 bg-white/[0.03] p-1.5 rounded-2xl border border-white/[0.06]">
                         {[
                             { id: 'last_30d', label: t('marketing.range_30d') },
                             { id: 'last_90d', label: t('marketing.range_90d') },
@@ -192,7 +192,7 @@ export default function MarketingHubView() {
                                 onClick={() => setTimeRange(range.id)}
                                 className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${timeRange === range.id
                                     ? 'bg-gray-900 text-white shadow-lg'
-                                    : 'text-gray-500 hover:bg-gray-50'
+                                    : 'text-white/40 hover:bg-white/[0.02]'
                                     }`}
                             >
                                 {range.label}
@@ -202,13 +202,13 @@ export default function MarketingHubView() {
                 </div>
 
                 {/* Platform Selection Tabs */}
-                <div className="bg-white border border-gray-200 rounded-3xl p-2 shadow-sm">
-                    <div className="flex bg-gray-100 p-1 rounded-2xl">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-2">
+                    <div className="flex bg-white/[0.04] p-1 rounded-2xl">
                         <button
                             onClick={() => setActivePlatform('meta')}
                             className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activePlatform === 'meta'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white/[0.03] text-white'
+                                : 'text-white/40 hover:text-white/70'
                                 }`}
                         >
                             <RefreshCw size={16} /> Meta Ads
@@ -216,8 +216,8 @@ export default function MarketingHubView() {
                         <button
                             onClick={() => setActivePlatform('google')}
                             className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activePlatform === 'google'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white/[0.03] text-white'
+                                : 'text-white/40 hover:text-white/70'
                                 }`}
                         >
                             <Globe size={16} /> Google Ads
@@ -237,20 +237,20 @@ export default function MarketingHubView() {
                     </div>
 
                     {/* Connection Status Card */}
-                    <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-8 flex flex-col justify-between">
                         <div>
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                <h3 className="font-bold text-white flex items-center gap-2">
                                     {activePlatform === 'meta' ? (
-                                        <RefreshCw size={18} className={isMetaConnected ? "text-blue-500" : "text-gray-400"} />
+                                        <RefreshCw size={18} className={isMetaConnected ? "text-blue-500" : "text-white/30"} />
                                     ) : (
-                                        <Globe size={18} className={isGoogleConnected ? "text-green-500" : "text-gray-400"} />
+                                        <Globe size={18} className={isGoogleConnected ? "text-green-500" : "text-white/30"} />
                                     )}
                                     {activePlatform === 'meta' ? t('marketing.meta_connection') : t('marketing.google_connection')}
                                 </h3>
                                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${activePlatform === 'meta' 
-                                    ? (isMetaConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
-                                    : (isGoogleConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
+                                    ? (isMetaConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400')
+                                    : (isGoogleConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400')
                                 }`}>
                                     {activePlatform === 'meta' 
                                         ? (isMetaConnected ? t('marketing.connected_active') : t('marketing.connected_disconnected'))
@@ -258,7 +258,7 @@ export default function MarketingHubView() {
                                     }
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-500 mb-6">
+                            <p className="text-sm text-white/40 mb-6">
                                 {activePlatform === 'meta'
                                     ? (isMetaConnected ? t('marketing.connected_desc') : t('marketing.disconnected_desc'))
                                     : (isGoogleConnected ? t('marketing.google_connected_desc') : t('marketing.google_disconnected_desc'))
@@ -269,8 +269,8 @@ export default function MarketingHubView() {
                         <button
                             onClick={activePlatform === 'meta' ? handleConnectMeta : handleConnectGoogle}
                             className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${activePlatform === 'meta'
-                                ? (isMetaConnected ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-gray-900 text-white hover:bg-black")
-                                : (isGoogleConnected ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-green-600 text-white hover:bg-green-700")
+                                ? (isMetaConnected ? "bg-white/[0.04] text-white hover:bg-white/[0.06]" : "bg-gray-900 text-white hover:bg-black")
+                                : (isGoogleConnected ? "bg-white/[0.04] text-white hover:bg-white/[0.06]" : "bg-green-600 text-white hover:bg-green-700")
                                 }`}
                         >
                             <ExternalLink size={18} /> 
@@ -285,14 +285,14 @@ export default function MarketingHubView() {
 
 
                 {/* Campaign/Ad Table with Tabs */}
-                <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden mb-12">
-                    <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div className="flex bg-gray-100 p-1 rounded-xl">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl overflow-hidden mb-12">
+                    <div className="p-6 border-b border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="flex bg-white/[0.04] p-1 rounded-xl">
                             <button
                                 onClick={() => setActiveTab('campaigns')}
                                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'campaigns'
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white/[0.03] text-white'
+                                    : 'text-white/40 hover:text-white/70'
                                     }`}
                             >
                                 {t('marketing.tabs.campaigns')}
@@ -300,50 +300,50 @@ export default function MarketingHubView() {
                             <button
                                 onClick={() => setActiveTab('ads')}
                                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'ads'
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white/[0.03] text-white'
+                                    : 'text-white/40 hover:text-white/70'
                                     }`}
                             >
                                 {t('marketing.tabs.creatives')}
                             </button>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500 mr-2 capitalize">{t('marketing.period_label')}: {timeRange.replace('_', ' ')}</span>
+                            <span className="text-sm text-white/40 mr-2 capitalize">{t('marketing.period_label')}: {timeRange.replace('_', ' ')}</span>
                         </div>
                     </div>
 
                     <div className="overflow-x-auto">
                         {/* Desktop Table View */}
                         <table className="hidden lg:table w-full text-left border-separate border-spacing-0">
-                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-sm">
+                            <thead className="bg-white/[0.02] text-white/40 text-xs uppercase tracking-wider sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold border-b border-gray-100 w-1/3">
+                                    <th className="px-6 py-4 font-semibold border-b border-white/[0.04] w-1/3">
                                         {activeTab === 'campaigns' ? t('marketing.table_campaign_ad') : t('marketing.table_ad')}
                                     </th>
-                                    <th className="px-6 py-4 font-semibold border-b border-gray-100">{t('marketing.table_spend')}</th>
-                                    <th className="px-6 py-4 font-semibold border-b border-gray-100">{t('marketing.table_leads')}</th>
-                                    <th className="px-6 py-4 font-semibold border-b border-gray-100">{t('marketing.table_appts')}</th>
-                                    <th className="px-6 py-4 font-semibold text-indigo-600 border-b border-gray-100">{t('marketing.table_roi')}</th>
-                                    <th className="px-6 py-4 font-semibold border-b border-gray-100">{t('marketing.table_status')}</th>
+                                    <th className="px-6 py-4 font-semibold border-b border-white/[0.04]">{t('marketing.table_spend')}</th>
+                                    <th className="px-6 py-4 font-semibold border-b border-white/[0.04]">{t('marketing.table_leads')}</th>
+                                    <th className="px-6 py-4 font-semibold border-b border-white/[0.04]">{t('marketing.table_appts')}</th>
+                                    <th className="px-6 py-4 font-semibold text-indigo-600 border-b border-white/[0.04]">{t('marketing.table_roi')}</th>
+                                    <th className="px-6 py-4 font-semibold border-b border-white/[0.04]">{t('marketing.table_status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {getPlatformData()?.map((c: any, index: number) => (
-                                    <tr key={c.ad_id || c.id || `campaign-${index}`} className="hover:bg-blue-50/30 transition-colors group">
+                                    <tr key={c.ad_id || c.id || `campaign-${index}`} className="hover:bg-blue-500/10/30 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                            <div className="font-bold text-white group-hover:text-blue-400 transition-colors">
                                                 {c.ad_name || c.name || `Campaign ${index + 1}`}
                                             </div>
-                                            <div className="text-xs text-gray-400 font-medium">
+                                            <div className="text-xs text-white/30 font-medium">
                                                 {c.campaign_name || c.channel_type || 'Google Ads'}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 font-bold text-gray-700">
+                                        <td className="px-6 py-4 font-bold text-white/70">
                                             {getCurrency()} {Number(c.spend || c.cost || 0).toLocaleString()}
                                         </td>
-                                        <td className="px-6 py-4 font-medium text-gray-600">{c.leads || c.conversions || 0}</td>
+                                        <td className="px-6 py-4 font-medium text-white/50">{c.leads || c.conversions || 0}</td>
                                         <td className="px-6 py-4">
-                                            <span className="font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">
+                                            <span className="font-bold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-lg">
                                                 {c.opportunities || Math.floor((c.conversions || 0) * 0.3)}
                                             </span>
                                         </td>
@@ -355,7 +355,7 @@ export default function MarketingHubView() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`flex items-center gap-1.5 text-sm font-bold ${c.status === 'active' || c.status === 'ENABLED' ? 'text-green-600' : (c.status === 'paused' || c.status === 'PAUSED' || c.status === 'archived') ? 'text-amber-600' : 'text-gray-400'}`}>
+                                            <span className={`flex items-center gap-1.5 text-sm font-bold ${c.status === 'active' || c.status === 'ENABLED' ? 'text-green-400' : (c.status === 'paused' || c.status === 'PAUSED' || c.status === 'archived') ? 'text-amber-600' : 'text-white/30'}`}>
                                                 <div className={`w-2 h-2 rounded-full ${c.status === 'active' || c.status === 'ENABLED' ? 'bg-green-500 animate-pulse' : (c.status === 'paused' || c.status === 'PAUSED' || c.status === 'archived') ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
                                                 <span className="capitalize">{c.status || 'Unknown'}</span>
                                             </span>
@@ -368,17 +368,17 @@ export default function MarketingHubView() {
                         {/* Mobile Cards View (Stacking Pattern) */}
                         <div className="lg:hidden divide-y divide-gray-100">
                             {getPlatformData()?.map((c: any, index: number) => (
-                                <div key={c.ad_id || c.id || `campaign-mobile-${index}`} className="p-5 space-y-4 hover:bg-gray-50 transition-colors">
+                                <div key={c.ad_id || c.id || `campaign-mobile-${index}`} className="p-5 space-y-4 hover:bg-white/[0.02] transition-colors">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1 min-w-0 pr-4">
-                                            <div className="font-black text-gray-900 leading-tight mb-1">
+                                            <div className="font-black text-white leading-tight mb-1">
                                                 {c.ad_name || c.name || `Campaign ${index + 1}`}
                                             </div>
-                                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider">
                                                 {c.campaign_name || c.channel_type || 'Google Ads'}
                                             </div>
                                         </div>
-                                        <span className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${c.status === 'active' || c.status === 'ENABLED' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                        <span className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${c.status === 'active' || c.status === 'ENABLED' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/[0.04] text-white/40 border-white/[0.06]'}`}>
                                             <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' || c.status === 'ENABLED' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                                             {c.status || 'Unknown'}
                                         </span>
@@ -386,8 +386,8 @@ export default function MarketingHubView() {
 
                                     <div className="grid grid-cols-2 gap-4 pt-2">
                                         <div>
-                                            <div className="text-[10px] text-gray-400 font-bold uppercase mb-1">{t('marketing.table_spend')}</div>
-                                            <div className="font-black text-gray-800">{getCurrency()}{Number(c.spend || c.cost || 0).toLocaleString()}</div>
+                                            <div className="text-[10px] text-white/30 font-bold uppercase mb-1">{t('marketing.table_spend')}</div>
+                                            <div className="font-black text-white">{getCurrency()}{Number(c.spend || c.cost || 0).toLocaleString()}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-indigo-400 font-bold uppercase mb-1">{t('marketing.table_roi')}</div>
@@ -396,12 +396,12 @@ export default function MarketingHubView() {
                                             </div>
                                         </div>
                                         <div>
-                                            <div className="text-[10px] text-gray-400 font-bold uppercase mb-1">{t('marketing.table_leads')}</div>
-                                            <div className="font-bold text-gray-700">{c.leads || c.conversions || 0}</div>
+                                            <div className="text-[10px] text-white/30 font-bold uppercase mb-1">{t('marketing.table_leads')}</div>
+                                            <div className="font-bold text-white/70">{c.leads || c.conversions || 0}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-green-500 font-bold uppercase mb-1">{t('marketing.table_appts')}</div>
-                                            <div className="font-black text-green-600">{c.opportunities || Math.floor((c.conversions || 0) * 0.3)}</div>
+                                            <div className="font-black text-green-400">{c.opportunities || Math.floor((c.conversions || 0) * 0.3)}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -410,7 +410,7 @@ export default function MarketingHubView() {
 
                         {/* Empty State */}
                         {!getPlatformData()?.length && (
-                            <div className="px-6 py-20 text-center text-gray-400 italic">
+                            <div className="px-6 py-20 text-center text-white/30 italic">
                                 {activePlatform === 'meta' ? (
                                     <Megaphone className="w-10 h-10 mx-auto mb-4 opacity-20" />
                                 ) : (

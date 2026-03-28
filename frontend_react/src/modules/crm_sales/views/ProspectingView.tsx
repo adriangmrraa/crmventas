@@ -206,15 +206,15 @@ export default function ProspectingView() {
         onClick={() => {
           if (window.innerWidth < 1024) setIsHeaderExpanded(!isHeaderExpanded);
         }}
-        className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0 cursor-pointer lg:cursor-default"
+        className="flex items-center justify-between p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0 cursor-pointer lg:cursor-default"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
             <Search className="w-5 h-5 text-emerald-700" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('nav.prospecting')}</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-xl font-semibold text-white">{t('nav.prospecting')}</h1>
+            <p className="text-sm text-white/40">
               {leads.length} {t('prospecting.subtitle')}
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function ProspectingView() {
             e.stopPropagation();
             setIsHeaderExpanded(!isHeaderExpanded);
           }}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+          className="p-2 hover:bg-white/[0.04] rounded-lg transition-colors text-white/40"
           title={isHeaderExpanded ? "Colapsar filtros" : "Expandir filtros"}
         >
           {isHeaderExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
@@ -233,19 +233,19 @@ export default function ProspectingView() {
       </div>
 
       {/* SCROLLABLE CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/30">
+      <div className="flex-1 overflow-y-auto min-h-0 bg-white/[0.02]/30">
         {/* COLLAPSIBLE FILTERS & ACTIONS BAR */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden border-b border-gray-200 bg-white/50
+          className={`transition-all duration-300 ease-in-out overflow-hidden border-b border-white/[0.06] bg-white/50
           ${isHeaderExpanded ? 'max-h-[500px] opacity-100 p-4 lg:p-6' : 'max-h-0 opacity-0 p-0 overflow-hidden'}`}
         >
           <div className="space-y-6">
             {/* FILTERS & ACTIONS BAR */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">Entidad</label>
+                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest leading-none mb-1.5 block">Entidad</label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-4 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] focus:ring-2 focus:ring-emerald-500 outline-none"
                   value={tenantId ?? ''}
                   disabled={loadingTenants}
                   onChange={(e) => setTenantId(Number(e.target.value))}
@@ -258,29 +258,29 @@ export default function ProspectingView() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.niche')}</label>
+                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.niche')}</label>
                 <input
                   type="text"
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
+                  className="w-full px-4 py-2 border border-white/[0.06] rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
                   placeholder={t('prospecting.nichePlaceholder')}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.location')}</label>
+                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest leading-none mb-1.5 block">{t('prospecting.location')}</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
+                  className="w-full px-4 py-2 border border-white/[0.06] rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
                   placeholder={t('prospecting.locationPlaceholder')}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5 block">Cant. Resultados</label>
+                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest leading-none mb-1.5 block">Cant. Resultados</label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-4 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] focus:ring-2 focus:ring-emerald-500 outline-none"
                   value={maxPlaces}
                   onChange={(e) => setMaxPlaces(Number(e.target.value))}
                 >
@@ -311,7 +311,7 @@ export default function ProspectingView() {
                   <select
                     value={selectedTemplate}
                     onChange={(e) => setSelectedTemplate(e.target.value)}
-                    className="w-full sm:w-auto pl-4 pr-10 py-2 border border-emerald-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none font-medium text-emerald-900"
+                    className="w-full sm:w-auto pl-4 pr-10 py-2 border border-emerald-200 rounded-lg text-sm bg-white/[0.03] focus:ring-2 focus:ring-emerald-500 outline-none appearance-none font-medium text-emerald-900"
                   >
                     {templates.length === 0 ? (
                       <option value="">{loadingTemplates ? t('common.loading') : t('prospecting.noTemplates')}</option>
@@ -335,7 +335,7 @@ export default function ProspectingView() {
                   type="button"
                   onClick={() => handleRequestSend('selected')}
                   disabled={requestingSend || selectedIds.length === 0 || !selectedTemplate}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all font-bold text-sm shadow-sm"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all font-bold text-sm"
                 >
                   {requestingSend ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   {t('prospecting.sendSelected', { count: selectedIds.length })}
@@ -347,7 +347,7 @@ export default function ProspectingView() {
                     leads.filter(l => !l.outreach_message_sent).forEach(l => toSelect[l.id] = true);
                     setSelected(toSelect);
                   }}
-                  className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-all text-sm font-bold shadow-sm"
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-white/[0.03] border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-all text-sm font-bold"
                 >
                   Auto-selección
                 </button>
@@ -358,7 +358,7 @@ export default function ProspectingView() {
 
         <div className="p-4 lg:p-6 space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-3">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <p className="text-sm font-medium">{error}</p>
             </div>
@@ -371,16 +371,16 @@ export default function ProspectingView() {
           )}
 
           {loadingLeads ? (
-            <div className="py-12 text-center text-gray-500 flex flex-col items-center justify-center gap-3">
+            <div className="py-12 text-center text-white/40 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
               <p className="font-medium">{t('prospecting.loadingLeads')}</p>
             </div>
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden lg:block bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="hidden lg:block bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-white/[0.02] border-b border-white/[0.06]">
                     <tr>
                       <th className="px-4 py-3 w-10">
                         <input
@@ -396,18 +396,18 @@ export default function ProspectingView() {
                           className="rounded text-emerald-600 focus:ring-emerald-500"
                         />
                       </th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colBusiness')}</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colPhone')}</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">Email</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">Rating</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">Website</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">Social</th>
-                      <th className="text-left px-4 py-3 font-bold text-gray-900">{t('prospecting.colStatus')}</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">{t('prospecting.colBusiness')}</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">{t('prospecting.colPhone')}</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">Email</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">Rating</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">Website</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">Social</th>
+                      <th className="text-left px-4 py-3 font-bold text-white">{t('prospecting.colStatus')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {leads.map((lead) => (
-                      <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
@@ -417,17 +417,17 @@ export default function ProspectingView() {
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-bold text-gray-900">{lead.apify_title || '—'}</div>
+                          <div className="font-bold text-white">{lead.apify_title || '—'}</div>
                           <div className="text-xs text-emerald-600 font-medium">{lead.apify_category_name || '—'}</div>
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-600">{lead.phone_number}</td>
+                        <td className="px-4 py-3 font-medium text-white/50">{lead.phone_number}</td>
                         <td className="px-4 py-3">
                           {lead.email ? (
-                            <div className="flex items-center gap-1.5 text-gray-600">
-                              <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            <div className="flex items-center gap-1.5 text-white/50">
+                              <Mail className="w-3.5 h-3.5 text-white/30" />
                               <span className="truncate max-w-[120px]" title={lead.email}>{lead.email}</span>
                             </div>
-                          ) : <span className="text-gray-300">—</span>}
+                          ) : <span className="text-white/20">—</span>}
                         </td>
                         <td className="px-4 py-3">
                           {lead.apify_rating ? (
@@ -435,11 +435,11 @@ export default function ProspectingView() {
                               <Star className="w-3.5 h-3.5 fill-current" />
                               <span className="font-bold">{lead.apify_rating.toFixed(1)}</span>
                             </div>
-                          ) : <span className="text-gray-300">—</span>}
+                          ) : <span className="text-white/20">—</span>}
                         </td>
                         <td className="px-4 py-3">
                           {lead.apify_website ? (
-                            <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 text-gray-500 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors inline-block">
+                            <a href={lead.apify_website} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/[0.02] text-white/40 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors inline-block">
                               <Globe className="w-4 h-4" />
                             </a>
                           ) : '—'}
@@ -452,7 +452,7 @@ export default function ProspectingView() {
                               </a>
                             )}
                             {lead.social_links?.facebook && (
-                              <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                              <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                                 <Facebook className="w-4 h-4" />
                               </a>
                             )}
@@ -464,7 +464,7 @@ export default function ProspectingView() {
                           ) : lead.outreach_send_requested ? (
                             <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-white/70 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
                           )}
                         </td>
                       </tr>
@@ -478,7 +478,7 @@ export default function ProspectingView() {
                 {leads.map((lead) => (
                   <div
                     key={lead.id}
-                    className={`bg-white border border-gray-200 rounded-2xl p-4 shadow-sm active:bg-gray-50 transition-colors ${selected[lead.id] ? 'ring-2 ring-emerald-500' : ''}`}
+                    className={`bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 active:bg-white/[0.02] transition-colors ${selected[lead.id] ? 'ring-2 ring-emerald-500' : ''}`}
                     onClick={() => setSelected((prev) => ({ ...prev, [lead.id]: !prev[lead.id] }))}
                   >
                     <div className="flex justify-between items-start mb-3">
@@ -487,7 +487,7 @@ export default function ProspectingView() {
                           <span className="text-emerald-700 font-bold">{(lead.apify_title || '—').charAt(0)}</span>
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900 leading-tight mb-0.5">
+                          <div className="font-bold text-white leading-tight mb-0.5">
                             {lead.apify_title || '—'}
                           </div>
                           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
@@ -504,17 +504,17 @@ export default function ProspectingView() {
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-2 text-sm text-white/50">
+                        <MapPin className="w-4 h-4 text-white/30" />
                         {lead.apify_city || lead.apify_address || '—'}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                      <div className="flex items-center gap-2 text-sm text-white/50 font-medium">
                         <span className="w-4 h-4 flex items-center justify-center text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">P</span>
                         {lead.phone_number}
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                    <div className="flex justify-between items-center pt-3 border-t border-white/[0.04]">
                       <div className="flex gap-2">
                         {lead.apify_website && (
                           <a
@@ -522,7 +522,7 @@ export default function ProspectingView() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="p-2.5 bg-gray-50 text-gray-500 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                            className="p-2.5 bg-white/[0.02] text-white/40 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                           >
                             <Globe className="w-5 h-5" />
                           </a>
@@ -533,7 +533,7 @@ export default function ProspectingView() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="p-2.5 bg-gray-50 text-pink-500 rounded-xl hover:bg-pink-50 transition-colors"
+                            className="p-2.5 bg-white/[0.02] text-pink-500 rounded-xl hover:bg-pink-50 transition-colors"
                           >
                             <Instagram className="w-5 h-5" />
                           </a>
@@ -545,7 +545,7 @@ export default function ProspectingView() {
                         ) : lead.outreach_send_requested ? (
                           <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusRequested')}</span>
                         ) : (
-                          <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
+                          <span className="px-3 py-1 rounded-full bg-white/[0.04] text-white/70 text-[10px] font-bold uppercase tracking-wider">{t('prospecting.statusPending')}</span>
                         )}
                       </div>
                     </div>
@@ -554,9 +554,9 @@ export default function ProspectingView() {
               </div>
 
               {leads.length === 0 && (
-                <div className="py-20 text-center text-gray-500">
+                <div className="py-20 text-center text-white/40">
                   <Search className="w-16 h-16 mx-auto text-gray-200 mb-4" />
-                  <p className="text-lg font-medium text-gray-400">{t('prospecting.noLeads')}</p>
+                  <p className="text-lg font-medium text-white/30">{t('prospecting.noLeads')}</p>
                 </div>
               )}
             </>

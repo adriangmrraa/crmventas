@@ -141,8 +141,8 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
   if (loading) {
     return (
       <div className={`p-8 text-center ${className}`}>
-        <Loader2 className="animate-spin mx-auto text-gray-400" size={32} />
-        <p className="text-gray-500 text-sm mt-3">{t('sellers.loading_metrics')}</p>
+        <Loader2 className="animate-spin mx-auto text-white/30" size={32} />
+        <p className="text-white/40 text-sm mt-3">{t('sellers.loading_metrics')}</p>
       </div>
     );
   }
@@ -150,7 +150,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
   if (error) {
     return (
       <div className={`p-6 text-center ${className}`}>
-        <BarChart3 className="mx-auto text-gray-300" size={40} />
+        <BarChart3 className="mx-auto text-white/20" size={40} />
         <p className="text-red-500 text-sm mt-3">{error}</p>
         <button
           onClick={fetchMetrics}
@@ -166,8 +166,8 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
   if (!metrics) {
     return (
       <div className={`p-6 text-center ${className}`}>
-        <BarChart3 className="mx-auto text-gray-300" size={40} />
-        <p className="text-gray-500 text-sm mt-3">{t('sellers.no_metrics')}</p>
+        <BarChart3 className="mx-auto text-white/20" size={40} />
+        <p className="text-white/40 text-sm mt-3">{t('sellers.no_metrics')}</p>
       </div>
     );
   }
@@ -177,42 +177,42 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       title: t('sellers.total_conversations'),
       value: metrics.total_conversations,
       icon: Users,
-      color: 'bg-blue-100 text-blue-600',
+      color: 'bg-blue-500/100/10 text-blue-400',
       trend: metrics.active_conversations > 0 ? 'positive' : 'neutral'
     },
     {
       title: t('sellers.active_conversations'),
       value: metrics.active_conversations,
       icon: MessageSquare,
-      color: 'bg-green-100 text-green-600',
+      color: 'bg-green-500/100/10 text-green-400',
       trend: 'positive'
     },
     {
       title: t('sellers.conversion_rate'),
       value: `${metrics.conversion_rate}%`,
       icon: TrendingUp,
-      color: 'bg-purple-100 text-purple-600',
+      color: 'bg-purple-500/10 text-purple-400',
       trend: metrics.conversion_rate > 20 ? 'positive' : metrics.conversion_rate > 5 ? 'neutral' : 'negative'
     },
     {
       title: t('sellers.avg_response_time'),
       value: formatTime(metrics.avg_response_time_seconds),
       icon: Clock,
-      color: 'bg-yellow-100 text-yellow-600',
+      color: 'bg-yellow-500/100/10 text-yellow-400',
       trend: metrics.avg_response_time_seconds < 300 ? 'positive' : metrics.avg_response_time_seconds < 900 ? 'neutral' : 'negative'
     },
     {
       title: t('sellers.leads_converted'),
       value: metrics.leads_converted,
       icon: Target,
-      color: 'bg-red-100 text-red-600',
+      color: 'bg-red-500/100/10 text-red-400',
       trend: metrics.leads_converted > 0 ? 'positive' : 'neutral'
     },
     {
       title: t('sellers.total_messages'),
       value: metrics.total_messages_sent + metrics.total_messages_received,
       icon: Zap,
-      color: 'bg-indigo-100 text-indigo-600',
+      color: 'bg-indigo-500/10 text-indigo-400',
       trend: 'positive'
     }
   ];
@@ -261,19 +261,19 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
   ];
   
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 ${className}`}>
+    <div className={`bg-white/[0.03]/[0.03] rounded-xl border border-white/[0.06] ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-500/100/10 text-blue-400 rounded-lg">
               <BarChart3 size={20} />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-white">
                 {showTitle ? t('sellers.performance_metrics') : t('sellers.metrics')}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/40">
                 {t('sellers.period')}: {formatDate(metrics.metrics_period_start)} - {formatDate(metrics.metrics_period_end)}
               </p>
             </div>
@@ -283,7 +283,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
             {showRefresh && (
               <button
                 onClick={fetchMetrics}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                className="p-2 text-white/30 hover:text-white/60 rounded-lg hover:bg-white/[0.06]/[0.03]/[0.06]"
                 title={t('sellers.refresh')}
               >
                 <RefreshCw size={18} />
@@ -292,7 +292,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
             
             <button
               onClick={exportMetrics}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="p-2 text-white/30 hover:text-white/60 rounded-lg hover:bg-white/[0.06]/[0.03]/[0.06]"
               title={t('sellers.export')}
             >
               <Download size={18} />
@@ -301,7 +301,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
             <select
               value={period}
               onChange={(e) => setPeriod(Number(e.target.value))}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="px-3 py-1.5 text-sm border border-white/[0.06] rounded-lg bg-white/[0.03]/[0.04] text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value={1}>{t('sellers.last_1_day')}</option>
               <option value={7}>{t('sellers.last_7_days')}</option>
@@ -313,24 +313,24 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       </div>
       
       {/* Stats Grid */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-white/[0.04]">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {statCards.map((stat, index) => (
-            <div key={index} className="bg-gray-50 rounded-lg p-3">
+            <div key={index} className="bg-white/[0.03]/[0.02] rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className={`p-1.5 rounded-md ${stat.color}`}>
                   <stat.icon size={16} />
                 </div>
                 <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                  stat.trend === 'positive' ? 'bg-green-100 text-green-700' :
-                  stat.trend === 'negative' ? 'bg-red-100 text-red-700' :
-                  'bg-gray-100 text-gray-700'
+                  stat.trend === 'positive' ? 'bg-green-500/100/10 text-green-400' :
+                  stat.trend === 'negative' ? 'bg-red-500/100/10 text-red-400' :
+                  'bg-white/[0.03]/[0.04] text-white/70'
                 }`}>
                   {stat.trend === 'positive' ? '↑' : stat.trend === 'negative' ? '↓' : '→'}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{stat.title}</p>
+              <p className="text-2xl font-bold text-white">{stat.value}</p>
+              <p className="text-xs text-white/40 mt-1">{stat.title}</p>
             </div>
           ))}
         </div>
@@ -340,33 +340,33 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {detailMetrics.map((metric, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-3">
+            <div key={index} className="border border-white/[0.06] rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <metric.icon size={14} className="text-gray-400" />
-                <span className="text-xs font-medium text-gray-500">{metric.label}</span>
+                <metric.icon size={14} className="text-white/30" />
+                <span className="text-xs font-medium text-white/40">{metric.label}</span>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{metric.value}</p>
+              <p className="text-lg font-semibold text-white">{metric.value}</p>
             </div>
           ))}
         </div>
         
         {/* Conversion Insights */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-white/[0.06] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <PieChart size={18} className="text-blue-600" />
-              <h4 className="font-medium text-gray-900">{t('sellers.conversion_insights')}</h4>
+              <PieChart size={18} className="text-blue-400" />
+              <h4 className="font-medium text-white">{t('sellers.conversion_insights')}</h4>
             </div>
             
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{t('sellers.lead_conversion')}</span>
+                  <span className="text-white/50">{t('sellers.lead_conversion')}</span>
                   <span className="font-medium">{metrics.leads_converted} / {metrics.leads_assigned}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-white/[0.03]/[0.06] rounded-full h-2">
                   <div 
-                    className="bg-green-500 h-2 rounded-full" 
+                    className="bg-green-500/100 h-2 rounded-full" 
                     style={{ width: `${(metrics.leads_converted / Math.max(metrics.leads_assigned, 1)) * 100}%` }}
                   />
                 </div>
@@ -374,12 +374,12 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
               
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{t('sellers.prospect_conversion')}</span>
+                  <span className="text-white/50">{t('sellers.prospect_conversion')}</span>
                   <span className="font-medium">{metrics.prospects_converted} / {metrics.prospects_generated}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-white/[0.03]/[0.06] rounded-full h-2">
                   <div 
-                    className="bg-blue-500 h-2 rounded-full" 
+                    className="bg-blue-500/100 h-2 rounded-full" 
                     style={{ width: `${(metrics.prospects_converted / Math.max(metrics.prospects_generated, 1)) * 100}%` }}
                   />
                 </div>
@@ -387,12 +387,12 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
               
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{t('sellers.message_ratio')}</span>
+                  <span className="text-white/50">{t('sellers.message_ratio')}</span>
                   <span className="font-medium">
                     {Math.round((metrics.total_messages_sent / Math.max(metrics.total_messages_received, 1)) * 100)}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-white/[0.03]/[0.06] rounded-full h-2">
                   <div 
                     className="bg-purple-500 h-2 rounded-full" 
                     style={{ width: `${Math.min((metrics.total_messages_sent / Math.max(metrics.total_messages_received, 1)) * 100, 100)}%` }}
@@ -402,56 +402,56 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
             </div>
           </div>
           
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-white/[0.06] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Zap size={18} className="text-yellow-600" />
-              <h4 className="font-medium text-gray-900">{t('sellers.activity_summary')}</h4>
+              <Zap size={18} className="text-yellow-400" />
+              <h4 className="font-medium text-white">{t('sellers.activity_summary')}</h4>
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.conversations_today')}</span>
+                <span className="text-sm text-white/50">{t('sellers.conversations_today')}</span>
                 <span className="font-medium">{metrics.conversations_assigned_today}</span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.avg_daily_conversations')}</span>
+                <span className="text-sm text-white/50">{t('sellers.avg_daily_conversations')}</span>
                 <span className="font-medium">
                   {Math.round(metrics.total_conversations / period)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.avg_daily_messages')}</span>
+                <span className="text-sm text-white/50">{t('sellers.avg_daily_messages')}</span>
                 <span className="font-medium">
                   {Math.round((metrics.total_messages_sent + metrics.total_messages_received) / period)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.avg_session_duration')}</span>
+                <span className="text-sm text-white/50">{t('sellers.avg_session_duration')}</span>
                 <span className="font-medium">{Math.round(metrics.avg_conversation_duration_minutes)}m</span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.response_time_goal')}</span>
+                <span className="text-sm text-white/50">{t('sellers.response_time_goal')}</span>
                 <span className={`font-medium ${
-                  metrics.avg_response_time_seconds < 300 ? 'text-green-600' :
+                  metrics.avg_response_time_seconds < 300 ? 'text-green-400' :
                   metrics.avg_response_time_seconds < 900 ? 'text-yellow-600' :
-                  'text-red-600'
+                  'text-red-400'
                 }`}>
                   {formatTime(metrics.avg_response_time_seconds)}
                 </span>
               </div>
             </div>
             
-            <div className="mt-4 pt-3 border-t border-gray-200">
+            <div className="mt-4 pt-3 border-t border-white/[0.06]">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('sellers.performance_score')}</span>
+                <span className="text-sm text-white/50">{t('sellers.performance_score')}</span>
                 <span className={`text-lg font-bold ${
-                  metrics.conversion_rate > 20 ? 'text-green-600' :
+                  metrics.conversion_rate > 20 ? 'text-green-400' :
                   metrics.conversion_rate > 10 ? 'text-yellow-600' :
-                  'text-red-600'
+                  'text-red-400'
                 }`}>
                   {Math.round(
                     (metrics.conversion_rate * 0.4) +
@@ -467,12 +467,12 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
         
         {/* Recommendations */}
         {metrics.conversion_rate < 10 && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="mt-6 p-4 bg-yellow-500/100/10 border border-yellow-500/20 rounded-lg">
             <div className="flex items-start gap-3">
-              <Zap size={18} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+              <Zap size={18} className="text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-medium text-yellow-800">{t('sellers.improvement_suggestions')}</h4>
-                <ul className="mt-2 space-y-1 text-sm text-yellow-700">
+                <h4 className="font-medium text-yellow-300">{t('sellers.improvement_suggestions')}</h4>
+                <ul className="mt-2 space-y-1 text-sm text-yellow-400/80">
                   {metrics.avg_response_time_seconds > 600 && (
                     <li>• {t('sellers.suggestion_response_time')}</li>
                   )}
@@ -493,8 +493,8 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       </div>
       
       {/* Footer */}
-      <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-        <p className="text-xs text-gray-500">
+      <div className="p-3 bg-white/[0.03]/[0.02] border-t border-white/[0.04] text-center">
+        <p className="text-xs text-white/40">
           {t('sellers.metrics_updated')}: {formatDate(metrics.metrics_calculated_at)}
         </p>
       </div>

@@ -115,8 +115,8 @@ export default function CompaniesView() {
     if (loading) {
         return (
             <div className="h-full flex flex-col items-center justify-center gap-3 min-h-0 overflow-y-auto">
-                <Loader2 className="animate-spin text-medical-600" size={32} />
-                <p className="text-medical-800 font-medium">{t('common.loading')}</p>
+                <Loader2 className="animate-spin text-blue-400" size={32} />
+                <p className="text-white font-medium">{t('common.loading')}</p>
             </div>
         );
     }
@@ -138,7 +138,7 @@ export default function CompaniesView() {
             />
 
             {success && (
-                <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center gap-2 border border-green-200 animate-fade-in">
+                <div className="bg-green-500/10 text-green-400 p-3 rounded-lg flex items-center gap-2 border border-green-500/20 animate-fade-in">
                     <CheckCircle2 size={18} /> {success}
                 </div>
             )}
@@ -147,23 +147,23 @@ export default function CompaniesView() {
                 {companies.map((clinica) => (
                     <div
                         key={clinica.id}
-                        className="bg-white rounded-xl shadow-sm border border-medical-100 overflow-hidden hover:shadow-md transition-shadow group"
+                        className="bg-white/[0.03] rounded-xl border border-white/[0.06] overflow-hidden hover:shadow-lg hover:shadow-black/20 transition-shadow group"
                     >
                         <div className="p-5 space-y-4">
                             <div className="flex justify-between items-start">
-                                <div className="bg-medical-50 p-3 rounded-lg text-medical-600 group-hover:bg-medical-600 group-hover:text-white transition-colors">
+                                <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400 group-hover:bg-medical-600 group-hover:text-white transition-colors">
                                     <Building2 size={24} />
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => handleOpenModal(clinica)}
-                                        className="p-2 text-medical-600 hover:bg-medical-50 rounded-lg transition-colors"
+                                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                                     >
                                         <Edit size={18} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(clinica.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={18} />
                                     </button>
@@ -171,18 +171,18 @@ export default function CompaniesView() {
                             </div>
 
                             <div>
-                                <h3 className="font-bold text-medical-900 text-lg">{clinica.clinic_name}</h3>
-                                <div className="flex items-center gap-2 text-medical-600 mt-2 text-sm">
+                                <h3 className="font-bold text-white text-lg">{clinica.clinic_name}</h3>
+                                <div className="flex items-center gap-2 text-blue-400 mt-2 text-sm">
                                     <Phone size={14} className="shrink-0" />
                                     <span className="font-mono">{clinica.bot_phone_number}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-medical-500 mt-1 text-xs">
+                                <div className="flex items-center gap-2 text-white/40 mt-1 text-xs">
                                     <Calendar size={12} className="shrink-0" />
                                     <span>{calendarProviderLabel(clinica.config?.calendar_provider || 'local')}</span>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-medical-50 flex justify-between items-center text-xs text-medical-400">
+                            <div className="pt-4 border-t border-white/[0.04] flex justify-between items-center text-xs text-white/30">
                                 <span>ID: {clinica.id}</span>
                                 <span>{t('common.since')}: {new Date(clinica.created_at).toLocaleDateString()}</span>
                             </div>
@@ -193,23 +193,23 @@ export default function CompaniesView() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-scale-in">
-                        <div className="p-6 border-b">
+                    <div className="bg-[#0d1117] rounded-xl shadow-2xl w-full max-w-md animate-scale-in">
+                        <div className="p-6 border-b border-white/[0.06]">
                             <h2 className="text-xl font-bold flex items-center gap-2">
-                                {editingCompany ? <Edit className="text-medical-600" /> : <Plus className="text-medical-600" />}
+                                {editingCompany ? <Edit className="text-blue-400" /> : <Plus className="text-blue-400" />}
                                 {editingCompany ? t(isEntity ? 'clinics.edit_entity' : 'clinics.edit_clinic') : t(isEntity ? 'clinics.create_entity' : 'clinics.create_clinic')}
                             </h2>
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             {error && (
-                                <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
+                                <div className="bg-red-500/10 text-red-400 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-500/20">
                                     <AlertCircle size={16} /> {error}
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-medical-700">{t(isEntity ? 'clinics.entity_name_label' : 'clinics.clinic_name_label')}</label>
+                                <label className="text-sm font-semibold text-white/70">{t(isEntity ? 'clinics.entity_name_label' : 'clinics.clinic_name_label')}</label>
                                 <input
                                     required
                                     type="text"
@@ -221,7 +221,7 @@ export default function CompaniesView() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-medical-700">{t('clinics.bot_phone_label')}</label>
+                                <label className="text-sm font-semibold text-white/70">{t('clinics.bot_phone_label')}</label>
                                 <input
                                     required
                                     type="text"
@@ -230,13 +230,13 @@ export default function CompaniesView() {
                                     value={formData.bot_phone_number}
                                     onChange={(e) => setFormData({ ...formData, bot_phone_number: e.target.value })}
                                 />
-                                <p className="text-[10px] text-medical-400 italic">
+                                <p className="text-[10px] text-white/30 italic">
                                     {t('clinics.bot_phone_help')}
                                 </p>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-medical-700 flex items-center gap-2">
+                                <label className="text-sm font-semibold text-white/70 flex items-center gap-2">
                                     <Calendar size={14} /> {t('clinics.calendar_provider_label')}
                                 </label>
                                 <select
@@ -250,7 +250,7 @@ export default function CompaniesView() {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-[10px] text-medical-400 italic">
+                                <p className="text-[10px] text-white/30 italic">
                                     {t('clinics.calendar_help')}
                                 </p>
                             </div>
@@ -259,7 +259,7 @@ export default function CompaniesView() {
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 py-2 text-medical-700 font-medium hover:bg-medical-50 rounded-lg transition-all"
+                                    className="flex-1 py-2 text-white/70 font-medium hover:bg-white/[0.06] rounded-lg transition-all"
                                 >
                                     {t('common.cancel')}
                                 </button>

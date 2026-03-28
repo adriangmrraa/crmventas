@@ -140,21 +140,21 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
   const getRoleColor = (role?: string) => {
     switch (role) {
       case 'ceo':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-500/10 text-purple-400';
       case 'setter':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-500/100/10 text-blue-400';
       case 'closer':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-500/100/10 text-green-400';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-white/[0.03]/[0.04] text-white/70';
     }
   };
   
   if (loading) {
     return (
       <div className={`p-4 text-center ${className}`}>
-        <Loader2 className="animate-spin mx-auto text-gray-400" size={20} />
-        <p className="text-gray-500 text-sm mt-2">{t('sellers.loading_history')}</p>
+        <Loader2 className="animate-spin mx-auto text-white/30" size={20} />
+        <p className="text-white/40 text-sm mt-2">{t('sellers.loading_history')}</p>
       </div>
     );
   }
@@ -165,7 +165,7 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
         <p className="text-red-500 text-sm">{error}</p>
         <button
           onClick={fetchHistory}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
+          className="mt-2 text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 mx-auto"
         >
           <RefreshCw size={14} />
           {t('sellers.retry')}
@@ -177,8 +177,8 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
   if (history.length === 0) {
     return (
       <div className={`p-4 text-center ${className}`}>
-        <History className="mx-auto text-gray-300" size={24} />
-        <p className="text-gray-500 text-sm mt-2">{t('sellers.no_history')}</p>
+        <History className="mx-auto text-white/20" size={24} />
+        <p className="text-white/40 text-sm mt-2">{t('sellers.no_history')}</p>
       </div>
     );
   }
@@ -186,22 +186,22 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
   const displayHistory = maxItems ? history.slice(0, maxItems) : history;
   
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
+    <div className={`bg-white/[0.03]/[0.03] rounded-lg border border-white/[0.06] ${className}`}>
       {showTitle && (
-        <div className="p-3 border-b border-gray-100">
+        <div className="p-3 border-b border-white/[0.04]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <History size={16} className="text-gray-600" />
-              <h4 className="font-medium text-gray-900">{t('sellers.assignment_history')}</h4>
+              <History size={16} className="text-white/50" />
+              <h4 className="font-medium text-white">{t('sellers.assignment_history')}</h4>
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-white/40">
               {history.length} {t('sellers.items')}
             </span>
           </div>
         </div>
       )}
       
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-white/[0.04]">
         {displayHistory.map((item, index) => (
           <div key={index} className="p-3">
             <div className="flex items-start justify-between">
@@ -211,22 +211,22 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
                     {item.seller_role ? t(`roles.${item.seller_role}`) : t('roles.seller')}
                   </div>
                   
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 text-xs text-white/40">
                     {getSourceIcon(item.source)}
                     <span>{getSourceLabel(item.source)}</span>
                   </div>
                 </div>
                 
                 <div className="mb-2">
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-white">
                     {item.seller_name || t('sellers.unknown_seller')}
                   </p>
                   {item.reason && (
-                    <p className="text-sm text-gray-600 mt-1">{item.reason}</p>
+                    <p className="text-sm text-white/50 mt-1">{item.reason}</p>
                   )}
                 </div>
                 
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-white/40">
                   <div className="flex items-center gap-1">
                     <Calendar size={12} />
                     <span>{formatDate(item.assigned_at)}</span>
@@ -243,7 +243,7 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
               
               {index === 0 && (
                 <div className="ml-2">
-                  <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                  <span className="px-2 py-0.5 text-xs bg-green-500/100/10 text-green-400 rounded-full">
                     {t('sellers.current')}
                   </span>
                 </div>
@@ -254,10 +254,10 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
       </div>
       
       {maxItems && history.length > maxItems && (
-        <div className="p-3 border-t border-gray-100 text-center">
+        <div className="p-3 border-t border-white/[0.04] text-center">
           <button
             onClick={() => {/* TODO: Show full history modal */}}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
+            className="text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 mx-auto"
           >
             {t('sellers.view_all_history')} ({history.length})
             <ExternalLink size={14} />
@@ -265,10 +265,10 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
         </div>
       )}
       
-      <div className="p-2 bg-gray-50 border-t border-gray-100 text-center">
+      <div className="p-2 bg-white/[0.03]/[0.02] border-t border-white/[0.04] text-center">
         <button
           onClick={fetchHistory}
-          className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mx-auto"
+          className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mx-auto"
         >
           <RefreshCw size={12} />
           {t('sellers.refresh')}

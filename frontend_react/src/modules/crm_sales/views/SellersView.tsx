@@ -233,15 +233,15 @@ const SellersView: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex gap-4 mb-4 border-b border-gray-200 pb-px shrink-0">
+            <div className="flex gap-4 mb-4 border-b border-white/[0.06] pb-px shrink-0">
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests' ? 'text-medical-600' : 'text-gray-500 hover:text-medical-700'}`}
+                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests' ? 'text-blue-400' : 'text-white/40 hover:text-blue-400'}`}
                 >
                     <div className="flex items-center gap-2">
                         {t('sellers.requests')}
                         {requests.length > 0 && (
-                            <span className="bg-danger text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm">
+                            <span className="bg-danger text-white text-[10px] px-1.5 py-0.5 rounded-full">
                                 {requests.length}
                             </span>
                         )}
@@ -255,7 +255,7 @@ const SellersView: React.FC = () => {
                 </button>
                 <button
                     onClick={() => setActiveTab('sellers')}
-                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'sellers' ? 'text-medical-600' : 'text-gray-500 hover:text-medical-700'}`}
+                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'sellers' ? 'text-blue-400' : 'text-white/40 hover:text-blue-400'}`}
                 >
                     {t('sellers.sellers_tab')}
                     {activeTab === 'sellers' && (
@@ -321,9 +321,9 @@ const SellersView: React.FC = () => {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={(e) => e.target === e.currentTarget && closeDetailModal()}
                 >
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[92dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
-                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 border-b border-gray-100 shrink-0">
-                            <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate min-w-0">
+                    <div className="bg-white/[0.03] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[92dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 border-b border-white/[0.04] shrink-0">
+                            <h2 className="text-lg sm:text-xl font-bold text-white truncate min-w-0">
                                 {selectedSeller.first_name || ''} {selectedSeller.last_name || ''}
                             </h2>
                             <div className="flex items-center gap-2 shrink-0">
@@ -335,12 +335,12 @@ const SellersView: React.FC = () => {
                                             if (rows.length > 0) openEditModal(rows[0]);
                                         });
                                     }}
-                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl border border-gray-200 hover:bg-gray-100 text-gray-600"
+                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl border border-white/[0.06] hover:bg-white/[0.03]/[0.06] text-white/50"
                                     title={t('sellers.edit_seller')}
                                 >
                                     <Settings size={20} />
                                 </button>
-                                <button type="button" onClick={closeDetailModal} className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-gray-400 hover:bg-gray-100">
+                                <button type="button" onClick={closeDetailModal} className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-white/30 hover:bg-white/[0.03]/[0.06]">
                                     <X size={24} />
                                 </button>
                             </div>
@@ -350,7 +350,7 @@ const SellersView: React.FC = () => {
                                 <div className="role-badge shrink-0" data-role={selectedSeller.role}>
                                     {selectedSeller.role === 'setter' ? t('sellers.setter') : t('sellers.closer')}
                                 </div>
-                                <p className="text-sm text-gray-600 flex items-center gap-2">
+                                <p className="text-sm text-white/50 flex items-center gap-2">
                                     <Mail size={14} />
                                     {selectedSeller.email}
                                 </p>
@@ -369,14 +369,14 @@ const SellersView: React.FC = () => {
 
                             {showLinkForm && (
                                 <form onSubmit={handleLinkToEntitySubmit} className="glass p-4 rounded-xl space-y-4">
-                                    <h3 className="text-sm font-semibold text-gray-800">{t('sellers.link_to_entity')}</h3>
+                                    <h3 className="text-sm font-semibold text-white">{t('sellers.link_to_entity')}</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">{t('sellers.choose_entity')}</label>
+                                            <label className="block text-xs font-medium text-white/50 mb-1">{t('sellers.choose_entity')}</label>
                                             <select
                                                 value={linkFormData.tenant_id ?? ''}
                                                 onChange={(e) => setLinkFormData((p) => ({ ...p, tenant_id: e.target.value ? parseInt(e.target.value, 10) : null }))}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                                 required
                                             >
                                                 <option value="">{t('sellers.choose_entity')}</option>
@@ -386,12 +386,12 @@ const SellersView: React.FC = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1"><Phone size={12} /> {t('approvals.phone')}</label>
+                                            <label className="block text-xs font-medium text-white/50 mb-1 flex items-center gap-1"><Phone size={12} /> {t('approvals.phone')}</label>
                                             <input
                                                 type="text"
                                                 value={linkFormData.phone}
                                                 onChange={(e) => setLinkFormData((p) => ({ ...p, phone: e.target.value }))}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                             />
                                         </div>
                                     </div>
@@ -408,15 +408,15 @@ const SellersView: React.FC = () => {
                             )}
 
                             {detailLoading ? (
-                                <p className="text-gray-500">{t('sellers.loading_entities')}</p>
+                                <p className="text-white/40">{t('sellers.loading_entities')}</p>
                             ) : sellerRows.length > 0 ? (
                                 <>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                        <h3 className="text-sm font-semibold text-white/70 mb-2 flex items-center gap-2">
                                             <Building2 size={16} />
                                             {t('sellers.assigned_entities')}
                                         </h3>
-                                        <ul className="list-disc list-inside text-sm text-gray-600">
+                                        <ul className="list-disc list-inside text-sm text-white/50">
                                             {sellerRows.map((p) => (
                                                 <li key={p.id}>
                                                     {entities.find((c) => c.id === p.tenant_id)?.clinic_name || `Entidad ${p.tenant_id}`}
@@ -424,26 +424,26 @@ const SellersView: React.FC = () => {
                                             ))}
                                         </ul>
                                     </div>
-                                    <div className="border border-gray-200 rounded-xl overflow-hidden">
-                                        <h3 className="text-sm font-semibold text-gray-700 p-4 flex items-center gap-2">
+                                    <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+                                        <h3 className="text-sm font-semibold text-white/70 p-4 flex items-center gap-2">
                                             <BarChart3 size={16} />
                                             {t('sellers.kpis_leads')}
                                         </h3>
-                                        <div className="p-4 border-t border-gray-200 space-y-4">
+                                        <div className="p-4 border-t border-white/[0.06] space-y-4">
                                             {sellerRows.map((row) => {
                                                 const key = `${row.id}-${row.tenant_id}`;
                                                 return (
                                                     <div key={key} className="text-sm">
-                                                        <p className="font-medium text-gray-700 mb-1">
+                                                        <p className="font-medium text-white/70 mb-1">
                                                             {entities.find((c) => c.id === row.tenant_id)?.clinic_name || `Entidad ${row.tenant_id}`}
                                                         </p>
                                                         {!kpisByRow[key] ? (
-                                                            <button type="button" onClick={() => loadKpis(row)} className="text-blue-600 hover:underline text-xs">
+                                                            <button type="button" onClick={() => loadKpis(row)} className="text-blue-400 hover:underline text-xs">
                                                                 {t('sellers.load_kpis')}
                                                             </button>
                                                         ) : null}
                                                         {kpisByRow[key] && (
-                                                            <ul className="text-gray-600 mt-1 space-y-0.5">
+                                                            <ul className="text-white/50 mt-1 space-y-0.5">
                                                                 <li>{t('sellers.total_leads')}: <strong>{kpisByRow[key].total_leads}</strong></li>
                                                                 {Object.entries(kpisByRow[key].by_status).map(([status, count]) => (
                                                                     <li key={status}>{status}: <strong>{count}</strong></li>
@@ -465,7 +465,7 @@ const SellersView: React.FC = () => {
                                     </button>
                                 </>
                             ) : (
-                                <p className="text-gray-500 text-sm">{t('sellers.not_linked_hint')}</p>
+                                <p className="text-white/40 text-sm">{t('sellers.not_linked_hint')}</p>
                             )}
                         </div>
                     </div>
@@ -478,51 +478,51 @@ const SellersView: React.FC = () => {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={(e) => e.target === e.currentTarget && closeEditModal()}
                 >
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <div className="bg-white/[0.03] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.04]">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Edit size={20} />
                                 {t('sellers.edit_seller')}
                             </h2>
-                            <button type="button" onClick={closeEditModal} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100">
+                            <button type="button" onClick={closeEditModal} className="p-2 rounded-xl text-white/30 hover:bg-white/[0.03]/[0.06]">
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleEditSubmit} className="p-4 space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('sellers.first_name')}</label>
+                                <label className="block text-xs font-medium text-white/50 mb-1">{t('sellers.first_name')}</label>
                                 <input
                                     type="text"
                                     value={editFormData.first_name}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, first_name: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('sellers.last_name')}</label>
+                                <label className="block text-xs font-medium text-white/50 mb-1">{t('sellers.last_name')}</label>
                                 <input
                                     type="text"
                                     value={editFormData.last_name}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, last_name: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('approvals.email')}</label>
+                                <label className="block text-xs font-medium text-white/50 mb-1">{t('approvals.email')}</label>
                                 <input
                                     type="email"
                                     value={editFormData.email}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, email: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('approvals.phone')}</label>
+                                <label className="block text-xs font-medium text-white/50 mb-1">{t('approvals.phone')}</label>
                                 <input
                                     type="text"
                                     value={editFormData.phone_number}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, phone_number: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                 />
                             </div>
                             <label className="flex items-center gap-3 cursor-pointer">
@@ -530,12 +530,12 @@ const SellersView: React.FC = () => {
                                     type="checkbox"
                                     checked={editFormData.is_active}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))}
-                                    className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                                    className="w-4 h-4 rounded border-white/[0.06] text-blue-400"
                                 />
-                                <span className="text-sm font-medium text-gray-700">{t('approvals.active')}</span>
+                                <span className="text-sm font-medium text-white/70">{t('approvals.active')}</span>
                             </label>
                             <div className="flex gap-2 pt-2">
-                                <button type="button" onClick={closeEditModal} className="flex-1 py-2 rounded-xl border border-gray-300 text-gray-700">
+                                <button type="button" onClick={closeEditModal} className="flex-1 py-2 rounded-xl border border-white/[0.06] text-white/70">
                                     {t('common.cancel')}
                                 </button>
                                 <button type="submit" disabled={editFormSubmitting} className="flex-1 py-2 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-50">
@@ -642,7 +642,7 @@ const SellerCard: React.FC<SellerCardProps> = ({ seller, onCardClick, onConfigCl
                 </div>
             </div>
             <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                <button type="button" onClick={onConfigClick} className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl border border-gray-200 hover:bg-gray-100" title={t('sellers.edit_seller')}>
+                <button type="button" onClick={onConfigClick} className="p-2.5 min-w-[44px] min-h-[44px] rounded-xl border border-white/[0.06] hover:bg-white/[0.03]/[0.06]" title={t('sellers.edit_seller')}>
                     <Settings size={20} />
                 </button>
             </div>

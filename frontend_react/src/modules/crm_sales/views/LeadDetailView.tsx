@@ -120,19 +120,19 @@ export default function LeadDetailView() {
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <div className="flex items-center gap-4 p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center gap-4 p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
         <button
           type="button"
           onClick={() => navigate('/crm/leads')}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+          className="p-2 rounded-lg hover:bg-white/[0.04] text-white/50"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold text-gray-900 truncate">
+          <h1 className="text-xl font-semibold text-white truncate">
             {isNew ? 'New lead' : (lead ? [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.phone_number : 'Lead')}
           </h1>
-          {lead && <p className="text-sm text-gray-500">{lead.phone_number}</p>}
+          {lead && <p className="text-sm text-white/40">{lead.phone_number}</p>}
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
@@ -140,10 +140,10 @@ export default function LeadDetailView() {
             <button
               type="button"
               onClick={() => setShowHistory(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/50 hover:text-white bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-colors border border-white/[0.06]"
               title="Ver historial de estados"
             >
-              <History size={18} className="text-blue-600" />
+              <History size={18} className="text-blue-400" />
               <span className="hidden sm:inline">Historial</span>
             </button>
           )}
@@ -152,60 +152,60 @@ export default function LeadDetailView() {
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
         {loading && !isNew ? (
-          <div className="flex items-center justify-center py-12 text-gray-500">{t('common.loading')}</div>
+          <div className="flex items-center justify-center py-12 text-white/40">{t('common.loading')}</div>
         ) : (
           <form onSubmit={handleSave} className="max-w-lg space-y-4">
             {isNew && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone number *</label>
+                <label className="block text-sm font-medium text-white/70 mb-1">Phone number *</label>
                 <input
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData((f) => ({ ...f, phone_number: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
                   required
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+              <label className="block text-sm font-medium text-white/70 mb-1">First name</label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+              <label className="block text-sm font-medium text-white/70 mb-1">Last name</label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-white/70 mb-1">Email</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Status</label>
               {isNew ? (
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500 bg-white"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500 bg-white/[0.03]"
                 >
                   <option value="new">New</option>
                   <option value="contacted">Contacted</option>
@@ -215,8 +215,8 @@ export default function LeadDetailView() {
                   <option value="closed_lost">Closed Lost</option>
                 </select>
               ) : (
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
-                  <div className="text-sm text-slate-500 font-medium">Estado actual:</div>
+                <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl flex items-center justify-between">
+                  <div className="text-sm text-white/40 font-medium">Estado actual:</div>
                   <LeadStatusSelector
                     leadId={id!}
                     currentStatusCode={formData.status}

@@ -89,27 +89,27 @@ interface RecentLeadRecord {
 // ============================================
 
 const KPICard = ({ title, value, icon: Icon, color, trend }: any) => (
-  <div className="bg-white/80 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+  <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6 hover:shadow-lg hover:shadow-black/20 transition-all duration-300 group">
     <div className="flex justify-between items-start mb-4">
       <div className={`p-3 rounded-xl ${color} bg-opacity-10 group-hover:scale-110 transition-transform`}>
         <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
       </div>
       {trend && (
-        <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+        <span className="flex items-center gap-1 text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
           <TrendingUp size={12} /> {trend}
         </span>
       )}
     </div>
-    <p className="text-gray-500 text-sm font-medium">{title}</p>
-    <h3 className="text-2xl font-bold text-gray-800 mt-1">{value}</h3>
+    <p className="text-white/40 text-sm font-medium">{title}</p>
+    <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
   </div>
 );
 
 const UrgencyBadge = ({ level }: { level: UrgencyRecord['urgency_level'] }) => {
   const styles = {
-    CRITICAL: 'bg-red-100 text-red-700 border-red-200',
-    HIGH: 'bg-orange-100 text-orange-700 border-orange-200',
-    NORMAL: 'bg-green-100 text-green-700 border-green-200'
+    CRITICAL: 'bg-red-500/10 text-red-400 border-red-500/20',
+    HIGH: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    NORMAL: 'bg-green-500/10 text-green-400 border-green-500/20'
   };
   return (
     <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${styles[level]}`}>
@@ -217,16 +217,16 @@ export default function DashboardView() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-[#06060e]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#06060e] overflow-hidden">
       {/* HEADER SECTION */}
-      <header className="p-4 sm:p-6 shrink-0 bg-white/50 backdrop-blur-sm border-b border-slate-100">
+      <header className="p-4 sm:p-6 shrink-0 bg-white/[0.03] backdrop-blur-sm border-b border-white/[0.04]">
         <PageHeader
           title={t('dashboard.analytics_title')}
           subtitle={t('dashboard.analytics_subtitle')}
@@ -234,18 +234,18 @@ export default function DashboardView() {
             <div className="flex gap-2">
               <button
                 onClick={() => setTimeRange('weekly')}
-                className={`px-4 py-2 rounded-xl shadow-sm border text-sm font-medium transition-colors ${timeRange === 'weekly'
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${timeRange === 'weekly'
                   ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  : 'bg-white/[0.03] text-white/50 border-white/[0.06] hover:bg-[#06060e]'
                   }`}
               >
                 {t('dashboard.weekly')}
               </button>
               <button
                 onClick={() => setTimeRange('monthly')}
-                className={`px-4 py-2 rounded-xl shadow-sm border text-sm font-medium transition-colors ${timeRange === 'monthly'
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${timeRange === 'monthly'
                   ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  : 'bg-white/[0.03] text-white/50 border-white/[0.06] hover:bg-[#06060e]'
                   }`}
               >
                 {t('dashboard.monthly')}
@@ -327,13 +327,13 @@ export default function DashboardView() {
 
         {/* MIDDLE ROW: CHARTS */}
         <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-white/[0.03] rounded-2xl border border-white/[0.04] p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-slate-800">
+              <h2 className="text-lg font-semibold text-white">
                 {isCrmSales ? 'Leads Overview' : t('dashboard.chart_title')}
               </h2>
               {!isCrmSales && (
-                <div className="hidden sm:flex gap-4 text-xs font-medium text-slate-500">
+                <div className="hidden sm:flex gap-4 text-xs font-medium text-white/40">
                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> {t('dashboard.referrals')}</span>
                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t('dashboard.completed')}</span>
                 </div>
@@ -342,7 +342,7 @@ export default function DashboardView() {
             <div className="h-[300px] min-h-[300px] w-full min-w-0">
               {isCrmSales ? (
                 // Placeholder para gráfico de CRM (podemos implementar más tarde)
-                <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                <div className="h-full flex flex-col items-center justify-center text-white/30">
                   <TrendingUpIcon className="w-16 h-16 mb-4 opacity-50" />
                   <p className="text-lg font-medium">Leads Analytics</p>
                   <p className="text-sm mt-2">Chart coming soon with lead conversion data</p>
@@ -377,12 +377,12 @@ export default function DashboardView() {
         </div>
 
         {/* BOTTOM ROW: RECENT ITEMS TABLE */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-4">
-          <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-800">
+        <div className="bg-white/[0.03] rounded-2xl border border-white/[0.04] overflow-hidden flex flex-col mb-4">
+          <div className="p-6 border-b border-white/[0.04] flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-white">
               {isCrmSales ? 'Recent Leads' : t('dashboard.urgencies_recent')}
             </h2>
-            <button className="text-blue-600 text-sm font-semibold hover:underline px-3 py-2">
+            <button className="text-blue-400 text-sm font-semibold hover:underline px-3 py-2">
               {isCrmSales ? 'See All Leads' : t('dashboard.see_all')}
             </button>
           </div>
@@ -391,49 +391,49 @@ export default function DashboardView() {
               // Tabla para Recent Leads (CRM)
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Lead</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
+                  <tr className="bg-[#06060e]/50">
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Lead</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Source</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Created</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-white/[0.04]">
                   {recentLeads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={lead.id} className="hover:bg-[#06060e]/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
                             <User size={18} />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-slate-800">{lead.name}</p>
-                            <p className="text-[11px] text-slate-500">{lead.niche || 'General'}</p>
+                            <p className="text-sm font-semibold text-white">{lead.name}</p>
+                            <p className="text-[11px] text-white/40">{lead.niche || 'General'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-mono">{lead.phone}</td>
+                      <td className="px-6 py-4 text-sm text-white/50 font-mono">{lead.phone}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          lead.status === 'new' ? 'bg-blue-100 text-blue-700' :
-                          lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-700' :
-                          lead.status === 'qualified' ? 'bg-green-100 text-green-700' :
-                          'bg-gray-100 text-gray-700'
+                          lead.status === 'new' ? 'bg-blue-500/10 text-blue-400' :
+                          lead.status === 'contacted' ? 'bg-yellow-500/10 text-yellow-700' :
+                          lead.status === 'qualified' ? 'bg-green-500/10 text-green-400' :
+                          'bg-white/[0.04] text-white/70'
                         }`}>
                           {lead.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{lead.source}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-white/50">{lead.source}</td>
+                      <td className="px-6 py-4 text-sm text-white/40">
                         <div className="flex items-center gap-1.5">
-                          <Clock size={14} className="text-slate-400" />
+                          <Clock size={14} className="text-white/30" />
                           {new Date(lead.created_at).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
                           <ArrowUpRight size={20} />
                         </button>
                       </td>
@@ -441,7 +441,7 @@ export default function DashboardView() {
                   ))}
                   {recentLeads.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
+                      <td colSpan={6} className="px-6 py-8 text-center text-white/30">
                         No recent leads found
                       </td>
                     </tr>
@@ -452,39 +452,39 @@ export default function DashboardView() {
               // Tabla existente para Urgencies (Dental)
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('dashboard.patient')}</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('dashboard.reason')}</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('dashboard.severity')}</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('dashboard.time')}</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
+                  <tr className="bg-[#06060e]/50">
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">{t('dashboard.patient')}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">{t('dashboard.reason')}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">{t('dashboard.severity')}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">{t('dashboard.time')}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-white/[0.04]">
                   {urgencies.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={u.id} className="hover:bg-[#06060e]/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
                             <User size={18} />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-slate-800">{u.patient_name}</p>
-                            <p className="text-[11px] text-slate-500 font-mono tracking-tighter">{u.phone}</p>
+                            <p className="text-sm font-semibold text-white">{u.patient_name}</p>
+                            <p className="text-[11px] text-white/40 font-mono tracking-tighter">{u.phone}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">{u.reason}</td>
+                      <td className="px-6 py-4 text-sm text-white/50 font-medium">{u.reason}</td>
                       <td className="px-6 py-4">
                         <UrgencyBadge level={u.urgency_level} />
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-white/40">
                         <div className="flex items-center gap-1.5">
-                          <Clock size={14} className="text-slate-400" /> {u.timestamp}
+                          <Clock size={14} className="text-white/30" /> {u.timestamp}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
                           <ArrowUpRight size={20} />
                         </button>
                       </td>

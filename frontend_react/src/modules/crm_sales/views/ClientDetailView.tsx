@@ -93,13 +93,13 @@ export default function ClientDetailView() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500">{t('common.loading')}</div>
+      <div className="h-full flex items-center justify-center text-white/40">{t('common.loading')}</div>
     );
   }
 
   if (!client && !loading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-gray-500">
+      <div className="h-full flex flex-col items-center justify-center p-6 text-white/40">
         <p className="mb-4">{t('clients.not_found')}</p>
         <button onClick={() => navigate('/crm/clientes')} className="text-primary hover:underline font-medium">
           {t('clients.back_to_list')}
@@ -112,24 +112,24 @@ export default function ClientDetailView() {
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-4 p-4 lg:p-6 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center justify-between gap-4 p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-4 min-w-0">
           <button
             type="button"
             onClick={() => navigate('/crm/clientes')}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 shrink-0"
+            className="p-2 rounded-lg hover:bg-white/[0.04] text-white/50 shrink-0"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-gray-900 truncate">{displayName}</h1>
-            {client && <p className="text-sm text-gray-500 truncate">{client.phone_number}</p>}
+            <h1 className="text-xl font-semibold text-white truncate">{displayName}</h1>
+            {client && <p className="text-sm text-white/40 truncate">{client.phone_number}</p>}
           </div>
         </div>
         <button
           type="button"
           onClick={handleDelete}
-          className="p-2 rounded-lg hover:bg-red-50 text-red-600 shrink-0 flex items-center gap-2"
+          className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 shrink-0 flex items-center gap-2"
           title={t('common.delete')}
         >
           <Trash2 size={18} />
@@ -139,41 +139,41 @@ export default function ClientDetailView() {
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
         <form onSubmit={handleSave} className="max-w-lg space-y-6">
           <div>
-            <h2 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
               <User size={18} />
               {t('clients.personal_data')}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.first_name')}</label>
+                <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.first_name')}</label>
                 <input
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.last_name')}</label>
+                <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.last_name')}</label>
                 <input
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-              <div className="sm:col-span-2 flex items-center gap-2 text-sm text-gray-500">
+              <div className="sm:col-span-2 flex items-center gap-2 text-sm text-white/40">
                 <Phone size={16} />
                 {client?.phone_number}
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <label className="block text-sm font-medium text-white/70 mb-1 flex items-center gap-1">
                   <Mail size={14} />
                   {t('clients.email')}
                 </label>
@@ -181,17 +181,17 @@ export default function ClientDetailView() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.status')}</label>
+            <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.status')}</label>
             <select
               value={formData.status}
               onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value as 'active' | 'inactive' }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="active">{t('clients.status_active')}</option>
               <option value="inactive">{t('clients.status_inactive')}</option>
@@ -209,7 +209,7 @@ export default function ClientDetailView() {
             <button
               type="button"
               onClick={() => navigate('/crm/clientes')}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+              className="px-4 py-2 text-white/70 bg-white/[0.04] rounded-lg hover:bg-white/[0.06] font-medium"
             >
               {t('common.cancel')}
             </button>

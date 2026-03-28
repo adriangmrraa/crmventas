@@ -31,7 +31,7 @@ const SellerBadge: React.FC<SellerBadgeProps> = ({
   if (!sellerId) {
     return (
       <div 
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200 ${className}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03]/[0.04] text-white/70 border border-white/[0.06] ${className}`}
         onClick={onClick}
       >
         <Bot size={size === 'sm' ? 12 : size === 'md' ? 14 : 16} />
@@ -49,41 +49,41 @@ const SellerBadge: React.FC<SellerBadgeProps> = ({
     switch (sellerRole) {
       case 'ceo':
         return {
-          bg: 'bg-purple-100',
-          text: 'text-purple-700',
-          border: 'border-purple-200',
+          bg: 'bg-purple-500/10',
+          text: 'text-purple-400',
+          border: 'border-purple-500/20',
           icon: Crown,
           label: t('roles.ceo')
         };
       case 'setter':
         return {
-          bg: 'bg-blue-100',
-          text: 'text-blue-700',
-          border: 'border-blue-200',
+          bg: 'bg-blue-500/100/10',
+          text: 'text-blue-400',
+          border: 'border-blue-500/20',
           icon: Target,
           label: t('roles.setter')
         };
       case 'closer':
         return {
-          bg: 'bg-green-100',
-          text: 'text-green-700',
-          border: 'border-green-200',
+          bg: 'bg-green-500/100/10',
+          text: 'text-green-400',
+          border: 'border-green-500/20',
           icon: Zap,
           label: t('roles.closer')
         };
       case 'professional':
         return {
-          bg: 'bg-indigo-100',
-          text: 'text-indigo-700',
-          border: 'border-indigo-200',
+          bg: 'bg-indigo-500/10',
+          text: 'text-indigo-400',
+          border: 'border-indigo-500/20',
           icon: UserCheck,
           label: t('roles.professional')
         };
       default:
         return {
-          bg: 'bg-gray-100',
-          text: 'text-gray-700',
-          border: 'border-gray-200',
+          bg: 'bg-white/[0.03]/[0.04]',
+          text: 'text-white/70',
+          border: 'border-white/[0.06]',
           icon: User,
           label: sellerRole || t('roles.seller')
         };

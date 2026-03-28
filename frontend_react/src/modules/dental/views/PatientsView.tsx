@@ -247,7 +247,7 @@ export default function PatientsView() {
   };
 
   return (
-    <div className="p-4 lg:p-6 h-full overflow-y-auto bg-gray-100">
+    <div className="p-4 lg:p-6 h-full overflow-y-auto bg-white/[0.03]/[0.04]">
       <PageHeader
         title={t('patients.title')}
         subtitle={t('patients.subtitle')}
@@ -255,7 +255,7 @@ export default function PatientsView() {
         action={
           <button
             onClick={openCreateModal}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-xl transition-colors text-sm font-medium shadow-md active:scale-[0.98]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-xl transition-colors text-sm font-medium -md active:scale-[0.98]"
           >
             <Plus size={20} />
             {t('patients.new_patient')}
@@ -266,13 +266,13 @@ export default function PatientsView() {
       {/* Search */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" size={18} />
           <input
             type="text"
             placeholder={t('patients.search_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white/[0.03]"
           />
         </div>
 
@@ -284,7 +284,7 @@ export default function PatientsView() {
             placeholder={t('patients.search_semantic')}
             value={semanticSearchTerm}
             onChange={(e) => handleSemanticSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/[0.03]"
           />
           {semanticLoading && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -295,42 +295,42 @@ export default function PatientsView() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white/[0.03] rounded-lg  overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">{t('patients.loading')}</div>
+          <div className="p-8 text-center text-white/40">{t('patients.loading')}</div>
         ) : filteredPatients.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-white/40">
             {t('patients.no_patients_found')}
           </div>
         ) : (
           <>
             <div className="overflow-x-auto hidden md:block">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-white/[0.03]/[0.02]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                       Paciente
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                       Contacto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                       {t('patients.dni_obra_social')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                       {t('patients.health')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
                       {t('patients.date_added')}
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
                       {t('patients.actions')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white/[0.03] divide-y divide-white/[0.06]">
                   {filteredPatients.map((patient) => (
-                    <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={patient.id} className="hover:bg-white/[0.03]/[0.02] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium">
@@ -338,7 +338,7 @@ export default function PatientsView() {
                           </div>
                           <div className="ml-4">
                             <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-white">
                                 {patient.first_name} {patient.last_name}
                               </div>
                               {semanticResults.some(r => r.id === patient.id) && (
@@ -349,36 +349,36 @@ export default function PatientsView() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{patient.phone_number}</div>
-                        <div className="text-sm text-gray-500">{patient.email}</div>
+                        <div className="text-sm text-white">{patient.phone_number}</div>
+                        <div className="text-sm text-white/40">{patient.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{patient.dni || '-'}</div>
-                        <div className="text-sm text-gray-500">{patient.obra_social || '-'}</div>
+                        <div className="text-sm text-white">{patient.dni || '-'}</div>
+                        <div className="text-sm text-white/40">{patient.obra_social || '-'}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white/40">-</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white/40">
                         {new Date(patient.created_at).toLocaleDateString('es-AR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => navigate(`/pacientes/${patient.id}`)}
-                            className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-primary hover:bg-white/[0.03]/[0.04] rounded-lg transition-colors"
                             title={t('patients.view_chart')}
                           >
                             <FileText size={18} />
                           </button>
                           <button
                             onClick={() => openEditModal(patient)}
-                            className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-primary hover:bg-white/[0.03]/[0.04] rounded-lg transition-colors"
                             title={t('common.edit')}
                           >
                             <Edit size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(patient.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-red-400 hover:bg-white/[0.03]/[0.04] rounded-lg transition-colors"
                             title={t('common.delete')}
                           >
                             <Trash2 size={18} />
@@ -394,7 +394,7 @@ export default function PatientsView() {
             {/* Cards for Mobile */}
             <div className="md:hidden divide-y">
               {filteredPatients.map((patient) => (
-                <div key={patient.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                <div key={patient.id} className="p-4 bg-white/[0.03] hover:bg-white/[0.03]/[0.02] transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium shrink-0">
@@ -402,50 +402,50 @@ export default function PatientsView() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold text-gray-900 truncate">
+                          <h3 className="text-sm font-semibold text-white truncate">
                             {patient.first_name} {patient.last_name}
                           </h3>
                           {semanticResults.some(r => r.id === patient.id) && (
                             <Brain size={14} className="text-purple-500 shrink-0" />
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 truncate">DNI: {patient.dni || '-'}</p>
+                        <p className="text-xs text-white/40 truncate">DNI: {patient.dni || '-'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => navigate(`/pacientes/${patient.id}`)}
-                        className="p-2 text-gray-600 hover:text-primary active:bg-gray-200 rounded-lg"
+                        className="p-2 text-white/50 hover:text-primary active:bg-white/[0.03]/[0.06] rounded-lg"
                       >
                         <FileText size={18} />
                       </button>
                       <button
                         onClick={() => openEditModal(patient)}
-                        className="p-2 text-gray-600 hover:text-primary active:bg-gray-200 rounded-lg"
+                        className="p-2 text-white/50 hover:text-primary active:bg-white/[0.03]/[0.06] rounded-lg"
                       >
                         <Edit size={18} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3 bg-gray-50 p-2 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-white/40 mb-3 bg-white/[0.03]/[0.02] p-2 rounded-lg">
                     <div>
-                      <span className="block text-[10px] text-gray-400 uppercase font-semibold">{t('patients.phone_label')}</span>
+                      <span className="block text-[10px] text-white/30 uppercase font-semibold">{t('patients.phone_label')}</span>
                       {patient.phone_number}
                     </div>
                     <div>
-                      <span className="block text-[10px] text-gray-400 uppercase font-semibold">{t('patients.obra_social')}</span>
+                      <span className="block text-[10px] text-white/30 uppercase font-semibold">{t('patients.obra_social')}</span>
                       {patient.obra_social || '-'}
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-white/30">
                       Cargado el {new Date(patient.created_at).toLocaleDateString('es-AR')}
                     </span>
                     <button
                       onClick={() => handleDelete(patient.id)}
-                      className="text-xs text-red-500 font-medium px-2 py-1 hover:bg-red-50 rounded"
+                      className="text-xs text-red-500 font-medium px-2 py-1 hover:bg-red-500/10 rounded"
                     >
                       {t('common.delete')}
                     </button>
@@ -460,12 +460,12 @@ export default function PatientsView() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg w-full max-w-2xl mx-4 my-8">
-            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+          <div className="bg-white/[0.03] rounded-lg w-full max-w-2xl mx-4 my-8">
+            <div className="flex justify-between items-center p-4 border-b border-white/[0.04] sticky top-0 bg-white/[0.03] z-10">
               <h2 className="text-xl font-bold">
                 {editingPatient ? t('patients.edit_patient') : t('patients.new_patient')}
               </h2>
-              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+              <button onClick={closeModal} className="text-white/40 hover:text-white/70">
                 <X size={24} />
               </button>
             </div>
@@ -476,13 +476,13 @@ export default function PatientsView() {
 
                 {/* 1. Datos Personales */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
                     <User size={18} />
                     {t('patients.personal_data')}
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.first_name_req')}
                       </label>
                       <input
@@ -490,11 +490,11 @@ export default function PatientsView() {
                         required
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.last_name_req')}
                       </label>
                       <input
@@ -502,11 +502,11 @@ export default function PatientsView() {
                         required
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.phone_req')}
                       </label>
                       <input
@@ -514,40 +514,40 @@ export default function PatientsView() {
                         required
                         value={formData.phone_number}
                         onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.dni')}
                       </label>
                       <input
                         type="text"
                         value={formData.dni}
                         onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.email')}
                       </label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         {t('patients.obra_social')}
                       </label>
                       <input
                         type="text"
                         value={formData.obra_social}
                         onChange={(e) => setFormData({ ...formData, obra_social: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder={t('patients.obra_social_placeholder')}
                       />
                     </div>
@@ -556,22 +556,22 @@ export default function PatientsView() {
 
                 {/* 2. Turno Inicial (Solo para Nuevos) */}
                 {!editingPatient && (
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+                  <div className="bg-white/[0.03]/[0.02] p-4 rounded-lg border border-white/[0.06]">
+                    <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
                       <Calendar size={18} />
                       {t('patients.schedule_first_appointment')}
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-white/70 mb-1">
                           {t('patients.treatment_service')}
                         </label>
                         <div className="relative">
-                          <Stethoscope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <Stethoscope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" size={16} />
                           <select
                             value={appointmentData.treatment_code}
                             onChange={(e) => setAppointmentData({ ...appointmentData, treatment_code: e.target.value })}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full pl-10 pr-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           >
                             <option value="">{t('patients.select_treatment')}</option>
                             {treatments.map(t => (
@@ -581,15 +581,15 @@ export default function PatientsView() {
                         </div>
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-white/70 mb-1">
                           {t('agenda.professional')}
                         </label>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" size={16} />
                           <select
                             value={appointmentData.professional_id}
                             onChange={(e) => setAppointmentData({ ...appointmentData, professional_id: e.target.value })}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full pl-10 pr-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           >
                             <option value="">{t('patients.select_professional')}</option>
                             {professionals.map(p => (
@@ -601,27 +601,27 @@ export default function PatientsView() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-white/70 mb-1">
                           {t('patients.date')}
                         </label>
                         <input
                           type="date"
                           value={appointmentData.date}
                           onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-white/70 mb-1">
                           {t('patients.time')}
                         </label>
                         <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" size={16} />
                           <input
                             type="time"
                             value={appointmentData.time}
                             onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full pl-10 pr-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           />
                         </div>
                       </div>
@@ -634,7 +634,7 @@ export default function PatientsView() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-white/70 bg-white/[0.03]/[0.04] rounded-lg hover:bg-white/[0.03]/[0.06] transition-colors"
                 >
                   {t('common.cancel')}
                 </button>

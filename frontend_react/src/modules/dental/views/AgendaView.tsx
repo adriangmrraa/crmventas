@@ -68,20 +68,20 @@ const SOURCE_COLORS: Record<string, { hex: string; label: string; bgClass: strin
   ai: {
     hex: '#3b82f6',
     label: 'AI',
-    bgClass: 'bg-blue-100',
-    textClass: 'text-blue-800'
+    bgClass: 'bg-blue-500/10',
+    textClass: 'text-blue-400'
   },
   manual: {
     hex: '#22c55e',
     label: 'Manual',
-    bgClass: 'bg-green-100',
-    textClass: 'text-green-800'
+    bgClass: 'bg-green-500/10',
+    textClass: 'text-green-400'
   },
   gcalendar: {
     hex: '#6b7280',
     label: 'GCalendar',
-    bgClass: 'bg-gray-100',
-    textClass: 'text-gray-800'
+    bgClass: 'bg-white/[0.04]',
+    textClass: 'text-white'
   },
 };
 
@@ -528,18 +528,18 @@ export default function AgendaView() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full lg:w-auto gap-4">
             <div className="border-l-4 border-medical-500 pl-3 sm:pl-4 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{t('agenda.title')}</h1>
-              <p className="text-xs sm:text-sm text-slate-600 mt-0.5">{t('agenda.subtitle')}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{t('agenda.title')}</h1>
+              <p className="text-xs sm:text-sm text-white/50 mt-0.5">{t('agenda.subtitle')}</p>
             </div>
 
             {/* Professional Filter (CEO/Secretary only) - Mobile Stacking */}
             {(user?.role === 'ceo' || user?.role === 'secretary') && (
-              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-100 w-full sm:w-auto">
-                <Stethoscope size={16} className="text-medical-600 shrink-0" />
+              <div className="flex items-center gap-2 bg-white/[0.03]px-3 py-2 rounded-xl  border border-white/[0.04] w-full sm:w-auto">
+                <Stethoscope size={16} className="text-blue-400 shrink-0" />
                 <select
                   value={selectedProfessionalId}
                   onChange={(e) => setSelectedProfessionalId(e.target.value)}
-                  className="bg-transparent border-none text-xs font-medium focus:ring-0 outline-none text-medical-900 cursor-pointer w-full"
+                  className="bg-transparent border-none text-xs font-medium focus:ring-0 outline-none text-white cursor-pointer w-full"
                 >
                   <option value="all">{t('agenda.all_professionals')}</option>
                   {professionals.map(p => (
@@ -555,18 +555,18 @@ export default function AgendaView() {
           {/* Connection Status & Controls */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full lg:w-auto">
             {/* Source Legend - Compact on Mobile */}
-            <div className="flex gap-2 sm:gap-3 bg-white px-3 py-1.5 rounded-full border border-gray-50">
+            <div className="flex gap-2 sm:gap-3 bg-white/[0.03]px-3 py-1.5 rounded-full border border-white/[0.04]">
               <div className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                <span className="text-[10px] text-gray-600">{t('agenda.source_ai')}</span>
+                <span className="text-[10px] text-white/50">{t('agenda.source_ai')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                <span className="text-[10px] text-gray-600">{t('agenda.source_manual')}</span>
+                <span className="text-[10px] text-white/50">{t('agenda.source_manual')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-gray-500"></div>
-                <span className="text-[10px] text-gray-600">{t('agenda.source_gcalendar')}</span>
+                <span className="text-[10px] text-white/50">{t('agenda.source_gcalendar')}</span>
               </div>
             </div>
 
@@ -699,7 +699,7 @@ export default function AgendaView() {
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-4">
                     <RefreshCw className="w-12 h-12 text-blue-500 animate-spin" />
-                    <p className="text-gray-500 font-medium">{t('common.loading')}</p>
+                    <p className="text-white/40 font-medium">{t('common.loading')}</p>
                   </div>
                 </div>
               ) : (

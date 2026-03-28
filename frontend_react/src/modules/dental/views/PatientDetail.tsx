@@ -137,7 +137,7 @@ export default function PatientDetail() {
       case 'evolution': return <Activity className="text-green-500" size={18} />;
       case 'procedure': return <Heart className="text-purple-500" size={18} />;
       case 'prescription': return <Pill className="text-orange-500" size={18} />;
-      default: return <FileText className="text-gray-500" size={18} />;
+      default: return <FileText className="text-white/40" size={18} />;
     }
   };
 
@@ -148,7 +148,7 @@ export default function PatientDetail() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="p-6 text-center text-white/40">
         {t('patient_detail.loading')}
       </div>
     );
@@ -156,7 +156,7 @@ export default function PatientDetail() {
 
   if (!patient) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="p-6 text-center text-white/40">
         {t('patient_detail.not_found')}
       </div>
     );
@@ -169,20 +169,20 @@ export default function PatientDetail() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/pacientes')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            className="p-2 hover:bg-white/[0.03]/[0.04] rounded-lg transition-colors shrink-0"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-800 truncate">
+            <h1 className="text-xl lg:text-2xl font-bold text-white truncate">
               {patient.first_name} {patient.last_name}
             </h1>
-            <p className="text-sm text-gray-500">{t('patient_detail.digital_record')}</p>
+            <p className="text-sm text-white/40">{t('patient_detail.digital_record')}</p>
           </div>
         </div>
 
         {criticalConditionsFound.length > 0 && (
-          <div className="sm:ml-auto flex items-center gap-2 bg-red-100 text-red-800 px-3 py-1.5 rounded-full shadow-sm">
+          <div className="sm:ml-auto flex items-center gap-2 bg-red-500/10 text-red-400 px-3 py-1.5 rounded-full -sm">
             <AlertTriangle size={16} className="shrink-0" />
             <span className="text-xs sm:text-sm font-semibold truncate">{t('patient_detail.critical_antecedents')}</span>
           </div>
@@ -193,44 +193,44 @@ export default function PatientDetail() {
         {/* Patient Profile */}
         <div className="lg:col-span-1 space-y-4">
           {/* Basic Info */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white/[0.03] rounded-lg  p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-xl font-bold">
                 {patient.first_name?.charAt(0)}
               </div>
               <div>
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-white">
                   {patient.first_name} {patient.last_name}
                 </div>
-                <div className="text-sm text-gray-500">{t('patient_detail.patient')}</div>
+                <div className="text-sm text-white/40">{t('patient_detail.patient')}</div>
               </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <Phone className="text-gray-400" size={16} />
+                <Phone className="text-white/30" size={16} />
                 <span>{patient.phone_number}</span>
               </div>
               {patient.email && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="text-gray-400" size={16} />
+                  <Mail className="text-white/30" size={16} />
                   <span>{patient.email}</span>
                 </div>
               )}
               {patient.dni && (
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="text-gray-400" size={16} />
+                  <User className="text-white/30" size={16} />
                   <span>DNI: {patient.dni}</span>
                 </div>
               )}
               {patient.obra_social && (
                 <div className="flex items-center gap-2 text-sm">
-                  <FileText className="text-gray-400" size={16} />
+                  <FileText className="text-white/30" size={16} />
                   <span>{patient.obra_social} {patient.obra_social_number}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="text-gray-400" size={16} />
+                <Calendar className="text-white/30" size={16} />
                 <span>{t('patient_detail.admission_date')}: {new Date(patient.created_at).toLocaleDateString()}</span>
               </div>
             </div>
@@ -238,20 +238,20 @@ export default function PatientDetail() {
 
           {/* Medical Notes / Antecedentes */}
           {patient.medical_notes && (
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <div className="bg-white/[0.03] rounded-lg  p-4 border-l-4 border-red-500">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="text-red-500" size={18} />
-                <h3 className="font-medium text-gray-900">{t('patient_detail.medical_antecedents')}</h3>
+                <h3 className="font-medium text-white">{t('patient_detail.medical_antecedents')}</h3>
               </div>
-              <p className="text-sm text-gray-600 whitespace-pre-wrap">
+              <p className="text-sm text-white/50 whitespace-pre-wrap">
                 {patient.medical_notes}
               </p>
               {criticalConditionsFound.length > 0 && (
                 <div className="mt-3 pt-3 border-t">
-                  <p className="text-xs font-medium text-red-600 mb-2">{t('patient_detail.critical_conditions')}</p>
+                  <p className="text-xs font-medium text-red-400 mb-2">{t('patient_detail.critical_conditions')}</p>
                   <div className="flex flex-wrap gap-1">
                     {criticalConditionsFound.map((condition) => (
-                      <span key={condition} className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                      <span key={condition} className="text-xs bg-red-500/10 text-red-400 px-2 py-0.5 rounded">
                         {condition}
                       </span>
                     ))}
@@ -273,15 +273,15 @@ export default function PatientDetail() {
 
         {/* Clinical Records Timeline */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white/[0.03] rounded-lg ">
             <div className="p-4 border-b">
-              <h2 className="font-medium text-gray-900">{t('patient_detail.clinical_timeline')}</h2>
-              <p className="text-sm text-gray-500">{t('patient_detail.records_count').replace('{{count}}', String(records.length))}</p>
+              <h2 className="font-medium text-white">{t('patient_detail.clinical_timeline')}</h2>
+              <p className="text-sm text-white/40">{t('patient_detail.records_count').replace('{{count}}', String(records.length))}</p>
             </div>
 
             <div className="p-4">
               {records.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-white/40">
                   <FileText size={48} className="mx-auto mb-2 opacity-50" />
                   <p>{t('patient_detail.no_records')}</p>
                 </div>
@@ -291,47 +291,47 @@ export default function PatientDetail() {
                     <div key={record.id} className="relative pl-8 pb-4">
                       {/* Timeline line */}
                       {index < records.length - 1 && (
-                        <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gray-200"></div>
+                        <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-white/[0.03]/[0.06]"></div>
                       )}
 
                       {/* Timeline dot */}
-                      <div className="absolute left-0 top-1 w-6 h-6 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center">
+                      <div className="absolute left-0 top-1 w-6 h-6 bg-white/[0.03] border-2 border-white/[0.06] rounded-full flex items-center justify-center">
                         {getRecordIcon(record.record_type)}
                       </div>
 
                       {/* Content */}
-                      <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="bg-white/[0.03]/[0.02] rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-full">
                               {getRecordTypeLabel(record.record_type)}
                             </span>
-                            <span className="ml-2 text-sm text-gray-500">
+                            <span className="ml-2 text-sm text-white/40">
                               {new Date(record.created_at).toLocaleString()}
                             </span>
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-white/30">
                             Dr. {record.professional_name}
                           </span>
                         </div>
 
                         {record.chief_complaint && (
                           <div className="mb-2">
-                            <p className="text-xs font-medium text-gray-500">{t('patient_detail.chief_complaint')}</p>
+                            <p className="text-xs font-medium text-white/40">{t('patient_detail.chief_complaint')}</p>
                             <p className="text-sm">{record.chief_complaint}</p>
                           </div>
                         )}
 
                         {record.diagnosis && (
                           <div className="mb-2">
-                            <p className="text-xs font-medium text-gray-500">{t('patient_detail.diagnosis')}</p>
+                            <p className="text-xs font-medium text-white/40">{t('patient_detail.diagnosis')}</p>
                             <p className="text-sm">{record.diagnosis}</p>
                           </div>
                         )}
 
                         {record.treatment_plan && (
                           <div className="mb-2">
-                            <p className="text-xs font-medium text-gray-500">{t('patient_detail.treatment_plan')}</p>
+                            <p className="text-xs font-medium text-white/40">{t('patient_detail.treatment_plan')}</p>
                             <div className="text-sm">
                               {typeof record.treatment_plan === 'string'
                                 ? record.treatment_plan
@@ -342,8 +342,8 @@ export default function PatientDetail() {
 
                         {record.notes && (
                           <div className="mb-2">
-                            <p className="text-xs font-medium text-gray-500">{t('patient_detail.notes')}</p>
-                            <p className="text-sm text-gray-600">{record.notes}</p>
+                            <p className="text-xs font-medium text-white/40">{t('patient_detail.notes')}</p>
+                            <p className="text-sm text-white/50">{record.notes}</p>
                           </div>
                         )}
 
@@ -351,19 +351,19 @@ export default function PatientDetail() {
                           <div className="flex gap-4 mt-2 pt-2 border-t">
                             {record.vital_signs.blood_pressure && (
                               <div className="text-xs">
-                                <span className="text-gray-400">PA: </span>
+                                <span className="text-white/30">PA: </span>
                                 <span>{record.vital_signs.blood_pressure}</span>
                               </div>
                             )}
                             {record.vital_signs.heart_rate && (
                               <div className="text-xs">
-                                <span className="text-gray-400">FC: </span>
+                                <span className="text-white/30">FC: </span>
                                 <span>{record.vital_signs.heart_rate} ppm</span>
                               </div>
                             )}
                             {record.vital_signs.temperature && (
                               <div className="text-xs">
-                                <span className="text-gray-400">T°: </span>
+                                <span className="text-white/30">T°: </span>
                                 <span>{record.vital_signs.temperature}°C</span>
                               </div>
                             )}
@@ -382,12 +382,12 @@ export default function PatientDetail() {
       {/* Add Note Modal */}
       {showNoteForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white">
+          <div className="bg-white/[0.03] rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white/[0.03]">
               <h2 className="text-xl font-bold">{t('patient_detail.new_evolution')}</h2>
               <button
                 onClick={() => setShowNoteForm(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-white/40 hover:text-white/70"
               >
                 ✕
               </button>
@@ -396,13 +396,13 @@ export default function PatientDetail() {
             <form onSubmit={handleSubmit} className="p-4">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-white/70 mb-1">
                     {t('patient_detail.record_type')}
                   </label>
                   <select
                     value={formData.record_type}
                     onChange={(e) => setFormData({ ...formData, record_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="initial">{t('patient_detail.initial_consult')}</option>
                     <option value="evolution">{t('patient_detail.evolution')}</option>
@@ -413,7 +413,7 @@ export default function PatientDetail() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/70 mb-1">
                   {t('patient_detail.chief_complaint_label')}
                 </label>
                 <input
@@ -421,80 +421,80 @@ export default function PatientDetail() {
                   value={formData.chief_complaint}
                   onChange={(e) => setFormData({ ...formData, chief_complaint: e.target.value })}
                   placeholder={t('patient_detail.placeholder_complaint')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/70 mb-1">
                   {t('patient_detail.diagnosis')}
                 </label>
                 <textarea
                   value={formData.diagnosis}
                   onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/70 mb-1">
                   {t('patient_detail.treatment_plan')}
                 </label>
                 <textarea
                   value={formData.treatment_plan}
                   onChange={(e) => setFormData({ ...formData, treatment_plan: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
               {/* Vital Signs */}
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">{t('patient_detail.vital_signs')}</h3>
+              <div className="mb-4 p-4 bg-white/[0.03]/[0.02] rounded-lg">
+                <h3 className="text-sm font-medium text-white/70 mb-2">{t('patient_detail.vital_signs')}</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">{t('patient_detail.blood_pressure')}</label>
+                    <label className="block text-xs text-white/40 mb-1">{t('patient_detail.blood_pressure')}</label>
                     <input
                       type="text"
                       placeholder={t('patient_detail.placeholder_bp')}
                       value={formData.blood_pressure}
                       onChange={(e) => setFormData({ ...formData, blood_pressure: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">{t('patient_detail.heart_rate')}</label>
+                    <label className="block text-xs text-white/40 mb-1">{t('patient_detail.heart_rate')}</label>
                     <input
                       type="text"
                       placeholder={t('patient_detail.placeholder_hr')}
                       value={formData.heart_rate}
                       onChange={(e) => setFormData({ ...formData, heart_rate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">{t('patient_detail.temperature')}</label>
+                    <label className="block text-xs text-white/40 mb-1">{t('patient_detail.temperature')}</label>
                     <input
                       type="text"
                       placeholder={t('patient_detail.placeholder_temp')}
                       value={formData.temperature}
                       onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg text-sm"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/70 mb-1">
                   Notas Adicionales
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -502,7 +502,7 @@ export default function PatientDetail() {
                 <button
                   type="button"
                   onClick={() => setShowNoteForm(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="px-4 py-2 text-white/70 bg-white/[0.03]/[0.04] rounded-lg hover:bg-white/[0.03]/[0.06]"
                 >
                   {t('common.cancel')}
                 </button>

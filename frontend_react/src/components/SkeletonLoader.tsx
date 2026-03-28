@@ -19,7 +19,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   animation = 'pulse',
   className = '',
 }) => {
-  const baseStyles = 'bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]';
+  const baseStyles = 'bg-gradient-to-r from-white/[0.06] via-transparent/[0.04] to-white/[0.06] bg-[length:200%_100%]';
   
   const variantStyles = {
     text: 'rounded h-4',
@@ -54,15 +54,15 @@ const Skeleton: React.FC<SkeletonProps> = ({
 // Tooth-shaped skeleton for dental content
 export const ToothSkeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
   <div className={`relative ${className}`}>
-    <div className="w-12 h-16 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-sm animate-pulse relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-8 bg-white/30 rounded-sm" />
+    <div className="w-12 h-16 bg-gradient-to-r from-white/[0.06] via-transparent/[0.04] to-white/[0.06] rounded-sm animate-pulse relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-8 bg-white/[0.03]/30 rounded-sm" />
     </div>
   </div>
 );
 
 // Calendar day skeleton for agenda
 export const CalendarDaySkeleton: React.FC<{ hasEvent?: boolean }> = ({ hasEvent = false }) => (
-  <div className="p-2 border border-gray-100 rounded-lg">
+  <div className="p-2 border border-white/[0.04] rounded-lg">
     <Skeleton variant="text" width="60%" height={12} className="mb-2" />
     {hasEvent && (
       <div className="space-y-1">
@@ -75,7 +75,7 @@ export const CalendarDaySkeleton: React.FC<{ hasEvent?: boolean }> = ({ hasEvent
 
 // Patient card skeleton
 export const PatientCardSkeleton: React.FC = () => (
-  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+  <div className="bg-white/[0.03]/[0.03] p-4 rounded-xl border border-white/[0.04]">
     <div className="flex items-center gap-4">
       <Skeleton variant="avatar" width={48} height={48} />
       <div className="flex-1 space-y-2">
@@ -92,7 +92,7 @@ export const PatientCardSkeleton: React.FC = () => (
 
 // Agenda event skeleton
 export const AgendaEventSkeleton: React.FC = () => (
-  <div className="p-3 rounded-lg border border-gray-100 mb-2">
+  <div className="p-3 rounded-lg border border-white/[0.04] mb-2">
     <div className="flex items-center gap-3">
       <div className="w-1 h-12 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
       <div className="flex-1 space-y-2">
@@ -108,7 +108,7 @@ export const ChatMessageSkeleton: React.FC<{ isUser?: boolean }> = ({ isUser = f
   <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
     <Skeleton variant="circular" width={32} height={32} />
     <div className={`max-w-[70%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
-      <div className={`${isUser ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-2xl rounded-${isUser ? 'tl-none' : 'tr-none'}`}>
+      <div className={`${isUser ? 'bg-blue-500/100/10' : 'bg-white/[0.03]/[0.04]'} p-3 rounded-2xl rounded-${isUser ? 'tl-none' : 'tr-none'}`}>
         <Skeleton variant="text" width={120} height={12} />
         <Skeleton variant="text" width={80} height={12} className="mt-1" />
       </div>
@@ -118,7 +118,7 @@ export const ChatMessageSkeleton: React.FC<{ isUser?: boolean }> = ({ isUser = f
 
 // Stats card skeleton
 export const StatsCardSkeleton: React.FC = () => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+  <div className="bg-white/[0.03]/[0.03] p-6 rounded-xl border border-white/[0.04]">
     <div className="flex items-center justify-between mb-4">
       <Skeleton variant="circular" width={48} height={48} />
       <Skeleton variant="text" width={60} height={24} />
@@ -138,7 +138,7 @@ export const FormFieldSkeleton: React.FC = () => (
 
 // Table row skeleton
 export const TableRowSkeleton: React.FC<{ columns: number }> = ({ columns }) => (
-  <tr className="border-b border-gray-50">
+  <tr className="border-b border-white/[0.02]">
     {Array.from({ length: columns }).map((_, i) => (
       <td key={i} className="px-4 py-3">
         <Skeleton variant="text" width="80%" height={16} />
@@ -172,7 +172,7 @@ export const PageLoader: React.FC<{ message?: string }> = ({ message = 'Cargando
         </svg>
       </div>
     </div>
-    <p className="text-gray-500 font-medium">{message}</p>
+    <p className="text-white/40 font-medium">{message}</p>
     <div className="mt-4 flex gap-1">
       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0s]" />
       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.1s]" />

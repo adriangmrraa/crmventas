@@ -57,34 +57,34 @@ const MetaTemplatesView: React.FC = () => {
     };
 
     const statusColors: Record<string, string> = {
-        'sent': 'bg-blue-100 text-blue-700',
-        'failed': 'bg-red-100 text-red-700',
-        'delivered': 'bg-green-100 text-green-700',
-        'read': 'bg-purple-100 text-purple-700'
+        'sent': 'bg-blue-500/10 text-blue-400',
+        'failed': 'bg-red-500/10 text-red-400',
+        'delivered': 'bg-green-500/10 text-green-400',
+        'read': 'bg-purple-500/10 text-purple-700'
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
+        <div className="flex flex-col h-full bg-white/[0.02] overflow-hidden">
             {/* Header */}
-            <header className="bg-white border-b px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+            <header className="bg-white/[0.03] border-b px-6 py-4 flex items-center justify-between shrink-0 z-10">
                 <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-md">
                         <Layout className="text-white" size={24} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">{t('hsm.title')}</h1>
-                        <p className="text-xs text-gray-500 font-medium">{t('hsm.subtitle')}</p>
+                        <h1 className="text-xl font-bold text-white">{t('hsm.title')}</h1>
+                        <p className="text-xs text-white/40 font-medium">{t('hsm.subtitle')}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200">
-                        <Globe size={14} className="text-gray-400" />
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-lg text-xs font-semibold text-white/50 border border-white/[0.06]">
+                        <Globe size={14} className="text-white/30" />
                         {t('hsm.timezone')}: {timezone.split('/').pop()?.replace('_', ' ')}
                     </div>
                     <button
                         onClick={fetchLogs}
                         disabled={refreshing}
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 text-white/40 hover:bg-white/[0.04] rounded-lg transition-colors disabled:opacity-50"
                     >
                         <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
                     </button>
@@ -97,53 +97,53 @@ const MetaTemplatesView: React.FC = () => {
 
                     {/* Hero Integration Status */}
                     <div className="grid md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-                            <div className="bg-green-100 p-3 rounded-xl">
-                                <ShieldCheck className="text-green-600" size={24} />
+                        <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04] flex items-start gap-4">
+                            <div className="bg-green-500/10 p-3 rounded-xl">
+                                <ShieldCheck className="text-green-400" size={24} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-900">{t('hsm.motor_active')}</h3>
-                                <p className="text-xs text-gray-500">{t('hsm.motor_desc')}</p>
-                                <span className="mt-2 inline-block px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded uppercase">{t('hsm.motor_operational')}</span>
+                                <h3 className="font-bold text-white">{t('hsm.motor_active')}</h3>
+                                <p className="text-xs text-white/40">{t('hsm.motor_desc')}</p>
+                                <span className="mt-2 inline-block px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] font-bold rounded uppercase">{t('hsm.motor_operational')}</span>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-                            <div className="bg-blue-100 p-3 rounded-xl">
-                                <Send className="text-blue-600" size={24} />
+                        <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04] flex items-start gap-4">
+                            <div className="bg-blue-500/10 p-3 rounded-xl">
+                                <Send className="text-blue-400" size={24} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-900">{t('hsm.sent_count')}</h3>
-                                <p className="text-2xl font-black text-gray-900">{logs.filter(l => l.status === 'sent').length}</p>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{t('hsm.last_24h')}</p>
+                                <h3 className="font-bold text-white">{t('hsm.sent_count')}</h3>
+                                <p className="text-2xl font-black text-white">{logs.filter(l => l.status === 'sent').length}</p>
+                                <p className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">{t('hsm.last_24h')}</p>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-                            <div className="bg-purple-100 p-3 rounded-xl">
-                                <Activity className="text-purple-600" size={24} />
+                        <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04] flex items-start gap-4">
+                            <div className="bg-purple-500/10 p-3 rounded-xl">
+                                <Activity className="text-purple-400" size={24} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-900">{t('hsm.conversion')}</h3>
-                                <p className="text-2xl font-black text-gray-900">85%</p>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{t('hsm.delivery_rate')}</p>
+                                <h3 className="font-bold text-white">{t('hsm.conversion')}</h3>
+                                <p className="text-2xl font-black text-white">85%</p>
+                                <p className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">{t('hsm.delivery_rate')}</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid lg:grid-cols-3 gap-6">
                         {/* Audit Log Table */}
-                        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                            <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/50">
+                        <div className="lg:col-span-2 bg-white/[0.03] rounded-2xl border border-white/[0.04] overflow-hidden flex flex-col">
+                            <div className="px-6 py-4 border-b flex items-center justify-between bg-white/[0.02]/50">
                                 <div className="flex items-center gap-2">
-                                    <History size={18} className="text-gray-500" />
-                                    <h3 className="font-bold text-gray-900">{t('hsm.transparency_feed')}</h3>
+                                    <History size={18} className="text-white/40" />
+                                    <h3 className="font-bold text-white">{t('hsm.transparency_feed')}</h3>
                                 </div>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase">{t('hsm.real_time')}</span>
+                                <span className="text-[10px] font-bold text-white/30 uppercase">{t('hsm.real_time')}</span>
                             </div>
 
                             <div className="flex-1 overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-black">
+                                        <tr className="bg-white/[0.02] text-[10px] uppercase tracking-widest text-white/30 font-black">
                                             <th className="px-6 py-3 border-b">{t('hsm.table_patient')}</th>
                                             <th className="px-6 py-3 border-b">{t('hsm.table_trigger')}</th>
                                             <th className="px-6 py-3 border-b">{t('hsm.table_datetime')}</th>
@@ -154,29 +154,29 @@ const MetaTemplatesView: React.FC = () => {
                                         {loading ? (
                                             Array(5).fill(0).map((_, i) => (
                                                 <tr key={i} className="animate-pulse">
-                                                    <td colSpan={4} className="px-6 py-4 h-12 bg-gray-50/50"></td>
+                                                    <td colSpan={4} className="px-6 py-4 h-12 bg-white/[0.02]/50"></td>
                                                 </tr>
                                             ))
                                         ) : logs.length > 0 ? (
                                             logs.map((log) => (
-                                                <tr key={log.id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <tr key={log.id} className="hover:bg-white/[0.02]/80 transition-colors group">
                                                     <td className="px-6 py-4">
-                                                        <div className="font-bold text-gray-900 text-sm">{log.lead_name}</div>
+                                                        <div className="font-bold text-white text-sm">{log.lead_name}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">
+                                                        <div className="text-xs font-semibold text-white/50 bg-white/[0.04] px-2 py-1 rounded inline-block">
                                                             {triggerLabels[log.trigger_type] || log.trigger_type}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="text-xs text-gray-500 font-medium">
+                                                        <div className="text-xs text-white/40 font-medium">
                                                             {new Date(log.created_at).toLocaleString(undefined, {
                                                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                                                             })}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${statusColors[log.status] || 'bg-gray-100'}`}>
+                                                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${statusColors[log.status] || 'bg-white/[0.04]'}`}>
                                                             {log.status}
                                                         </span>
                                                     </td>
@@ -184,7 +184,7 @@ const MetaTemplatesView: React.FC = () => {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={4} className="px-6 py-12 text-center text-gray-400 flex flex-col items-center gap-2">
+                                                <td colSpan={4} className="px-6 py-12 text-center text-white/30 flex flex-col items-center gap-2">
                                                     <AlertCircle size={32} />
                                                     <p className="font-medium italic">{t('hsm.no_logs')}</p>
                                                 </td>
@@ -198,25 +198,25 @@ const MetaTemplatesView: React.FC = () => {
                         {/* Sidebar: Config & Info */}
                         <div className="space-y-6">
                             {/* Timezone Config */}
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04]">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Globe size={18} className="text-blue-600" />
-                                    <h4 className="font-bold text-gray-900">{t('hsm.regional_config')}</h4>
+                                    <Globe size={18} className="text-blue-400" />
+                                    <h4 className="font-bold text-white">{t('hsm.regional_config')}</h4>
                                 </div>
-                                <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                                <p className="text-xs text-white/40 mb-4 leading-relaxed">
                                     {t('hsm.timezone_help')}
                                 </p>
                                 <select
                                     value={timezone}
                                     onChange={(e) => setTimezone(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-not-allowed opacity-70"
+                                    className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm font-bold text-white/70 outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-not-allowed opacity-70"
                                     disabled
                                 >
                                     <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
                                     <option value="America/Mexico_City">Ciudad de México (GMT-6)</option>
                                     <option value="Europe/Madrid">Madrid (GMT+1)</option>
                                 </select>
-                                <p className="mt-2 text-[10px] text-blue-600 font-bold bg-blue-50 p-2 rounded-lg">
+                                <p className="mt-2 text-[10px] text-blue-400 font-bold bg-blue-500/10 p-2 rounded-lg">
                                     {t('hsm.timezone_disclaimer')}
                                 </p>
                             </div>

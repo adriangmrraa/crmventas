@@ -249,18 +249,18 @@ const UserApprovalView: React.FC = () => {
             </div>
 
             {/* TABS */}
-            <div className="flex gap-4 mb-4 border-b border-gray-200 pb-px shrink-0">
+            <div className="flex gap-4 mb-4 border-b border-white/[0.06] pb-px shrink-0">
                 <button
                     onClick={() => setActiveTab('requests')}
                     className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests'
-                        ? 'text-medical-600'
-                        : 'text-gray-500 hover:text-medical-700'
+                        ? 'text-blue-400'
+                        : 'text-white/40 hover:text-medical-700'
                         }`}
                 >
                     <div className="flex items-center gap-2">
                         {t('approvals.requests')}
                         {requests.length > 0 && (
-                            <span className="bg-danger text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm">
+                            <span className="bg-danger text-white text-[10px] px-1.5 py-0.5 rounded-full">
                                 {requests.length}
                             </span>
                         )}
@@ -275,8 +275,8 @@ const UserApprovalView: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('staff')}
                     className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'staff'
-                        ? 'text-medical-600'
-                        : 'text-gray-500 hover:text-medical-700'
+                        ? 'text-blue-400'
+                        : 'text-white/40 hover:text-medical-700'
                         }`}
                 >
                     {t('approvals.staff')}
@@ -338,12 +338,12 @@ const UserApprovalView: React.FC = () => {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={(e) => e.target === e.currentTarget && closeStaffModal()}
                 >
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[92dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
-                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 shrink-0">
-                            <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate min-w-0">
+                    <div className="bg-white/[0.03] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[92dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
+                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-white/[0.04] shrink-0">
+                            <h2 className="text-lg sm:text-xl font-bold text-white truncate min-w-0">
                                 {selectedStaff.first_name || 'Sin nombre'} {selectedStaff.last_name || ''}
                             </h2>
-                            <button type="button" onClick={closeStaffModal} className="shrink-0 p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors touch-manipulation" aria-label="Cerrar">
+                            <button type="button" onClick={closeStaffModal} className="shrink-0 p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-white/30 hover:bg-white/[0.04] hover:text-white/70 transition-colors touch-manipulation" aria-label="Cerrar">
                                 <X size={24} />
                             </button>
                         </div>
@@ -354,11 +354,11 @@ const UserApprovalView: React.FC = () => {
                                         {selectedStaff.role.toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm text-gray-600 flex items-center gap-2 truncate">
+                                        <p className="text-sm text-white/50 flex items-center gap-2 truncate">
                                             <Mail size={14} className="shrink-0" />
                                             <span className="truncate">{selectedStaff.email}</span>
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-white/40 mt-1">
                                             {t('approvals.member_since')}: {new Date(selectedStaff.created_at).toLocaleDateString()}
                                         </p>
                                     </div>
@@ -378,14 +378,14 @@ const UserApprovalView: React.FC = () => {
 
                             {showLinkForm && (
                                 <form onSubmit={handleLinkToSedeSubmit} className="glass p-4 sm:p-5 rounded-xl space-y-4">
-                                    <h3 className="text-sm font-semibold text-gray-800">{t('approvals.create_profile_sede')}</h3>
+                                    <h3 className="text-sm font-semibold text-white">{t('approvals.create_profile_sede')}</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">{t('approvals.choose_clinic')}</label>
+                                            <label className="block text-xs font-medium text-white/50 mb-1">{t('approvals.choose_clinic')}</label>
                                             <select
                                                 value={linkFormData.tenant_id ?? ''}
                                                 onChange={(e) => setLinkFormData((p) => ({ ...p, tenant_id: e.target.value ? parseInt(e.target.value, 10) : null }))}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                                 required
                                             >
                                                 <option value="">{t('approvals.choose_clinic')}</option>
@@ -395,13 +395,13 @@ const UserApprovalView: React.FC = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1"><Phone size={12} /> {t('approvals.phone')}</label>
+                                            <label className="block text-xs font-medium text-white/50 mb-1 flex items-center gap-1"><Phone size={12} /> {t('approvals.phone')}</label>
                                             <input
                                                 type="text"
                                                 value={linkFormData.phone}
                                                 onChange={(e) => setLinkFormData((p) => ({ ...p, phone: e.target.value }))}
                                                 placeholder={t('approvals.phone_placeholder')}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                className="w-full border border-white/[0.06] rounded-lg px-3 py-2 text-sm"
                                             />
                                         </div>
                                     </div>
@@ -418,15 +418,15 @@ const UserApprovalView: React.FC = () => {
                             )}
 
                             {staffDetailLoading ? (
-                                <p className="text-gray-500">{t('approvals.loading_clinics')}</p>
+                                <p className="text-white/40">{t('approvals.loading_clinics')}</p>
                             ) : sellerRows.length > 0 ? (
                                 <>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                        <h3 className="text-sm font-semibold text-white/70 mb-2 flex items-center gap-2">
                                             <Building2 size={16} />
                                             {t('approvals.assigned_locations')}
                                         </h3>
-                                        <ul className="list-disc list-inside text-sm text-gray-600">
+                                        <ul className="list-disc list-inside text-sm text-white/50">
                                             {sellerRows.map((p) => (
                                                 <li key={p.id}>
                                                     {clinics.find((c) => c.id === p.tenant_id)?.clinic_name || t('approvals.location_id').replace('{{id}}', String(p.tenant_id))}
@@ -435,24 +435,24 @@ const UserApprovalView: React.FC = () => {
                                         </ul>
                                     </div>
 
-                                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                    <div className="border border-white/[0.06] rounded-xl overflow-hidden">
                                         <button
                                             type="button"
                                             onClick={() => handleAccordionToggle('mensajes')}
-                                            className="w-full flex items-center justify-between gap-2 p-4 min-h-[48px] text-left bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+                                            className="w-full flex items-center justify-between gap-2 p-4 min-h-[48px] text-left bg-white/[0.02] hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors touch-manipulation"
                                         >
-                                            <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-white/70 flex items-center gap-2">
                                                 <MessageSquare size={16} />
                                                 {t('approvals.messages_interactions')}
                                             </span>
                                             {expandedAccordion === 'mensajes' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                         </button>
                                         {expandedAccordion === 'mensajes' && (
-                                            <div className="p-4 border-t border-gray-200 bg-white">
+                                            <div className="p-4 border-t border-white/[0.06] bg-white/[0.03]">
                                                 {accordionLoading === 'mensajes' ? (
-                                                    <p className="text-sm text-gray-500">{t('approvals.loading_short')}</p>
+                                                    <p className="text-sm text-white/40">{t('approvals.loading_short')}</p>
                                                 ) : (
-                                                    <div className="space-y-2 text-sm text-gray-600">
+                                                    <div className="space-y-2 text-sm text-white/50">
                                                         {sellerRows.map((row) => {
                                                             const tid = row.tenant_id ?? 0;
                                                             const count = tid ? (accordionData.chatCountByTenant[String(tid)] ?? '—') : '—';
@@ -470,7 +470,7 @@ const UserApprovalView: React.FC = () => {
                                     </div>
                                 </>
                             ) : (
-                                <div className="glass p-4 rounded-xl text-center text-gray-500 text-sm">
+                                <div className="glass p-4 rounded-xl text-center text-white/40 text-sm">
                                     {t('approvals.not_linked_hint')}
                                 </div>
                             )}
@@ -485,44 +485,44 @@ const UserApprovalView: React.FC = () => {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={(e) => e.target === e.currentTarget && closeEditProfileModal()}
                 >
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in duration-200">
-                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 shrink-0">
+                    <div className="bg-white/[0.03] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in duration-200">
+                        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-white/[0.04] shrink-0">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
                                     <Edit size={22} />
                                 </div>
                                 <div className="min-w-0">
-                                    <h2 className="text-base font-bold text-gray-900 truncate">
+                                    <h2 className="text-base font-bold text-white truncate">
                                         {t('approvals.edit_profile_title')}: {editFormData.name || staffForEditModal?.email || t('approvals.professional_fallback')}
                                     </h2>
-                                    <p className="text-xs text-gray-500 mt-0.5">
+                                    <p className="text-xs text-white/40 mt-0.5">
                                         {clinics.find((c) => c.id === editingSellerRow.tenant_id)?.clinic_name || `Sede #${editingSellerRow.tenant_id ?? '—'}`}
                                     </p>
                                 </div>
                             </div>
-                            <button type="button" onClick={closeEditProfileModal} className="shrink-0 p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors touch-manipulation" aria-label="Cerrar">
+                            <button type="button" onClick={closeEditProfileModal} className="shrink-0 p-2.5 min-w-[44px] min-h-[44px] rounded-xl text-white/30 hover:bg-white/[0.04] hover:text-white/70 transition-colors touch-manipulation" aria-label="Cerrar">
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleEditProfileSubmit} className="p-4 sm:p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.full_name_required')}</label>
+                                <label className="block text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t('approvals.full_name_required')}</label>
                                 <input type="text" value={editFormData.name} onChange={(e) => setEditFormData((p) => ({ ...p, name: e.target.value }))} className="edit-profile-input" required />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.email')}</label>
+                                <label className="block text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t('approvals.email')}</label>
                                 <input type="email" value={editFormData.email} onChange={(e) => setEditFormData((p) => ({ ...p, email: e.target.value }))} className="edit-profile-input" />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('approvals.phone')}</label>
+                                <label className="block text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">{t('approvals.phone')}</label>
                                 <input type="text" value={editFormData.phone} onChange={(e) => setEditFormData((p) => ({ ...p, phone: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.phone_edit_placeholder')} />
                             </div>
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                <span className="text-sm font-medium text-gray-700">{t('approvals.active')}</span>
+                                <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-white/[0.06] text-blue-400 focus:ring-blue-500" />
+                                <span className="text-sm font-medium text-white/70">{t('approvals.active')}</span>
                             </label>
                             <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={closeEditProfileModal} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 touch-manipulation">
+                                <button type="button" onClick={closeEditProfileModal} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/70 font-medium hover:bg-white/[0.02] touch-manipulation">
                                     {t('common.cancel')}
                                 </button>
                                 <button type="submit" disabled={editFormSubmitting} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 touch-manipulation">

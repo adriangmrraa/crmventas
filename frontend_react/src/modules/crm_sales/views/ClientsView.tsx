@@ -167,7 +167,7 @@ export default function ClientsView() {
   };
 
   return (
-    <div className="p-4 lg:p-6 h-full flex flex-col min-h-0 overflow-hidden bg-gray-100">
+    <div className="p-4 lg:p-6 h-full flex flex-col min-h-0 overflow-hidden bg-white/[0.04]">
       <PageHeader
         title={t('clients.title')}
         subtitle={t('clients.subtitle')}
@@ -185,19 +185,19 @@ export default function ClientsView() {
 
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" size={18} />
           <input
             type="text"
             placeholder={t('clients.search_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white/[0.03]"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary"
+          className="px-3 py-2 border border-white/[0.06] rounded-lg text-sm bg-white/[0.03] focus:ring-2 focus:ring-primary"
         >
           <option value="">{t('clients.all_statuses')}</option>
           <option value="active">{t('clients.status_active')}</option>
@@ -205,70 +205,70 @@ export default function ClientsView() {
         </select>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-lg shadow">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white/[0.03] rounded-lg shadow">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">{t('common.loading')}</div>
+          <div className="p-8 text-center text-white/40">{t('common.loading')}</div>
         ) : clients.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">{t('clients.no_clients')}</div>
+          <div className="p-8 text-center text-white/40">{t('clients.no_clients')}</div>
         ) : (
           <>
             <div className="overflow-x-auto hidden md:block">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-white/[0.02]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('clients.client')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('clients.contact')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('clients.status')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('clients.date_added')}</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('clients.actions')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">{t('clients.client')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">{t('clients.contact')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">{t('clients.status')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">{t('clients.date_added')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">{t('clients.actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white/[0.03] divide-y divide-gray-200">
                   {clients.map((client) => (
-                    <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={client.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium">
                             {(client.first_name || client.phone_number || '?').charAt(0).toUpperCase()}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-white">
                               {[client.first_name, client.last_name].filter(Boolean).join(' ') || client.phone_number || '—'}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{client.phone_number}</div>
-                        <div className="text-sm text-gray-500">{client.email || '—'}</div>
+                        <div className="text-sm text-white">{client.phone_number}</div>
+                        <div className="text-sm text-white/40">{client.email || '—'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-white/[0.04] text-white/70 capitalize">
                           {t('clients.status_' + (client.status === 'active' ? 'active' : 'inactive'))}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white/40">
                         {new Date(client.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => navigate(`/crm/clientes/${client.id}`)}
-                            className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-primary hover:bg-white/[0.04] rounded-lg transition-colors"
                             title={t('clients.view_detail')}
                           >
                             <FileText size={18} />
                           </button>
                           <button
                             onClick={() => openEditModal(client)}
-                            className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-primary hover:bg-white/[0.04] rounded-lg transition-colors"
                             title={t('common.edit')}
                           >
                             <Edit size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(client.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-white/50 hover:text-red-400 hover:bg-white/[0.04] rounded-lg transition-colors"
                             title={t('common.delete')}
                           >
                             <Trash2 size={18} />
@@ -283,31 +283,31 @@ export default function ClientsView() {
 
             <div className="md:hidden divide-y">
               {clients.map((client) => (
-                <div key={client.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                <div key={client.id} className="p-4 bg-white/[0.03] hover:bg-white/[0.02] transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium shrink-0">
                         {(client.first_name || client.phone_number || '?').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        <h3 className="text-sm font-semibold text-white truncate">
                           {[client.first_name, client.last_name].filter(Boolean).join(' ') || client.phone_number || '—'}
                         </h3>
-                        <p className="text-xs text-gray-500 truncate">{client.phone_number}</p>
+                        <p className="text-xs text-white/40 truncate">{client.phone_number}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => navigate(`/crm/clientes/${client.id}`)} className="p-2 text-gray-600 hover:text-primary active:bg-gray-200 rounded-lg">
+                      <button onClick={() => navigate(`/crm/clientes/${client.id}`)} className="p-2 text-white/50 hover:text-primary active:bg-white/[0.06] rounded-lg">
                         <FileText size={18} />
                       </button>
-                      <button onClick={() => openEditModal(client)} className="p-2 text-gray-600 hover:text-primary active:bg-gray-200 rounded-lg">
+                      <button onClick={() => openEditModal(client)} className="p-2 text-white/50 hover:text-primary active:bg-white/[0.06] rounded-lg">
                         <Edit size={18} />
                       </button>
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-2">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">{t('clients.status_' + (client.status === 'active' ? 'active' : 'inactive'))}</span>
-                    <button onClick={() => handleDelete(client.id)} className="text-xs text-red-500 font-medium px-2 py-1 hover:bg-red-50 rounded">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-white/[0.04] text-white/70 capitalize">{t('clients.status_' + (client.status === 'active' ? 'active' : 'inactive'))}</span>
+                    <button onClick={() => handleDelete(client.id)} className="text-xs text-red-500 font-medium px-2 py-1 hover:bg-red-500/10 rounded">
                       {t('common.delete')}
                     </button>
                   </div>
@@ -320,27 +320,27 @@ export default function ClientsView() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl mx-4 my-8">
-            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+          <div className="bg-white/[0.03] rounded-lg w-full max-w-2xl mx-4 my-8">
+            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white/[0.03] z-10">
               <h2 className="text-xl font-bold">
                 {editingClient ? t('clients.edit_client') : t('clients.new_client')}
               </h2>
-              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 p-1">
+              <button onClick={closeModal} className="text-white/40 hover:text-white/70 p-1">
                 <X size={24} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6">
               {modalError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{modalError}</div>
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{modalError}</div>
               )}
               <div className="space-y-4">
                 {!editingClient && leads.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.load_from_lead')}</label>
+                    <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.load_from_lead')}</label>
                     <select
                       value={selectedLeadId || ''}
                       onChange={(e) => handleSelectLead(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">{t('clients.select_lead_placeholder')}</option>
                       {leads.map((lead) => (
@@ -353,51 +353,51 @@ export default function ClientsView() {
                 )}
                 {!editingClient && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.phone')} *</label>
+                    <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.phone')} *</label>
                     <input
                       type="tel"
                       required
                       value={formData.phone_number}
                       onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.first_name')}</label>
+                    <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.first_name')}</label>
                     <input
                       type="text"
                       value={formData.first_name}
                       onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.last_name')}</label>
+                    <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.last_name')}</label>
                     <input
                       type="text"
                       value={formData.last_name}
                       onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.email')}</label>
+                  <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.email')}</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('clients.status')}</label>
+                  <label className="block text-sm font-medium text-white/70 mb-1">{t('clients.status')}</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value="active">{t('clients.status_active')}</option>
                     <option value="inactive">{t('clients.status_inactive')}</option>
@@ -405,7 +405,7 @@ export default function ClientsView() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <button type="button" onClick={closeModal} className="px-4 py-2 text-white/70 bg-white/[0.04] rounded-lg hover:bg-white/[0.06] transition-colors">
                   {t('common.cancel')}
                 </button>
                 <button type="submit" disabled={saving} className="px-4 py-2 text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50">

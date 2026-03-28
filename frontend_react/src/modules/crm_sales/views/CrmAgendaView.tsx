@@ -241,15 +241,15 @@ export default function CrmAgendaView() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full lg:w-auto gap-4">
             <div className="border-l-4 border-blue-500 pl-3 sm:pl-4 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{t('agenda_crm.title')}</h1>
-              <p className="text-xs sm:text-sm text-slate-600 mt-0.5">{t('agenda_crm.subtitle')}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{t('agenda_crm.title')}</h1>
+              <p className="text-xs sm:text-sm text-white/50 mt-0.5">{t('agenda_crm.subtitle')}</p>
             </div>
-            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-100 w-full sm:w-auto">
-              <User size={16} className="text-blue-600 shrink-0" />
+            <div className="flex items-center gap-2 bg-white/[0.03] px-3 py-2 rounded-xl border border-white/[0.04] w-full sm:w-auto">
+              <User size={16} className="text-blue-400 shrink-0" />
               <select
                 value={selectedSellerId}
                 onChange={(e) => setSelectedSellerId(e.target.value)}
-                className="bg-transparent border-none text-xs font-medium focus:ring-0 outline-none text-slate-900 cursor-pointer w-full"
+                className="bg-transparent border-none text-xs font-medium focus:ring-0 outline-none text-white cursor-pointer w-full"
               >
                 <option value="all">{t('agenda_crm.all_sellers')}</option>
                 {sellers.map((s) => (
@@ -293,7 +293,7 @@ export default function CrmAgendaView() {
               {loading && events.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <RefreshCw className="w-12 h-12 text-blue-500 animate-spin" />
-                  <p className="ml-3 text-gray-500 font-medium">{t('common.loading')}</p>
+                  <p className="ml-3 text-white/40 font-medium">{t('common.loading')}</p>
                 </div>
               ) : (
                 <FullCalendar

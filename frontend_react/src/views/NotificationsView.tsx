@@ -127,16 +127,16 @@ export default function NotificationsView() {
             case 'followup': return <Clock size={18} className="text-blue-500" />;
             case 'performance_alert': return <TrendingUp size={18} className="text-yellow-500" />;
             case 'assignment': return <User size={18} className="text-green-500" />;
-            default: return <Bell size={18} className="text-gray-500" />;
+            default: return <Bell size={18} className="text-white/40" />;
         }
     };
 
     const getPriorityBadge = (priority: string) => {
         const styles: Record<string, string> = {
-            critical: 'bg-red-100 text-red-700 border-red-200',
-            high: 'bg-orange-100 text-orange-700 border-orange-200',
-            medium: 'bg-blue-100 text-blue-700 border-blue-200',
-            low: 'bg-gray-100 text-gray-700 border-gray-200',
+            critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+            high: 'bg-orange-500/10 text-orange-700 border-orange-500/20',
+            medium: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            low: 'bg-white/[0.04] text-white/70 border-white/[0.06]',
         };
         return (
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${styles[priority] || styles.medium}`}>
@@ -146,7 +146,7 @@ export default function NotificationsView() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-white/[0.02] pb-20">
             <div className="max-w-6xl mx-auto px-4 pt-8">
                 <PageHeader
                     title={user?.role === 'ceo' ? "Centro de Control (CEO)" : "Mis Notificaciones"}
@@ -155,19 +155,19 @@ export default function NotificationsView() {
                 />
 
                 {/* Filters Bar */}
-                <div className="mt-8 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-4 bg-white/[0.03] p-4 rounded-2xl border border-white/[0.06]">
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                        <div className="flex items-center gap-2 bg-white/[0.04] p-1 rounded-lg">
                             <button
                                 onClick={() => setUnreadOnly(false)}
-                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${!unreadOnly ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${!unreadOnly ? 'bg-white/[0.03] text-white' : 'text-white/40 hover:text-white/70'
                                     }`}
                             >
                                 Todas
                             </button>
                             <button
                                 onClick={() => setUnreadOnly(true)}
-                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${unreadOnly ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${unreadOnly ? 'bg-white/[0.03] text-white' : 'text-white/40 hover:text-white/70'
                                     }`}
                             >
                                 No leídas
@@ -176,11 +176,11 @@ export default function NotificationsView() {
 
                         {user?.role === 'ceo' && (
                             <div className="flex items-center gap-2 ml-4">
-                                <Filter size={16} className="text-gray-400" />
+                                <Filter size={16} className="text-white/30" />
                                 <select
                                     value={selectedSellerId}
                                     onChange={(e) => setSelectedSellerId(e.target.value)}
-                                    className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2 transition-all"
+                                    className="bg-white/[0.02] border border-white/[0.06] text-white/70 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2 transition-all"
                                 >
                                     <option value="all">Todos los vendedores</option>
                                     {sellers.map(s => (
@@ -195,7 +195,7 @@ export default function NotificationsView() {
 
                     <button
                         onClick={() => fetchNotifications(0, false)}
-                        className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all"
+                        className="p-2 text-white/40 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all"
                         title="Refrescar"
                     >
                         <RefreshCw size={20} className={loading && !loadingMore ? 'animate-spin' : ''} />
@@ -205,29 +205,29 @@ export default function NotificationsView() {
                 {/* Notifications List */}
                 <div className="mt-6 space-y-4">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3">
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-3">
                             <AlertCircle size={20} />
                             <p>{error}</p>
                         </div>
                     )}
 
                     {!loading && notifications.length === 0 ? (
-                        <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Bell size={40} className="text-gray-300" />
+                        <div className="bg-white/[0.03] rounded-3xl p-12 text-center border-2 border-dashed border-white/[0.06]">
+                            <div className="w-20 h-20 bg-white/[0.02] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Bell size={40} className="text-white/20" />
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-900">Sin notificaciones</h3>
-                            <p className="text-gray-500 mt-2">No se encontraron alertas para el filtro seleccionado.</p>
+                            <h3 className="text-xl font-semibold text-white">Sin notificaciones</h3>
+                            <p className="text-white/40 mt-2">No se encontraron alertas para el filtro seleccionado.</p>
                         </div>
                     ) : (
                         <>
                             {notifications.map((n) => (
                                 <div
                                     key={n.id}
-                                    className={`bg-white rounded-2xl p-5 border transition-all hover:shadow-md flex gap-4 ${!n.read ? 'border-primary-200 bg-primary-50/10' : 'border-gray-200'
+                                    className={`bg-white/[0.03] rounded-2xl p-5 border transition-all hover:shadow-md flex gap-4 ${!n.read ? 'border-primary-200 bg-primary-50/10' : 'border-white/[0.06]'
                                         }`}
                                 >
-                                    <div className={`flex-none w-12 h-12 rounded-xl flex items-center justify-center ${!n.read ? 'bg-primary-100' : 'bg-gray-100'
+                                    <div className={`flex-none w-12 h-12 rounded-xl flex items-center justify-center ${!n.read ? 'bg-primary-100' : 'bg-white/[0.04]'
                                         }`}>
                                         {getTypeIcon(n.type)}
                                     </div>
@@ -235,17 +235,17 @@ export default function NotificationsView() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <h4 className={`font-bold text-gray-900 truncate ${!n.read ? '' : 'font-semibold'}`}>
+                                                <h4 className={`font-bold text-white truncate ${!n.read ? '' : 'font-semibold'}`}>
                                                     {n.title}
                                                 </h4>
                                                 {getPriorityBadge(n.priority)}
                                             </div>
-                                            <span className="text-xs text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                                            <span className="text-xs text-white/30 flex items-center gap-1 whitespace-nowrap">
                                                 <Calendar size={12} />
                                                 {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: es })}
                                             </span>
                                         </div>
-                                        <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                                        <p className="text-white/50 text-sm leading-relaxed mb-3">
                                             {n.message}
                                         </p>
 
@@ -263,7 +263,7 @@ export default function NotificationsView() {
                                             {n.related_entity_id && (
                                                 <a
                                                     href={n.related_entity_type === 'conversation' ? `/chat?phone=${n.metadata?.phone}` : `/leads/${n.related_entity_id}`}
-                                                    className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 uppercase tracking-wider bg-gray-100 px-3 py-1 rounded-md transition-all"
+                                                    className="text-xs font-bold text-white/50 hover:text-white flex items-center gap-1 uppercase tracking-wider bg-white/[0.04] px-3 py-1 rounded-md transition-all"
                                                 >
                                                     <Info size={14} />
                                                     Ir al detalle
@@ -278,7 +278,7 @@ export default function NotificationsView() {
                                 <button
                                     onClick={loadMore}
                                     disabled={loadingMore}
-                                    className="w-full py-4 bg-white border border-gray-200 rounded-2xl text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center gap-2 transition-all shadow-sm"
+                                    className="w-full py-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl text-white/50 font-bold hover:bg-white/[0.02] flex items-center justify-center gap-2 transition-all"
                                 >
                                     {loadingMore ? (
                                         <>
@@ -299,7 +299,7 @@ export default function NotificationsView() {
                     {loading && !loadingMore && (
                         <div className="flex flex-col items-center justify-center p-20">
                             <Loader2 size={48} className="text-primary-500 animate-spin mb-4" />
-                            <p className="text-gray-500 font-medium">Sincronizando con el servidor...</p>
+                            <p className="text-white/40 font-medium">Sincronizando con el servidor...</p>
                         </div>
                     )}
                 </div>

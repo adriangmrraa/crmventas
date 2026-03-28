@@ -67,19 +67,19 @@ interface CrmDashboardStats {
 // ============================================
 
 const KPICard = ({ title, value, icon: Icon, color, trend }: any) => (
-  <div className="bg-white/80 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+  <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6 hover:shadow-lg hover:shadow-black/20 transition-all duration-300 group">
     <div className="flex justify-between items-start mb-4">
       <div className={`p-3 rounded-xl ${color} bg-opacity-10 group-hover:scale-110 transition-transform`}>
         <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
       </div>
       {trend && (
-        <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+        <span className="flex items-center gap-1 text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
           <TrendingUp size={12} /> {trend}
         </span>
       )}
     </div>
-    <p className="text-gray-500 text-sm font-medium">{title}</p>
-    <h3 className="text-2xl font-bold text-gray-800 mt-1">{value}</h3>
+    <p className="text-white/40 text-sm font-medium">{title}</p>
+    <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
   </div>
 );
 
@@ -89,13 +89,13 @@ import { LeadHistoryTimeline } from '../components/leads/LeadHistoryTimeline';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
-    'new': 'bg-blue-100 text-blue-700 border-blue-200',
-    'contacted': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    'interested': 'bg-purple-100 text-purple-700 border-purple-200',
-    'negotiation': 'bg-orange-100 text-orange-700 border-orange-200',
-    'closed_won': 'bg-green-100 text-green-700 border-green-200',
-    'closed_lost': 'bg-red-100 text-red-700 border-red-200',
-    'default': 'bg-gray-100 text-gray-700 border-gray-200'
+    'new': 'bg-blue-500/100/10 text-blue-400 border-blue-500/20',
+    'contacted': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    'interested': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    'negotiation': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    'closed_won': 'bg-green-500/10 text-green-400 border-green-500/20',
+    'closed_lost': 'bg-red-500/10 text-red-400 border-red-500/20',
+    'default': 'bg-white/[0.04] text-white/70 border-white/[0.06]'
   };
 
   return (
@@ -152,16 +152,16 @@ export default function CrmDashboardView() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-[#06060e]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#06060e] overflow-hidden">
       {/* HEADER SECTION */}
-      <header className="p-4 sm:p-6 shrink-0 bg-white/50 backdrop-blur-sm border-b border-slate-100">
+      <header className="p-4 sm:p-6 shrink-0 bg-white/[0.03] backdrop-blur-sm border-b border-white/[0.04]">
         <PageHeader
           title="CRM Sales Dashboard"
           subtitle="Real-time sales pipeline monitoring and analytics"
@@ -169,18 +169,18 @@ export default function CrmDashboardView() {
             <div className="flex gap-2">
               <button
                 onClick={() => setTimeRange('weekly')}
-                className={`px-4 py-2 rounded-xl shadow-sm border text-sm font-medium transition-colors ${timeRange === 'weekly'
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${timeRange === 'weekly'
+                  ? 'bg-white/[0.03] text-[#0a0e1a] border-white'
+                  : 'bg-white/[0.03] text-white/50 border-white/[0.06] hover:bg-white/[0.04]'
                   }`}
               >
                 Weekly
               </button>
               <button
                 onClick={() => setTimeRange('monthly')}
-                className={`px-4 py-2 rounded-xl shadow-sm border text-sm font-medium transition-colors ${timeRange === 'monthly'
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${timeRange === 'monthly'
+                  ? 'bg-white/[0.03] text-[#0a0e1a] border-white'
+                  : 'bg-white/[0.03] text-white/50 border-white/[0.06] hover:bg-white/[0.04]'
                   }`}
               >
                 Monthly
@@ -199,7 +199,7 @@ export default function CrmDashboardView() {
             title="Total Leads"
             value={stats?.total_leads || 0}
             icon={Users}
-            color="bg-blue-500"
+            color="bg-blue-500/100"
             trend="+12%"
           />
           <KPICard
@@ -228,10 +228,10 @@ export default function CrmDashboardView() {
         {/* MIDDLE ROW: CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Lead Status Distribution */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-white/[0.03] rounded-2xl border border-white/[0.06] p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-slate-800">Lead Status Distribution</h2>
-              <Filter size={18} className="text-slate-400" />
+              <h2 className="text-lg font-semibold text-white">Lead Status Distribution</h2>
+              <Filter size={18} className="text-white/30" />
             </div>
             <div className="h-[300px] min-h-[300px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minHeight={300}>
@@ -260,11 +260,11 @@ export default function CrmDashboardView() {
           </div>
 
           {/* Revenue Trend */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-white/[0.03] rounded-2xl border border-white/[0.06] p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-slate-800">Revenue & Leads Trend</h2>
-              <div className="hidden sm:flex gap-4 text-xs font-medium text-slate-500">
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Revenue</span>
+              <h2 className="text-lg font-semibold text-white">Revenue & Leads Trend</h2>
+              <div className="hidden sm:flex gap-4 text-xs font-medium text-white/40">
+                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500/100"></div> Revenue</span>
                 <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Leads</span>
               </div>
             </div>
@@ -290,18 +290,18 @@ export default function CrmDashboardView() {
         </div>
 
         {/* BOTTOM ROW: RECENT LEADS */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-4">
-          <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50">
+        <div className="bg-white/[0.03] rounded-2xl border border-white/[0.06] overflow-hidden flex flex-col mb-4">
+          <div className="p-6 border-b border-white/[0.04] flex justify-between items-center bg-white/[0.02]">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold text-slate-800">Recent Leads</h2>
+              <h2 className="text-lg font-semibold text-white">Recent Leads</h2>
               {isAdvancedLeadStatusEnabled && selectedLeads.length > 0 && (
                 <div className="animate-in fade-in slide-in-from-left-4 flex items-center gap-3">
-                  <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  <span className="text-sm font-medium text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full">
                     {selectedLeads.length} seleccionados
                   </span>
                   <button
                     onClick={() => setShowBulkModal(true)}
-                    className="text-white text-sm font-semibold hover:bg-blue-700 bg-blue-600 px-4 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-2"
+                    className="text-white text-sm font-semibold hover:bg-blue-700 bg-blue-600 px-4 py-1.5 rounded-xl transition-all flex items-center gap-2"
                   >
                     Actualizar Estado Múltiple
                   </button>
@@ -311,7 +311,7 @@ export default function CrmDashboardView() {
 
             <button
               onClick={() => navigate('/crm/leads')}
-              className="text-blue-600 text-sm font-semibold hover:underline px-3 py-2"
+              className="text-blue-400 text-sm font-semibold hover:underline px-3 py-2"
             >
               See All Leads
             </button>
@@ -319,34 +319,34 @@ export default function CrmDashboardView() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
-                <tr className="bg-slate-50/50">
+                <tr className="bg-white/[0.02]/50">
                   {isAdvancedLeadStatusEnabled && (
-                    <th className="px-6 py-4 w-12 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 w-12 text-center text-xs font-bold text-white/40 uppercase tracking-wider">
                       <input
                         type="checkbox"
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
                         checked={selectedLeads.length > 0 && selectedLeads.length === (stats?.recent_leads ? stats.recent_leads.length : 0)}
                         onChange={toggleAllSelection}
                       />
                     </th>
                   )}
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Lead</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Niche</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Lead</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Source</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Niche</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-wider"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-white/[0.04]">
                 {(stats?.recent_leads || []).map((lead) => (
-                  <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedLeads.includes(lead.id) && isAdvancedLeadStatusEnabled ? 'bg-blue-50/30' : ''}`}>
+                  <tr key={lead.id} className={`hover:bg-white/[0.04] transition-colors group ${selectedLeads.includes(lead.id) && isAdvancedLeadStatusEnabled ? 'bg-blue-500/100/10' : ''}`}>
                     {isAdvancedLeadStatusEnabled && (
                       <td className="px-6 py-4 text-center">
                         <input
                           type="checkbox"
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
                           checked={selectedLeads.includes(lead.id)}
                           onChange={() => toggleLeadSelection(lead.id)}
                         />
@@ -354,36 +354,36 @@ export default function CrmDashboardView() {
                     )}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                        <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
                           <Users size={18} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{lead.name}</p>
-                          <p className="text-[11px] text-slate-500">ID: {lead.id.substring(0, 8)}...</p>
+                          <p className="text-sm font-semibold text-white">{lead.name}</p>
+                          <p className="text-[11px] text-white/40">ID: {lead.id.substring(0, 8)}...</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Phone size={14} className="text-slate-400" />
+                        <div className="flex items-center gap-2 text-sm text-white/50">
+                          <Phone size={14} className="text-white/30" />
                           {lead.phone}
                         </div>
                         {lead.source === 'website' && (
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <Building size={12} className="text-slate-400" />
+                          <div className="flex items-center gap-2 text-xs text-white/40">
+                            <Building size={12} className="text-white/30" />
                             Website Lead
                           </div>
                         )}
                         {lead.source === 'meta_ads' && (
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <TrendingUp size={12} className="text-slate-400" />
+                          <div className="flex items-center gap-2 text-xs text-white/40">
+                            <TrendingUp size={12} className="text-white/30" />
                             Meta Ads
                           </div>
                         )}
                         {lead.source === 'referral' && (
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <UserCheck size={12} className="text-slate-400" />
+                          <div className="flex items-center gap-2 text-xs text-white/40">
+                            <UserCheck size={12} className="text-white/30" />
                             Referral
                           </div>
                         )}
@@ -396,18 +396,18 @@ export default function CrmDashboardView() {
                         <StatusBadge status={lead.status} />
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-white/50">
                       <span className="capitalize">{lead.source}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-white/50">
                       <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-slate-400" />
+                        <MapPin size={14} className="text-white/30" />
                         {lead.niche}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
+                    <td className="px-6 py-4 text-sm text-white/40">
                       <div className="flex items-center gap-1.5">
-                        <Clock size={14} className="text-slate-400" />
+                        <Clock size={14} className="text-white/30" />
                         {new Date(lead.created_at).toLocaleDateString()}
                       </div>
                     </td>
@@ -417,7 +417,7 @@ export default function CrmDashboardView() {
                           <button
                             title="Ver Historial de Estados"
                             onClick={() => setHistoryModalLead({ id: lead.id, name: lead.name })}
-                            className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                           >
                             <Clock size={18} />
                           </button>
@@ -425,7 +425,7 @@ export default function CrmDashboardView() {
                         <button
                           title="Ver Detalles del Lead"
                           onClick={() => navigate(`/crm/leads/${lead.id}`)}
-                          className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                         >
                           <ArrowUpRight size={20} />
                         </button>
@@ -435,9 +435,9 @@ export default function CrmDashboardView() {
                 ))}
                 {(stats?.recent_leads || []).length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                    <td colSpan={7} className="px-6 py-8 text-center text-white/30">
                       <div className="flex flex-col items-center gap-2">
-                        <Users size={48} className="text-slate-300" />
+                        <Users size={48} className="text-white/30" />
                         <p className="text-lg font-medium">No recent leads found</p>
                         <p className="text-sm">Start prospecting to see leads here</p>
                       </div>

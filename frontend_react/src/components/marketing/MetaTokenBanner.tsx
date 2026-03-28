@@ -54,7 +54,7 @@ export default function MetaTokenBanner() {
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => navigate('/marketing?reconnect=true')}
-                    className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 border border-white/30"
+                    className="bg-white/[0.03]/20 hover:bg-white/[0.06]/[0.03]/30 backdrop-blur-md px-4 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 border border-white/30"
                 >
                     <RefreshCw size={14} /> Reconectar Ahora
                 </button>

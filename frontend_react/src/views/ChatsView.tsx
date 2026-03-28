@@ -701,7 +701,7 @@ export default function ChatsView() {
     }
     return {
       badge: (
-        <span className="flex items-center gap-1 text-xs text-green-600">
+        <span className="flex items-center gap-1 text-xs text-green-400">
           <Activity size={12} /> IA Activa
         </span>
       ),
@@ -716,7 +716,7 @@ export default function ChatsView() {
   // ============================================
 
   return (
-    <div className="flex h-full min-h-0 bg-medical-50 overflow-hidden font-sans">
+    <div className="flex h-full min-h-0 bg-blue-500/10 overflow-hidden font-sans">
       {/* Audio para notificaciones */}
       <audio ref={audioRef} src="/notification.mp3" preload="auto" />
 
@@ -744,14 +744,14 @@ export default function ChatsView() {
       {/* Chat List */}
       <div className={`
         ${selectedSession ? 'hidden lg:flex' : 'flex'} 
-        w-full lg:w-80 border-r bg-white flex-col
+        w-full lg:w-80 border-r bg-white/[0.03] flex-col
       `}>
         <div className="p-4 border-b">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold">{t('chats.title')}</h2>
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-lg hover:bg-white/[0.04]"
               title={soundEnabled ? t('chats.mute_sound') : t('chats.enable_sound')}
             >
               {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -759,11 +759,11 @@ export default function ChatsView() {
           </div>
           {clinics.length > 1 && (
             <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-500 mb-1">{t('chats.clinic_label')}</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">{t('chats.clinic_label')}</label>
               <select
                 value={selectedTenantId ?? ''}
                 onChange={(e) => setSelectedTenantId(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white/[0.03]"
               >
                 {clinics.map((c) => (
                   <option key={c.id} value={c.id}>{c.clinic_name}</option>
@@ -772,10 +772,10 @@ export default function ChatsView() {
             </div>
           )}
           {clinics.length === 1 && clinics[0] && (
-            <p className="text-xs text-gray-500 mb-2">{clinics[0].clinic_name}</p>
+            <p className="text-xs text-white/40 mb-2">{clinics[0].clinic_name}</p>
           )}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
             <input
               type="text"
               placeholder={t('chats.search_placeholder')}
@@ -788,9 +788,9 @@ export default function ChatsView() {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-gray-500">{t('common.loading')}</div>
+            <div className="p-4 text-center text-white/40">{t('common.loading')}</div>
           ) : filteredSessions.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">{t('chats.no_sessions')}</div>
+            <div className="p-4 text-center text-white/40">{t('chats.no_sessions')}</div>
           ) : (
             filteredSessions.map(session => {
               const { avatarBg } = getStatusConfig(session);
@@ -802,18 +802,18 @@ export default function ChatsView() {
                   key={session.phone_number}
                   onClick={() => setSelectedSession(session)}
                   className={`px-4 py-3 border-b cursor-pointer transition-all relative
-                    ${isSelected ? 'bg-medical-50' : 'hover:bg-gray-50 active:bg-gray-100'}
-                    ${isHighlighted ? 'bg-orange-50 animate-pulse' : ''}
+                    ${isSelected ? 'bg-blue-500/10' : 'hover:bg-white/[0.02] active:bg-white/[0.04]'}
+                    ${isHighlighted ? 'bg-orange-500/10 animate-pulse' : ''}
                   `}
                 >
                   <div className="flex items-center gap-3">
                     {/* Avatar with Status Ring */}
                     <div className="relative shrink-0">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${avatarBg}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${avatarBg}`}>
                         {(session.patient_name || session.phone_number).charAt(0)}
                       </div>
                       {session.status === 'human_handling' && (
-                        <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full shadow-sm">
+                        <div className="absolute -bottom-1 -right-1 bg-white/[0.03] p-0.5 rounded-full">
                           <User size={12} className="text-orange-500 fill-orange-500" />
                         </div>
                       )}
@@ -822,16 +822,16 @@ export default function ChatsView() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <span className={`font-semibold truncate ${isSelected ? 'text-medical-900' : 'text-gray-900'}`}>
+                        <span className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-white'}`}>
                           {session.patient_name || session.phone_number}
                         </span>
-                        <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-medical-600 font-bold' : 'text-gray-400'}`}>
+                        <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-blue-400 font-bold' : 'text-white/30'}`}>
                           {formatTime(session.last_message_time)}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <p className={`text-sm truncate pr-4 ${session.unread_count > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        <p className={`text-sm truncate pr-4 ${session.unread_count > 0 ? 'text-white font-medium' : 'text-white/40'}`}>
                           {session.last_message || t('chats.no_messages')}
                         </p>
                         {session.unread_count > 0 && (
@@ -858,18 +858,18 @@ export default function ChatsView() {
       {/* Chat Detail */}
       {selectedSession ? (
         <>
-          <div className="flex-1 flex flex-col min-w-0 bg-gray-50 h-full min-h-0">
+          <div className="flex-1 flex flex-col min-w-0 bg-white/[0.02] h-full min-h-0">
             {/* Header + Messages + Input Container */}
             <div className="flex-1 flex flex-col min-h-0 relative">
               {/* Header */}
-              <div className="p-4 border-b bg-white flex justify-between items-center">
+              <div className="p-4 border-b bg-white/[0.03] flex justify-between items-center">
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     onClick={() => {
                       setSelectedSession(null);
                       setShowMobileContext(false);
                     }}
-                    className="lg:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-600 active:bg-gray-200 transition-colors"
+                    className="lg:hidden p-2 -ml-2 hover:bg-white/[0.04] rounded-full text-white/50 active:bg-white/[0.06] transition-colors"
                   >
                     <ChevronLeft size={24} />
                   </button>
@@ -884,7 +884,7 @@ export default function ChatsView() {
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => window.innerWidth < 1280 && setShowMobileContext(!showMobileContext)}>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900 truncate leading-tight">
+                      <h3 className="font-bold text-white truncate leading-tight">
                         {selectedSession.patient_name || t('chats.no_name')}
                       </h3>
                       {/* Seller Badge */}
@@ -903,7 +903,7 @@ export default function ChatsView() {
                       )}
                       {!sellerAssignment?.assigned_seller_id && (
                         <div
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200 text-xs cursor-pointer hover:bg-gray-200"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.04] text-white/70 border border-white/[0.06] text-xs cursor-pointer hover:bg-white/[0.06]"
                           onClick={() => setShowSellerSelector(true)}
                         >
                           <Bot size={12} />
@@ -911,7 +911,7 @@ export default function ChatsView() {
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate">{selectedSession.phone_number}</p>
+                    <p className="text-xs text-white/40 truncate">{selectedSession.phone_number}</p>
                   </div>
                 </div>
 
@@ -920,10 +920,10 @@ export default function ChatsView() {
                   {/* Assign Seller Button */}
                   <button
                     onClick={() => setShowSellerSelector(!showSellerSelector)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-sm
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all
                       ${sellerAssignment?.assigned_seller_id
-                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-200 border border-blue-500/20'
+                        : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.06] border border-white/[0.06]'
                       }`}
                     title={sellerAssignment?.assigned_seller_id ? "Reasignar vendedor" : "Asignar vendedor"}
                   >
@@ -938,7 +938,7 @@ export default function ChatsView() {
                   <button
                     onClick={handleAutoAssign}
                     disabled={assigningSeller}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 transition-all shadow-sm disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400 hover:bg-green-200 border border-green-500/20 transition-all disabled:opacity-50"
                     title="Asignación automática"
                   >
                     {assigningSeller ? (
@@ -953,7 +953,7 @@ export default function ChatsView() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     onClick={() => setShowMobileContext(!showMobileContext)}
-                    className="p-2 text-medical-600 hover:bg-medical-50 rounded-full lg:hidden transition-colors"
+                    className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-full lg:hidden transition-colors"
                     title={t('chats.view_clinical_chart')}
                   >
                     <Activity size={20} />
@@ -961,10 +961,10 @@ export default function ChatsView() {
 
                   <button
                     onClick={handleToggleHumanMode}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all
                       ${selectedSession.status === 'human_handling' || selectedSession.status === 'silenced'
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
-                        : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200'
+                        ? 'bg-green-500/10 text-green-400 hover:bg-green-200 border border-green-500/20'
+                        : 'bg-orange-500/10 text-orange-700 hover:bg-orange-200 border border-orange-500/20'
                       }`}
                   >
                     {selectedSession.status === 'human_handling' || selectedSession.status === 'silenced' ? (
@@ -978,7 +978,7 @@ export default function ChatsView() {
 
               {/* Alert Banner para derivhumano */}
               {selectedSession.last_derivhumano_at ? (
-                <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 flex items-center gap-2">
+                <div className="bg-orange-500/10 border-b border-orange-500/20 px-4 py-2 flex items-center gap-2">
                   <AlertCircle size={16} className="text-orange-500" />
                   <span className="text-sm text-orange-700">
                     ⚠️ {t('chats.handoff_banner').replace('{{time}}', new Date(selectedSession.last_derivhumano_at).toLocaleTimeString())}
@@ -991,14 +991,14 @@ export default function ChatsView() {
                   </button>
                 </div>
               ) : (selectedSession.status === 'silenced' || selectedSession.status === 'human_handling') && (
-                <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2">
+                <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-2 flex items-center gap-2">
                   <Pause size={16} className="text-blue-500" />
-                  <span className="text-sm text-blue-700">
+                  <span className="text-sm text-blue-400">
                     ✋ {t('chats.manual_mode_active')}
                   </span>
                   <button
                     onClick={handleToggleHumanMode}
-                    className="ml-auto text-xs text-blue-600 hover:underline"
+                    className="ml-auto text-xs text-blue-400 hover:underline"
                   >
                     {t('chats.activate_ai')}
                   </button>
@@ -1007,7 +1007,7 @@ export default function ChatsView() {
 
               {/* Banner de Ventana de 24hs Cerrada */}
               {selectedSession.is_window_open === false && (
-                <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 flex items-center gap-2">
+                <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2 flex items-center gap-2">
                   <Clock size={16} className="text-yellow-600" />
                   <span className="text-sm text-yellow-700">
                     ⏳ {t('chats.window_24h_closed')}
@@ -1016,12 +1016,12 @@ export default function ChatsView() {
               )}
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/[0.02] flex flex-col min-h-0">
                 {hasMoreMessages && (
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="mx-auto py-2 px-4 text-xs text-medical-600 hover:text-medical-700 font-medium bg-white rounded-full shadow-sm border border-medical-100 mb-4 transition-all disabled:opacity-50 shrink-0"
+                    className="mx-auto py-2 px-4 text-xs text-blue-400 hover:text-medical-700 font-medium bg-white/[0.03] rounded-full border border-white/[0.06] mb-4 transition-all disabled:opacity-50 shrink-0"
                   >
                     {loadingMore ? t('common.loading') : t('chats.load_older_messages')}
                   </button>
@@ -1036,10 +1036,10 @@ export default function ChatsView() {
                   >
                     <div
                       className={`max-w-[70%] rounded-lg px-4 py-3 ${message.role === 'user'
-                        ? 'bg-white shadow-sm'
+                        ? 'bg-white/[0.03]'
                         : message.is_derivhumano
-                          ? 'bg-orange-100 border border-orange-300 shadow-sm text-gray-800'
-                          : 'bg-blue-600 text-white shadow-sm'
+                          ? 'bg-orange-500/10 border border-orange-300 text-white'
+                          : 'bg-blue-600 text-white'
                         }`}
                     >
                       {message.is_derivhumano && (
@@ -1049,7 +1049,7 @@ export default function ChatsView() {
                         </div>
                       )}
                       <p className="text-sm">{message.content}</p>
-                      <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-gray-400' : 'text-blue-200'
+                      <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/30' : 'text-blue-200'
                         }`}>
                         {new Date(message.created_at).toLocaleTimeString()}
                       </p>
@@ -1060,7 +1060,7 @@ export default function ChatsView() {
               </div>
 
               {/* Input */}
-              <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+              <form onSubmit={handleSendMessage} className="p-4 border-t bg-white/[0.03]">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1074,7 +1074,7 @@ export default function ChatsView() {
                         handleSendMessage(e as any);
                       }
                     }}
-                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500 bg-white text-gray-900 ${selectedSession.is_window_open === false ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
+                    className={`flex-1 px-4 py-2 border border-white/[0.06] rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500 bg-white/[0.03] text-white ${selectedSession.is_window_open === false ? 'bg-white/[0.04] cursor-not-allowed opacity-75' : ''}`}
                   />
                   <button
                     type="submit"
@@ -1093,19 +1093,19 @@ export default function ChatsView() {
           <div className={`
             ${showMobileContext ? 'flex' : 'hidden'}
             xl:flex flex-col
-            fixed inset-0 z-40 bg-white
+            fixed inset-0 z-40 bg-white/[0.03]
             xl:relative xl:z-0 xl:w-80 xl:border-l xl:inset-auto
             animate-slide-in xl:animate-none
           `}>
             {/* Context Header (Mobile only) */}
             <div className="p-4 border-b flex justify-between items-center xl:hidden">
               <div className="flex items-center gap-2">
-                <User className="text-medical-600" size={20} />
+                <User className="text-blue-400" size={20} />
                 <h3 className="font-bold">{t('chats.patient_profile_title')}</h3>
               </div>
               <button
                 onClick={() => setShowMobileContext(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-2 hover:bg-white/[0.04] rounded-full"
               >
                 <ChevronLeft size={24} className="rotate-180" />
               </button>
@@ -1120,20 +1120,20 @@ export default function ChatsView() {
             <div className="flex-1 overflow-y-auto">
               {/* AI Status */}
               <div className={`p-3 rounded-lg ${selectedSession.status === 'human_handling' || selectedSession.status === 'silenced'
-                ? 'bg-orange-50 border border-orange-200'
-                : 'bg-green-50 border border-green-200'
+                ? 'bg-orange-500/10 border border-orange-500/20'
+                : 'bg-green-500/10 border border-green-500/20'
                 }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {selectedSession.status === 'human_handling' || selectedSession.status === 'silenced' ? (
                     <User size={16} className="text-orange-600" />
                   ) : (
-                    <Activity size={16} className="text-green-600" />
+                    <Activity size={16} className="text-green-400" />
                   )}
                   <span className="font-medium text-sm">
                     {t('chats.bot_status')}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-white/50">
                   {selectedSession.status === 'human_handling'
                     ? 'Atendido por persona'
                     : selectedSession.status === 'silenced'
@@ -1141,7 +1141,7 @@ export default function ChatsView() {
                       : t('chats.ia_active')}
                 </p>
                 {selectedSession.human_override_until && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-white/40 mt-1">
                     Hasta: {new Date(selectedSession.human_override_until).toLocaleString()}
                   </p>
                 )}
@@ -1155,18 +1155,18 @@ export default function ChatsView() {
                   : selectedSession.patient_name || selectedSession.phone_number;
                 return (
                   <>
-                    <div className={`p-3 rounded-lg ${hasEvents ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'}`}>
+                    <div className={`p-3 rounded-lg ${hasEvents ? 'bg-white/[0.02]' : 'bg-amber-50 border border-amber-200'}`}>
                       {hasEvents ? (
                         <>
-                          <h4 className="text-xs font-medium text-gray-500 mb-2">{t('chats.patient_label')}</h4>
+                          <h4 className="text-xs font-medium text-white/40 mb-2">{t('chats.patient_label')}</h4>
                           <p className="font-medium">{displayName}</p>
-                          <p className="text-sm text-gray-500">{selectedSession.phone_number}</p>
+                          <p className="text-sm text-white/40">{selectedSession.phone_number}</p>
                         </>
                       ) : (
                         <>
                           <h4 className="text-xs font-medium text-amber-700 mb-2">{t('chats.contact_no_appointments')}</h4>
                           <p className="font-medium">{displayName}</p>
-                          <p className="text-sm text-gray-500">{selectedSession.phone_number}</p>
+                          <p className="text-sm text-white/40">{selectedSession.phone_number}</p>
                           <p className="text-xs text-amber-700 mt-2">{t('chats.no_appointments_yet')}</p>
                         </>
                       )}
@@ -1175,25 +1175,25 @@ export default function ChatsView() {
                     {hasEvents ? (
                       <>
                         {/* Last Appointment */}
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
+                        <div className="p-3 bg-white/[0.02] rounded-lg">
+                          <h4 className="text-xs font-medium text-white/40 mb-2 flex items-center gap-1">
                             <Calendar size={12} /> {t('chats.last_appointment')}
                           </h4>
                           {leadContext?.last_event ? (
                             <div className="space-y-1">
                               <p className="text-sm font-medium">{leadContext.last_event.title}</p>
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <div className="flex items-center gap-2 text-xs text-white/40">
                                 <span>{new Date(leadContext.last_event.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-400">{t('chats.no_previous_appointments')}</p>
+                            <p className="text-sm text-white/30">{t('chats.no_previous_appointments')}</p>
                           )}
                         </div>
 
                         {/* Upcoming Appointment */}
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
+                        <div className="p-3 bg-white/[0.02] rounded-lg">
+                          <h4 className="text-xs font-medium text-white/40 mb-2 flex items-center gap-1">
                             <Clock size={12} /> {t('chats.upcoming_appointment')}
                           </h4>
                           {leadContext?.upcoming_event ? (
@@ -1204,19 +1204,19 @@ export default function ChatsView() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-400">{t('chats.no_scheduled_appointments')}</p>
+                            <p className="text-sm text-white/30">{t('chats.no_scheduled_appointments')}</p>
                           )}
                         </div>
 
                         {/* Tratamiento (CRM: no aplica) */}
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <h4 className="text-xs font-medium text-gray-500 mb-2">{t('chats.current_treatment')}</h4>
-                          <p className="text-sm text-gray-400 italic">{t('chats.no_treatment_plan')}</p>
+                        <div className="p-3 bg-white/[0.02] rounded-lg">
+                          <h4 className="text-xs font-medium text-white/40 mb-2">{t('chats.current_treatment')}</h4>
+                          <p className="text-sm text-white/30 italic">{t('chats.no_treatment_plan')}</p>
                         </div>
                       </>
                     ) : (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-500 italic">{t('chats.no_clinical_history')}</p>
+                      <div className="p-3 bg-white/[0.02] rounded-lg">
+                        <p className="text-sm text-white/40 italic">{t('chats.no_clinical_history')}</p>
                       </div>
                     )}
 
@@ -1238,10 +1238,10 @@ export default function ChatsView() {
           </div>
         </>
       ) : (
-        <div className="hidden lg:flex flex-1 items-center justify-center bg-gray-50 flex-col gap-4">
+        <div className="hidden lg:flex flex-1 items-center justify-center bg-white/[0.02] flex-col gap-4">
           <MessageCircle size={64} className="opacity-20" />
-          <p className="text-lg font-medium text-gray-400">{t('chats.select_conversation')}</p>
-          <p className="text-sm text-gray-400">{t('chats.to_start_chatting')}</p>
+          <p className="text-lg font-medium text-white/30">{t('chats.select_conversation')}</p>
+          <p className="text-sm text-white/30">{t('chats.to_start_chatting')}</p>
         </div>
       )}
 

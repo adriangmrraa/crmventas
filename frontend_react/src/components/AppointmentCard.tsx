@@ -19,50 +19,50 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; text: string; 
     confirmed: {
         bg: 'bg-emerald-500/10',
         border: 'border-l-emerald-500',
-        text: 'text-emerald-900',
+        text: 'text-emerald-400',
         icon: CheckCircle
     },
     scheduled: {
         bg: 'bg-blue-500/10',
         border: 'border-l-blue-500',
-        text: 'text-blue-900',
+        text: 'text-blue-400',
         icon: Clock
     },
     pending: {
         bg: 'bg-amber-500/10',
         border: 'border-l-amber-500',
-        text: 'text-amber-900',
+        text: 'text-amber-400',
         icon: HelpCircle
     },
     in_progress: {
         bg: 'bg-purple-500/10',
         border: 'border-l-purple-500',
-        text: 'text-purple-900',
+        text: 'text-purple-400',
         icon: Clock
     },
     completed: {
         bg: 'bg-slate-500/10',
         border: 'border-l-slate-500',
-        text: 'text-slate-900',
+        text: 'text-white',
         icon: CheckCircle
     },
     cancelled: {
         bg: 'bg-red-500/10',
         border: 'border-l-red-500',
-        text: 'text-red-900',
+        text: 'text-red-400',
         icon: AlertTriangle
     },
     no_show: {
         bg: 'bg-orange-500/10',
         border: 'border-l-orange-500',
-        text: 'text-orange-900',
+        text: 'text-orange-400',
         icon: AlertTriangle
     },
     // Urgency overrides
     emergency: {
         bg: 'bg-rose-500/10',
         border: 'border-l-rose-500',
-        text: 'text-rose-900',
+        text: 'text-rose-400',
         icon: AlertTriangle
     }
 };
@@ -75,13 +75,13 @@ export const AppointmentCard: React.FC<EventContentArg> = (eventInfo) => {
     // --- GCal Block Rendering ---
     if (isGCal) {
         return (
-            <div className="flex flex-col h-full p-1.5 rounded-lg border-l-4 border-l-gray-400 bg-gray-50/80 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
+            <div className="flex flex-col h-full p-1.5 rounded-lg border-l-4 border-l-gray-400 bg-white/[0.02] backdrop-blur-sm overflow-hidden hover:shadow-md hover:shadow-black/20 transition-all duration-200"
                 style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px)' }}>
-                <div className="flex items-center gap-1.5 text-gray-500 font-semibold text-[10px] uppercase tracking-wider mb-1 opacity-70">
+                <div className="flex items-center gap-1.5 text-white/40 font-semibold text-[10px] uppercase tracking-wider mb-1 opacity-70">
                     <CloudOff size={10} />
                     <span>GCalendar</span>
                 </div>
-                <div className="font-medium text-xs text-gray-700 truncate leading-tight">
+                <div className="font-medium text-xs text-white/70 truncate leading-tight">
                     {eventInfo.event.title.replace('🔒 ', '')}
                 </div>
             </div>
@@ -99,7 +99,7 @@ export const AppointmentCard: React.FC<EventContentArg> = (eventInfo) => {
         <div className={`
       flex flex-col h-full w-full p-2 
       rounded-xl border-l-4 ${styles.border} ${styles.bg}
-      shadow-sm hover:shadow-md hover:scale-[1.02] 
+      hover:shadow-md hover:shadow-black/20 hover:scale-[1.02] 
       transition-all duration-200 cursor-pointer overflow-hidden
       ${urgency_level === 'emergency' ? 'animate-pulse-soft' : ''}
     `}>
@@ -121,7 +121,7 @@ export const AppointmentCard: React.FC<EventContentArg> = (eventInfo) => {
 
                 {/* Treatment Badge */}
                 <div className="flex">
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-white/60 backdrop-blur-sm text-slate-700 truncate max-w-full">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-white/[0.06] backdrop-blur-sm text-white/70 truncate max-w-full">
                         {appointment_type || 'Consulta'}
                     </span>
                 </div>

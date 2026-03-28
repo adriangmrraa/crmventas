@@ -224,9 +224,9 @@ export function getGoogleAdsStatusColor(status: string): string {
     case 'PAUSED':
       return 'text-amber-600 bg-amber-50 border-amber-100';
     case 'REMOVED':
-      return 'text-gray-600 bg-gray-50 border-gray-100';
+      return 'text-white/50 bg-white/[0.02] border-gray-100';
     default:
-      return 'text-gray-600 bg-gray-50 border-gray-100';
+      return 'text-white/50 bg-white/[0.02] border-gray-100';
   }
 }
 

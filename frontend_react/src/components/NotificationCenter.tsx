@@ -204,7 +204,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'low':
         return 'border-blue-500 bg-blue-500/10';
       default:
-        return 'border-gray-500 bg-white/[0.02]';
+        return 'border-white/[0.10] bg-white/[0.02]';
     }
   };
 

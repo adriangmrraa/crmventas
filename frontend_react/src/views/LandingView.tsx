@@ -111,7 +111,7 @@ export default function LandingView() {
           -webkit-tap-highlight-color: transparent;
         }
         .landing-glass {
-          background: white;
+          background: #0d1117;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
           transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }

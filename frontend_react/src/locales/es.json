@@ -21,7 +21,10 @@
     "app_name_Crm": "CRM Sales",
     "prospecting": "Prospección",
     "marketing": "Marketing Hub",
-    "hsm_automation": "HSM Automation"
+    "hsm_automation": "HSM Automation",
+    "sellers": "Vendedores",
+    "companies": "Empresas",
+    "clients": "Clientes"
   },
   "common": {
     "save": "Guardar",

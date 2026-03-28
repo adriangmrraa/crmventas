@@ -536,7 +536,7 @@ const UserApprovalView: React.FC = () => {
 
             <style>{`
         .glass {
-          background: white;
+          background: #0d1117;
           border: 1px solid var(--white-300);
           border-radius: 16px;
           box-shadow: var(--shadow-card);
@@ -552,13 +552,13 @@ const UserApprovalView: React.FC = () => {
           border-radius: 8px;
           font-size: 0.7rem;
           font-weight: 700;
-          background: #f8f9fa;
+          background: rgba(255,255,255,0.04);
           letter-spacing: 0.5px;
           border: 1px solid rgba(0,0,0,0.05);
         }
-        .role-badge[data-role='ceo'] { color: #856404; background: #fff3cd; border-color: #ffeeba; }
-        .role-badge[data-role='professional'] { color: #004085; background: #cce5ff; border-color: #b8daff; }
-        .role-badge[data-role='secretary'] { color: #155724; background: #d4edda; border-color: #c3e6cb; }
+        .role-badge[data-role='ceo'] { color: #fbbf24; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
+        .role-badge[data-role='professional'] { color: #60a5fa; background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.3); }
+        .role-badge[data-role='secretary'] { color: #34d399; background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); }
 
         .btn-icon-labeled {
           display: flex;
@@ -568,42 +568,42 @@ const UserApprovalView: React.FC = () => {
           border-radius: 10px;
           font-size: 0.9rem;
           font-weight: 500;
-          border: 1px solid #dee2e6;
-          background: #fff;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
           transition: all 0.3s;
-          color: #495057;
+          color: rgba(255,255,255,0.7);
         }
         .btn-icon-labeled:hover {
-          background: #f8f9fa;
-          border-color: #adb5bd;
+          background: rgba(255,255,255,0.04);
+          border-color: rgba(255,255,255,0.15);
           transform: translateY(-1px);
         }
         .btn-icon-labeled.success {
-          border-color: #c3e6cb;
-          background: #d4edda;
-          color: #155724;
+          border-color: rgba(16,185,129,0.3);
+          background: rgba(16,185,129,0.15);
+          color: #34d399;
         }
         .btn-icon-labeled.success:hover {
           background: #c3e6cb;
-          border-color: #155724;
+          border-color: #34d399;
         }
         .btn-icon-labeled.danger {
-          border-color: #f5c6cb;
-          background: #f8d7da;
-          color: #721c24;
+          border-color: rgba(239,68,68,0.3);
+          background: rgba(239,68,68,0.15);
+          color: #f87171;
         }
         .btn-icon-labeled.danger:hover {
           background: #f5c6cb;
-          border-color: #721c24;
+          border-color: #f87171;
         }
         .btn-icon-labeled.warning {
-          border-color: #ffeeba;
-          background: #fff3cd;
-          color: #856404;
+          border-color: rgba(245,158,11,0.3);
+          background: rgba(245,158,11,0.15);
+          color: #fbbf24;
         }
         .btn-icon-labeled.warning:hover {
           background: #ffeeba;
-          border-color: #856404;
+          border-color: #fbbf24;
         }
         .btn-vincular-sede {
           display: inline-flex;
@@ -632,27 +632,27 @@ const UserApprovalView: React.FC = () => {
           width: 44px;
           height: 44px;
           border-radius: 50%;
-          border: 1px solid #dee2e6;
-          background: #fff;
-          color: #495057;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+          color: rgba(255,255,255,0.7);
           cursor: pointer;
           transition: all 0.2s;
           flex-shrink: 0;
         }
         .btn-gear:hover {
-          background: #f8f9fa;
-          border-color: #adb5bd;
+          background: rgba(255,255,255,0.04);
+          border-color: rgba(255,255,255,0.15);
           color: #2563eb;
           transform: translateY(-1px);
         }
         .edit-profile-input {
           width: 100%;
           padding: 12px 16px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 16px;
           font-size: 0.875rem;
           color: #1f2937;
-          background: #fff;
+          background: rgba(255,255,255,0.05);
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .edit-profile-input:focus {

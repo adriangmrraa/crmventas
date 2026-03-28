@@ -83,7 +83,7 @@ export default function MarketingPerformanceCard({ stats: externalStats, loading
                     <p className="text-white/30 text-[9px] sm:text-[10px] font-bold uppercase mb-1">CPA</p>
                     <p className="text-[10px] sm:text-sm font-bold text-white/70">{stats?.currency === 'USD' ? '$' : stats?.currency || ''}{stats?.cpa > 999 ? Math.round(stats.cpa).toLocaleString() : stats?.cpa?.toFixed(2) || '0.00'}</p>
                 </div>
-                <div className="text-center border-x border-gray-50 px-1">
+                <div className="text-center border-x border-white/[0.04] px-1">
                     <p className="text-white/30 text-[9px] sm:text-[10px] font-bold uppercase mb-1">Leads</p>
                     <p className="text-[10px] sm:text-sm font-bold text-white/70">{stats?.leads || 0}</p>
                 </div>

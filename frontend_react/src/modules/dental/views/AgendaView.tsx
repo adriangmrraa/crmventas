@@ -635,12 +635,12 @@ export default function AgendaView() {
           
           /* Opacar días pasados visualmente */
           .fc-day-past {
-            background-color: #f9fafb !important;
+            background-color: rgba(255,255,255,0.02) !important;
             opacity: 0.5 !important;
           }
           
           .fc-timegrid-col.fc-day-past {
-            background-color: #f9fafb !important;
+            background-color: rgba(255,255,255,0.02) !important;
           }
           
           .fc-event-past {

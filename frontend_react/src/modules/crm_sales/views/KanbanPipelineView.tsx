@@ -64,7 +64,10 @@ export default function KanbanPipelineView() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const getLeadsByStatus = (statusCode: string) =>
-    leads.filter(l => l.status === statusCode);
+    leads.filter(l => {
+      const leadStatus = l.status || 'new';
+      return leadStatus === statusCode;
+    });
 
   const getDaysInStage = (lead: Lead) => {
     const updated = lead.updated_at || lead.created_at;

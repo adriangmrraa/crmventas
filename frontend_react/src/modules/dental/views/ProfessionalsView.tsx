@@ -349,7 +349,7 @@ export default function ProfessionalsView() {
               >
                 {/* Card Header Profile */}
                 <div className="p-5 flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-2xl shrink-0 flex items-center justify-center text-white font-black text-xl shadow-inner ${professional.is_active ? 'bg-primary' : 'bg-gray-400'
+                  <div className={`w-14 h-14 rounded-2xl shrink-0 flex items-center justify-center text-white font-black text-xl shadow-inner ${professional.is_active ? 'bg-primary' : 'bg-white/[0.20]'
                     }`}>
                     {professional.name.charAt(0)}
                   </div>
@@ -361,7 +361,7 @@ export default function ProfessionalsView() {
                       {professional.is_active ? (
                         <div className="w-2 h-2 rounded-full bg-green-500  shadow-green-200"></div>
                       ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                        <div className="w-2 h-2 rounded-full bg-white/[0.15]"></div>
                       )}
                     </div>
                     <p className="text-[10px] font-black text-primary bg-primary/5 inline-block px-2 py-0.5 rounded mt-1 uppercase tracking-wider">

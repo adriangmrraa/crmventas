@@ -548,14 +548,14 @@ const SellersView: React.FC = () => {
             )}
 
             <style>{`
-                .glass { background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
-                .role-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; background: #f8f9fa; }
-                .role-badge[data-role='setter'] { color: #004085; background: #cce5ff; }
-                .role-badge[data-role='closer'] { color: #155724; background: #d4edda; }
-                .btn-icon-labeled { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 0.9rem; border: 1px solid #dee2e6; background: #fff; color: #495057; }
-                .btn-icon-labeled.danger { border-color: #f5c6cb; background: #f8d7da; color: #721c24; }
-                .btn-icon-labeled.success { border-color: #c3e6cb; background: #d4edda; color: #155724; }
-                .btn-icon-labeled.warning { border-color: #ffeeba; background: #fff3cd; color: #856404; }
+                .glass { background: #0d1117; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+                .role-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; background: rgba(255,255,255,0.04); }
+                .role-badge[data-role='setter'] { color: #60a5fa; background: rgba(59,130,246,0.15); }
+                .role-badge[data-role='closer'] { color: #34d399; background: rgba(16,185,129,0.15); }
+                .btn-icon-labeled { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
+                .btn-icon-labeled.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.15); color: #f87171; }
+                .btn-icon-labeled.success { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.15); color: #34d399; }
+                .btn-icon-labeled.warning { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.15); color: #fbbf24; }
             `}</style>
         </div>
     );

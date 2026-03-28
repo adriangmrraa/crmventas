@@ -4,7 +4,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { RefreshCw, User } from 'lucide-react';
-import api from '../../../api/axios';
+import { io } from 'socket.io-client';
+import api, { BACKEND_URL } from '../../../api/axios';
 import { useAuth } from '../../../context/AuthContext';
 import { useTranslation } from '../../../context/LanguageContext';
 import AgendaEventForm, { type AgendaEventFormData, type SellerOption } from '../components/AgendaEventForm';
@@ -147,6 +148,40 @@ export default function CrmAgendaView() {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, []);
+
+  // Socket.IO real-time sync
+  useEffect(() => {
+    const socket = io(BACKEND_URL, { reconnection: true, reconnectionDelay: 1000 });
+
+    socket.on('NEW_APPOINTMENT', () => refetchCurrentRange());
+    socket.on('APPOINTMENT_UPDATED', () => refetchCurrentRange());
+    socket.on('APPOINTMENT_DELETED', () => refetchCurrentRange());
+    socket.on('LEAD_UPDATED', () => refetchCurrentRange());
+    socket.on('AGENDA_UPDATED', () => refetchCurrentRange());
+
+    return () => { socket.disconnect(); };
+  }, [refetchCurrentRange]);
+
+  // Google Calendar blocks
+  const [googleBlocks, setGoogleBlocks] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!events.length) return;
+    const fetchBlocks = async () => {
+      try {
+        const base = selectedDate || new Date();
+        const startStr = startOfDay(subDays(base, 7)).toISOString();
+        const endStr = endOfDay(addDays(base, 7)).toISOString();
+        const blocksRes = await api.get('/admin/calendar/blocks', {
+          params: { start_date: startStr, end_date: endStr }
+        });
+        setGoogleBlocks(blocksRes.data || []);
+      } catch (err) {
+        // Calendar blocks are optional
+      }
+    };
+    fetchBlocks();
+  }, [events, selectedDate]);
 
   const filteredEvents = selectedSellerId && selectedSellerId !== 'all'
     ? events.filter((e) => e.seller_id.toString() === selectedSellerId)
@@ -319,6 +354,9 @@ export default function CrmAgendaView() {
                 ))}
               </select>
             </div>
+            {events.length > 0 && (
+              <p className="text-xs text-white/30">{events.length} eventos</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className="flex gap-2 sm:gap-3 bg-white/[0.04] px-3 py-1.5 rounded-full border border-white/[0.06]">
@@ -340,7 +378,7 @@ export default function CrmAgendaView() {
             <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
               <MobileAgenda
                 appointments={mobileAppointments}
-                googleBlocks={[]}
+                googleBlocks={googleBlocks}
                 selectedDate={selectedDate || new Date()}
                 onDateChange={(d) => setSelectedDate(d)}
                 onEventClick={(evt: any) => {

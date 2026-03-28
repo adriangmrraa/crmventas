@@ -33,6 +33,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 3. HSTS: Forzar HTTPS. max-age de 6 meses (15768000 seg) incluyendo subdominios
         response.headers["Strict-Transport-Security"] = "max-age=15768000; includeSubDomains"
 
+        # 4b. XSS Protection (legacy browsers)
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # 4c. Referrer-Policy: solo enviar origin en cross-origin, full en same-origin
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # 4d. Permissions-Policy: restringir acceso a APIs sensibles del navegador
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
+
         # 4. Content-Security-Policy dinámico basado en CORS_ALLOWED_ORIGINS + CSP_EXTRA_DOMAINS
         allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
         extra_domains = os.getenv("CSP_EXTRA_DOMAINS", "").split(",")

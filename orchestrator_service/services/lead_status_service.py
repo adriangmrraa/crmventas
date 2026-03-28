@@ -14,9 +14,10 @@ class LeadStatusService:
         """Obtiene estados para un tenant (Tenant Isolation)"""
         active_filter = "" if include_inactive else "AND is_active = true"
         query = f"""
-            SELECT id, name, code, description, color, icon, 
+            SELECT id, tenant_id, name, code, description, color, icon,
                    is_active, is_initial, is_final, sort_order,
-                   requires_comment, category, badge_style, metadata
+                   requires_comment, category, badge_style, metadata,
+                   created_at, updated_at
             FROM lead_statuses
             WHERE tenant_id = $1 {active_filter}
             ORDER BY sort_order, name

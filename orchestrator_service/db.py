@@ -541,6 +541,21 @@ class Database:
                 AND role IN ('setter', 'closer', 'professional', 'ceo')
                 ON CONFLICT (user_id) DO NOTHING;
             END $$;
+            """,
+
+            # Parche 15: Lead Scoring — score column + breakdown JSONB
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='score') THEN
+                    ALTER TABLE leads ADD COLUMN score INTEGER DEFAULT 0;
+                    ALTER TABLE leads ADD COLUMN score_breakdown JSONB DEFAULT '{}';
+                    ALTER TABLE leads ADD COLUMN score_updated_at TIMESTAMPTZ;
+                    CREATE INDEX IF NOT EXISTS idx_leads_score ON leads (tenant_id, score DESC);
+                    RAISE NOTICE 'Parche 15: Lead scoring columns added';
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 15: Error: %', SQLERRM;
+            END $$;
             """
         ]
 

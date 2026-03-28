@@ -1904,3 +1904,29 @@ async def delete_agenda_event(
     if result == "UPDATE 0":
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     return {"status": "cancelled"}
+
+
+# =============================================================================
+# LEAD SCORING
+# =============================================================================
+
+@router.post("/leads/{lead_id}/score")
+async def score_lead(lead_id: str, user=Depends(verify_admin_token)):
+    """Calculate and return lead score."""
+    from services.lead_scoring_service import calculate_lead_score
+    tenant_id = user.get("tenant_id", 1)
+    try:
+        lead_uuid = uuid.UUID(lead_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid lead ID")
+    result = await calculate_lead_score(db.pool, lead_uuid, tenant_id)
+    return result
+
+
+@router.post("/leads/score/batch")
+async def batch_score_leads(user=Depends(verify_admin_token)):
+    """Recalculate scores for stale leads."""
+    from services.lead_scoring_service import batch_calculate_scores
+    tenant_id = user.get("tenant_id", 1)
+    await batch_calculate_scores(db.pool, tenant_id, limit=100)
+    return {"status": "ok", "message": "Batch scoring started"}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, Clock, FileText, DollarSign, Activity, AlertTriangle, Trash2, Check } from 'lucide-react';
+import { X, Calendar, User, Clock, FileText, DollarSign, Building2, AlertTriangle, Trash2, Check } from 'lucide-react';
 import type { Appointment, Patient, Professional } from '../views/AgendaView';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -15,7 +15,7 @@ interface AppointmentFormProps {
     isEditing: boolean;
 }
 
-type TabType = 'general' | 'anamnesis' | 'billing';
+type TabType = 'general' | 'negocio' | 'billing';
 
 export default function AppointmentForm({
     isOpen,
@@ -53,9 +53,15 @@ export default function AppointmentForm({
             ]));
     }, []);
 
+    // Business info state (Negocio tab)
+    const [businessData, setBusinessData] = useState({
+        company_name: '', industry: '', company_size: '', budget_range: '', decision_maker: '', pain_points: ''
+    });
+
     // Billing state
     const [billingData, setBillingData] = useState({
         billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending',
+        deal_value: '', commission_estimate: '', payment_method: '',
     });
     const [billingSaving, setBillingSaving] = useState(false);
     const [billingSuccess, setBillingSuccess] = useState<string | null>(null);
@@ -101,13 +107,16 @@ export default function AppointmentForm({
                             billing_installments: apt.billing_installments != null ? String(apt.billing_installments) : '',
                             billing_notes: apt.billing_notes || '',
                             payment_status: apt.payment_status || 'pending',
+                            deal_value: apt.deal_value != null ? String(apt.deal_value) : '',
+                            commission_estimate: apt.commission_estimate != null ? String(apt.commission_estimate) : '',
+                            payment_method: apt.payment_method || '',
                         });
                     })
                     .catch(() => {
-                        setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending' });
+                        setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending', deal_value: '', commission_estimate: '', payment_method: '' });
                     });
             } else {
-                setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending' });
+                setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending', deal_value: '', commission_estimate: '', payment_method: '' });
             }
         }
     }, [isOpen, initialData, professionals, isEditing]);
@@ -237,10 +246,23 @@ export default function AppointmentForm({
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] bg-white/[0.02]">
                     <div>
-                        <h2 className="text-xl font-bold text-white">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             {isEditing ? t('agenda.form_edit_appointment') : t('agenda.form_new_appointment')}
+                            {isEditing && initialData.patient_id && (() => {
+                                const leadPatient = patients.find(p => String(p.id) === String(initialData.patient_id));
+                                return leadPatient ? (
+                                    <span className="text-base font-normal text-white/60">— {leadPatient.first_name} {leadPatient.last_name}</span>
+                                ) : null;
+                            })()}
                         </h2>
-                        <p className="text-xs text-white/40">{t('agenda.clinical_inspector')}</p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs text-white/40">Sales CRM</p>
+                            {(initialData as any)?.source && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+                                    {(initialData as any).source}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/[0.06] rounded-full text-white/30 hover:text-white/60 transition-colors">
                         <X size={20} />
@@ -249,8 +271,8 @@ export default function AppointmentForm({
 
                 <div className="flex border-b border-white/[0.04] bg-white/[0.02]">
                     {renderTabButton('general', t('agenda.tab_general'), FileText)}
-                    {renderTabButton('anamnesis', t('agenda.tab_anamnesis'), Activity)}
-                    {renderTabButton('billing', t('agenda.tab_billing'), DollarSign)}
+                    {renderTabButton('negocio', 'Negocio', Building2)}
+                    {renderTabButton('billing', 'Facturacion', DollarSign)}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -268,14 +290,14 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                         value={formData.patient_id}
                                         onChange={(e) => handleChange('patient_id', e.target.value)}
                                         disabled={isEditing}
                                     >
-                                        <option value="">{t('agenda.select_patient')}</option>
+                                        <option value="" className="bg-[#0d1117] text-white">{t('agenda.select_patient')}</option>
                                         {patients.map(p => (
-                                            <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
+                                            <option key={p.id} value={p.id} className="bg-[#0d1117] text-white">{p.first_name} {p.last_name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -286,13 +308,13 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                         value={formData.professional_id}
                                         onChange={(e) => handleChange('professional_id', e.target.value)}
                                     >
-                                        <option value="">{t('agenda.select_professional')}</option>
+                                        <option value="" className="bg-[#0d1117] text-white">{t('agenda.select_professional')}</option>
                                         {professionals.map(p => (
-                                            <option key={p.id} value={p.id}>Dr. {p.first_name} {p.last_name}</option>
+                                            <option key={p.id} value={p.id} className="bg-[#0d1117] text-white">{p.first_name} {p.last_name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -316,16 +338,16 @@ export default function AppointmentForm({
                                     <div className="relative">
                                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                         <select
-                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                             value={formData.duration_minutes}
                                             onChange={(e) => handleChange('duration_minutes', parseInt(e.target.value))}
                                         >
-                                            <option value="15">15 min</option>
-                                            <option value="30">30 min</option>
-                                            <option value="45">45 min</option>
-                                            <option value="60">60 min</option>
-                                            <option value="90">90 min</option>
-                                            <option value="120">2 horas</option>
+                                            <option value="15" className="bg-[#0d1117] text-white">15 min</option>
+                                            <option value="30" className="bg-[#0d1117] text-white">30 min</option>
+                                            <option value="45" className="bg-[#0d1117] text-white">45 min</option>
+                                            <option value="60" className="bg-[#0d1117] text-white">60 min</option>
+                                            <option value="90" className="bg-[#0d1117] text-white">90 min</option>
+                                            <option value="120" className="bg-[#0d1117] text-white">2 horas</option>
                                         </select>
                                     </div>
                                 </div>
@@ -378,10 +400,90 @@ export default function AppointmentForm({
                         </div>
                     )}
 
-                    {activeTab === 'anamnesis' && (
-                        <div className="text-center py-10 text-white/30">
-                            <Activity size={48} className="mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">{t('agenda.medical_history_coming')}</p>
+                    {activeTab === 'negocio' && (
+                        <div className="space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Empresa</label>
+                                <input
+                                    type="text"
+                                    placeholder="Nombre de la empresa"
+                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                    value={businessData.company_name}
+                                    onChange={(e) => setBusinessData(prev => ({ ...prev, company_name: e.target.value }))}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Industria</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        value={businessData.industry}
+                                        onChange={(e) => setBusinessData(prev => ({ ...prev, industry: e.target.value }))}
+                                    >
+                                        <option value="" className="bg-[#0d1117] text-white">Seleccionar...</option>
+                                        <option value="tecnologia" className="bg-[#0d1117] text-white">Tecnologia</option>
+                                        <option value="salud" className="bg-[#0d1117] text-white">Salud</option>
+                                        <option value="educacion" className="bg-[#0d1117] text-white">Educacion</option>
+                                        <option value="retail" className="bg-[#0d1117] text-white">Retail</option>
+                                        <option value="finanzas" className="bg-[#0d1117] text-white">Finanzas</option>
+                                        <option value="manufactura" className="bg-[#0d1117] text-white">Manufactura</option>
+                                        <option value="servicios" className="bg-[#0d1117] text-white">Servicios</option>
+                                        <option value="otro" className="bg-[#0d1117] text-white">Otro</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tamano empresa</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        value={businessData.company_size}
+                                        onChange={(e) => setBusinessData(prev => ({ ...prev, company_size: e.target.value }))}
+                                    >
+                                        <option value="" className="bg-[#0d1117] text-white">Seleccionar...</option>
+                                        <option value="1-10" className="bg-[#0d1117] text-white">1-10 empleados</option>
+                                        <option value="11-50" className="bg-[#0d1117] text-white">11-50 empleados</option>
+                                        <option value="51-200" className="bg-[#0d1117] text-white">51-200 empleados</option>
+                                        <option value="201-500" className="bg-[#0d1117] text-white">201-500 empleados</option>
+                                        <option value="500+" className="bg-[#0d1117] text-white">500+ empleados</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Rango de presupuesto</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        value={businessData.budget_range}
+                                        onChange={(e) => setBusinessData(prev => ({ ...prev, budget_range: e.target.value }))}
+                                    >
+                                        <option value="" className="bg-[#0d1117] text-white">Seleccionar...</option>
+                                        <option value="<5k" className="bg-[#0d1117] text-white">Menos de $5,000</option>
+                                        <option value="5k-15k" className="bg-[#0d1117] text-white">$5,000 - $15,000</option>
+                                        <option value="15k-50k" className="bg-[#0d1117] text-white">$15,000 - $50,000</option>
+                                        <option value="50k-100k" className="bg-[#0d1117] text-white">$50,000 - $100,000</option>
+                                        <option value="100k+" className="bg-[#0d1117] text-white">$100,000+</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Decision maker</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre del decisor"
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                        value={businessData.decision_maker}
+                                        onChange={(e) => setBusinessData(prev => ({ ...prev, decision_maker: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Pain points</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Problemas o necesidades del lead..."
+                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                    value={businessData.pain_points}
+                                    onChange={(e) => setBusinessData(prev => ({ ...prev, pain_points: e.target.value }))}
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -390,36 +492,60 @@ export default function AppointmentForm({
                             {!isEditing && (
                                 <div className="text-center py-6 text-white/30 bg-white/[0.02] rounded-xl border border-white/[0.06]">
                                     <DollarSign size={32} className="mx-auto mb-2 opacity-30" />
-                                    <p className="text-sm">{t('agenda.billing_save_first') || 'Guardá el turno primero para facturar'}</p>
+                                    <p className="text-sm">Guarda la reunion primero para facturar</p>
                                 </div>
                             )}
                             {isEditing && (
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold text-white/50">{t('agenda.billing_amount') || 'Monto ($)'}</label>
+                                            <label className="text-xs font-semibold text-white/50">Monto ($)</label>
                                             <input type="number" step="0.01" placeholder="0.00"
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
                                                 value={billingData.billing_amount}
                                                 onChange={(e) => setBillingData(prev => ({ ...prev, billing_amount: e.target.value }))} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold text-white/50">{t('agenda.billing_installments') || 'Cuotas'}</label>
-                                            <input type="number" min="1" placeholder="1"
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40"
-                                                value={billingData.billing_installments}
-                                                onChange={(e) => setBillingData(prev => ({ ...prev, billing_installments: e.target.value }))} />
+                                            <label className="text-xs font-semibold text-white/50">Valor del deal ($)</label>
+                                            <input type="number" step="0.01" placeholder="0.00"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                                value={billingData.deal_value}
+                                                onChange={(e) => setBillingData(prev => ({ ...prev, deal_value: e.target.value }))} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold text-white/50">Comision estimada ($)</label>
+                                            <input type="number" step="0.01" placeholder="0.00"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                                value={billingData.commission_estimate}
+                                                onChange={(e) => setBillingData(prev => ({ ...prev, commission_estimate: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-white/50">Metodo de pago</label>
+                                            <select
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                                value={billingData.payment_method}
+                                                onChange={(e) => setBillingData(prev => ({ ...prev, payment_method: e.target.value }))}
+                                            >
+                                                <option value="" className="bg-[#0d1117] text-white">Seleccionar...</option>
+                                                <option value="transferencia" className="bg-[#0d1117] text-white">Transferencia</option>
+                                                <option value="tarjeta" className="bg-[#0d1117] text-white">Tarjeta</option>
+                                                <option value="efectivo" className="bg-[#0d1117] text-white">Efectivo</option>
+                                                <option value="cheque" className="bg-[#0d1117] text-white">Cheque</option>
+                                                <option value="otro" className="bg-[#0d1117] text-white">Otro</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-white/50">{t('agenda.billing_notes') || 'Notas de facturación'}</label>
-                                        <textarea rows={3} placeholder={t('agenda.billing_notes_placeholder') || 'Observaciones...'}
-                                            className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40"
+                                        <label className="text-xs font-semibold text-white/50">Notas de facturacion</label>
+                                        <textarea rows={3} placeholder="Observaciones..."
+                                            className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40 placeholder-white/20"
                                             value={billingData.billing_notes}
                                             onChange={(e) => setBillingData(prev => ({ ...prev, billing_notes: e.target.value }))} />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-white/50 mb-2 block">{t('agenda.payment_status') || 'Estado de pago'}</label>
+                                        <label className="text-xs font-semibold text-white/50 mb-2 block">Estado de pago</label>
                                         <div className="grid grid-cols-3 gap-2">
                                             {['pending', 'partial', 'paid'].map(ps => (
                                                 <button key={ps} type="button"
@@ -431,14 +557,14 @@ export default function AppointmentForm({
                                                             : 'bg-blue-500/15 border-blue-500/30 text-blue-400'
                                                         : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
                                                     }`}>
-                                                    {ps === 'pending' ? '⏳ Pendiente' : ps === 'partial' ? '🔄 Parcial' : '✅ Pagado'}
+                                                    {ps === 'pending' ? 'Pendiente' : ps === 'partial' ? 'Parcial' : 'Pagado'}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
                                         {billingSuccess && (
-                                            <span className="text-xs text-green-400 flex items-center gap-1">✓ {billingSuccess}</span>
+                                            <span className="text-xs text-green-400 flex items-center gap-1">Guardado</span>
                                         )}
                                         {!billingSuccess && <span />}
                                         <button type="button" disabled={billingSaving}
@@ -451,14 +577,17 @@ export default function AppointmentForm({
                                                         billing_installments: billingData.billing_installments ? parseInt(billingData.billing_installments) : null,
                                                         billing_notes: billingData.billing_notes || null,
                                                         payment_status: billingData.payment_status,
+                                                        deal_value: billingData.deal_value ? parseFloat(billingData.deal_value) : null,
+                                                        commission_estimate: billingData.commission_estimate ? parseFloat(billingData.commission_estimate) : null,
+                                                        payment_method: billingData.payment_method || null,
                                                     });
-                                                    setBillingSuccess(t('agenda.billing_saved') || 'Guardado');
+                                                    setBillingSuccess('Guardado');
                                                     setTimeout(() => setBillingSuccess(null), 3000);
                                                 } catch (err) { console.error('Error saving billing:', err); }
                                                 finally { setBillingSaving(false); }
                                             }}>
                                             {billingSaving ? <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" /> : <DollarSign size={16} />}
-                                            {t('agenda.billing_save') || 'Guardar facturación'}
+                                            Guardar facturacion
                                         </button>
                                     </div>
                                 </div>

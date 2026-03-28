@@ -147,7 +147,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
   }
   
   return (
-    <div className={`bg-white/[0.03]/[0.03] rounded-xl shadow-xl shadow-black/20 border border-white/[0.06] overflow-hidden ${className}`}>
+    <div className={`bg-[#0d1117] rounded-xl shadow-xl shadow-black/20 border border-white/[0.08] overflow-hidden ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
@@ -159,7 +159,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
           {onCancel && (
             <button
               onClick={onCancel}
-              className="p-1 text-white/30 hover:text-white/60 rounded-full hover:bg-white/[0.06]/[0.03]/[0.06]"
+              className="p-1 text-white/30 hover:text-white/60 rounded-full hover:bg-white/[0.06]"
             >
               <X size={18} />
             </button>
@@ -173,7 +173,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
       
       {/* Current assignment */}
       {currentSellerId && (
-        <div className="px-4 py-3 bg-blue-500/100/10 border-b border-blue-500/20">
+        <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm text-blue-400">{t('sellers.currently_assigned')}:</span>
@@ -190,7 +190,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
       
       {/* Error message */}
       {error && (
-        <div className="px-4 py-3 bg-red-500/100/10 border-b border-red-500/20">
+        <div className="px-4 py-3 bg-red-500/10 border-b border-red-500/20">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
@@ -216,7 +216,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
           <button
             onClick={handleAutoAssign}
             disabled={assigning === 'auto'}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.03]/[0.04] text-white/70 rounded-lg hover:bg-white/[0.06]/[0.03]/[0.08] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.04] text-white/70 rounded-lg hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {assigning === 'auto' ? (
               <Loader2 className="animate-spin" size={18} />
@@ -243,7 +243,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 roleFilter === option.value
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white/[0.03]/[0.04] text-white/70 hover:bg-white/[0.06]/[0.03]/[0.08]'
+                  : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'
               }`}
             >
               {option.label}
@@ -257,7 +257,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
             placeholder={t('sellers.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-white/[0.06] rounded-lg bg-white/[0.03]/[0.04] text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 text-sm border border-white/[0.08] rounded-lg bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           />
         </div>
       </div>
@@ -285,18 +285,18 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
               return (
                 <div
                   key={seller.id}
-                  className={`p-3 hover:bg-white/[0.06]/[0.03]/[0.04] transition-colors ${
-                    isCurrent ? 'bg-blue-500/100/10' : ''
+                  className={`p-3 hover:bg-white/[0.06] transition-colors ${
+                    isCurrent ? 'bg-blue-500/10' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-white/[0.03]/[0.06] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center">
                           <User size={18} className="text-white/50" />
                         </div>
                         {isCurrent && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500/100 rounded-full flex items-center justify-center">
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                             <Check size={10} className="text-white" />
                           </div>
                         )}
@@ -307,9 +307,9 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                           <span className="font-medium text-white">{sellerName}</span>
                           <span className={`px-1.5 py-0.5 text-xs rounded ${
                             seller.role === 'ceo' ? 'bg-purple-500/10 text-purple-400' :
-                            seller.role === 'setter' ? 'bg-blue-500/100/10 text-blue-400' :
-                            seller.role === 'closer' ? 'bg-green-500/100/10 text-green-400' :
-                            'bg-white/[0.03]/[0.04] text-white/70'
+                            seller.role === 'setter' ? 'bg-blue-500/10 text-blue-400' :
+                            seller.role === 'closer' ? 'bg-green-500/10 text-green-400' :
+                            'bg-white/[0.04] text-white/70'
                           }`}>
                             {t(`roles.${seller.role}`)}
                           </span>
@@ -337,7 +337,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                       disabled={isCurrent || isAssigning}
                       className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                         isCurrent
-                          ? 'bg-blue-500/100/10 text-blue-400 cursor-default'
+                          ? 'bg-blue-500/10 text-blue-400 cursor-default'
                           : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
                       }`}
                     >
@@ -358,7 +358,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
       </div>
       
       {/* Footer */}
-      <div className="p-3 bg-white/[0.03]/[0.02] border-t border-white/[0.04]">
+      <div className="p-3 bg-white/[0.02] border-t border-white/[0.06]">
         <p className="text-xs text-white/40 text-center">
           {t('sellers.total_sellers')}: {filteredSellers.length}
         </p>

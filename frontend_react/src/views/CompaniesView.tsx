@@ -36,6 +36,7 @@ export default function CompaniesView() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
 
     useEffect(() => {
         fetchCompanies();
@@ -100,12 +101,13 @@ export default function CompaniesView() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm(t(isEntity ? 'alerts.confirm_delete_entity' : 'alerts.confirm_delete_clinic'))) return;
         try {
             await api.delete(`/admin/core/tenants/${id}`);
             fetchCompanies();
         } catch (err) {
             console.error('Error eliminando clínica:', err);
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -130,7 +132,7 @@ export default function CompaniesView() {
                 action={
                     <button
                         onClick={() => handleOpenModal()}
-                        className="flex items-center justify-center gap-2 bg-medical-600 text-white px-4 py-2.5 rounded-xl hover:bg-medical-700 transition-all shadow-md font-medium text-sm sm:text-base active:scale-[0.98]"
+                        className="flex items-center justify-center gap-2 bg-white text-[#0a0e1a] px-4 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-md font-medium text-sm sm:text-base active:scale-95"
                     >
                         <Plus size={20} /> {t(isEntity ? 'clinics.new_entity' : 'clinics.new_clinic')}
                     </button>
@@ -151,7 +153,7 @@ export default function CompaniesView() {
                     >
                         <div className="p-5 space-y-4">
                             <div className="flex justify-between items-start">
-                                <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400 group-hover:bg-medical-600 group-hover:text-white transition-colors">
+                                <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400 group-hover:bg-blue-500/20 group-hover:text-blue-300 transition-colors">
                                     <Building2 size={24} />
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -162,7 +164,7 @@ export default function CompaniesView() {
                                         <Edit size={18} />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(clinica.id)}
+                                        onClick={() => setDeleteTarget(clinica)}
                                         className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={18} />
@@ -191,11 +193,43 @@ export default function CompaniesView() {
                 ))}
             </div>
 
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] shadow-2xl w-full max-w-sm animate-scale-in p-6 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-red-500/10 p-3 rounded-lg">
+                                <Trash2 className="text-red-400" size={22} />
+                            </div>
+                            <h2 className="text-lg font-bold text-white">{t(isEntity ? 'alerts.confirm_delete_entity' : 'alerts.confirm_delete_clinic')}</h2>
+                        </div>
+                        <p className="text-white/50 text-sm">
+                            {t('common.delete_warning')}: <span className="text-white font-medium">{deleteTarget.clinic_name}</span>
+                        </p>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteTarget(null)}
+                                className="flex-1 py-2 text-white/70 font-medium hover:bg-white/[0.05] rounded-lg transition-all active:scale-95"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleDelete(deleteTarget.id)}
+                                className="flex-1 py-2 bg-red-500/20 text-red-400 font-bold rounded-lg hover:bg-red-500/30 transition-all active:scale-95"
+                            >
+                                {t('common.delete')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0d1117] rounded-xl shadow-2xl w-full max-w-md animate-scale-in">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] shadow-2xl w-full max-w-md animate-scale-in">
                         <div className="p-6 border-b border-white/[0.06]">
-                            <h2 className="text-xl font-bold flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 {editingCompany ? <Edit className="text-blue-400" /> : <Plus className="text-blue-400" />}
                                 {editingCompany ? t(isEntity ? 'clinics.edit_entity' : 'clinics.edit_clinic') : t(isEntity ? 'clinics.create_entity' : 'clinics.create_clinic')}
                             </h2>
@@ -214,7 +248,7 @@ export default function CompaniesView() {
                                     required
                                     type="text"
                                     placeholder={t(isEntity ? 'clinics.entity_name_placeholder' : 'clinics.clinic_name_placeholder')}
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-medical-500 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
                                     value={formData.clinic_name}
                                     onChange={(e) => setFormData({ ...formData, clinic_name: e.target.value })}
                                 />
@@ -226,7 +260,7 @@ export default function CompaniesView() {
                                     required
                                     type="text"
                                     placeholder={t('clinics.bot_phone_placeholder')}
-                                    className="w-full px-4 py-2 border rounded-lg font-mono focus:ring-2 focus:ring-medical-500 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg font-mono text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
                                     value={formData.bot_phone_number}
                                     onChange={(e) => setFormData({ ...formData, bot_phone_number: e.target.value })}
                                 />
@@ -240,7 +274,7 @@ export default function CompaniesView() {
                                     <Calendar size={14} /> {t('clinics.calendar_provider_label')}
                                 </label>
                                 <select
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-medical-500 outline-none"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
                                     value={formData.calendar_provider}
                                     onChange={(e) => setFormData({ ...formData, calendar_provider: e.target.value as 'local' | 'google' })}
                                 >
@@ -259,14 +293,14 @@ export default function CompaniesView() {
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 py-2 text-white/70 font-medium hover:bg-white/[0.06] rounded-lg transition-all"
+                                    className="flex-1 py-2 text-white/70 font-medium hover:bg-white/[0.05] rounded-lg transition-all active:scale-95"
                                 >
                                     {t('common.cancel')}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex-1 py-2 bg-medical-600 text-white font-bold rounded-lg hover:bg-medical-700 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 py-2 bg-white text-[#0a0e1a] font-bold rounded-lg hover:bg-white/90 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
                                 >
                                     {saving ? <Loader2 className="animate-spin" size={20} /> : t('common.save')}
                                 </button>

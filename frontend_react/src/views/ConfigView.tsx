@@ -350,12 +350,12 @@ export default function ConfigView() {
                         <div>
                             <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.field_tenant')}</label>
                             <select
-                                className="w-full px-4 py-2 bg-white/[0.02] border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                                className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-green-500 outline-none transition-all"
                                 value={intConfig.tenant_id === null ? '' : intConfig.tenant_id}
                                 onChange={(e) => setIntConfig({ ...intConfig, tenant_id: e.target.value ? Number(e.target.value) : null })}
                             >
-                                <option value="">{t('config.global_all_tenants')}</option>
-                                {tenants.map(t => <option key={t.id} value={t.id.toString()}>{t.clinic_name}</option>)}
+                                <option value="" className="bg-[#0d1117] text-white">{t('config.global_all_tenants')}</option>
+                                {tenants.map(t => <option key={t.id} value={t.id.toString()} className="bg-[#0d1117] text-white">{t.clinic_name}</option>)}
                             </select>
                         </div>
 
@@ -363,7 +363,7 @@ export default function ConfigView() {
                             <label className="text-sm font-medium text-white/70 mb-1 block">YCloud API Key</label>
                             <input
                                 type="password"
-                                className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                                className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-green-500 outline-none transition-all"
                                 placeholder="sk_..."
                                 value={intConfig.ycloud_api_key || ''}
                                 onChange={e => setIntConfig({ ...intConfig, ycloud_api_key: e.target.value })}
@@ -374,7 +374,7 @@ export default function ConfigView() {
                             <label className="text-sm font-medium text-white/70 mb-1 block">Webhook Secret</label>
                             <input
                                 type="password"
-                                className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                                className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-green-500 outline-none transition-all"
                                 placeholder="whsec_..."
                                 value={intConfig.ycloud_webhook_secret || ''}
                                 onChange={e => setIntConfig({ ...intConfig, ycloud_webhook_secret: e.target.value })}
@@ -403,7 +403,7 @@ export default function ConfigView() {
                                     <th className="px-4 py-3 rounded-r-lg text-right font-semibold">{t('config.col_actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-white/[0.06]">
                                 {credentials.filter(c => c.category === 'integration' && c.name === 'YCLOUD_API_KEY').map(c => (
                                     <tr key={c.id} className="hover:bg-white/[0.02]/50 transition-colors">
                                         <td className="px-4 py-4 font-medium text-white">{getTenantName(c.tenant_id)}</td>
@@ -416,14 +416,14 @@ export default function ConfigView() {
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     onClick={() => setIntConfig({ ...intConfig, tenant_id: c.tenant_id || null })}
-                                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
+                                                    className="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors border border-transparent hover:border-indigo-500/20"
                                                     title="Editar"
                                                 >
                                                     <Edit2 size={16} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteCredential(c.id!)}
-                                                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+                                                    className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/20"
                                                     title="Eliminar"
                                                 >
                                                     <Trash2 size={16} />
@@ -458,14 +458,14 @@ export default function ConfigView() {
                     <p className="text-sm text-blue-400 mb-6">{t('config.webhook_hint_meta')}</p>
 
                     <div className="mb-4">
-                        <label className="text-sm font-medium text-blue-900 mb-1 block">{t('config.field_tenant')}</label>
+                        <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.field_tenant')}</label>
                         <select
-                            className="w-full sm:w-80 px-4 py-2 bg-white/[0.03] border border-blue-500/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                            className="w-full sm:w-80 px-4 py-2 bg-white/[0.04] border border-blue-500/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-white"
                             value={metaTenantId === null ? '' : metaTenantId}
                             onChange={(e) => setMetaTenantId(e.target.value ? Number(e.target.value) : null)}
                         >
-                            <option value="">{t('config.global_all_tenants')}</option>
-                            {tenants.map(t => <option key={t.id} value={t.id.toString()}>{t.clinic_name}</option>)}
+                            <option value="" className="bg-[#0d1117] text-white">{t('config.global_all_tenants')}</option>
+                            {tenants.map(t => <option key={t.id} value={t.id.toString()} className="bg-[#0d1117] text-white">{t.clinic_name}</option>)}
                         </select>
                     </div>
 
@@ -507,10 +507,10 @@ export default function ConfigView() {
                                 </span>
                             </div>
                             <div className="flex gap-1 group-hover:opacity-100 opacity-0 transition-opacity">
-                                <button onClick={() => { setEditingCred(cred); setCredForm({ ...cred, value: '••••••••' }); setIsCredModalOpen(true); }} className="p-1.5 hover:bg-white/[0.04] rounded-lg text-white/40 hover:text-indigo-600">
+                                <button onClick={() => { setEditingCred(cred); setCredForm({ ...cred, value: '••••••••' }); setIsCredModalOpen(true); }} className="p-1.5 hover:bg-white/[0.04] rounded-lg text-white/40 hover:text-indigo-400">
                                     <Edit2 size={16} />
                                 </button>
-                                <button onClick={() => handleDeleteCredential(cred.id!)} className="p-1.5 hover:bg-rose-50 rounded-lg text-white/30 hover:text-rose-600">
+                                <button onClick={() => handleDeleteCredential(cred.id!)} className="p-1.5 hover:bg-rose-500/10 rounded-lg text-white/30 hover:text-rose-400">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -544,7 +544,7 @@ export default function ConfigView() {
                 </p>
 
                 <div className="space-y-6">
-                    <div className="flex flex-col gap-4 p-4 bg-white/[0.02] rounded-xl border">
+                    <div className="flex flex-col gap-4 p-4 bg-white/[0.02] rounded-xl border border-white/[0.06]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h4 className="font-medium text-white flex items-center gap-2">
@@ -555,14 +555,14 @@ export default function ConfigView() {
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-white/70">{t('config.field_age')}</span>
                                 <select
-                                    className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                     defaultValue="180"
                                     id="cleanup-days-select"
                                 >
-                                    <option value="30">{t('config.option_1month')}</option>
-                                    <option value="90">{t('config.option_3months')}</option>
-                                    <option value="180">{t('config.option_6months')}</option>
-                                    <option value="365">{t('config.option_1year')}</option>
+                                    <option value="30" className="bg-[#0d1117] text-white">{t('config.option_1month')}</option>
+                                    <option value="90" className="bg-[#0d1117] text-white">{t('config.option_3months')}</option>
+                                    <option value="180" className="bg-[#0d1117] text-white">{t('config.option_6months')}</option>
+                                    <option value="365" className="bg-[#0d1117] text-white">{t('config.option_1year')}</option>
                                 </select>
                             </div>
                         </div>
@@ -584,7 +584,7 @@ export default function ConfigView() {
                         <div className="flex gap-3">
                             <Info size={20} className="text-blue-400 shrink-0" />
                             <div>
-                                <h4 className="text-sm font-semibold text-blue-900">{t('config.smart_storage_title')}</h4>
+                                <h4 className="text-sm font-semibold text-blue-400">{t('config.smart_storage_title')}</h4>
                                 <p className="text-xs text-blue-400 leading-relaxed mt-1">
                                     {t('config.smart_storage_hint')}
                                 </p>
@@ -646,10 +646,10 @@ export default function ConfigView() {
                 )}
 
                 {/* Tabs Header */}
-                <div className="flex border-b border-white/[0.06] mb-0 overflow-x-auto bg-white/50 backdrop-blur-sm rounded-t-2xl px-2 scrollbar-hide">
+                <div className="flex border-b border-white/[0.06] mb-0 overflow-x-auto bg-white/[0.03] backdrop-blur-sm rounded-t-2xl px-2 scrollbar-hide">
                     <button
                         onClick={() => setActiveTab('general')}
-                        className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'general' ? 'border-indigo-600 text-indigo-600 font-semibold' : 'border-transparent text-white/40 hover:text-white/70 hover:border-white/[0.06]'}`}
+                        className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'general' ? 'border-indigo-500 text-indigo-400 font-semibold' : 'border-transparent text-white/40 hover:text-white/70 hover:border-white/[0.06]'}`}
                     >
                         <Globe size={18} /> General
                     </button>
@@ -669,19 +669,19 @@ export default function ConfigView() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('others')}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'others' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-white/40 hover:text-indigo-500 hover:border-indigo-200'}`}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'others' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-white/40 hover:text-indigo-500 hover:border-indigo-500/20'}`}
                             >
                                 <Key size={18} /> Otras
                             </button>
                             <button
                                 onClick={() => setActiveTab('notifications')}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'notifications' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-white/40 hover:text-indigo-500 hover:border-indigo-200'}`}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'notifications' ? 'border-indigo-500 text-indigo-500 font-semibold' : 'border-transparent text-white/40 hover:text-indigo-500 hover:border-indigo-500/20'}`}
                             >
                                 <Bell size={18} /> Notificaciones
                             </button>
                             <button
                                 onClick={() => setActiveTab('maintenance')}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'maintenance' ? 'border-amber-600 text-amber-600 font-semibold' : 'border-transparent text-white/40 hover:text-amber-600 hover:border-amber-200'}`}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'maintenance' ? 'border-amber-600 text-amber-600 font-semibold' : 'border-transparent text-white/40 hover:text-amber-600 hover:border-amber-500/20'}`}
                             >
                                 <Database size={18} /> Mantenimiento
                             </button>
@@ -691,7 +691,7 @@ export default function ConfigView() {
             </div>
 
             {/* Content Area (Scrollable) */}
-            <div className="flex-1 overflow-y-auto bg-white/[0.02]/50 scrollbar-thin scrollbar-thumb-gray-200">
+            <div className="flex-1 overflow-y-auto bg-white/[0.02]/50 scrollbar-thin scrollbar-thumb-white/10">
                 <div className="p-6 max-w-6xl mx-auto pb-32">
                     {activeTab === 'general' && renderGeneralTab()}
                     {activeTab === 'ycloud' && user?.role === 'ceo' && renderYCloudTab()}
@@ -709,7 +709,7 @@ export default function ConfigView() {
                         <label className="block text-sm font-medium text-white/70 mb-1">{t('config.field_name_identifier')}</label>
                         <input
                             required
-                            className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-indigo-500 outline-none"
                             value={credForm.name}
                             onChange={e => setCredForm({ ...credForm, name: e.target.value })}
                             placeholder="Ej: OpenAI Key Principal"
@@ -720,7 +720,7 @@ export default function ConfigView() {
                         <input
                             required
                             type="password"
-                            className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
                             value={credForm.value}
                             onChange={e => setCredForm({ ...credForm, value: e.target.value })}
                         />
@@ -729,26 +729,26 @@ export default function ConfigView() {
                         <div>
                             <label className="block text-sm font-medium text-white/70 mb-1">{t('config.field_category')}</label>
                             <select
-                                className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.03]"
+                                className="w-full px-4 py-2 border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.04] text-white"
                                 value={credForm.category}
                                 onChange={e => setCredForm({ ...credForm, category: e.target.value })}
                             >
-                                <option value="openai">OpenAI</option>
-                                <option value="tiendanube">Tienda Nube</option>
-                                <option value="icloud">iCloud</option>
-                                <option value="database">Database</option>
-                                <option value="other">Otro</option>
+                                <option value="openai" className="bg-[#0d1117] text-white">OpenAI</option>
+                                <option value="tiendanube" className="bg-[#0d1117] text-white">Tienda Nube</option>
+                                <option value="icloud" className="bg-[#0d1117] text-white">iCloud</option>
+                                <option value="database" className="bg-[#0d1117] text-white">Database</option>
+                                <option value="other" className="bg-[#0d1117] text-white">Otro</option>
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-white/70 mb-1">{t('config.field_scope')}</label>
                             <select
-                                className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.03]"
+                                className="w-full px-4 py-2 border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.04] text-white"
                                 value={credForm.scope}
                                 onChange={e => setCredForm({ ...credForm, scope: e.target.value as 'global' | 'tenant' })}
                             >
-                                <option value="global">{t('config.scope_global')}</option>
-                                <option value="tenant">{t('config.scope_tenant')}</option>
+                                <option value="global" className="bg-[#0d1117] text-white">{t('config.scope_global')}</option>
+                                <option value="tenant" className="bg-[#0d1117] text-white">{t('config.scope_tenant')}</option>
                             </select>
                         </div>
                     </div>
@@ -757,12 +757,12 @@ export default function ConfigView() {
                             <label className="block text-sm font-medium text-white/70 mb-1">{t('config.field_assign_tenant')}</label>
                             <select
                                 required
-                                className="w-full px-4 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.03]"
+                                className="w-full px-4 py-2 border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white/[0.04] text-white"
                                 value={credForm.tenant_id?.toString() || ''}
                                 onChange={e => setCredForm({ ...credForm, tenant_id: parseInt(e.target.value) })}
                             >
-                                <option value="">{t('config.select_placeholder')}</option>
-                                {tenants.map(t => <option key={t.id} value={t.id}>{t.clinic_name}</option>)}
+                                <option value="" className="bg-[#0d1117] text-white">{t('config.select_placeholder')}</option>
+                                {tenants.map(t => <option key={t.id} value={t.id} className="bg-[#0d1117] text-white">{t.clinic_name}</option>)}
                             </select>
                         </div>
                     )}

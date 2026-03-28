@@ -92,12 +92,12 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white/[0.03] rounded-[28px] w-full max-w-lg overflow-hidden shadow-2xl my-auto">
+            <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] w-full max-w-lg overflow-hidden shadow-2xl my-auto">
 
                 {/* Header */}
                 <div className="p-7 border-b border-white/[0.04] bg-gradient-to-br from-blue-600 to-blue-700">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/[0.03]/20 rounded-2xl flex items-center justify-center text-white">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
                             <BarChart3 size={24} />
                         </div>
                         <div>
@@ -113,12 +113,12 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                 <React.Fragment key={s}>
                                     <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${step > s ? 'bg-green-400 text-white' :
                                         step === s ? 'bg-white/[0.03] text-blue-400' :
-                                            'bg-white/[0.03]/20 text-white/60'
+                                            'bg-white/20 text-white/60'
                                         }`}>
                                         {step > s ? <CheckCircle2 size={16} /> : s}
                                     </div>
                                     {s < totalSteps && (
-                                        <div className={`flex-1 h-0.5 transition-all ${step > s ? 'bg-green-400' : 'bg-white/[0.03]/20'}`} />
+                                        <div className={`flex-1 h-0.5 transition-all ${step > s ? 'bg-green-400' : 'bg-white/20'}`} />
                                     )}
                                 </React.Fragment>
                             ))}
@@ -153,7 +153,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                     </div>
 
                                     <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-3xl flex flex-col items-center gap-3">
-                                        <div className="w-16 h-16 bg-white/[0.03] rounded-2xl flex items-center justify-center text-blue-400">
+                                        <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
                                             <ShieldCheck size={32} />
                                         </div>
                                         <div className="text-center">
@@ -164,7 +164,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
 
                                     <button
                                         onClick={() => setStep(2)}
-                                        className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2"
+                                        className="w-full py-4 bg-white/[0.06] text-white rounded-2xl font-bold hover:bg-white/[0.10] transition-all shadow-lg flex items-center justify-center gap-2"
                                     >
                                         Siguiente <ChevronRight size={18} />
                                     </button>
@@ -187,7 +187,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                     setSelectedPortfolio(p);
                                                     loadAccounts(p.id);
                                                 }}
-                                                className="w-full p-4 rounded-2xl border-2 border-white/[0.04] hover:border-blue-500 hover:bg-blue-500/10/50 transition-all text-left flex items-center justify-between group"
+                                                className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/10 transition-all text-left flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center group-hover:bg-blue-500/10 transition-all">
@@ -240,9 +240,9 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                             <button
                                                 key={a.id}
                                                 onClick={() => setSelectedAccount(a)}
-                                                className={`w-full p-4 rounded-2xl border-2 transition-all text-left flex items-center justify-between ${selectedAccount?.id === a.id
-                                                    ? 'border-blue-600 bg-blue-500/10'
-                                                    : 'border-white/[0.04] hover:border-blue-400 hover:bg-blue-500/10/50'
+                                                className={`w-full p-4 rounded-2xl transition-all text-left flex items-center justify-between ${selectedAccount?.id === a.id
+                                                    ? 'border border-blue-500 bg-blue-500/10'
+                                                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/10'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -267,12 +267,12 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                         ))}
 
                                         {accounts.length === 0 && (
-                                            <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 text-center space-y-3">
-                                                <p className="font-bold text-amber-900 text-sm">No hay cuentas disponibles</p>
-                                                <p className="text-xs text-amber-700">Asegurate de haber dado permiso a este Business Manager en el popup de Meta.</p>
+                                            <div className="bg-amber-500/10 rounded-2xl p-5 border border-amber-500/20 text-center space-y-3">
+                                                <p className="font-bold text-amber-400 text-sm">No hay cuentas disponibles</p>
+                                                <p className="text-xs text-amber-400/70">Asegurate de haber dado permiso a este Business Manager en el popup de Meta.</p>
                                                 <button
                                                     onClick={() => loadAccounts()}
-                                                    className="w-full py-2.5 bg-white/[0.03] border border-amber-200 text-amber-800 rounded-xl text-xs font-bold hover:bg-amber-50 transition-all"
+                                                    className="w-full py-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-500/20 transition-all"
                                                 >
                                                     Buscar en todas las cuentas
                                                 </button>
@@ -286,7 +286,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                         <input
                                             type="text"
                                             placeholder="Pegar ID manual (ej. act_1234567890...)"
-                                            className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition-all font-mono"
+                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500 transition-all font-mono"
                                             onChange={(e) => {
                                                 const val = e.target.value.trim();
                                                 if (val) {

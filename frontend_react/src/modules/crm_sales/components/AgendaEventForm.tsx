@@ -103,8 +103,8 @@ export default function AgendaEventForm({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white/[0.03] rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-white/[0.04]">
           <h2 className="text-lg font-semibold text-white">
             {isEditing ? t('agenda_crm.form_edit') : t('agenda_crm.form_new')}
@@ -115,7 +115,7 @@ export default function AgendaEventForm({
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm">{error}</div>
+            <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20">{error}</div>
           )}
           <div>
             <label className="block text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
@@ -124,12 +124,12 @@ export default function AgendaEventForm({
             <select
               value={formData.seller_id || ''}
               onChange={(e) => setFormData({ ...formData, seller_id: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
-              <option value="">{t('agenda_crm.select_seller')}</option>
+              <option value="" className="bg-[#0d1117] text-white">{t('agenda_crm.select_seller')}</option>
               {sellers.map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={s.id} className="bg-[#0d1117] text-white">
                   {s.first_name} {s.last_name || ''}
                 </option>
               ))}
@@ -143,7 +143,7 @@ export default function AgendaEventForm({
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder={t('agenda_crm.title_placeholder')}
               required
             />
@@ -157,7 +157,7 @@ export default function AgendaEventForm({
                 type="datetime-local"
                 value={formData.start_datetime}
                 onChange={(e) => setFormData({ ...formData, start_datetime: e.target.value })}
-                className="w-full px-3 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
@@ -169,7 +169,7 @@ export default function AgendaEventForm({
                 type="datetime-local"
                 value={formData.end_datetime}
                 onChange={(e) => setFormData({ ...formData, end_datetime: e.target.value })}
-                className="w-full px-3 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
@@ -181,7 +181,7 @@ export default function AgendaEventForm({
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-white/[0.06] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               rows={3}
               placeholder={t('agenda_crm.notes_placeholder')}
             />
@@ -191,19 +191,19 @@ export default function AgendaEventForm({
               <button
                 type="button"
                 onClick={() => onDelete(initialData.id!).then(() => onClose())}
-                className="px-4 py-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10"
+                className="px-4 py-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 active:scale-95 transition-all"
               >
                 {t('agenda_crm.cancel_event')}
               </button>
             )}
             <div className="flex-1" />
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-white/[0.06] text-white/50 hover:bg-white/[0.02]">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-white/[0.06] text-white/70 hover:bg-white/[0.08] active:scale-95 transition-all">
               {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
             >
               {loading ? t('common.loading') : t('agenda_crm.save')}
             </button>

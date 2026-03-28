@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Clock, DollarSign, User, GripVertical, RefreshCw, Filter, LayoutGrid, List } from 'lucide-react';
-import api from '../../../api/axios';
+import api, { BACKEND_URL } from '../../../api/axios';
 import { parseTags } from '../../../utils/parseTags';
 import PageHeader from '../../../components/PageHeader';
 import { useTranslation } from '../../../context/LanguageContext';
 import ScoreBadge from '../../../components/leads/ScoreBadge';
+import { io, Socket } from 'socket.io-client';
 
 interface LeadStatus {
-  id: number;
+  id: string;
   name: string;
   code: string;
   color: string;
@@ -19,7 +20,7 @@ interface LeadStatus {
 }
 
 interface Lead {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
   phone_number: string;
@@ -27,12 +28,12 @@ interface Lead {
   company?: string;
   status: string;
   source?: string;
-  seller_id?: number;
+  seller_id?: string;
   seller_name?: string;
   created_at: string;
   updated_at?: string;
   last_activity_at?: string;
-  tags?: string[];
+  tags?: string[] | string;
   notes?: string;
   estimated_value?: number;
   score?: number;
@@ -44,10 +45,11 @@ export default function KanbanPipelineView() {
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -66,6 +68,56 @@ export default function KanbanPipelineView() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // WebSocket: real-time pipeline updates
+  useEffect(() => {
+    const wsUrl = BACKEND_URL.replace(/^http/, 'ws').replace(/\/+$/, '');
+    const socket = io(wsUrl, { transports: ['websocket', 'polling'], reconnection: true });
+    socketRef.current = socket;
+
+    // Lead status changed (by AI agent, another user, or API)
+    socket.on('LEAD_STATUS_CHANGED', (data: { lead_id: string; new_status: string; old_status: string; changed_by?: string }) => {
+      setLeads(prev => prev.map(l =>
+        String(l.id) === String(data.lead_id) ? { ...l, status: data.new_status } : l
+      ));
+    });
+
+    // Lead derived to setter/closer
+    socket.on('LEAD_DERIVED', (data: { lead_id: string; new_status?: string }) => {
+      if (data.new_status) {
+        setLeads(prev => prev.map(l =>
+          String(l.id) === String(data.lead_id) ? { ...l, status: data.new_status } : l
+        ));
+      }
+    });
+
+    // Lead taken by setter
+    socket.on('LEAD_TAKEN_BY_SETTER', (data: { lead_id: string; new_status?: string }) => {
+      if (data.new_status) {
+        setLeads(prev => prev.map(l =>
+          String(l.id) === String(data.lead_id) ? { ...l, status: data.new_status } : l
+        ));
+      }
+    });
+
+    // New lead created (via WhatsApp, Meta, etc.)
+    socket.on('NEW_LEAD', (data: Lead) => {
+      setLeads(prev => {
+        if (prev.find(l => String(l.id) === String(data.id))) return prev;
+        return [data, ...prev];
+      });
+    });
+
+    // Meta lead received
+    socket.on('META_LEAD_RECEIVED', (data: any) => {
+      fetchData(); // Refresh all leads
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [fetchData]);
+
   const getLeadsByStatus = (statusCode: string) =>
     leads.filter(l => {
       const leadStatus = l.status || 'nuevo';
@@ -78,8 +130,8 @@ export default function KanbanPipelineView() {
     return Math.floor((Date.now() - new Date(updated).getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  // Drag handlers
-  const handleDragStart = (e: React.DragEvent, leadId: number) => {
+  // Drag handlers (desktop)
+  const handleDragStart = (e: React.DragEvent, leadId: string) => {
     e.dataTransfer.setData('leadId', String(leadId));
     e.dataTransfer.effectAllowed = 'move';
     setDraggingId(leadId);
@@ -95,18 +147,13 @@ export default function KanbanPipelineView() {
     setDragOverColumn(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
-    e.preventDefault();
-    setDragOverColumn(null);
-    setDraggingId(null);
-
-    const leadId = parseInt(e.dataTransfer.getData('leadId'));
-    const lead = leads.find(l => l.id === leadId);
+  const moveLeadToStatus = async (leadId: string, newStatus: string) => {
+    const lead = leads.find(l => String(l.id) === String(leadId));
     if (!lead || lead.status === newStatus) return;
 
-    // Optimistic update
     const oldStatus = lead.status;
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    // Optimistic update with animation
+    setLeads(prev => prev.map(l => String(l.id) === String(leadId) ? { ...l, status: newStatus } : l));
     setUpdatingId(leadId);
 
     try {
@@ -114,13 +161,28 @@ export default function KanbanPipelineView() {
         new_status_id: newStatus,
         reason: 'Moved via Kanban pipeline',
       });
+      // Emit to other clients watching the pipeline
+      if (socketRef.current) {
+        socketRef.current.emit('LEAD_STATUS_CHANGED', {
+          lead_id: leadId,
+          old_status: oldStatus,
+          new_status: newStatus,
+        });
+      }
     } catch (err: any) {
-      // Revert on failure
       console.error('Failed to move lead:', err);
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: oldStatus } : l));
+      setLeads(prev => prev.map(l => String(l.id) === String(leadId) ? { ...l, status: oldStatus } : l));
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+    setDraggingId(null);
+    const leadId = e.dataTransfer.getData('leadId');
+    await moveLeadToStatus(leadId, newStatus);
   };
 
   const handleDragEnd = () => {
@@ -129,7 +191,49 @@ export default function KanbanPipelineView() {
   };
 
   // Touch drag for mobile
-  const touchLeadRef = useRef<{ id: number; startX: number; startY: number } | null>(null);
+  const touchLeadRef = useRef<{ id: string; startX: number; startY: number; element: HTMLElement } | null>(null);
+  const [touchDragStatus, setTouchDragStatus] = useState<string | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent, leadId: string) => {
+    const touch = e.touches[0];
+    touchLeadRef.current = {
+      id: leadId,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      element: e.currentTarget as HTMLElement,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchLeadRef.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchLeadRef.current.startX);
+    const dy = Math.abs(touch.clientY - touchLeadRef.current.startY);
+    // Only start drag if moved more horizontally than vertically
+    if (dx > 30 && dx > dy) {
+      e.preventDefault();
+      setDraggingId(touchLeadRef.current.id);
+      // Find which column we're over
+      const columns = document.querySelectorAll('[data-status-code]');
+      columns.forEach(col => {
+        const rect = col.getBoundingClientRect();
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right) {
+          setTouchDragStatus(col.getAttribute('data-status-code'));
+          setDragOverColumn(col.getAttribute('data-status-code'));
+        }
+      });
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (touchLeadRef.current && touchDragStatus && draggingId) {
+      await moveLeadToStatus(touchLeadRef.current.id, touchDragStatus);
+    }
+    touchLeadRef.current = null;
+    setTouchDragStatus(null);
+    setDraggingId(null);
+    setDragOverColumn(null);
+  };
 
   const getColumnValue = (statusCode: string) => {
     const columnLeads = getLeadsByStatus(statusCode);
@@ -189,7 +293,8 @@ export default function KanbanPipelineView() {
             return (
               <div
                 key={status.code}
-                className={`flex flex-col w-[280px] sm:w-[300px] shrink-0 rounded-2xl border transition-all duration-200
+                data-status-code={status.code}
+                className={`flex flex-col w-[280px] sm:w-[300px] shrink-0 rounded-2xl border transition-all duration-300
                   ${isOver
                     ? 'border-blue-500/40 bg-blue-500/[0.04] scale-[1.01]'
                     : 'border-white/[0.06] bg-white/[0.02]'
@@ -238,14 +343,19 @@ export default function KanbanPipelineView() {
                         <div
                           key={lead.id}
                           draggable
-                          onDragStart={(e) => handleDragStart(e, lead.id)}
+                          onDragStart={(e) => handleDragStart(e, String(lead.id))}
                           onDragEnd={handleDragEnd}
-                          onClick={() => navigate(`/crm/leads/${lead.id}`)}
+                          onTouchStart={(e) => handleTouchStart(e, String(lead.id))}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                          onClick={() => {
+                            if (!draggingId) navigate(`/crm/leads/${lead.id}`);
+                          }}
                           className={`group relative bg-white/[0.03] rounded-xl border border-white/[0.06] p-3 cursor-grab
                             hover:bg-white/[0.05] hover:border-white/[0.10]
                             active:cursor-grabbing active:scale-[0.97]
-                            transition-all duration-200 touch-manipulation
-                            ${isDragging ? 'opacity-40 scale-95' : ''}
+                            transition-all duration-500 ease-in-out touch-manipulation
+                            ${isDragging && String(draggingId) === String(lead.id) ? 'opacity-40 scale-95 rotate-1' : ''}
                             ${isUpdating ? 'animate-pulse ring-2 ring-blue-500/30' : ''}
                           `}
                         >

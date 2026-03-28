@@ -4,6 +4,7 @@ from uuid import UUID
 
 from core.security import verify_admin_token, get_resolved_tenant_id
 from db import db
+from core.socket_notifications import sio
 from services.lead_status_service import LeadStatusService
 from services.lead_history_service import LeadHistoryService
 from modules.crm_sales.status_models import (
@@ -66,6 +67,10 @@ async def update_lead_status(
     """Actualiza el estado de un lead y registra el historial."""
     tenant_id = await get_resolved_tenant_id(user_data)
     try:
+        # Get old status before change
+        lead_row = await db.fetchrow("SELECT status FROM leads WHERE id = $1 AND tenant_id = $2", lead_id, tenant_id)
+        old_status = lead_row["status"] if lead_row else None
+
         updated_status = await status_service.change_lead_status(
             lead_id=lead_id,
             tenant_id=tenant_id,
@@ -73,6 +78,18 @@ async def update_lead_status(
             comment=status_update.reason,
             user_id=user_data["user_id"] if isinstance(user_data, dict) else (user_data.user_id if hasattr(user_data, 'user_id') else None)
         )
+
+        # Emit real-time event so all pipeline UIs update
+        try:
+            await sio.emit('LEAD_STATUS_CHANGED', {
+                'lead_id': str(lead_id),
+                'old_status': old_status,
+                'new_status': status_update.new_status_id,
+                'tenant_id': tenant_id,
+            })
+        except Exception:
+            pass  # Don't fail the request if socket emit fails
+
         return updated_status
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

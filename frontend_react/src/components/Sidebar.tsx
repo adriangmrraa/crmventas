@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -22,6 +22,25 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 
+/* ── Unsplash thumbnails per menu section ── */
+const SIDEBAR_IMAGES: Record<string, string> = {
+  dashboard:      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60',
+  leads:          'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=60',
+  pipeline:       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=60',
+  meta_leads:     'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=60',
+  clients:        'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=60',
+  crm_agenda:     'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&q=60',
+  chats:          'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=400&q=60',
+  prospecting:    'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=60',
+  analytics:      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60',
+  marketing:      'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&q=60',
+  hsm_automation: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&q=60',
+  sellers:        'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=400&q=60',
+  tenants:        'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=60',
+  profile:        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=60',
+  settings:       'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=60',
+};
+
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -34,26 +53,65 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   const { user, logout } = useAuth();
   const { t } = useTranslation();
 
-  // Single-niche: solo CRM Ventas (no sales)
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [touchedId, setTouchedId] = useState<string | null>(null);
+  const [tooltipId, setTooltipId] = useState<string | null>(null);
+  const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ── Preload all sidebar images ── */
+  useEffect(() => {
+    Object.values(SIDEBAR_IMAGES).forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
+  const isHovered = (id: string) => hoveredId === id || touchedId === id;
+
+  const handleMouseEnter = (id: string) => {
+    setHoveredId(id);
+    tooltipTimer.current = setTimeout(() => setTooltipId(id), 600);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredId(null);
+    setTooltipId(null);
+    if (tooltipTimer.current) {
+      clearTimeout(tooltipTimer.current);
+      tooltipTimer.current = null;
+    }
+  };
+
+  const handleTouchStart = (id: string) => {
+    setTouchedId(id);
+    tooltipTimer.current = setTimeout(() => setTooltipId(id), 500);
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => setTouchedId(null), 300);
+    setTooltipId(null);
+    if (tooltipTimer.current) {
+      clearTimeout(tooltipTimer.current);
+      tooltipTimer.current = null;
+    }
+  };
+
   const menuItems = [
-    { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    { id: 'pipeline', labelKey: 'nav.pipeline' as const, icon: <LayoutGrid size={20} />, path: '/crm/pipeline', roles: ['ceo', 'setter', 'closer'] },
-    { id: 'meta_leads', labelKey: 'nav.meta_leads' as const, icon: <Megaphone size={20} />, path: '/crm/meta-leads', roles: ['ceo', 'setter', 'closer', 'secretary'] },
-    { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={20} />, path: '/crm/prospeccion', roles: ['ceo', 'setter', 'closer'] },
-    { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    // Analytics
-    { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={20} />, path: '/crm/analytics', roles: ['ceo'] },
-    // Marketing Items
-    { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={20} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'] },
-    { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={20} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'] },
-    // Admin Items
-    { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={20} />, path: '/crm/vendedores', roles: ['ceo'] },
-    { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={20} />, path: '/empresas', roles: ['ceo'] },
-    { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={20} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
-    { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={20} />, path: '/configuracion', roles: ['ceo'] },
+    { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={17} />, path: '/', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Metricas clave de ventas, leads y conversion en tiempo real' },
+    { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={17} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Todos los leads con estado, origen y seguimiento' },
+    { id: 'pipeline', labelKey: 'nav.pipeline' as const, icon: <LayoutGrid size={17} />, path: '/crm/pipeline', roles: ['ceo', 'setter', 'closer'], hint: 'Kanban visual de oportunidades por etapa de venta' },
+    { id: 'meta_leads', labelKey: 'nav.meta_leads' as const, icon: <Megaphone size={17} />, path: '/crm/meta-leads', roles: ['ceo', 'setter', 'closer', 'secretary'], hint: 'Leads entrantes desde formularios de Meta Ads' },
+    { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={17} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Base de clientes convertidos con historial de compras' },
+    { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={17} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Agenda de llamadas, demos y reuniones del equipo' },
+    { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={17} />, path: '/crm/prospeccion', roles: ['ceo', 'setter', 'closer'], hint: 'Busqueda activa de prospectos y enriquecimiento de datos' },
+    { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={17} />, path: '/chats', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Conversaciones de WhatsApp e Instagram en un solo lugar' },
+    { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={17} />, path: '/crm/analytics', roles: ['ceo'], hint: 'Rendimiento por vendedor, canal y campana' },
+    { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={17} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'], hint: 'ROI de campanas publicitarias con atribucion de leads' },
+    { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={17} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'], hint: 'Plantillas HSM y secuencias de automatizacion' },
+    { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
+    { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={17} />, path: '/empresas', roles: ['ceo'], hint: 'Empresas y organizaciones registradas en la plataforma' },
+    { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={17} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Tu perfil, cuenta y preferencias personales' },
+    { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={17} />, path: '/configuracion', roles: ['ceo'], hint: 'Configuracion general, integraciones y credenciales' },
   ];
 
   const filteredItems = menuItems.filter(item =>
@@ -72,10 +130,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     return location.pathname === path;
   };
 
+  const isCollapsedDesktop = collapsed && !onCloseMobile;
+
   return (
-    <aside className="h-full bg-medical-900 text-white flex flex-col relative shadow-xl overflow-hidden">
+    <aside className="h-full bg-[#0a0e1a] text-white flex flex-col relative shadow-2xl overflow-hidden">
       {/* Logo Area */}
-      <div className={`h-16 flex items-center ${collapsed && !onCloseMobile ? 'justify-center' : 'px-6'} border-b border-medical-800 shrink-0`}>
+      <div className={`h-16 flex items-center ${isCollapsedDesktop ? 'justify-center' : 'px-6'} border-b border-white/[0.06] shrink-0`}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
             <Stethoscope size={18} className="text-white" />
@@ -87,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
           )}
         </div>
 
-        {/* Mobile Close Button - Visible only in drawer mode */}
+        {/* Mobile Close Button */}
         {onCloseMobile && (
           <button
             onClick={onCloseMobile}
@@ -103,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
       {!onCloseMobile && (
         <button
           onClick={onToggle}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white/[0.08] rounded-full shadow-lg items-center justify-center text-white/70 hover:bg-white/[0.15] transition-all z-20 border border-white/[0.10]"
+          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white/90 text-[#0a0e1a] rounded-full shadow-lg items-center justify-center hover:bg-white transition-all z-20"
           aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -111,52 +171,173 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
       )}
 
       {/* Navigation */}
-      <nav className={`flex-1 py-4 overflow-y-auto overflow-x-hidden ${collapsed && !onCloseMobile ? 'px-2' : 'px-3'}`}>
+      <nav className={`flex-1 py-4 overflow-y-auto overflow-x-hidden ${isCollapsedDesktop ? 'px-2' : 'px-3'}`}>
         {filteredItems.map((item) => {
-          const labelKey = item.labelKey;
+          const active = isActive(item.path);
+          const hovered = isHovered(item.id);
+          const showImage = active || hovered;
+          const showTooltip = tooltipId === item.id;
+
           return (
-            <button
-              key={item.id}
-              onClick={() => {
-                navigate(item.path);
-                onCloseMobile?.();
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 group ${isActive(item.path)
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:bg-white/[0.06] hover:text-white'
-                }`}
-              title={collapsed && !onCloseMobile ? t(labelKey) : undefined}
-            >
-              <span className="flex-shrink-0 group-hover:scale-110 transition-transform">{item.icon}</span>
-              {(!collapsed || onCloseMobile) && <span className="font-medium text-sm truncate">{t(labelKey)}</span>}
-            </button>
+            <div key={item.id} className="relative mb-1">
+              <button
+                onClick={() => {
+                  navigate(item.path);
+                  onCloseMobile?.();
+                }}
+                onMouseEnter={() => handleMouseEnter(item.id)}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={() => handleTouchStart(item.id)}
+                onTouchEnd={handleTouchEnd}
+                className={`
+                  w-full relative overflow-hidden rounded-xl
+                  ${isCollapsedDesktop ? 'h-10 justify-center px-0' : 'h-11 px-3'}
+                  flex items-center gap-3 transition-all duration-200
+                  ${active
+                    ? 'ring-1 ring-white/[0.12] shadow-lg shadow-white/[0.03]'
+                    : hovered
+                      ? 'ring-1 ring-white/[0.06]'
+                      : ''
+                  }
+                `}
+                style={{
+                  transform: hovered ? 'scale(1.03)' : 'scale(1)',
+                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+              >
+                {/* Background image layer */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center pointer-events-none"
+                  style={{
+                    backgroundImage: SIDEBAR_IMAGES[item.id] ? `url(${SIDEBAR_IMAGES[item.id]})` : undefined,
+                    filter: 'blur(1px)',
+                    opacity: showImage ? 0.12 : 0,
+                    transition: 'opacity 500ms ease-out',
+                  }}
+                />
+
+                {/* Dark overlay */}
+                <div
+                  className={`absolute inset-0 pointer-events-none transition-all duration-500 ${
+                    active ? 'bg-white/[0.08]' : hovered ? 'bg-white/[0.04]' : 'bg-transparent'
+                  }`}
+                />
+
+                {/* Gradient edge on hover/active */}
+                {showImage && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.06] to-transparent pointer-events-none" />
+                )}
+
+                {/* Active indicator bar */}
+                {active && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-blue-400 rounded-r-full" />
+                )}
+
+                {/* Content */}
+                <span className={`flex-shrink-0 relative z-10 ${active ? 'text-white' : hovered ? 'text-white' : 'text-white/40'}`}>
+                  {item.icon}
+                </span>
+                {(!collapsed || onCloseMobile) && (
+                  <span className={`font-medium text-[13px] truncate relative z-10 ${active ? 'text-white' : hovered ? 'text-white' : 'text-white/40'}`}>
+                    {t(item.labelKey)}
+                  </span>
+                )}
+              </button>
+
+              {/* Tooltip */}
+              {showTooltip && item.hint && (
+                <div
+                  className="absolute left-full top-0 ml-3 z-50 w-56 bg-[#0d1117] border border-white/[0.08] shadow-2xl rounded-xl px-3.5 py-2.5 pointer-events-none"
+                  style={{
+                    animation: 'sidebar-tooltip-in 0.15s ease-out forwards',
+                  }}
+                >
+                  {/* Arrow */}
+                  <div
+                    className="absolute top-3.5 -left-[5px] w-0 h-0"
+                    style={{
+                      borderTop: '5px solid transparent',
+                      borderBottom: '5px solid transparent',
+                      borderRight: '5px solid rgba(255,255,255,0.08)',
+                    }}
+                  />
+                  <p className="text-[11px] font-semibold text-white/80">{t(item.labelKey)}</p>
+                  <p className="text-[10px] text-white/40 leading-relaxed mt-0.5">{item.hint}</p>
+                </div>
+              )}
+            </div>
           );
         })}
 
-        <button
-          onClick={logout}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mt-4 text-red-400 hover:bg-red-500/10 group`}
-          title={collapsed && !onCloseMobile ? t('nav.logout') : undefined}
-        >
-          <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
-          {(!collapsed || onCloseMobile) && <span className="font-medium text-sm">{t('nav.logout')}</span>}
-        </button>
+        {/* Logout button */}
+        <div className="relative mt-4">
+          <button
+            onClick={logout}
+            onMouseEnter={() => setHoveredId('logout')}
+            onMouseLeave={() => setHoveredId(null)}
+            className={`
+              w-full relative overflow-hidden rounded-xl
+              ${isCollapsedDesktop ? 'h-10 justify-center px-0' : 'h-11 px-3'}
+              flex items-center gap-3 transition-all duration-200 group
+            `}
+            style={{
+              transform: isHovered('logout') ? 'scale(1.03)' : 'scale(1)',
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            title={isCollapsedDesktop ? t('nav.logout') : undefined}
+          >
+            {/* Logout hover overlay */}
+            <div
+              className={`absolute inset-0 pointer-events-none transition-all duration-300 rounded-xl ${
+                isHovered('logout') ? 'bg-red-500/[0.08]' : 'bg-transparent'
+              }`}
+            />
+
+            <LogOut
+              size={17}
+              className={`flex-shrink-0 relative z-10 group-hover:rotate-12 transition-transform ${
+                isHovered('logout') ? 'text-red-400' : 'text-red-400/60'
+              }`}
+            />
+            {(!collapsed || onCloseMobile) && (
+              <span className={`font-medium text-[13px] relative z-10 ${
+                isHovered('logout') ? 'text-red-400' : 'text-red-400/60'
+              }`}>
+                {t('nav.logout')}
+              </span>
+            )}
+          </button>
+        </div>
       </nav>
 
       {/* Footer Info */}
       {(!collapsed || onCloseMobile) && (
-        <div className="p-4 border-t border-medical-800 bg-medical-900/50 shrink-0">
+        <div className="p-4 border-t border-white/[0.06] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-medical-600 flex items-center justify-center text-xs font-medium uppercase shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-xs font-medium uppercase shrink-0">
               {user?.email?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-white">{user?.email}</p>
+              <p className="text-sm font-medium truncate text-white/70">{user?.email}</p>
               <p className="text-[10px] text-white/40 truncate uppercase tracking-wider font-semibold">{user?.role}</p>
             </div>
           </div>
         </div>
       )}
+
+      {/* Tooltip animation keyframe */}
+      <style>{`
+        @keyframes sidebar-tooltip-in {
+          from {
+            opacity: 0;
+            transform: translateX(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </aside>
   );
 };

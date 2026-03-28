@@ -556,6 +556,41 @@ class Database:
             EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE 'Parche 15: Error: %', SQLERRM;
             END $$;
+            """,
+
+            # Parche 16: Task Management + lead import tracking
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'lead_tasks') THEN
+                    CREATE TABLE lead_tasks (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+                        seller_id INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
+                        title TEXT NOT NULL,
+                        description TEXT,
+                        due_date TIMESTAMPTZ,
+                        status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
+                        priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+                        completed_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                    CREATE INDEX idx_lead_tasks_tenant ON lead_tasks (tenant_id);
+                    CREATE INDEX idx_lead_tasks_lead ON lead_tasks (lead_id);
+                    CREATE INDEX idx_lead_tasks_pending ON lead_tasks (tenant_id, status) WHERE status != 'completed';
+                    RAISE NOTICE 'Parche 16: lead_tasks table created';
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='company') THEN
+                    ALTER TABLE leads ADD COLUMN company TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='estimated_value') THEN
+                    ALTER TABLE leads ADD COLUMN estimated_value DECIMAL(12,2) DEFAULT 0;
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 16: Error: %', SQLERRM;
+            END $$;
             """
         ]
 

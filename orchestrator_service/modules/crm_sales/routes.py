@@ -7,7 +7,7 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request, UploadFile, File
 from typing import List, Optional, Any
 from uuid import UUID
 import httpx
@@ -1958,3 +1958,203 @@ async def get_velocity(days: int = 90, user=Depends(verify_admin_token)):
     from services.sales_analytics_service import get_velocity_data
     tenant_id = user.get("tenant_id", 1)
     return await get_velocity_data(db.pool, tenant_id, days)
+
+
+# =============================================================================
+# TASK MANAGEMENT (per lead)
+# =============================================================================
+
+@router.get("/tasks")
+async def list_tasks(lead_id: str = None, status: str = None, limit: int = 50, user=Depends(verify_admin_token)):
+    """List tasks, optionally filtered by lead_id or status."""
+    tenant_id = user.get("tenant_id", 1)
+    query = "SELECT * FROM lead_tasks WHERE tenant_id = $1"
+    params = [tenant_id]
+    if lead_id:
+        params.append(uuid.UUID(lead_id))
+        query += f" AND lead_id = ${len(params)}"
+    if status:
+        params.append(status)
+        query += f" AND status = ${len(params)}"
+    query += " ORDER BY CASE WHEN status='completed' THEN 1 ELSE 0 END, due_date ASC NULLS LAST LIMIT $" + str(len(params) + 1)
+    params.append(limit)
+    rows = await db.pool.fetch(query, *params)
+    return [dict(r) for r in rows]
+
+
+@router.post("/tasks")
+async def create_task(body: dict, user=Depends(verify_admin_token)):
+    """Create a task linked to a lead."""
+    tenant_id = user.get("tenant_id", 1)
+    lead_id = body.get("lead_id")
+    row = await db.pool.fetchrow("""
+        INSERT INTO lead_tasks (tenant_id, lead_id, seller_id, title, description, due_date, priority)
+        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    """, tenant_id,
+        uuid.UUID(lead_id) if lead_id else None,
+        body.get("seller_id"),
+        body.get("title", ""),
+        body.get("description"),
+        body.get("due_date"),
+        body.get("priority", "medium"),
+    )
+    return dict(row)
+
+
+@router.patch("/tasks/{task_id}")
+async def update_task(task_id: int, body: dict, user=Depends(verify_admin_token)):
+    """Update task fields."""
+    tenant_id = user.get("tenant_id", 1)
+    sets = []
+    params = [tenant_id, task_id]
+    for field in ["title", "description", "due_date", "status", "priority", "seller_id"]:
+        if field in body:
+            params.append(body[field])
+            sets.append(f"{field} = ${len(params)}")
+    if not sets:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    if body.get("status") == "completed":
+        sets.append("completed_at = NOW()")
+    sets.append("updated_at = NOW()")
+    query = f"UPDATE lead_tasks SET {', '.join(sets)} WHERE tenant_id = $1 AND id = $2 RETURNING *"
+    row = await db.pool.fetchrow(query, *params)
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return dict(row)
+
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(task_id: int, user=Depends(verify_admin_token)):
+    """Delete a task."""
+    tenant_id = user.get("tenant_id", 1)
+    result = await db.pool.execute("DELETE FROM lead_tasks WHERE id = $1 AND tenant_id = $2", task_id, tenant_id)
+    if result == "DELETE 0":
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {"status": "deleted"}
+
+
+# =============================================================================
+# BULK LEAD IMPORT (CSV)
+# =============================================================================
+
+@router.post("/leads/import/preview")
+async def import_preview(file: UploadFile = File(...), user=Depends(verify_admin_token)):
+    """Preview CSV import: auto-detect columns, show sample rows, check duplicates."""
+    import csv
+    import io
+    tenant_id = user.get("tenant_id", 1)
+
+    content = await file.read()
+    # Try UTF-8 first, fallback to latin-1
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+
+    if len(rows) > 1000:
+        raise HTTPException(status_code=400, detail="Max 1000 rows per import")
+
+    # Column aliases (Spanish → internal)
+    ALIASES = {
+        "nombre": "first_name", "first_name": "first_name", "name": "first_name",
+        "apellido": "last_name", "last_name": "last_name", "surname": "last_name",
+        "telefono": "phone_number", "phone": "phone_number", "tel": "phone_number", "celular": "phone_number",
+        "email": "email", "correo": "email", "mail": "email",
+        "empresa": "company", "company": "company", "compañia": "company",
+        "fuente": "source", "source": "source", "origen": "source",
+        "notas": "notes", "notes": "notes", "comentarios": "notes",
+        "valor": "estimated_value", "value": "estimated_value", "monto": "estimated_value",
+    }
+
+    # Map columns
+    headers = list(reader.fieldnames or [])
+    mapped = {}
+    unmapped = []
+    for h in headers:
+        key = h.lower().strip()
+        if key in ALIASES:
+            mapped[h] = ALIASES[key]
+        else:
+            unmapped.append(h)
+
+    # Check duplicates by phone
+    phones = [r.get(next((h for h, v in mapped.items() if v == "phone_number"), ""), "") for r in rows]
+    phones = [p for p in phones if p]
+    existing = await db.pool.fetch(
+        "SELECT phone_number FROM leads WHERE tenant_id = $1 AND phone_number = ANY($2::text[])",
+        tenant_id, phones
+    )
+    existing_phones = {r["phone_number"] for r in existing}
+
+    return {
+        "total_rows": len(rows),
+        "headers": headers,
+        "mapped_columns": mapped,
+        "unmapped_columns": unmapped,
+        "sample_rows": rows[:5],
+        "duplicates_found": len(existing_phones),
+        "duplicate_phones": list(existing_phones)[:10],
+    }
+
+
+@router.post("/leads/import/execute")
+async def import_execute(body: dict, user=Depends(verify_admin_token)):
+    """Execute CSV import with mapped columns."""
+    tenant_id = user.get("tenant_id", 1)
+    rows = body.get("rows", [])
+    mapping = body.get("mapping", {})
+    on_duplicate = body.get("on_duplicate", "skip")  # "skip" or "update"
+
+    created = 0
+    updated = 0
+    skipped = 0
+
+    for row in rows[:1000]:
+        data = {}
+        for csv_col, db_col in mapping.items():
+            if csv_col in row:
+                data[db_col] = row[csv_col]
+
+        phone = data.get("phone_number", "").strip()
+        if not phone:
+            skipped += 1
+            continue
+
+        existing = await db.pool.fetchval(
+            "SELECT id FROM leads WHERE tenant_id = $1 AND phone_number = $2", tenant_id, phone
+        )
+
+        if existing:
+            if on_duplicate == "update":
+                sets = []
+                params = [tenant_id, existing]
+                for field in ["first_name", "last_name", "email", "company", "notes"]:
+                    if field in data and data[field]:
+                        params.append(data[field])
+                        sets.append(f"{field} = COALESCE(NULLIF({field}, ''), ${len(params)})")
+                if sets:
+                    await db.pool.execute(
+                        f"UPDATE leads SET {', '.join(sets)}, updated_at = NOW() WHERE tenant_id = $1 AND id = $2",
+                        *params
+                    )
+                    updated += 1
+                else:
+                    skipped += 1
+            else:
+                skipped += 1
+        else:
+            await db.pool.execute("""
+                INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email, company, source, notes, estimated_value)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            """, tenant_id, phone,
+                data.get("first_name"), data.get("last_name"),
+                data.get("email"), data.get("company"),
+                data.get("source", "import"), data.get("notes"),
+                float(data.get("estimated_value", 0) or 0),
+            )
+            created += 1
+
+    return {"created": created, "updated": updated, "skipped": skipped, "total": len(rows)}

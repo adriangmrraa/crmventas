@@ -32,6 +32,18 @@ export interface CrmAgendaEvent {
   appointment_datetime?: string;
 }
 
+const SOURCE_COLORS: Record<string, { hex: string; label: string }> = {
+  ai: { hex: '#3b82f6', label: 'Ventas IA' },
+  nova: { hex: '#a855f7', label: 'Nova' },
+  manual: { hex: '#22c55e', label: 'Manual' },
+  gcalendar: { hex: '#6b7280', label: 'GCal' },
+};
+
+const getSourceColor = (source: string | undefined): string => {
+  if (!source) return SOURCE_COLORS.ai.hex;
+  return SOURCE_COLORS[source]?.hex || SOURCE_COLORS.ai.hex;
+};
+
 export default function CrmAgendaView() {
   const { user } = useAuth();
   const { t, language } = useTranslation();
@@ -145,8 +157,8 @@ export default function CrmAgendaView() {
     title: evt.title,
     start: evt.start_datetime,
     end: evt.end_datetime,
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: getSourceColor(evt.source),
+    borderColor: getSourceColor(evt.source),
     extendedProps: { ...evt, eventType: 'agenda_event' },
   }));
 
@@ -309,6 +321,14 @@ export default function CrmAgendaView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex gap-2 sm:gap-3 bg-white/[0.04] px-3 py-1.5 rounded-full border border-white/[0.06]">
+              {Object.entries(SOURCE_COLORS).map(([key, val]) => (
+                <div key={key} className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: val.hex }} />
+                  <span className="text-[10px] text-white/50">{val.label}</span>
+                </div>
+              ))}
+            </div>
             {isBackgroundSyncing && (
               <RefreshCw size={16} className="text-blue-500 animate-spin opacity-60" />
             )}
@@ -350,6 +370,8 @@ export default function CrmAgendaView() {
                   initialView="timeGridWeek"
                   editable={false}
                   selectable={true}
+                  selectMirror={true}
+                  firstDay={1}
                   dayMaxEvents={true}
                   weekends={true}
                   nowIndicator={true}

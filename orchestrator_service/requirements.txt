@@ -42,4 +42,5 @@ python-engineio==4.9.0
 asyncpg==0.29.0
 redis==5.0.1
 alembic
+websockets
 

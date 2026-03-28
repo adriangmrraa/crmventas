@@ -9,7 +9,7 @@ import socketio
 from datetime import datetime
 from typing import Optional, List, Any
 
-from fastapi import FastAPI, Request, Header, HTTPException, Depends
+from fastapi import FastAPI, Request, Header, HTTPException, Depends, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -400,6 +400,176 @@ async def shutdown_event():
 async def emit_event_shim(event: str, data: dict):
     await sio.emit(event, data)
 app.state.emit_appointment_event = emit_event_shim
+
+# =============================================================================
+# NOVA VOICE — WebSocket Handler (CRM Sales)
+# =============================================================================
+
+@app.websocket("/public/nova/voice")
+async def nova_voice_crm(websocket: WebSocket):
+    """Nova Voice Assistant for CRM Sales — WebSocket bridge to OpenAI Realtime API."""
+    import json as json_mod
+
+    # Parse query params
+    query_params = dict(websocket.query_params)
+    token = query_params.get("token", "")
+    tenant_id_str = query_params.get("tenant_id", "1")
+    page = query_params.get("page", "dashboard")
+
+    # Validate JWT
+    try:
+        from auth import decode_token
+        payload = decode_token(token)
+        user_id = payload.get("user_id", "")
+        user_role = payload.get("role", "ceo")
+        tenant_id = int(payload.get("tenant_id", tenant_id_str))
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    await websocket.accept()
+    logger.info(f"🎙️ NOVA CRM: Connected tenant={tenant_id} role={user_role} page={page}")
+
+    # Get model from DB config
+    model = "gpt-4o-realtime-preview"
+    try:
+        from dashboard.config_manager import get_config
+        model = await get_config(db.pool, tenant_id, "MODEL_NOVA_VOICE", "gpt-4o-realtime-preview")
+    except Exception:
+        pass
+
+    # Build system prompt
+    system_prompt = f"""IDIOMA: Espanol argentino con voseo. NUNCA cambies de idioma.
+
+Sos Nova, la inteligencia artificial de ventas del CRM. Sos como Jarvis pero para un equipo de ventas.
+Pagina: {page}. Rol: {user_role}. Tenant: {tenant_id}.
+
+PRINCIPIO: Ejecutar primero, hablar despues. Tu PRIMER instinto ante cualquier pedido es ejecutar una tool.
+
+TOOLS (20):
+LEADS: buscar_lead, ver_lead, registrar_lead, actualizar_lead, cambiar_estado_lead
+PIPELINE: ver_pipeline, mover_lead_etapa, resumen_pipeline, leads_por_etapa
+AGENDA: ver_agenda_hoy, agendar_llamada, proxima_llamada
+ANALYTICS: resumen_ventas, rendimiento_vendedor, conversion_rate
+NAVEGACION: ir_a_pagina, ir_a_lead
+COMUNICACION: ver_chats_recientes, enviar_whatsapp, ver_sellers
+
+REGLAS:
+- Ejecutar tools SIN confirmacion intermedia
+- Sin dato → inferilo o preguntá UNA vez
+- NUNCA inventes datos. SIEMPRE tools.
+- Formato: 2-3 oraciones breves. Montos: $15.000.
+"""
+
+    # Import tools
+    from services.nova_tools_crm import NOVA_CRM_TOOLS_SCHEMA, execute_nova_crm_tool
+
+    # Connect to OpenAI Realtime
+    import websockets
+    openai_key = os.getenv("OPENAI_API_KEY", "")
+    openai_url = f"wss://api.openai.com/v1/realtime?model={model}"
+
+    try:
+        async with websockets.connect(
+            openai_url,
+            extra_headers={
+                "Authorization": f"Bearer {openai_key}",
+                "OpenAI-Beta": "realtime=v1",
+            },
+        ) as openai_ws:
+            # Send session config
+            session_config = {
+                "type": "session.update",
+                "session": {
+                    "modalities": ["audio", "text"],
+                    "instructions": system_prompt,
+                    "voice": "alloy",
+                    "input_audio_format": "pcm16",
+                    "output_audio_format": "pcm16",
+                    "tools": NOVA_CRM_TOOLS_SCHEMA,
+                    "tool_choice": "auto",
+                    "temperature": 0.7,
+                },
+            }
+            await openai_ws.send(json_mod.dumps(session_config))
+            logger.info(f"🎙️ NOVA CRM: session.update sent with {len(NOVA_CRM_TOOLS_SCHEMA)} tools")
+
+            async def relay_browser_to_openai():
+                """Forward browser audio/text to OpenAI."""
+                try:
+                    async for message in websocket.iter_bytes():
+                        try:
+                            data = json_mod.loads(message)
+                            await openai_ws.send(json_mod.dumps(data))
+                        except (json_mod.JSONDecodeError, ValueError):
+                            # Raw audio bytes
+                            import base64
+                            audio_b64 = base64.b64encode(message).decode()
+                            await openai_ws.send(json_mod.dumps({
+                                "type": "input_audio_buffer.append",
+                                "audio": audio_b64,
+                            }))
+                except Exception as e:
+                    logger.info(f"🎙️ NOVA CRM: Browser disconnected: {e}")
+
+            async def relay_openai_to_browser():
+                """Forward OpenAI responses to browser, handle tool calls."""
+                try:
+                    async for message in openai_ws:
+                        data = json_mod.loads(message)
+                        event_type = data.get("type", "")
+
+                        # Handle tool calls
+                        if event_type == "response.function_call_arguments.done":
+                            tool_name = data.get("name", "")
+                            tool_args_str = data.get("arguments", "{}")
+                            call_id = data.get("call_id", "")
+
+                            try:
+                                tool_args = json_mod.loads(tool_args_str)
+                            except:
+                                tool_args = {}
+
+                            logger.info(f"🎙️ NOVA CRM TOOL: {tool_name}({tool_args})")
+
+                            # Execute tool
+                            result = await execute_nova_crm_tool(
+                                tool_name, tool_args, tenant_id, user_role, user_id
+                            )
+
+                            logger.info(f"🎙️ NOVA CRM RESULT: {tool_name} → {result[:100]}")
+
+                            # Send result back to OpenAI
+                            await openai_ws.send(json_mod.dumps({
+                                "type": "conversation.item.create",
+                                "item": {
+                                    "type": "function_call_output",
+                                    "call_id": call_id,
+                                    "output": result,
+                                },
+                            }))
+                            await openai_ws.send(json_mod.dumps({
+                                "type": "response.create",
+                            }))
+
+                        # Forward everything to browser
+                        await websocket.send_text(json_mod.dumps(data))
+
+                except Exception as e:
+                    logger.info(f"🎙️ NOVA CRM: OpenAI disconnected: {e}")
+
+            # Run both relays concurrently
+            await asyncio.gather(
+                relay_browser_to_openai(),
+                relay_openai_to_browser(),
+            )
+
+    except Exception as e:
+        logger.error(f"🎙️ NOVA CRM ERROR: {e}")
+        try:
+            await websocket.close()
+        except:
+            pass
 
 # --- MAIN ENTRYPOINT (For Uvicorn) ---
 final_app = socketio.ASGIApp(sio, app)

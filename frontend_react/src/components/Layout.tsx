@@ -8,6 +8,7 @@ import { BACKEND_URL } from '../api/axios';
 import { AlertCircle, X, HelpCircle } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import OnboardingGuide from './OnboardingGuide';
+import { NovaWidget } from './NovaWidget';
 import axios from 'axios';
 import { GlobalTopBar, ContextualSubheader, StatusAlertsCluster } from './Header';
 import type { BreadcrumbItem } from './Header/types';
@@ -194,6 +195,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* Onboarding Guide */}
+      {/* Nova AI Voice Widget */}
+      <NovaWidget />
 
       {/* Onboarding Guide */}
       <OnboardingGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />

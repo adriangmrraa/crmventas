@@ -48,7 +48,7 @@ WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_servic
 # LEADS ENDPOINTS
 # ============================================
 
-@router.get("/leads", response_model=List[LeadResponse])
+@router.get("/leads")
 @audit_access("list_leads")
 @limiter.limit("100/minute")
 async def list_leads(

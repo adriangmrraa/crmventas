@@ -274,6 +274,41 @@ async def list_users(
     return {"success": True, "count": len(users), "users": users}
 
 
+# ─── 3.5 Migrate Lead Statuses from English to Spanish ────────────────────────
+
+@router.post("/admin/setup/migrate-lead-statuses")
+async def migrate_lead_statuses(x_admin_token: str = Header(None)):
+    """Migrates leads with English status codes to Spanish codes."""
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=500, detail="ADMIN_TOKEN not configured.")
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid X-Admin-Token.")
+
+    status_map = {
+        "new": "nuevo",
+        "contacted": "contactado",
+        "interested": "calificado",
+        "qualified": "calificado",
+        "negotiation": "negociacion",
+        "closed_won": "cerrado_ganado",
+        "closed_lost": "cerrado_perdido",
+        "follow_up": "seguimiento_pendiente",
+    }
+
+    total_updated = 0
+    for old_status, new_status in status_map.items():
+        result = await db.pool.execute(
+            "UPDATE leads SET status = $1 WHERE status = $2",
+            new_status, old_status,
+        )
+        count = int(result.split(" ")[-1]) if result else 0
+        if count > 0:
+            total_updated += count
+            logger.info(f"Migrated {count} leads from '{old_status}' → '{new_status}'")
+
+    return {"success": True, "total_updated": total_updated, "mappings": status_map}
+
+
 # ─── 4. Seed Demo Leads (admin token only) ─────────────────────────────────────
 
 @router.post("/admin/setup/seed-demo-leads")
@@ -297,14 +332,16 @@ async def seed_demo_leads(x_admin_token: str = Header(None)):
         raise HTTPException(status_code=404, detail="Tenant 'Codexy' not found. Run /admin/setup/seed-team first.")
     tenant_id = tenant_row["id"]
 
-    # Idempotent check
-    existing_count = await db.fetchval("SELECT COUNT(*) FROM leads WHERE tenant_id = $1", tenant_id)
-    if existing_count and existing_count > 0:
+    # Check if demo leads specifically exist (by phone prefix +549115500)
+    demo_count = await db.fetchval(
+        "SELECT COUNT(*) FROM leads WHERE tenant_id = $1 AND phone_number LIKE '+549115500%'", tenant_id
+    )
+    if demo_count and demo_count >= 18:
         return {
             "success": True,
-            "message": f"Leads already exist ({existing_count} found). Skipping seed.",
+            "message": f"Demo leads already exist ({demo_count} found). Skipping seed.",
             "created": 0,
-            "existing": existing_count,
+            "existing": demo_count,
         }
 
     # Get a seller for assignments (first active setter or any seller)

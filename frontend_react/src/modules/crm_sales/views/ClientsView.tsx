@@ -175,7 +175,7 @@ export default function ClientsView() {
         action={
           <button
             onClick={openCreateModal}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-xl transition-colors text-sm font-medium shadow-md active:scale-[0.98]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl transition-colors text-sm font-medium shadow-md active:scale-[0.98]"
           >
             <Plus size={20} />
             {t('clients.new_client')}
@@ -228,7 +228,7 @@ export default function ClientsView() {
                     <tr key={client.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium">
+                          <div className="flex-shrink-0 h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center text-white font-medium">
                             {(client.first_name || client.phone_number || '?').charAt(0).toUpperCase()}
                           </div>
                           <div className="ml-4">
@@ -286,7 +286,7 @@ export default function ClientsView() {
                 <div key={client.id} className="p-4 bg-white/[0.03] hover:bg-white/[0.02] transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-white font-medium shrink-0">
+                      <div className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center text-white font-medium shrink-0">
                         {(client.first_name || client.phone_number || '?').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -340,7 +340,7 @@ export default function ClientsView() {
                     <select
                       value={selectedLeadId || ''}
                       onChange={(e) => handleSelectLead(e.target.value)}
-                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                     >
                       <option value="">{t('clients.select_lead_placeholder')}</option>
                       {leads.map((lead) => (
@@ -359,7 +359,7 @@ export default function ClientsView() {
                       required
                       value={formData.phone_number}
                       onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                     />
                   </div>
                 )}
@@ -370,7 +370,7 @@ export default function ClientsView() {
                       type="text"
                       value={formData.first_name}
                       onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                     />
                   </div>
                   <div>
@@ -379,7 +379,7 @@ export default function ClientsView() {
                       type="text"
                       value={formData.last_name}
                       onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                     />
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export default function ClientsView() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                   />
                 </div>
                 <div>
@@ -397,7 +397,7 @@ export default function ClientsView() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                    className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                   >
                     <option value="active">{t('clients.status_active')}</option>
                     <option value="inactive">{t('clients.status_inactive')}</option>
@@ -408,7 +408,7 @@ export default function ClientsView() {
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-white/70 bg-white/[0.04] rounded-lg hover:bg-white/[0.06] transition-colors">
                   {t('common.cancel')}
                 </button>
-                <button type="submit" disabled={saving} className="px-4 py-2 text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50">
+                <button type="submit" disabled={saving} className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                   {editingClient ? t('common.save_changes') : t('clients.create_client')}
                 </button>
               </div>

@@ -69,41 +69,44 @@ async def list_leads(
     user_id = context.get("user_id") or context.get("id")
 
     query = """
-        SELECT id, tenant_id, phone_number, first_name, last_name, email,
-               status, stage_id, assigned_seller_id, source, meta_lead_id, tags,
-               apify_title, apify_category_name, apify_address, apify_city, apify_state, apify_country_code,
-               apify_website, apify_place_id, apify_total_score, apify_reviews_count, apify_scraped_at,
-               prospecting_niche, prospecting_location_query,
-               outreach_message_sent, outreach_send_requested, outreach_last_requested_at, outreach_last_sent_at,
-               created_at, updated_at
-        FROM leads
-        WHERE tenant_id = $1 AND (status IS NULL OR status != 'deleted')
+        SELECT l.id, l.tenant_id, l.phone_number, l.first_name, l.last_name, l.email,
+               l.status, l.stage_id, l.assigned_seller_id, l.source, l.meta_lead_id, l.tags,
+               l.apify_title, l.apify_category_name, l.apify_address, l.apify_city, l.apify_state, l.apify_country_code,
+               l.apify_website, l.apify_place_id, l.apify_total_score, l.apify_reviews_count, l.apify_scraped_at,
+               l.prospecting_niche, l.prospecting_location_query,
+               l.outreach_message_sent, l.outreach_send_requested, l.outreach_last_requested_at, l.outreach_last_sent_at,
+               l.score,
+               CASE WHEN u.id IS NOT NULL THEN TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) ELSE NULL END AS seller_name,
+               l.created_at, l.updated_at
+        FROM leads l
+        LEFT JOIN users u ON u.id = l.assigned_seller_id
+        WHERE l.tenant_id = $1 AND (l.status IS NULL OR l.status != 'deleted')
     """
     params: list = [tenant_id]
     param_idx = 2
 
     # Role-based filtering: Setters and Closers only see assigned leads
     if role in ['setter', 'closer']:
-        query += f" AND assigned_seller_id = ${param_idx}"
+        query += f" AND l.assigned_seller_id = ${param_idx}"
         params.append(UUID(user_id) if isinstance(user_id, str) else user_id)
         param_idx += 1
-    
+
     if status:
-        query += f" AND status = ${param_idx}"
+        query += f" AND l.status = ${param_idx}"
         params.append(status)
         param_idx += 1
-    
+
     if assigned_seller_id:
-        query += f" AND assigned_seller_id = ${param_idx}"
+        query += f" AND l.assigned_seller_id = ${param_idx}"
         params.append(assigned_seller_id)
         param_idx += 1
-    
+
     if search and search.strip():
-        query += f" AND (first_name ILIKE ${param_idx} OR last_name ILIKE ${param_idx} OR phone_number ILIKE ${param_idx} OR email ILIKE ${param_idx})"
+        query += f" AND (l.first_name ILIKE ${param_idx} OR l.last_name ILIKE ${param_idx} OR l.phone_number ILIKE ${param_idx} OR l.email ILIKE ${param_idx})"
         params.append(f"%{search.strip()}%")
         param_idx += 1
-    
-    query += f" ORDER BY created_at DESC LIMIT ${param_idx} OFFSET ${param_idx + 1}"
+
+    query += f" ORDER BY l.created_at DESC LIMIT ${param_idx} OFFSET ${param_idx + 1}"
     params.extend([limit, offset])
     
     rows = await db.pool.fetch(query, *params)
@@ -679,16 +682,16 @@ async def get_crm_dashboard_stats(
             for r in trend_rows
         ]
 
-        # 9. Recent leads
-        recent_leads = await db.pool.fetch("""
-            SELECT id, first_name, last_name, phone_number, status, 
+        # 9. Recent leads (respect role-based filtering)
+        recent_leads_query = f"""
+            SELECT id, first_name, last_name, phone_number, status,
                    created_at, source, prospecting_niche
-            FROM leads 
-            WHERE tenant_id = $1 
-            AND status != 'deleted'
-            ORDER BY created_at DESC 
-            LIMIT 5
-        """, tenant_id)
+            FROM leads
+            {where_base} AND status != 'deleted'
+            ORDER BY created_at DESC
+            LIMIT 10
+        """
+        recent_leads = await db.pool.fetch(recent_leads_query, *where_params)
         
         formatted_recent_leads = []
         for lead in recent_leads:

@@ -272,3 +272,169 @@ async def list_users(
         })
 
     return {"success": True, "count": len(users), "users": users}
+
+
+# ─── 4. Seed Demo Leads (admin token only) ─────────────────────────────────────
+
+@router.post("/admin/setup/seed-demo-leads")
+async def seed_demo_leads(x_admin_token: str = Header(None)):
+    """
+    Seeds 18 realistic demo leads spread across all pipeline statuses.
+    Protected by X-Admin-Token only (no JWT needed).
+    Idempotent: skips if leads already exist for the tenant.
+    """
+    import random
+    from datetime import datetime, timedelta, timezone
+
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=500, detail="ADMIN_TOKEN not configured on server.")
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid X-Admin-Token.")
+
+    # Find Codexy tenant
+    tenant_row = await db.fetchrow("SELECT id FROM tenants WHERE clinic_name = 'Codexy' LIMIT 1")
+    if not tenant_row:
+        raise HTTPException(status_code=404, detail="Tenant 'Codexy' not found. Run /admin/setup/seed-team first.")
+    tenant_id = tenant_row["id"]
+
+    # Idempotent check
+    existing_count = await db.fetchval("SELECT COUNT(*) FROM leads WHERE tenant_id = $1", tenant_id)
+    if existing_count and existing_count > 0:
+        return {
+            "success": True,
+            "message": f"Leads already exist ({existing_count} found). Skipping seed.",
+            "created": 0,
+            "existing": existing_count,
+        }
+
+    # Get a seller for assignments (first active setter or any seller)
+    seller_row = await db.fetchrow(
+        """
+        SELECT s.id AS seller_id, u.id AS user_id
+        FROM sellers s JOIN users u ON s.user_id = u.id
+        WHERE s.tenant_id = $1 AND s.is_active = TRUE
+        ORDER BY u.role = 'setter' DESC, s.id ASC
+        LIMIT 1
+        """,
+        tenant_id,
+    )
+    seller_user_id = str(seller_row["user_id"]) if seller_row else None
+
+    # Get seeded tags
+    tag_rows = await db.pool.fetch("SELECT name FROM lead_tags WHERE tenant_id = $1 AND is_active = TRUE", tenant_id)
+    available_tags = [r["name"] for r in tag_rows] if tag_rows else []
+
+    now = datetime.now(timezone.utc)
+
+    # Demo leads data: (first_name, last_name, phone, email, company, source, status, score, estimated_value, days_ago)
+    demo_leads = [
+        # 4x nuevo
+        ("Martín",   "González",   "+5491155001001", "martin.gonzalez@gmail.com",    "Estudio Contable MG",   "whatsapp_inbound", "nuevo",                 15, 0,       0),
+        ("Lucía",    "Fernández",  "+5491155001002", "lucia.fernandez@hotmail.com",  "Boutique Lucía",        "meta_ads",         "nuevo",                 22, 0,       1),
+        ("Santiago",  "López",     "+5491155001003", "santiago.lopez@outlook.com",   "López & Asociados",     "csv_import",       "nuevo",                 10, 0,       0),
+        ("Valentina", "Martínez",  "+5491155001004", "valentina.m@gmail.com",        "VM Consultora",         "whatsapp_inbound", "nuevo",                 30, 0,       2),
+        # 3x contactado
+        ("Tomás",    "Rodríguez",  "+5491155001005", "tomas.rodriguez@gmail.com",    "TR Arquitectura",       "meta_ads",         "contactado",            45, 50000,   3),
+        ("Camila",   "García",     "+5491155001006", "camila.garcia@yahoo.com",      "Peluquería Camila",     "whatsapp_inbound", "contactado",            55, 35000,   4),
+        ("Nicolás",  "Díaz",       "+5491155001007", "nicolas.diaz@gmail.com",       "Díaz Seguros",          "meta_ads",         "contactado",            40, 80000,   5),
+        # 2x calificado
+        ("Florencia","Romero",     "+5491155001008", "florencia.romero@gmail.com",   "FR Marketing Digital",  "whatsapp_inbound", "calificado",            70, 120000,  7),
+        ("Matías",   "Sánchez",    "+5491155001009", "matias.sanchez@empresa.com",   "Sánchez Inmobiliaria",  "csv_import",       "calificado",            65, 200000,  6),
+        # 2x llamada_agendada
+        ("Carolina", "Moreno",     "+5491155001010", "carolina.moreno@gmail.com",    "Moreno Odontología",    "meta_ads",         "llamada_agendada",      78, 150000, 10),
+        ("Federico", "Álvarez",    "+5491155001011", "federico.alvarez@outlook.com", "Álvarez Abogados",      "whatsapp_inbound", "llamada_agendada",      80, 300000,  8),
+        # 2x negociacion
+        ("María",    "Torres",     "+5491155001012", "maria.torres@gmail.com",       "Torres Catering",       "meta_ads",         "negociacion",           85, 250000, 14),
+        ("Andrés",   "Ruiz",       "+5491155001013", "andres.ruiz@empresa.com.ar",   "Ruiz Distribuciones",   "csv_import",       "negociacion",           90, 500000, 12),
+        # 1x cerrado_ganado
+        ("Paula",    "Herrera",    "+5491155001014", "paula.herrera@gmail.com",       "Herrera Clínica Vet",   "whatsapp_inbound", "cerrado_ganado",        95, 180000, 20),
+        # 1x cerrado_perdido
+        ("Diego",    "Giménez",    "+5491155001015", "diego.gimenez@hotmail.com",    "Giménez Automotores",   "meta_ads",         "cerrado_perdido",       25, 400000, 18),
+        # 2x sin_respuesta
+        ("Laura",    "Medina",     "+5491155001016", "laura.medina@gmail.com",       "Medina Spa",            "whatsapp_inbound", "sin_respuesta",         20, 60000,  15),
+        ("Joaquín",  "Peralta",    "+5491155001017", "joaquin.peralta@yahoo.com.ar", "Peralta Gym",           "meta_ads",         "sin_respuesta",         18, 45000,  11),
+        # 1x seguimiento_pendiente
+        ("Sofía",    "Acosta",     "+5491155001018", "sofia.acosta@gmail.com",       "Acosta Estética",       "whatsapp_inbound", "seguimiento_pendiente", 60, 90000,  16),
+    ]
+
+    created_ids = []
+    for (first, last, phone, email, company, source, status, score, est_value, days_ago) in demo_leads:
+        created_at = now - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+        # Pick 1-2 random tags
+        lead_tags = random.sample(available_tags, min(random.randint(1, 2), len(available_tags))) if available_tags else []
+        tags_json = f'[{",".join(f""""{t}" """ .strip() for t in lead_tags)}]'
+
+        try:
+            lead_id = await db.fetchval(
+                """
+                INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email, company,
+                                   status, source, score, estimated_value, tags,
+                                   assigned_seller_id, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $13)
+                ON CONFLICT (tenant_id, phone_number) DO NOTHING
+                RETURNING id
+                """,
+                tenant_id, phone, first, last, email, company,
+                status, source, score, est_value,
+                f'[{",".join(chr(34) + t + chr(34) for t in lead_tags)}]',
+                seller_user_id, created_at,
+            )
+            if lead_id:
+                created_ids.append({"id": str(lead_id), "name": f"{first} {last}", "status": status})
+        except Exception as e:
+            logger.error(f"Error seeding lead {first} {last}: {e}")
+
+    # Create lead_notes for the "negociacion" leads
+    negociacion_leads = [l for l in created_ids if l["status"] == "negociacion"]
+    notes_created = 0
+    for lead_info in negociacion_leads:
+        note_content = (
+            f"El lead {lead_info['name']} mostró interés fuerte en el plan premium. "
+            "Pidió descuento del 10% si cierra antes de fin de mes. Seguir contacto."
+            if notes_created == 0 else
+            f"Llamada con {lead_info['name']}: están comparando con la competencia. "
+            "Necesitan propuesta formal con precios y condiciones de pago."
+        )
+        try:
+            await db.pool.execute(
+                """
+                INSERT INTO lead_notes (tenant_id, lead_id, author_id, note_type, content, visibility, created_at)
+                VALUES ($1, $2::uuid, $3::uuid, 'internal', $4, 'all', NOW())
+                """,
+                tenant_id, lead_info["id"], seller_user_id, note_content,
+            )
+            notes_created += 1
+        except Exception as e:
+            logger.warning(f"Could not create note for lead {lead_info['id']}: {e}")
+
+    # Try to create seller_agenda_events for "llamada_agendada" leads
+    agendada_leads = [l for l in created_ids if l["status"] == "llamada_agendada"]
+    events_created = 0
+    if seller_row:
+        for i, lead_info in enumerate(agendada_leads):
+            event_start = now + timedelta(days=i + 1, hours=10)
+            event_end = event_start + timedelta(minutes=30)
+            try:
+                await db.pool.execute(
+                    """
+                    INSERT INTO seller_agenda_events (tenant_id, seller_id, title, start_datetime, end_datetime, lead_id, status)
+                    VALUES ($1, $2, $3, $4, $5, $6::uuid, 'scheduled')
+                    """,
+                    tenant_id, seller_row["seller_id"],
+                    f"Llamada con {lead_info['name']}",
+                    event_start, event_end, lead_info["id"],
+                )
+                events_created += 1
+            except Exception as e:
+                logger.warning(f"Could not create agenda event for lead {lead_info['id']}: {e} (professionals table may be missing)")
+
+    return {
+        "success": True,
+        "tenant_id": tenant_id,
+        "summary": {
+            "leads_created": len(created_ids),
+            "notes_created": notes_created,
+            "events_created": events_created,
+        },
+        "leads": created_ids,
+    }

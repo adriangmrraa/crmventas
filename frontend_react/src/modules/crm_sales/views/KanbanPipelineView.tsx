@@ -67,7 +67,7 @@ export default function KanbanPipelineView() {
 
   const getLeadsByStatus = (statusCode: string) =>
     leads.filter(l => {
-      const leadStatus = l.status || 'new';
+      const leadStatus = l.status || 'nuevo';
       return leadStatus === statusCode;
     });
 
@@ -109,8 +109,8 @@ export default function KanbanPipelineView() {
     setUpdatingId(leadId);
 
     try {
-      await api.put(`/admin/core/crm/${leadId}/status`, {
-        new_status: newStatus,
+      await api.post(`/admin/core/crm/leads/${leadId}/status`, {
+        new_status_id: newStatus,
         reason: 'Moved via Kanban pipeline',
       });
     } catch (err: any) {
@@ -261,10 +261,10 @@ export default function KanbanPipelineView() {
                             <ScoreBadge score={lead.score} size="sm" />
                           </div>
 
-                          {/* Company */}
-                          {lead.company && (
+                          {/* Phone */}
+                          {lead.phone_number && (
                             <p className="text-[11px] text-white/40 truncate mt-0.5">
-                              {lead.company}
+                              {lead.phone_number}
                             </p>
                           )}
 

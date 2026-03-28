@@ -15,7 +15,13 @@ import { TagBadge, type LeadTag } from '../../../components/leads/TagBadge';
 import LeadImportModal from '../../../components/leads/LeadImportModal';
 
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
-const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
+
+interface LeadStatusOption {
+  code: string;
+  name: string;
+  color: string;
+  sort_order: number;
+}
 
 export interface Lead {
   id: string;
@@ -51,7 +57,7 @@ const defaultForm = {
   first_name: '',
   last_name: '',
   email: '',
-  status: 'new' as const,
+  status: 'nuevo',
 };
 
 // ─── Error Boundary ───────────────────────────────────────────────
@@ -107,12 +113,24 @@ function LeadsViewInner() {
   const [availableTags, setAvailableTags] = useState<LeadTag[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
+  const [statusOptions, setStatusOptions] = useState<LeadStatusOption[]>([]);
 
   useEffect(() => {
     fetchLeads();
     fetchAvailableTags();
+    fetchStatusOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  const fetchStatusOptions = async () => {
+    try {
+      const res = await api.get('/admin/core/crm/lead-statuses');
+      const data: LeadStatusOption[] = Array.isArray(res.data) ? res.data : [];
+      setStatusOptions(data.sort((a, b) => a.sort_order - b.sort_order));
+    } catch (err) {
+      console.error('[LeadsView] Failed to fetch status options:', err);
+    }
+  };
 
   const fetchAvailableTags = async () => {
     try {
@@ -200,7 +218,7 @@ function LeadsViewInner() {
         first_name: lead.first_name || '',
         last_name: lead.last_name || '',
         email: lead.email || '',
-        status: (lead.status as typeof defaultForm.status) || 'new',
+        status: lead.status || 'nuevo',
       });
     } else {
       setEditingLead(null);
@@ -306,8 +324,8 @@ function LeadsViewInner() {
                 className="flex-1 px-3 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] outline-none focus:ring-2 focus:ring-medical-500 transition-all font-medium text-white/70"
               >
                 <option value="">Todos los estados</option>
-                {STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                {statusOptions.map(s => (
+                  <option key={s.code} value={s.code}>{s.name}</option>
                 ))}
               </select>
 
@@ -653,10 +671,10 @@ function LeadsViewInner() {
                         <select
                           className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-white/[0.03] font-medium"
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof defaultForm.status })}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         >
-                          {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                          {statusOptions.map((s) => (
+                            <option key={s.code} value={s.code}>{s.name}</option>
                           ))}
                         </select>
                       </div>

@@ -44,7 +44,9 @@ class LeadResponse(LeadBase):
     tenant_id: int
     assigned_seller_id: Optional[UUID] = None
     stage_id: Optional[UUID] = None
-    
+    score: Optional[int] = None
+    seller_name: Optional[str] = None
+
     # Apify / Prospecting fields
     apify_title: Optional[str] = None
     apify_category_name: Optional[str] = None

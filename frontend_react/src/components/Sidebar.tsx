@@ -5,6 +5,7 @@ import {
   Users,
   MessageSquare,
   Settings,
+  Link2,
   ChevronLeft,
   ChevronRight,
   Stethoscope,
@@ -40,6 +41,7 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   sellers:        'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=400&q=60',
   tenants:        'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=60',
   profile:        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=60',
+  integrations:   'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&q=60',
   settings:       'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=60',
 };
 
@@ -114,6 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
     { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={17} />, path: '/empresas', roles: ['ceo'], hint: 'Empresas y organizaciones registradas en la plataforma' },
     { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={17} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Tu perfil, cuenta y preferencias personales' },
+    { id: 'integrations', labelKey: 'nav.integrations' as const, icon: <Link2 size={17} />, path: '/crm/integraciones', roles: ['ceo'], hint: 'WhatsApp, Instagram y Facebook: canales de mensajeria' },
     { id: 'settings', labelKey: 'nav.settings' as const, icon: <Settings size={17} />, path: '/configuracion', roles: ['ceo'], hint: 'Configuracion general, integraciones y credenciales' },
   ];
 
@@ -131,6 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/seguimientos') return location.pathname === path;
     if (path === '/crm/marketing') return location.pathname === path;
     if (path === '/crm/hsm') return location.pathname === path;
+    if (path === '/crm/integraciones') return location.pathname === path;
     return location.pathname === path;
   };
 

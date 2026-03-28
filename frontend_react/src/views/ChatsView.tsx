@@ -5,7 +5,7 @@ import {
   Pause, Play, AlertCircle, Clock, ChevronLeft,
   Search, XCircle, Bell, Volume2, VolumeX,
   UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw, X,
-  Tag, Star, HandMetal, Shield, FileText
+  Tag, Star, HandMetal, Shield, FileText, Instagram, Facebook
 } from 'lucide-react';
 import api, { BACKEND_URL } from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -40,6 +40,8 @@ interface ChatSession {
   last_derivhumano_at?: string;
   is_window_open?: boolean;
   last_user_message_time?: string;
+  // Channel: whatsapp | instagram | facebook
+  channel?: 'whatsapp' | 'instagram' | 'facebook';
   // AI agent activity fields
   tags?: string[];
   handoff_requested?: boolean;
@@ -187,6 +189,7 @@ export default function ChatsView() {
   const [highlightedSession, setHighlightedSession] = useState<string | null>(null);
   const [showMobileContext, setShowMobileContext] = useState(false);
   const [showHsmPanel, setShowHsmPanel] = useState(false);
+  const [channelFilter, setChannelFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -718,23 +721,53 @@ export default function ChatsView() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedSession) return;
 
+    const messageText = newMessage;
+    const channel = selectedSession.channel || 'whatsapp';
+
+    // Optimistic update: add message to local state immediately
+    const optimisticMsg: ChatMessage = {
+      id: Date.now(),
+      from_number: 'me',
+      role: 'assistant',
+      content: messageText,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setNewMessage('');
+
     setSending(true);
     try {
       await api.post('/admin/core/chat/send', {
         phone: selectedSession.phone_number,
         tenant_id: selectedSession.tenant_id,
-        message: newMessage,
+        message: messageText,
+        channel,
       });
-      setNewMessage('');
-      fetchMessages(selectedSession.phone_number, selectedSession.tenant_id);
+
+      setShowToast({
+        id: Date.now().toString(),
+        type: 'success',
+        title: 'Mensaje enviado',
+        message: `Enviado por ${getChannelLabel(channel)}`,
+      });
 
       socketRef.current?.emit('MANUAL_MESSAGE', {
         phone: selectedSession.phone_number,
         tenant_id: selectedSession.tenant_id,
-        message: newMessage,
+        message: messageText,
+        channel,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+      setNewMessage(messageText); // Restore the message text
+      setShowToast({
+        id: Date.now().toString(),
+        type: 'error',
+        title: 'Error al enviar',
+        message: error.response?.data?.detail || 'No se pudo enviar el mensaje',
+      });
     } finally {
       setSending(false);
     }
@@ -806,10 +839,12 @@ export default function ChatsView() {
   // UTILIDADES
   // ============================================
 
-  const filteredSessions = sessions.filter(session =>
-    session.lead_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.phone_number.includes(searchTerm)
-  );
+  const filteredSessions = sessions.filter(session => {
+    const matchesSearch = session.lead_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      session.phone_number.includes(searchTerm);
+    const matchesChannel = channelFilter === 'all' || (session.channel || 'whatsapp') === channelFilter;
+    return matchesSearch && matchesChannel;
+  });
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -820,6 +855,28 @@ export default function ChatsView() {
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
     return date.toLocaleDateString();
+  };
+
+  /** Channel icon helper */
+  const ChannelIcon = ({ channel, size = 14 }: { channel?: string; size?: number }) => {
+    switch (channel) {
+      case 'instagram':
+        return <Instagram size={size} className="text-purple-400" />;
+      case 'facebook':
+        return <Facebook size={size} className="text-blue-400" />;
+      case 'whatsapp':
+      default:
+        return <MessageCircle size={size} className="text-green-400" />;
+    }
+  };
+
+  const getChannelLabel = (channel?: string) => {
+    switch (channel) {
+      case 'instagram': return 'Instagram';
+      case 'facebook': return 'Facebook';
+      case 'whatsapp':
+      default: return 'WhatsApp';
+    }
   };
 
   const getStatusConfig = (session: ChatSession) => {
@@ -926,6 +983,29 @@ export default function ChatsView() {
               className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+
+          {/* Channel Filter Tabs */}
+          <div className="flex gap-1 px-1 py-2 border-t border-white/[0.04]">
+            {([
+              { id: 'all' as const, label: 'Todos', icon: null },
+              { id: 'whatsapp' as const, label: 'WA', icon: <MessageCircle size={12} className="text-green-400" /> },
+              { id: 'instagram' as const, label: 'IG', icon: <Instagram size={12} className="text-purple-400" /> },
+              { id: 'facebook' as const, label: 'FB', icon: <Facebook size={12} className="text-blue-400" /> },
+            ]).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setChannelFilter(tab.id)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all flex-1 justify-center
+                  ${channelFilter === tab.id
+                    ? 'bg-white/[0.08] text-white'
+                    : 'text-white/30 hover:text-white/60 hover:bg-white/[0.03]'
+                  }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -976,7 +1056,8 @@ export default function ChatsView() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <span className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-white'}`}>
+                        <span className={`font-semibold truncate flex items-center gap-1.5 ${isSelected ? 'text-white' : 'text-white'}`}>
+                          <ChannelIcon channel={session.channel} size={13} />
                           {session.lead_name || session.phone_number}
                         </span>
                         <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-blue-400 font-bold' : 'text-white/30'}`}>
@@ -1054,6 +1135,7 @@ export default function ChatsView() {
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => window.innerWidth < 1280 && setShowMobileContext(!showMobileContext)}>
                     <div className="flex items-center gap-2">
+                      <ChannelIcon channel={selectedSession.channel} size={16} />
                       <h3 className="font-bold text-white truncate leading-tight">
                         {selectedSession.lead_name || t('chats.no_name')}
                       </h3>
@@ -1283,6 +1365,13 @@ export default function ChatsView() {
 
               {/* Input */}
               <form onSubmit={handleSendMessage} className="p-4 border-t bg-white/[0.03]">
+                {/* Channel indicator bar */}
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <ChannelIcon channel={selectedSession.channel} size={12} />
+                  <span className="text-[11px] text-white/30 font-medium">
+                    Enviando por {getChannelLabel(selectedSession.channel)}
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="button"

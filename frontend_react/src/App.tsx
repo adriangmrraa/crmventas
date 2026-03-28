@@ -23,6 +23,7 @@ import SetterQueueView from './modules/crm_sales/views/SetterQueueView';
 import CloserPanelView from './modules/crm_sales/views/CloserPanelView';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
+import IntegrationsView from './components/integrations/IntegrationsView';
 // Optional Notifications Pages
 import NotificationsView from './views/NotificationsView';
 // Legal Pages
@@ -130,6 +131,11 @@ function App() {
                         <Route path="crm/hsm" element={
                           <ProtectedRoute allowedRoles={['ceo', 'admin', 'setter', 'closer']}>
                             <MetaTemplatesView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/integraciones" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <IntegrationsView />
                           </ProtectedRoute>
                         } />
                         <Route path="notificaciones" element={<NotificationsView />} />

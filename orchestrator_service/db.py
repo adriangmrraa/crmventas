@@ -1103,6 +1103,123 @@ class Database:
             EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE 'Parche 26: Error: %', SQLERRM;
             END $$;
+            """,
+
+            # Parche 27: Channel Bindings + Business Assets + chat_messages platform columns (Multi-Channel Routing)
+            """
+            DO $$ BEGIN
+                -- channel_bindings table
+                CREATE TABLE IF NOT EXISTS channel_bindings (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    provider VARCHAR(50) NOT NULL,
+                    channel_type VARCHAR(50) NOT NULL,
+                    channel_id VARCHAR(255) NOT NULL,
+                    label VARCHAR(255),
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    CONSTRAINT channel_bindings_provider_channel_unique UNIQUE (provider, channel_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_channel_bindings_tenant ON channel_bindings (tenant_id, is_active);
+                CREATE INDEX IF NOT EXISTS idx_channel_bindings_lookup ON channel_bindings (provider, channel_id, is_active);
+
+                -- business_assets table
+                CREATE TABLE IF NOT EXISTS business_assets (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    asset_type VARCHAR(50) NOT NULL,
+                    external_id VARCHAR(255) NOT NULL,
+                    name VARCHAR(255),
+                    metadata JSONB DEFAULT '{}',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    CONSTRAINT business_assets_tenant_type_extid_unique UNIQUE (tenant_id, asset_type, external_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_business_assets_tenant ON business_assets (tenant_id, is_active);
+
+                -- chat_messages: platform columns
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='platform') THEN
+                    ALTER TABLE chat_messages ADD COLUMN platform VARCHAR(20);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='platform_message_id') THEN
+                    ALTER TABLE chat_messages ADD COLUMN platform_message_id TEXT;
+                END IF;
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_platform ON chat_messages (platform);
+
+                RAISE NOTICE 'Parche 27: Channel bindings, business assets, and chat_messages platform columns added';
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 27: Error: %', SQLERRM;
+            END $$;
+            """,
+
+            # Parche 28: Multi-Channel Lead Identity — instagram_psid, facebook_psid, channel_source on leads + chat_messages
+            """
+            DO $$ BEGIN
+                -- leads: instagram_psid
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='instagram_psid') THEN
+                    ALTER TABLE leads ADD COLUMN instagram_psid VARCHAR(100);
+                END IF;
+                -- leads: facebook_psid
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='facebook_psid') THEN
+                    ALTER TABLE leads ADD COLUMN facebook_psid VARCHAR(100);
+                END IF;
+                -- leads: channel_source (first contact channel)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='channel_source') THEN
+                    ALTER TABLE leads ADD COLUMN channel_source VARCHAR(20) DEFAULT 'whatsapp';
+                END IF;
+
+                -- Indexes for PSID lookups
+                CREATE INDEX IF NOT EXISTS idx_leads_instagram_psid ON leads (tenant_id, instagram_psid) WHERE instagram_psid IS NOT NULL;
+                CREATE INDEX IF NOT EXISTS idx_leads_facebook_psid ON leads (tenant_id, facebook_psid) WHERE facebook_psid IS NOT NULL;
+
+                -- chat_messages: channel_source column (redundant with platform but explicit for queries)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='channel_source') THEN
+                    ALTER TABLE chat_messages ADD COLUMN channel_source VARCHAR(20) DEFAULT 'whatsapp';
+                END IF;
+                -- chat_messages: external_user_id (phone or PSID, for unified queries)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='external_user_id') THEN
+                    ALTER TABLE chat_messages ADD COLUMN external_user_id VARCHAR(100);
+                END IF;
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_channel_user ON chat_messages (tenant_id, channel_source, external_user_id);
+
+                RAISE NOTICE 'Parche 28: Multi-channel lead identity columns added';
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 28: Error: %', SQLERRM;
+            END $$;
+            """,
+
+            # Parche 29: Message delivery status tracking (Meta messaging webhooks)
+            """
+            DO $$ BEGIN
+                -- chat_messages: delivery status columns
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='delivery_status') THEN
+                    ALTER TABLE chat_messages ADD COLUMN delivery_status VARCHAR(20);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='delivery_timestamp') THEN
+                    ALTER TABLE chat_messages ADD COLUMN delivery_timestamp TIMESTAMPTZ;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='updated_at') THEN
+                    ALTER TABLE chat_messages ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_delivery ON chat_messages (delivery_status) WHERE delivery_status IS NOT NULL;
+
+                -- message_status_log table for tracking delivery/read receipts
+                CREATE TABLE IF NOT EXISTS message_status_log (
+                    id SERIAL PRIMARY KEY,
+                    provider_message_id TEXT NOT NULL,
+                    status VARCHAR(20) NOT NULL,
+                    recipient VARCHAR(100),
+                    timestamp TIMESTAMPTZ,
+                    errors JSONB,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    CONSTRAINT message_status_log_unique UNIQUE (provider_message_id, status)
+                );
+                CREATE INDEX IF NOT EXISTS idx_message_status_log_msg ON message_status_log (provider_message_id);
+
+                RAISE NOTICE 'Parche 29: Message delivery status tracking columns added';
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 29: Error: %', SQLERRM;
+            END $$;
             """
         ]
 
@@ -1141,12 +1258,34 @@ class Database:
         async with self.pool.acquire() as conn:
             await conn.execute(query, provider, provider_message_id, error)
 
-    async def append_chat_message(self, from_number: str, role: str, content: str, correlation_id: str, tenant_id: int = 1):
-        """Append a chat message and trigger notifications for leads."""
+    async def append_chat_message(
+        self, from_number: str, role: str, content: str, correlation_id: str, tenant_id: int = 1,
+        platform: Optional[str] = None, platform_message_id: Optional[str] = None,
+        channel_source: Optional[str] = None, external_user_id: Optional[str] = None
+    ):
+        """Append a chat message and trigger notifications for leads.
+
+        Multi-channel support:
+          - platform: 'whatsapp' | 'instagram' | 'facebook'
+          - platform_message_id: provider-level message ID for dedup
+          - channel_source: same as platform (explicit channel tag)
+          - external_user_id: phone number (whatsapp) or PSID (ig/fb)
+        """
+        # Derive defaults for backward-compat: if caller didn't pass channel info, assume whatsapp
+        _platform = platform or channel_source or "whatsapp"
+        _channel_source = channel_source or platform or "whatsapp"
+        _external_user_id = external_user_id or from_number
+
         async with self.pool.acquire() as conn:
-            # 1. Insert message
-            query = "INSERT INTO chat_messages (from_number, role, content, correlation_id, tenant_id) VALUES ($1, $2, $3, $4, $5)"
-            await conn.execute(query, from_number, role, content, correlation_id, tenant_id)
+            # 1. Insert message (with multi-channel columns)
+            query = """INSERT INTO chat_messages
+                (from_number, role, content, correlation_id, tenant_id,
+                 platform, platform_message_id, channel_source, external_user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"""
+            await conn.execute(
+                query, from_number, role, content, correlation_id, tenant_id,
+                _platform, platform_message_id, _channel_source, _external_user_id
+            )
             
             # 2. Trigger Notification if it's a message FROM the USER (lead)
             if role == "user":
@@ -1211,24 +1350,49 @@ class Database:
         phone_number: str,
         customer_name: Optional[str] = None,
         source: str = "whatsapp_inbound",
-        referral: Optional[dict] = None
+        referral: Optional[dict] = None,
+        channel_source: Optional[str] = None,
+        external_user_id: Optional[str] = None
     ):
         """
         Ensures a lead record exists (CRM Sales).
         customer_name: WhatsApp display name; split into first_name/last_name.
         Handles Meta Ads attribution if referral is present.
+
+        Multi-channel support:
+          - channel_source: 'whatsapp' | 'instagram' | 'facebook'
+          - external_user_id: phone number (whatsapp) or PSID (instagram/facebook)
+        For WhatsApp the lookup is by phone_number (backward-compat).
+        For Instagram/Facebook the lookup is by PSID column.
         """
+        _channel = channel_source or "whatsapp"
+        _ext_id = external_user_id or phone_number
+
         parts = (customer_name or "").strip().split(None, 1)
         first_name = parts[0] if parts else "Lead"
         last_name = parts[1] if len(parts) > 1 else ""
-        
+
         async with self.pool.acquire() as conn:
-            # 1. Check for existing lead
-            existing = await conn.fetchrow(
-                "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND phone_number = $2",
-                tenant_id, phone_number
-            )
-            
+            # 1. Check for existing lead — lookup strategy depends on channel
+            existing = None
+            if _channel == "instagram":
+                existing = await conn.fetchrow(
+                    "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND instagram_psid = $2",
+                    tenant_id, _ext_id
+                )
+            elif _channel == "facebook":
+                existing = await conn.fetchrow(
+                    "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND facebook_psid = $2",
+                    tenant_id, _ext_id
+                )
+
+            # Fallback / WhatsApp: lookup by phone_number (also catches IG/FB leads that already have a phone)
+            if not existing and phone_number:
+                existing = await conn.fetchrow(
+                    "SELECT id, first_name, last_name, lead_source FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                    tenant_id, phone_number
+                )
+
             # 2. Build attribution fields if referral present (Spec Multi-Attribution)
             attribution_data = {}
             if referral:
@@ -1240,6 +1404,13 @@ class Database:
                         "meta_campaign_id": referral.get("campaign_id")
                     }
 
+            # 3. Build channel-specific PSID fields
+            psid_fields = {}
+            if _channel == "instagram" and _ext_id:
+                psid_fields["instagram_psid"] = _ext_id
+            elif _channel == "facebook" and _ext_id:
+                psid_fields["facebook_psid"] = _ext_id
+
             if existing:
                 # Update existing lead
                 update_fields = {
@@ -1249,30 +1420,60 @@ class Database:
                 }
                 if attribution_data:
                     update_fields.update(attribution_data)
-                
+                # Merge PSID fields (add IG/FB PSID to existing lead even if it was created via WhatsApp)
+                if psid_fields:
+                    update_fields.update(psid_fields)
+                # Store channel_source if not already set
+                update_fields["channel_source"] = _channel
+
                 set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(update_fields.keys())]
                 query = f"UPDATE leads SET {', '.join(set_clauses)} WHERE id = ${len(update_fields)+1}"
                 await conn.execute(query, *update_fields.values(), existing["id"])
                 return {**dict(existing), **update_fields}
 
-            # 3. Create new lead
+            # 4. Create new lead
             insert_fields = {
                 "tenant_id": tenant_id,
-                "phone_number": phone_number,
+                "phone_number": phone_number or "",
                 "first_name": first_name,
                 "last_name": last_name,
                 "source": source,
-                "lead_source": attribution_data.get("lead_source", "ORGANIC")
+                "lead_source": attribution_data.get("lead_source", "ORGANIC"),
+                "channel_source": _channel
             }
             if attribution_data:
                 insert_fields.update(attribution_data)
-                
+            if psid_fields:
+                insert_fields.update(psid_fields)
+
             cols = ", ".join(insert_fields.keys())
             placeholders = ", ".join([f"${i+1}" for i in range(len(insert_fields))])
             query = f"INSERT INTO leads ({cols}) VALUES ({placeholders}) RETURNING id, tenant_id, phone_number, first_name, last_name, status, source, lead_source"
             return await conn.fetchrow(query, *insert_fields.values())
 
-    async def get_chat_history(self, from_number: str, limit: int = 15, tenant_id: Optional[int] = None) -> List[dict]:
+    async def get_chat_history(
+        self, from_number: str, limit: int = 15, tenant_id: Optional[int] = None,
+        channel_source: Optional[str] = None, external_user_id: Optional[str] = None
+    ) -> List[dict]:
+        """Fetch recent chat messages for a conversation.
+
+        Multi-channel: when channel_source + external_user_id are provided,
+        uses the indexed (tenant_id, channel_source, external_user_id) path.
+        Falls back to from_number lookup for backward-compat.
+        """
+        _channel = channel_source or "whatsapp"
+        _ext_id = external_user_id or from_number
+
+        # Prefer channel+ext_id lookup when tenant is known (indexed path)
+        if tenant_id is not None and (_channel != "whatsapp" or external_user_id):
+            query = """SELECT role, content FROM chat_messages
+                       WHERE tenant_id = $1 AND channel_source = $2 AND external_user_id = $3
+                       ORDER BY created_at DESC LIMIT $4"""
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(query, tenant_id, _channel, _ext_id, limit)
+                return [dict(row) for row in reversed(rows)]
+
+        # Legacy path: lookup by from_number (WhatsApp default)
         if tenant_id is not None:
             query = "SELECT role, content FROM chat_messages WHERE from_number = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT $3"
             async with self.pool.acquire() as conn:

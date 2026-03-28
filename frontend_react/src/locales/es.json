@@ -25,7 +25,8 @@
     "sellers": "Vendedores",
     "companies": "Empresas",
     "follow_ups": "Seguimientos",
-    "clients": "Clientes"
+    "clients": "Clientes",
+    "integrations": "Integraciones"
   },
   "common": {
     "save": "Guardar",

@@ -639,11 +639,57 @@ class ChatMessage(Base):
     assigned_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     assignment_source = Column(Text, default="manual")
 
+    # Multi-channel routing (Patch 27)
+    platform = Column(String(20))  # whatsapp | instagram | facebook
+    platform_message_id = Column(Text)
+
     __table_args__ = (
         CheckConstraint("role IN ('user', 'assistant', 'system', 'tool')", name="chat_messages_role_check"),
         Index("idx_chat_messages_from_number_created_at", "from_number", created_at.desc()),
         Index("idx_chat_messages_assigned_seller", "assigned_seller_id"),
         Index("idx_chat_messages_assignment_source", "assignment_source"),
+        Index("idx_chat_messages_platform", "platform"),
+    )
+
+
+# ============================================================
+# MULTI-CHANNEL ROUTING (Patch 27)
+# ============================================================
+
+class ChannelBinding(Base):
+    __tablename__ = "channel_bindings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String(50), nullable=False)     # ycloud | meta | chatwoot
+    channel_type = Column(String(50), nullable=False)  # whatsapp | instagram | facebook
+    channel_id = Column(String(255), nullable=False)   # page_id, waba_id, phone_number_id
+    label = Column(String(255))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("provider", "channel_id", name="channel_bindings_provider_channel_unique"),
+        Index("idx_channel_bindings_tenant", "tenant_id", "is_active"),
+        Index("idx_channel_bindings_lookup", "provider", "channel_id", "is_active"),
+    )
+
+
+class BusinessAsset(Base):
+    __tablename__ = "business_assets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    asset_type = Column(String(50), nullable=False)    # facebook_page | instagram_account | whatsapp_waba
+    external_id = Column(String(255), nullable=False)
+    name = Column(String(255))
+    metadata_ = Column("metadata", JSONB, default={})
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "asset_type", "external_id", name="business_assets_tenant_type_extid_unique"),
+        Index("idx_business_assets_tenant", "tenant_id", "is_active"),
     )
 
 
@@ -928,4 +974,49 @@ class LeadTag(Base):
     __table_args__ = (
         UniqueConstraint("tenant_id", "name", name="lead_tags_tenant_name_unique"),
         Index("idx_lead_tags_tenant", "tenant_id", "is_active"),
+    )
+
+
+# ============================================================
+# META EMBEDDED SIGNUP — BUSINESS ASSETS & CHANNEL BINDINGS
+# ============================================================
+
+class BusinessAsset(Base):
+    """Discovered Meta assets (Facebook Pages, Instagram accounts, WABAs, phone numbers)."""
+    __tablename__ = "business_assets"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    platform = Column(String(50), nullable=False)        # facebook, instagram, whatsapp
+    asset_type = Column(String(50), nullable=False)       # page, instagram_account, waba, phone_number
+    asset_id = Column(String(255), nullable=False)
+    asset_name = Column(Text)
+    parent_asset_id = Column(String(255))                 # e.g. page_id for instagram, waba_id for phone
+    metadata = Column(JSONB, default={})
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "platform", "asset_id", name="business_assets_tenant_platform_asset_unique"),
+        Index("idx_business_assets_tenant", "tenant_id", "platform"),
+    )
+
+
+class ChannelBinding(Base):
+    """Activated channel bindings — which assets are actively used for messaging."""
+    __tablename__ = "channel_bindings"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    channel = Column(String(50), nullable=False)          # whatsapp, instagram, facebook
+    asset_id = Column(String(255), nullable=False)
+    asset_name = Column(Text)
+    config = Column(JSONB, default={})
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "channel", "asset_id", name="channel_bindings_tenant_channel_asset_unique"),
+        Index("idx_channel_bindings_tenant_active", "tenant_id", "active"),
     )

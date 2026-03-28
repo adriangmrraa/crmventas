@@ -24,7 +24,8 @@
     "clients": "Clients",
     "prospecting": "Prospecting",
     "marketing": "Marketing Hub",
-    "hsm_automation": "HSM Automation"
+    "hsm_automation": "HSM Automation",
+    "integrations": "Integrations"
   },
   "common": {
     "save": "Save",

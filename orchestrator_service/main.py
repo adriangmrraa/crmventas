@@ -170,6 +170,14 @@ try:
 except Exception as e:
     logger.error(f"❌ Could not mount HSM Templates routes: {e}", exc_info=True)
 
+# Free-text Chat Send Routes
+try:
+    from routes.chat_routes import router as chat_routes_router
+    app.include_router(chat_routes_router, tags=["Chat Send"])
+    logger.info("✅ Chat Send API mounted (POST /admin/core/chat/send)")
+except Exception as e:
+    logger.error(f"❌ Could not mount Chat Send routes: {e}", exc_info=True)
+
 # Meta Ads Marketing Routes
 try:
     from routes.marketing import router as marketing_router
@@ -182,6 +190,14 @@ try:
     logger.info("✅ Meta Ads Marketing API and Webhooks mounted")
 except Exception as e:
     logger.error(f"❌ Could not mount Meta Ads Marketing routes: {e}", exc_info=True)
+
+# Meta Embedded Signup — WhatsApp, Instagram, Facebook Pages connection
+try:
+    from routes.meta_connect import router as meta_connect_router
+    app.include_router(meta_connect_router, prefix="/admin/meta", tags=["Meta Embedded Signup"])
+    logger.info("✅ Meta Embedded Signup routes mounted at /admin/meta")
+except Exception as e:
+    logger.error(f"❌ Could not mount Meta Embedded Signup routes: {e}", exc_info=True)
 
 # Google Ads Marketing Routes
 try:
@@ -221,6 +237,16 @@ try:
     logger.info("✅ AI Agent Config API mounted (GET/PUT /admin/core/settings/ai-agent + POST /admin/setup/seed-ai-agent)")
 except Exception as e:
     logger.error(f"❌ Could not mount AI Agent Config routes: {e}", exc_info=True)
+
+# Channel Bindings & Multi-Channel Routing (Patch 27)
+try:
+    from routes.channel_routes import internal_router as channel_internal_router
+    from routes.channel_routes import admin_router as channel_admin_router
+    app.include_router(channel_internal_router, tags=["Internal Routing"])
+    app.include_router(channel_admin_router, tags=["Channel Management"])
+    logger.info("✅ Channel Routing API mounted (GET /internal/routing/resolve + /admin/core/channels CRUD)")
+except Exception as e:
+    logger.error(f"❌ Could not mount Channel Routing routes: {e}", exc_info=True)
 
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
@@ -498,8 +524,11 @@ async def proxy_ycloud_webhook(tenant_id: int, request: Request):
             logger.error(f"Error proxying webhook to whatsapp_service: {e}")
             raise HTTPException(status_code=502, detail="Bad Gateway")
 
-# --- INTERNAL CHAT (WhatsApp inbound) ---
+# --- INTERNAL CHAT (Multi-Channel inbound: WhatsApp / Instagram / Facebook) ---
 INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "internal-secret-token")
+
+# Valid channel sources for multi-channel routing
+_VALID_CHANNELS = {"whatsapp", "instagram", "facebook"}
 
 
 def _verify_internal_token(x_internal_token: Optional[str] = Header(None)):
@@ -514,14 +543,21 @@ async def chat_inbound(
     _token: str = Depends(_verify_internal_token),
 ):
     """
-    Receives inbound WhatsApp (or other) events from whatsapp_service.
+    Receives inbound messages from any channel (WhatsApp, Instagram, Facebook).
     Deduplicates by provider+provider_message_id, ensures lead exists (CRM),
     appends user message, runs agent, appends assistant reply, returns response for sending.
+
+    Multi-channel fields (all optional, backward-compat with WhatsApp-only callers):
+      - channel_source / platform: "whatsapp" | "instagram" | "facebook"  (default: "whatsapp")
+      - external_user_id: phone number (whatsapp) or PSID (instagram/facebook)
+      - platform_message_id: provider-level message ID for dedup
+      - media: list of media attachments from Meta messaging
     """
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+
     provider = body.get("provider") or "ycloud"
     event_id = body.get("event_id") or ""
     provider_message_id = body.get("provider_message_id") or event_id
@@ -530,9 +566,37 @@ async def chat_inbound(
     customer_name = body.get("customer_name")
     to_number = body.get("to_number")
     correlation_id = body.get("correlation_id") or ""
+    media = body.get("media")  # List of media attachments from Meta messaging
 
-    if not from_number or text is None:
-        raise HTTPException(status_code=400, detail="from_number and text required")
+    # --- Multi-channel identity ---
+    # channel_source / platform are interchangeable; prefer channel_source
+    channel_source = body.get("channel_source") or body.get("platform") or "whatsapp"
+    if channel_source not in _VALID_CHANNELS:
+        channel_source = "whatsapp"  # safe fallback
+
+    # external_user_id: PSID for IG/FB, phone for WhatsApp
+    external_user_id = body.get("external_user_id") or ""
+    if not external_user_id:
+        # Derive from sender_id (IG/FB webhook field) or from_number (WhatsApp)
+        external_user_id = body.get("sender_id") or from_number
+    platform_msg_id = body.get("platform_message_id") or provider_message_id
+
+    # Validation: need at least one identifier
+    if channel_source == "whatsapp" and not from_number:
+        raise HTTPException(status_code=400, detail="from_number required for whatsapp channel")
+    if channel_source in ("instagram", "facebook") and not external_user_id:
+        raise HTTPException(status_code=400, detail="external_user_id or sender_id required for instagram/facebook channel")
+    if text is None:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    # For IG/FB: if from_number wasn't provided, use external_user_id as conversation key
+    if not from_number:
+        from_number = external_user_id
+
+    # Conversation key: prefixed for IG/FB to avoid PSID-phone collisions
+    conversation_key = from_number
+    if channel_source in ("instagram", "facebook"):
+        conversation_key = f"{channel_source}:{from_number}"
 
     # Resolve tenant (prioritize explicit tenant_id from payload)
     tenant_id = body.get("tenant_id")
@@ -550,20 +614,36 @@ async def chat_inbound(
     # Critical: Ensure tenant_id is int for asyncpg (Spec Database Evolution)
     tenant_id = int(tenant_id)
 
-
+    logger.info(f"chat_inbound: channel={channel_source} ext_id={external_user_id} from={from_number} tenant={tenant_id}")
 
     is_new = await db.try_insert_inbound(
-        provider, provider_message_id, event_id, from_number, body, correlation_id
+        provider, provider_message_id, event_id, conversation_key, body, correlation_id
     )
     if not is_new:
         return {"status": "duplicate", "send": False}
 
     await db.mark_inbound_processing(provider, provider_message_id)
     try:
-        # Pass referral to ensure_lead_exists (Spec Meta Attribution)
+        # Pass referral + channel info to ensure_lead_exists (Spec Meta Attribution + Multi-Channel)
         referral = body.get("referral")
+
+        # Determine source label based on channel
+        source_label = {
+            "whatsapp": "whatsapp_inbound",
+            "instagram": "instagram_dm",
+            "facebook": "facebook_messenger",
+        }.get(channel_source, "whatsapp_inbound")
+
+        # For WhatsApp: phone_number is from_number; for IG/FB: phone may be empty, lead identified by PSID
+        _phone_for_lead = from_number if channel_source == "whatsapp" else (body.get("from_number") or "")
+
         lead = await db.ensure_lead_exists(
-            tenant_id, from_number, customer_name=customer_name, source="whatsapp_inbound", referral=referral
+            tenant_id, _phone_for_lead,
+            customer_name=customer_name,
+            source=source_label,
+            referral=referral,
+            channel_source=channel_source,
+            external_user_id=external_user_id,
         )
 
         # Notify via Socket.IO if attributed (Spec Mission 4)
@@ -572,66 +652,97 @@ async def chat_inbound(
                 await sio.emit('META_LEAD_RECEIVED', {
                     "tenant_id": tenant_id,
                     "lead_id": str(lead.get("id")),
-                    "phone_number": from_number,
+                    "phone_number": conversation_key,
+                    "channel_source": channel_source,
                     "name": f"{lead.get('first_name', '')} {lead.get('last_name', '')}".strip(),
                     "ad_id": referral.get("ad_id"),
                     "headline": referral.get("headline"),
                     "timestamp": datetime.now().isoformat()
                 })
-                logger.info(f"📡 Socket META_LEAD_RECEIVED emitted for {from_number}")
+                logger.info(f"Socket META_LEAD_RECEIVED emitted for {conversation_key}")
             except Exception as sio_err:
-                logger.error(f"⚠️ Error emitting Meta lead notification: {sio_err}")
+                logger.error(f"Error emitting Meta lead notification: {sio_err}")
 
         # --- DEV-19: Auto-detect "sin_respuesta" tag ---
         # If the last assistant message was sent >24h ago and no user message since,
         # the lead was unresponsive. Auto-tag before processing current message.
         try:
-            last_msg_row = await db.fetchrow(
-                """
-                SELECT role, created_at FROM chat_messages
-                WHERE from_number = $1 AND tenant_id = $2
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                from_number, tenant_id,
-            )
+            # Use channel-aware query for IG/FB, from_number for WhatsApp
+            if channel_source != "whatsapp" and external_user_id:
+                last_msg_row = await db.fetchrow(
+                    """
+                    SELECT role, created_at FROM chat_messages
+                    WHERE tenant_id = $1 AND channel_source = $2 AND external_user_id = $3
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    tenant_id, channel_source, external_user_id,
+                )
+            else:
+                last_msg_row = await db.fetchrow(
+                    """
+                    SELECT role, created_at FROM chat_messages
+                    WHERE from_number = $1 AND tenant_id = $2
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    from_number, tenant_id,
+                )
             if last_msg_row and last_msg_row["role"] == "assistant":
                 from datetime import timedelta as _td
                 gap = datetime.now(last_msg_row["created_at"].tzinfo if last_msg_row["created_at"].tzinfo else None) - last_msg_row["created_at"]
                 if gap > _td(hours=24):
-                    # Lead was silent for >24h after our last message — auto-tag
-                    from core.utils import normalize_phone as _norm
-                    _phone = _norm(from_number)
-                    if _phone:
+                    # Lead was silent for >24h after our last message -- auto-tag
+                    # Find lead by channel-appropriate lookup
+                    _lead_row = None
+                    if channel_source == "instagram":
                         _lead_row = await db.fetchrow(
-                            "SELECT id, tags FROM leads WHERE tenant_id = $1 AND phone_number = $2",
-                            tenant_id, _phone,
+                            "SELECT id, tags FROM leads WHERE tenant_id = $1 AND instagram_psid = $2",
+                            tenant_id, external_user_id,
                         )
-                        if _lead_row:
-                            _existing = _lead_row["tags"] if _lead_row["tags"] else []
-                            if isinstance(_existing, str):
-                                _existing = json.loads(_existing)
-                            if "sin_respuesta" not in _existing:
-                                _merged = list(dict.fromkeys(_existing + ["sin_respuesta"]))
-                                await db.execute(
-                                    "UPDATE leads SET tags = $1, updated_at = NOW() WHERE id = $2",
-                                    json.dumps(_merged), _lead_row["id"],
-                                )
-                                await db.execute(
-                                    "INSERT INTO lead_tag_log (tenant_id, lead_id, tags_added, reason, source) VALUES ($1, $2, $3, $4, 'system_auto')",
-                                    tenant_id, _lead_row["id"],
-                                    ["sin_respuesta"],
-                                    f"Lead no respondio por {gap.days}d {gap.seconds // 3600}h desde ultimo mensaje del asistente",
-                                )
-                                logger.info(f"Auto-tagged lead {from_number} as sin_respuesta (gap: {gap})")
+                    elif channel_source == "facebook":
+                        _lead_row = await db.fetchrow(
+                            "SELECT id, tags FROM leads WHERE tenant_id = $1 AND facebook_psid = $2",
+                            tenant_id, external_user_id,
+                        )
+                    if not _lead_row:
+                        # Fallback to phone lookup (works for WhatsApp or cross-channel leads)
+                        from core.utils import normalize_phone as _norm
+                        _phone = _norm(from_number)
+                        if _phone:
+                            _lead_row = await db.fetchrow(
+                                "SELECT id, tags FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                                tenant_id, _phone,
+                            )
+                    if _lead_row:
+                        _existing = _lead_row["tags"] if _lead_row["tags"] else []
+                        if isinstance(_existing, str):
+                            _existing = json.loads(_existing)
+                        if "sin_respuesta" not in _existing:
+                            _merged = list(dict.fromkeys(_existing + ["sin_respuesta"]))
+                            await db.execute(
+                                "UPDATE leads SET tags = $1, updated_at = NOW() WHERE id = $2",
+                                json.dumps(_merged), _lead_row["id"],
+                            )
+                            await db.execute(
+                                "INSERT INTO lead_tag_log (tenant_id, lead_id, tags_added, reason, source) VALUES ($1, $2, $3, $4, 'system_auto')",
+                                tenant_id, _lead_row["id"],
+                                ["sin_respuesta"],
+                                f"Lead no respondio por {gap.days}d {gap.seconds // 3600}h desde ultimo mensaje del asistente",
+                            )
+                            logger.info(f"Auto-tagged lead {channel_source}:{external_user_id} as sin_respuesta (gap: {gap})")
         except Exception as tag_err:
             logger.warning(f"sin_respuesta auto-tag check failed: {tag_err}")
 
         await db.append_chat_message(
-            from_number, "user", text, correlation_id, tenant_id
+            conversation_key, "user", text, correlation_id, tenant_id,
+            platform=channel_source, platform_message_id=platform_msg_id,
+            channel_source=channel_source, external_user_id=external_user_id,
         )
 
         # Build history (previous messages only; current turn is "input")
-        history_raw = await db.get_chat_history(from_number, limit=15, tenant_id=tenant_id)
+        history_raw = await db.get_chat_history(
+            conversation_key, limit=15, tenant_id=tenant_id,
+            channel_source=channel_source, external_user_id=external_user_id,
+        )
         # Exclude the message we just added (last one is current user)
         if history_raw and history_raw[-1].get("content") == text and history_raw[-1].get("role") == "user":
             history_raw = history_raw[:-1]
@@ -643,17 +754,26 @@ async def chat_inbound(
             elif m.get("role") == "assistant":
                 lc_history.append(AIMessage(content=m.get("content", "")))
 
-        current_customer_phone.set(from_number)
+        current_customer_phone.set(conversation_key)
         current_tenant_id.set(tenant_id)
         agent = await get_agent_executor(tenant_id)
         result = await agent.ainvoke({"history": lc_history, "input": text})
         output = (result.get("output") or "").strip()
 
         await db.append_chat_message(
-            from_number, "assistant", output, correlation_id, tenant_id
+            conversation_key, "assistant", output, correlation_id, tenant_id,
+            platform=channel_source, platform_message_id=None,
+            channel_source=channel_source, external_user_id=external_user_id,
         )
         await db.mark_inbound_done(provider, provider_message_id)
-        return {"status": "ok", "send": True, "text": output, "messages": [{"text": output}]}
+        return {
+            "status": "ok", "send": True, "text": output,
+            "messages": [{"text": output}],
+            "channel_source": channel_source,
+            "external_user_id": external_user_id,
+            "from_number": from_number,
+            "conversation_key": conversation_key,
+        }
     except Exception as e:
         logger.exception("chat_inbound_error")
         await db.mark_inbound_failed(provider, provider_message_id, str(e))

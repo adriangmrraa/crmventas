@@ -22,7 +22,8 @@
     "sellers": "Vendeurs",
     "follow_ups": "Suivis",
     "clients": "Clients",
-    "prospecting": "Prospection"
+    "prospecting": "Prospection",
+    "integrations": "Intégrations"
   },
   "header": {
     "tenant_selector": "Sélecteur de Clinique",

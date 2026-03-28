@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { io, Socket } from 'socket.io-client';
 import { BACKEND_URL } from '../api/axios';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, X, HelpCircle } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import OnboardingGuide from './OnboardingGuide';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +20,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const socketRef = useRef<Socket | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [guideTooltip, setGuideTooltip] = useState(false);
+  const tooltipShownRef = useRef(false);
+
+  // Tooltip on first visit
+  useEffect(() => {
+    if (tooltipShownRef.current) return;
+    const alreadyShown = sessionStorage.getItem('tooltips_shown');
+    if (alreadyShown) return;
+    tooltipShownRef.current = true;
+    const t1 = setTimeout(() => setGuideTooltip(true), 3000);
+    const t2 = setTimeout(() => { setGuideTooltip(false); sessionStorage.setItem('tooltips_shown', '1'); }, 8000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   // Notification State
   const [notification, setNotification] = useState<{
@@ -136,6 +151,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3">
+              {/* Guide Button */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowGuide(true); setGuideTooltip(false); }}
+                  className="guide-btn relative flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 hover:scale-110 active:scale-90 transition-all duration-200"
+                  title="Guia de la pagina"
+                >
+                  <HelpCircle size={18} className="guide-icon" />
+                  <span className="absolute inset-0 rounded-full border-2 border-blue-400/40 animate-[guidePing_3s_ease-out_infinite]" />
+                </button>
+                {guideTooltip && (
+                  <div
+                    className="absolute top-12 right-0 w-52 px-3 py-2 rounded-xl bg-blue-500/90 backdrop-blur-md text-white text-[11px] leading-snug shadow-xl shadow-blue-500/20 pointer-events-none z-50"
+                    style={{ animation: 'tooltipIn 0.4s cubic-bezier(0.16,1,0.3,1)' }}
+                  >
+                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-blue-500/90 rotate-45" />
+                    Toca para ver la guia de esta pagina y aprender cada funcion
+                  </div>
+                )}
+              </div>
+
               {/* Notification Bell */}
               <NotificationBell className="block" />
 
@@ -155,6 +191,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* Onboarding Guide */}
+      <OnboardingGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
       {/* GLOBAL NOTIFICATION TOAST */}
       {notification && (

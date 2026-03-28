@@ -16,7 +16,8 @@ import {
   Search,
   Megaphone,
   Layout,
-  LayoutGrid
+  LayoutGrid,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -43,6 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
     { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={20} />, path: '/crm/prospeccion', roles: ['ceo', 'setter', 'closer'] },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={20} />, path: '/chats', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
+    // Analytics
+    { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={20} />, path: '/crm/analytics', roles: ['ceo'] },
     // Marketing Items
     { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={20} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'] },
     { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={20} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'] },

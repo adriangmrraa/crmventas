@@ -1930,3 +1930,31 @@ async def batch_score_leads(user=Depends(verify_admin_token)):
     tenant_id = user.get("tenant_id", 1)
     await batch_calculate_scores(db.pool, tenant_id, limit=100)
     return {"status": "ok", "message": "Batch scoring started"}
+
+
+# =============================================================================
+# SALES ANALYTICS
+# =============================================================================
+
+@router.get("/analytics/funnel")
+async def get_funnel(days: int = 30, user=Depends(verify_admin_token)):
+    """Conversion funnel with stage counts and rates."""
+    from services.sales_analytics_service import get_funnel_data
+    tenant_id = user.get("tenant_id", 1)
+    return await get_funnel_data(db.pool, tenant_id, days)
+
+
+@router.get("/analytics/forecast")
+async def get_forecast(user=Depends(verify_admin_token)):
+    """Weighted pipeline forecast."""
+    from services.sales_analytics_service import get_forecast_data
+    tenant_id = user.get("tenant_id", 1)
+    return await get_forecast_data(db.pool, tenant_id)
+
+
+@router.get("/analytics/velocity")
+async def get_velocity(days: int = 90, user=Depends(verify_admin_token)):
+    """Sales velocity metrics."""
+    from services.sales_analytics_service import get_velocity_data
+    tenant_id = user.get("tenant_id", 1)
+    return await get_velocity_data(db.pool, tenant_id, days)

@@ -40,6 +40,8 @@ export interface GlobalTopBarProps {
   tenants?: Tenant[];
   onTenantChange?: (tenantId: number) => void;
   isLoading?: boolean;
+  /** Callback to open the mobile sidebar drawer */
+  onMenuClick?: () => void;
 }
 
 // ════════════════════════════════════════════════════════════════

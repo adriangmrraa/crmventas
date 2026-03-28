@@ -52,7 +52,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from '../../context/LanguageContext';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Menu } from 'lucide-react';
 import type { GlobalTopBarProps } from './types';
 import { TenantSwitcher } from './TenantSwitcher';
 import { CommandBar } from './CommandBar';
@@ -71,6 +71,7 @@ export const GlobalTopBar: React.FC<GlobalTopBarProps> = ({
   tenants = [],
   onTenantChange,
   isLoading = false,
+  onMenuClick,
 }) => {
   const { t } = useTranslation();
 
@@ -106,10 +107,21 @@ export const GlobalTopBar: React.FC<GlobalTopBarProps> = ({
           {/* LEFT: ClinicForge Logo + TenantSwitcher Dropdown */}
           {/* ───────────────────────────────────────────────────────────── */}
           <div className="flex items-center gap-3 min-w-max">
+            {/* Hamburger Menu Button (Mobile only) */}
+            {onMenuClick && (
+              <button
+                onClick={onMenuClick}
+                className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all duration-200"
+                aria-label="Open menu"
+              >
+                <Menu size={20} className="text-white/70" />
+              </button>
+            )}
+
             {/* ClinicForge Brand Icon */}
             {/* Size: 32px (w-8 h-8), rounded square, medical gradient */}
             {/* Color: medical-500 (primary brand color) */}
-            <div 
+            <div
               className="flex items-center justify-center w-8 h-8 rounded-md bg-medical-500 flex-shrink-0"
               title="ClinicForge"
               aria-label="ClinicForge Logo"

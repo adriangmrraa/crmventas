@@ -249,8 +249,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             onClick={handleCloseCenter}
           />
 
-          {/* Center Container */}
-          <div className="fixed sm:absolute top-16 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-[#0d1117] rounded-lg shadow-xl shadow-black/20 border border-white/[0.06] z-50 max-h-[calc(100vh-5rem)] sm:max-h-[80vh] flex flex-col overflow-hidden">
+          {/* Center Container - slides DOWN from bell position */}
+          <div
+            className="fixed sm:absolute top-16 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-[#0d1117] rounded-lg shadow-xl shadow-black/20 border border-white/[0.06] z-50 max-h-[calc(100vh-5rem)] sm:max-h-[80vh] flex flex-col overflow-hidden"
+            style={{ animation: 'notifSlideDown 0.2s ease-out forwards' }}
+          >
             <NotificationCenter
               onClose={handleCloseCenter}
               onNotificationRead={handleNotificationRead}
@@ -277,6 +280,20 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
           {t('notifications.last_updated')}: {lastUpdated.toLocaleTimeString()}
         </div>
       )}
+
+      {/* Slide-down animation for notification dropdown */}
+      <style>{`
+        @keyframes notifSlideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 };

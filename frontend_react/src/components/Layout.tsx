@@ -179,6 +179,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (tenant) setCurrentTenant(tenant);
           }}
           isLoading={tenantsLoading}
+          onMenuClick={() => setIsMobileMenuOpen(true)}
         />
 
         {/* Contextual Subheader (sticky below top bar) */}

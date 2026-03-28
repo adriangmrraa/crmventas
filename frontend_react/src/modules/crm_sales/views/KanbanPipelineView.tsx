@@ -294,7 +294,7 @@ export default function KanbanPipelineView() {
               <div
                 key={status.code}
                 data-status-code={status.code}
-                className={`flex flex-col w-[280px] sm:w-[300px] shrink-0 rounded-2xl border transition-all duration-300
+                className={`flex flex-col w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 rounded-xl sm:rounded-2xl border transition-all duration-300
                   ${isOver
                     ? 'border-blue-500/40 bg-blue-500/[0.04] scale-[1.01]'
                     : 'border-white/[0.06] bg-white/[0.02]'
@@ -336,66 +336,62 @@ export default function KanbanPipelineView() {
                   ) : (
                     columnLeads.map(lead => {
                       const days = getDaysInStage(lead);
-                      const isDragging = draggingId === lead.id;
-                      const isUpdating = updatingId === lead.id;
+                      const lid = String(lead.id);
+                      const isDragging = String(draggingId) === lid;
+                      const isUpdating = String(updatingId) === lid;
 
                       return (
                         <div
-                          key={lead.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, String(lead.id))}
+                          key={lid}
+                          draggable={true}
+                          onDragStart={(e) => handleDragStart(e, lid)}
                           onDragEnd={handleDragEnd}
-                          onTouchStart={(e) => handleTouchStart(e, String(lead.id))}
+                          onTouchStart={(e) => handleTouchStart(e, lid)}
                           onTouchMove={handleTouchMove}
                           onTouchEnd={handleTouchEnd}
                           onClick={() => {
                             if (!draggingId) navigate(`/crm/leads/${lead.id}`);
                           }}
-                          className={`group relative bg-white/[0.03] rounded-xl border border-white/[0.06] p-3 cursor-grab
+                          className={`group relative bg-white/[0.03] rounded-xl border border-white/[0.06] p-2 sm:p-3 cursor-grab
                             hover:bg-white/[0.05] hover:border-white/[0.10]
                             active:cursor-grabbing active:scale-[0.97]
-                            transition-all duration-500 ease-in-out touch-manipulation
-                            ${isDragging && String(draggingId) === String(lead.id) ? 'opacity-40 scale-95 rotate-1' : ''}
+                            transition-all duration-500 ease-in-out
+                            ${isDragging ? 'opacity-40 scale-95 rotate-1 ring-2 ring-blue-400/30' : ''}
                             ${isUpdating ? 'animate-pulse ring-2 ring-blue-500/30' : ''}
                           `}
                         >
                           {/* Drag handle */}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-30 transition-opacity">
-                            <GripVertical size={14} />
+                          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-30 sm:opacity-0 group-hover:opacity-30 transition-opacity">
+                            <GripVertical size={12} />
                           </div>
 
                           {/* Lead name */}
-                          <div className="flex items-center gap-1.5 pr-6">
-                            <h4 className="text-sm font-semibold text-white truncate">
+                          <div className="flex items-center gap-1 pr-5">
+                            <h4 className="text-xs sm:text-sm font-semibold text-white truncate">
                               {lead.first_name} {lead.last_name}
                             </h4>
                             <ScoreBadge score={lead.score} size="sm" />
                           </div>
 
-                          {/* Phone */}
-                          {lead.phone_number && (
-                            <p className="text-[11px] text-white/40 truncate mt-0.5">
-                              {lead.phone_number}
-                            </p>
-                          )}
+                          {/* Phone + days compact row */}
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-white/30">
+                            {lead.phone_number && (
+                              <span className="truncate">{lead.phone_number}</span>
+                            )}
+                            <span className="hidden sm:inline">·</span>
+                            <span className="hidden sm:flex items-center gap-0.5">
+                              <Clock size={9} />{days}d
+                            </span>
+                          </div>
 
-                          {/* Meta row */}
-                          <div className="flex items-center gap-3 mt-2 text-[10px] text-white/30">
-                            {/* Seller */}
+                          {/* Meta row — hidden on mobile for compactness */}
+                          <div className="hidden sm:flex items-center gap-3 mt-1.5 text-[10px] text-white/30">
                             {lead.seller_name && (
                               <div className="flex items-center gap-1">
                                 <User size={10} />
                                 <span className="truncate max-w-[60px]">{lead.seller_name}</span>
                               </div>
                             )}
-
-                            {/* Days in stage */}
-                            <div className="flex items-center gap-1">
-                              <Clock size={10} />
-                              <span>{days}d</span>
-                            </div>
-
-                            {/* Value */}
                             {lead.estimated_value && lead.estimated_value > 0 && (
                               <div className="flex items-center gap-1 text-green-400/60">
                                 <DollarSign size={10} />
@@ -404,10 +400,10 @@ export default function KanbanPipelineView() {
                             )}
                           </div>
 
-                          {/* Source badge */}
+                          {/* Source badge — smaller on mobile */}
                           {lead.source && (
-                            <div className="mt-2">
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25 uppercase font-bold">
+                            <div className="mt-1 sm:mt-2">
+                              <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25 uppercase font-bold">
                                 {lead.source}
                               </span>
                             </div>
@@ -417,7 +413,7 @@ export default function KanbanPipelineView() {
                           {parseTags(lead.tags).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {parseTags(lead.tags).slice(0, 2).map(tag => (
-                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400/60">
+                                <span key={tag} className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400/60 truncate max-w-[80px]">
                                   {tag}
                                 </span>
                               ))}

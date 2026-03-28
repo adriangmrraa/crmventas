@@ -18,6 +18,9 @@ import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
 import ProspectingView from './modules/crm_sales/views/ProspectingView';
 import KanbanPipelineView from './modules/crm_sales/views/KanbanPipelineView';
 import SalesAnalyticsView from './modules/crm_sales/views/SalesAnalyticsView';
+import FollowUpQueueView from './modules/crm_sales/views/FollowUpQueueView';
+import SetterQueueView from './modules/crm_sales/views/SetterQueueView';
+import CloserPanelView from './modules/crm_sales/views/CloserPanelView';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 // Optional Notifications Pages
@@ -93,6 +96,21 @@ function App() {
                         } />
                         <Route path="crm/clientes" element={<ClientsView />} />
                         <Route path="crm/clientes/:id" element={<ClientDetailView />} />
+                        <Route path="crm/setter-queue" element={
+                          <ProtectedRoute allowedRoles={['ceo', 'setter']}>
+                            <SetterQueueView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/closer-panel" element={
+                          <ProtectedRoute allowedRoles={['ceo', 'closer']}>
+                            <CloserPanelView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/seguimientos" element={
+                          <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
+                            <FollowUpQueueView />
+                          </ProtectedRoute>
+                        } />
                         <Route path="crm/prospeccion" element={
                           <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
                             <ProspectingView />

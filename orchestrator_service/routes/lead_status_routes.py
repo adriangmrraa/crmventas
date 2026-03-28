@@ -55,7 +55,7 @@ async def get_available_transitions(
     transitions = await service.get_available_transitions(tenant_id, current_status)
     return transitions
 
-@router.put("/{lead_id}/status", response_model=LeadStatusResponse)
+@router.post("/leads/{lead_id}/status", response_model=LeadStatusResponse)
 async def update_lead_status(
     lead_id: UUID, 
     status_update: LeadStatusUpdate,

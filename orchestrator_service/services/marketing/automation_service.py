@@ -281,7 +281,7 @@ class AutomationService:
     async def get_automation_logs(tenant_id: int, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         """Recupera el historial de ejecuciones de automatización."""
         query = """
-            SELECT l.id, l.tenant_id, l.patient_id, l.trigger_type, l.target_id, 
+            SELECT l.id, l.tenant_id, l.patient_id, l.trigger_type, l.target_id,
                    l.status, l.error_details, l.meta, l.created_at,
                    p.first_name || ' ' || COALESCE(p.last_name, '') as patient_name
             FROM automation_logs l
@@ -292,6 +292,63 @@ class AutomationService:
         """
         rows = await db.pool.fetch(query, tenant_id, limit, offset)
         return [dict(row) for row in rows]
+
+    @staticmethod
+    async def get_hsm_templates(tenant_id: int) -> List[Dict[str, Any]]:
+        """Recupera las plantillas HSM del tenant desde meta_templates."""
+        rows = await db.pool.fetch(
+            """
+            SELECT id, tenant_id, meta_template_id, waba_id, name, category,
+                   language, status, components, example,
+                   sent_count, delivered_count, read_count, replied_count,
+                   last_synced_at, sync_status, created_at, updated_at
+            FROM meta_templates
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC
+            """,
+            tenant_id,
+        )
+        templates = []
+        for row in rows:
+            t = dict(row)
+            t["id"] = str(t["id"])
+            # Extract body_text from example for convenience
+            if t.get("example") and isinstance(t["example"], dict):
+                t["body_text"] = t["example"].get("body_text", "")
+                t["variables_count"] = t["example"].get("variables_count", 0)
+            templates.append(t)
+        return templates
+
+    @staticmethod
+    async def get_automation_rules(tenant_id: int) -> List[Dict[str, Any]]:
+        """Recupera las reglas de automatización del tenant."""
+        rows = await db.pool.fetch(
+            """
+            SELECT id, tenant_id, name, trigger_type, trigger_conditions,
+                   action_type, action_config, is_active,
+                   last_triggered_at, trigger_count, success_count, error_count,
+                   created_at, updated_at
+            FROM automation_rules
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC
+            """,
+            tenant_id,
+        )
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    async def update_automation_rules(tenant_id: int, rules: Dict[str, Any]) -> Dict[str, Any]:
+        """Actualiza reglas de automatización del tenant (bulk upsert)."""
+        updated = 0
+        for rule_id, rule_data in rules.items():
+            is_active = rule_data.get("is_active")
+            if is_active is not None:
+                await db.pool.execute(
+                    "UPDATE automation_rules SET is_active = $1, updated_at = NOW() WHERE id = $2::uuid AND tenant_id = $3",
+                    is_active, rule_id, tenant_id,
+                )
+                updated += 1
+        return {"updated": updated}
 
 # Instancia singleton
 automation_service = AutomationService()

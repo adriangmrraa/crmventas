@@ -7,11 +7,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
-from sqlalchemy import text
 
 from core.security import get_current_user
 from services.seller_notification_service import notification_service
-from db import get_db
+from db import db as asyncpg_db
 
 router = APIRouter(prefix="/admin/core/notifications", tags=["notifications"])
 
@@ -62,7 +61,6 @@ async def get_notifications(
     offset: int = Query(0, ge=0),
     unread_only: bool = False,
     seller_id: Optional[str] = None,
-    db=Depends(get_db)
 ):
     """
     Obtener notificaciones del usuario actual (o de otro vendedor si es CEO)
@@ -84,30 +82,45 @@ async def get_notifications(
 @router.get("/count", response_model=NotificationCountResponse)
 async def get_notification_count(
     current_user: dict = Depends(get_current_user),
-    db=Depends(get_db)
 ):
     """
     Obtener conteo de notificaciones no leídas (aislado por tenant_id)
     """
     try:
-        # Usamos el tenant_id del usuario para el conteo si es que la vista no lo filtra
-        # Pero la vista 'unread_notifications_count' agrupa por recipient_id, que es único globalmente (UUID)
-        async with db.begin():
-            result = await db.execute(
-                text("SELECT * FROM unread_notifications_count WHERE user_id = :user_id"),
-                {"user_id": current_user["id"]}
+        user_id = current_user["id"]
+        # Try the pre-built view first; fall back to direct query if the view doesn't exist
+        try:
+            row = await asyncpg_db.fetchrow(
+                "SELECT * FROM unread_notifications_count WHERE user_id = $1",
+                user_id,
             )
-            row = result.fetchone()
-            
-            if row:
-                return NotificationCountResponse(
-                    total=row.count,
-                    critical=row.critical_count,
-                    high=row.high_count,
-                    medium=row.medium_count,
-                    low=row.low_count
-                )
-            return NotificationCountResponse(total=0, critical=0, high=0, medium=0, low=0)
+        except Exception:
+            # View may not exist — query notifications table directly
+            row = await asyncpg_db.fetchrow(
+                """
+                SELECT
+                    COUNT(*) AS count,
+                    COUNT(CASE WHEN priority = 'critical' THEN 1 END) AS critical_count,
+                    COUNT(CASE WHEN priority = 'high' THEN 1 END) AS high_count,
+                    COUNT(CASE WHEN priority = 'medium' THEN 1 END) AS medium_count,
+                    COUNT(CASE WHEN priority = 'low' THEN 1 END) AS low_count
+                FROM notifications
+                WHERE recipient_id = $1
+                  AND read = false
+                  AND (expires_at IS NULL OR expires_at > NOW())
+                """,
+                user_id,
+            )
+
+        if row:
+            return NotificationCountResponse(
+                total=row["count"],
+                critical=row["critical_count"],
+                high=row["high_count"],
+                medium=row["medium_count"],
+                low=row["low_count"],
+            )
+        return NotificationCountResponse(total=0, critical=0, high=0, medium=0, low=0)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting notification count: {str(e)}")
 
@@ -152,35 +165,31 @@ async def mark_all_as_read(
 @router.get("/settings", response_model=NotificationSettings)
 async def get_notification_settings(
     current_user: dict = Depends(get_current_user),
-    db=Depends(get_db)
 ):
     """
     Obtener configuración de notificaciones del usuario
     """
     try:
-        async with db as database:
-            result = await database.execute(
-                """
-                SELECT email_notifications, push_notifications, desktop_notifications,
-                       mute_until, muted_types
-                FROM notification_settings
-                WHERE user_id = :user_id
-                """,
-                {"user_id": current_user["id"]}
+        row = await asyncpg_db.fetchrow(
+            """
+            SELECT email_notifications, push_notifications, desktop_notifications,
+                   mute_until, muted_types
+            FROM notification_settings
+            WHERE user_id = $1
+            """,
+            current_user["id"],
+        )
+
+        if row:
+            return NotificationSettings(
+                email_notifications=row["email_notifications"],
+                push_notifications=row["push_notifications"],
+                desktop_notifications=row["desktop_notifications"],
+                mute_until=row["mute_until"],
+                muted_types=row["muted_types"] or [],
             )
-            row = result.fetchone()
-            
-            if row:
-                return NotificationSettings(
-                    email_notifications=row.email_notifications,
-                    push_notifications=row.push_notifications,
-                    desktop_notifications=row.desktop_notifications,
-                    mute_until=row.mute_until,
-                    muted_types=row.muted_types or []
-                )
-            else:
-                # Crear configuración por defecto si no existe
-                return NotificationSettings()
+        else:
+            return NotificationSettings()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting notification settings: {str(e)}")
 
@@ -188,42 +197,35 @@ async def get_notification_settings(
 async def update_notification_settings(
     settings: NotificationSettings,
     current_user: dict = Depends(get_current_user),
-    db=Depends(get_db)
 ):
     """
     Actualizar configuración de notificaciones
     """
     try:
-        async with db as database:
-            await database.execute(
-                """
-                INSERT INTO notification_settings (
-                    user_id, email_notifications, push_notifications, 
-                    desktop_notifications, mute_until, muted_types
-                ) VALUES (
-                    :user_id, :email_notifications, :push_notifications,
-                    :desktop_notifications, :mute_until, :muted_types
-                )
-                ON CONFLICT (user_id) DO UPDATE SET
-                    email_notifications = EXCLUDED.email_notifications,
-                    push_notifications = EXCLUDED.push_notifications,
-                    desktop_notifications = EXCLUDED.desktop_notifications,
-                    mute_until = EXCLUDED.mute_until,
-                    muted_types = EXCLUDED.muted_types,
-                    updated_at = NOW()
-                """,
-                {
-                    "user_id": current_user["id"],
-                    "email_notifications": settings.email_notifications,
-                    "push_notifications": settings.push_notifications,
-                    "desktop_notifications": settings.desktop_notifications,
-                    "mute_until": settings.mute_until,
-                    "muted_types": settings.muted_types
-                }
+        await asyncpg_db.execute(
+            """
+            INSERT INTO notification_settings (
+                user_id, email_notifications, push_notifications,
+                desktop_notifications, mute_until, muted_types
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6
             )
-            await database.commit()
-            
-            return settings
+            ON CONFLICT (user_id) DO UPDATE SET
+                email_notifications = EXCLUDED.email_notifications,
+                push_notifications = EXCLUDED.push_notifications,
+                desktop_notifications = EXCLUDED.desktop_notifications,
+                mute_until = EXCLUDED.mute_until,
+                muted_types = EXCLUDED.muted_types,
+                updated_at = NOW()
+            """,
+            current_user["id"],
+            settings.email_notifications,
+            settings.push_notifications,
+            settings.desktop_notifications,
+            settings.mute_until,
+            settings.muted_types,
+        )
+        return settings
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating notification settings: {str(e)}")
 

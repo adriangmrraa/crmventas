@@ -4,7 +4,8 @@ import {
   MessageCircle, Send, Calendar, User, Activity,
   Pause, Play, AlertCircle, Clock, ChevronLeft,
   Search, XCircle, Bell, Volume2, VolumeX,
-  UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw, X
+  UserPlus, Users, Target, Zap, Crown, Bot, RefreshCw, X,
+  Tag, Star, HandMetal, Shield, FileText
 } from 'lucide-react';
 import api, { BACKEND_URL } from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -13,6 +14,8 @@ import { io, Socket } from 'socket.io-client';
 import SellerBadge from '../components/SellerBadge';
 import SellerSelector from '../components/SellerSelector';
 import AssignmentHistory from '../components/AssignmentHistory';
+import { TagBadge, type LeadTag } from '../components/leads/TagBadge';
+import HsmTemplatePanel from '../components/chat/HsmTemplatePanel';
 
 // ============================================
 // INTERFACES
@@ -37,6 +40,10 @@ interface ChatSession {
   last_derivhumano_at?: string;
   is_window_open?: boolean;
   last_user_message_time?: string;
+  // AI agent activity fields
+  tags?: string[];
+  handoff_requested?: boolean;
+  assigned_human_id?: string | null;
 }
 
 interface ChatMessage {
@@ -59,6 +66,8 @@ interface LeadContext {
     email?: string;
     assigned_seller_id?: string;
     assignment_history?: any[];
+    tags?: string[];
+    score?: number;
   } | null;
   upcoming_event: {
     id: string;
@@ -73,8 +82,54 @@ interface LeadContext {
     date: string;
     status?: string;
   } | null;
+  upcoming_meetings?: {
+    id: string;
+    title: string;
+    date: string;
+    status?: string;
+  }[];
+  handoff_requested?: boolean;
+  handoff_reason?: string;
   is_guest: boolean;
 }
+
+/** AI activity system messages shown inline in the chat */
+interface AIActivityEvent {
+  id: string;
+  type: 'tag_assigned' | 'meeting_scheduled' | 'lead_qualified' | 'handoff_requested';
+  message: string;
+  timestamp: string;
+}
+
+// Tag color mapping for common CRM tags
+const TAG_COLORS: Record<string, string> = {
+  caliente: '#ef4444',
+  tibio: '#f59e0b',
+  frio: '#3b82f6',
+  interesado: '#10b981',
+  no_interesado: '#6b7280',
+  seguimiento: '#8b5cf6',
+  urgente: '#dc2626',
+  vip: '#d97706',
+  nuevo: '#06b6d4',
+  contactado: '#14b8a6',
+  cerrado: '#22c55e',
+  perdido: '#ef4444',
+};
+
+const getTagColor = (tagName: string): string => {
+  const normalized = tagName.toLowerCase().replace(/\s+/g, '_');
+  return TAG_COLORS[normalized] || '#6b7280';
+};
+
+/** Score display helper */
+const getScoreConfig = (score: number) => {
+  if (score >= 80) return { label: 'Muy calificado', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' };
+  if (score >= 60) return { label: 'Calificado', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
+  if (score >= 40) return { label: 'Tibio', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' };
+  if (score >= 20) return { label: 'Bajo interes', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' };
+  return { label: 'Sin calificar', color: 'text-white/40', bg: 'bg-white/[0.02]', border: 'border-white/[0.06]' };
+};
 
 interface SellerAssignment {
   assigned_seller_id?: string;
@@ -123,11 +178,15 @@ export default function ChatsView() {
   const [assigningSeller, setAssigningSeller] = useState(false);
   const { user } = useAuth();
 
+  // AI activity events (inline system messages in chat)
+  const [aiActivityEvents, setAiActivityEvents] = useState<AIActivityEvent[]>([]);
+
   // Estados de UI
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showToast, setShowToast] = useState<Toast | null>(null);
   const [highlightedSession, setHighlightedSession] = useState<string | null>(null);
   const [showMobileContext, setShowMobileContext] = useState(false);
+  const [showHsmPanel, setShowHsmPanel] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -332,6 +391,89 @@ export default function ChatsView() {
         title: '📅 ' + t('chats.toast_new_appointment_title'),
         message: `${t('chats.toast_new_appointment_message_prefix')} ${data.phone_number}`,
       });
+    });
+
+    // Evento: Etiqueta asignada por IA
+    socketRef.current.on('AI_TAG_ASSIGNED', (data: { phone_number: string; tag: string; tenant_id?: number }) => {
+      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+
+      // Update session tags
+      setSessions(prev => prev.map(s =>
+        s.phone_number === data.phone_number
+          ? { ...s, tags: [...(s.tags || []).filter(t => t !== data.tag), data.tag] }
+          : s
+      ));
+
+      // Add inline AI activity event if viewing this conversation
+      if (selectedSession?.phone_number === data.phone_number) {
+        setAiActivityEvents(prev => [...prev, {
+          id: `tag-${Date.now()}`,
+          type: 'tag_assigned',
+          message: `Etiqueta '${data.tag}' asignada automaticamente`,
+          timestamp: new Date().toISOString(),
+        }]);
+        fetchLeadContext(data.phone_number);
+      }
+    });
+
+    // Evento: Lead calificado por IA (score update)
+    socketRef.current.on('LEAD_QUALIFIED', (data: { phone_number: string; score: number; tenant_id?: number }) => {
+      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+
+      if (selectedSession?.phone_number === data.phone_number) {
+        setAiActivityEvents(prev => [...prev, {
+          id: `qual-${Date.now()}`,
+          type: 'lead_qualified',
+          message: `Lead calificado con score ${data.score}/100`,
+          timestamp: new Date().toISOString(),
+        }]);
+        fetchLeadContext(data.phone_number);
+      }
+    });
+
+    // Evento: Handoff solicitado por IA
+    socketRef.current.on('HANDOFF_REQUESTED', (data: { phone_number: string; reason: string; tenant_id?: number }) => {
+      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+
+      setSessions(prev => prev.map(s =>
+        s.phone_number === data.phone_number
+          ? { ...s, handoff_requested: true }
+          : s
+      ));
+
+      if (selectedSession?.phone_number === data.phone_number) {
+        setAiActivityEvents(prev => [...prev, {
+          id: `handoff-${Date.now()}`,
+          type: 'handoff_requested',
+          message: `IA solicita handoff: ${data.reason}`,
+          timestamp: new Date().toISOString(),
+        }]);
+        fetchLeadContext(data.phone_number);
+      }
+
+      setShowToast({
+        id: Date.now().toString(),
+        type: 'warning',
+        title: 'Handoff solicitado',
+        message: `IA solicita atencion humana para ${data.phone_number}: ${data.reason}`,
+      });
+
+      if (soundEnabled) playNotificationSound();
+    });
+
+    // Evento: Reunion agendada por IA
+    socketRef.current.on('AI_MEETING_SCHEDULED', (data: { phone_number: string; title: string; date: string; tenant_id?: number }) => {
+      if (data.tenant_id != null && selectedTenantId != null && data.tenant_id !== selectedTenantId) return;
+
+      if (selectedSession?.phone_number === data.phone_number) {
+        setAiActivityEvents(prev => [...prev, {
+          id: `meeting-${Date.now()}`,
+          type: 'meeting_scheduled',
+          message: `Reunion '${data.title}' agendada para ${new Date(data.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`,
+          timestamp: new Date().toISOString(),
+        }]);
+        fetchLeadContext(data.phone_number);
+      }
     });
 
     // Cleanup
@@ -817,6 +959,18 @@ export default function ChatsView() {
                           <User size={12} className="text-orange-500 fill-orange-500" />
                         </div>
                       )}
+                      {/* Robot icon if AI-handled (no human assigned) */}
+                      {session.status === 'active' && !session.assigned_human_id && (
+                        <div className="absolute -bottom-1 -right-1 bg-white/[0.03] p-0.5 rounded-full">
+                          <Bot size={12} className="text-cyan-400" />
+                        </div>
+                      )}
+                      {/* Alert icon if handoff requested */}
+                      {session.handoff_requested && (
+                        <div className="absolute -top-1 -right-1 bg-white/[0.03] p-0.5 rounded-full">
+                          <AlertCircle size={12} className="text-orange-400 fill-orange-400/20" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -840,6 +994,22 @@ export default function ChatsView() {
                           </span>
                         )}
                       </div>
+                      {/* Tag colored dots row */}
+                      {session.tags && session.tags.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {session.tags.slice(0, 5).map(tag => (
+                            <span
+                              key={tag}
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: getTagColor(tag) }}
+                              title={tag}
+                            />
+                          ))}
+                          {session.tags.length > 5 && (
+                            <span className="text-[10px] text-white/30">+{session.tags.length - 5}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {/* Floating Urgency Indicator for Mobile */}
@@ -1029,39 +1199,103 @@ export default function ChatsView() {
 
                 <div className="flex-1" /> {/* Spacer to push messages down if few */}
 
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-lg px-4 py-3 ${message.role === 'user'
-                        ? 'bg-white/[0.03]'
-                        : message.is_derivhumano
-                          ? 'bg-orange-500/10 border border-orange-300 text-white'
-                          : 'bg-blue-600 text-white'
-                        }`}
-                    >
-                      {message.is_derivhumano && (
-                        <div className="flex items-center gap-1 text-xs text-orange-600 mb-1">
-                          <User size={12} />
-                          <span className="font-medium">{t('chats.auto_handoff')}</span>
+                {/* Merge messages + AI activity events, sorted by time */}
+                {(() => {
+                  // Build combined timeline of messages + AI activity events
+                  const aiItems = aiActivityEvents.map(ev => ({
+                    kind: 'ai_event' as const,
+                    sortTime: new Date(ev.timestamp).getTime(),
+                    event: ev,
+                  }));
+                  const msgItems = messages.map(m => ({
+                    kind: 'message' as const,
+                    sortTime: new Date(m.created_at).getTime(),
+                    message: m,
+                  }));
+                  const combined = [...msgItems, ...aiItems].sort((a, b) => a.sortTime - b.sortTime);
+
+                  return combined.map((item, idx) => {
+                    if (item.kind === 'ai_event') {
+                      const ev = item.event;
+                      return (
+                        <div key={ev.id} className="flex justify-center my-1">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300">
+                            <Bot size={12} className="text-purple-400" />
+                            <span>{ev.message}</span>
+                            <span className="text-white/30 ml-1">
+                              {new Date(ev.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                      <p className="text-sm">{message.content}</p>
-                      <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/30' : 'text-blue-200'
-                        }`}>
-                        {new Date(message.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                      );
+                    }
+
+                    const message = item.message;
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.role === 'user' ? 'justify-start' : message.role === 'system' ? 'justify-center' : 'justify-end'}`}
+                      >
+                        {/* System messages (tag assignments, etc) */}
+                        {message.role === 'system' ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-xs text-white/50">
+                            <Zap size={12} className="text-yellow-400" />
+                            <span>{message.content}</span>
+                            <span className="text-white/30 ml-1">
+                              {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ) : (
+                          <div
+                            className={`max-w-[70%] rounded-lg px-4 py-3 ${message.role === 'user'
+                              ? 'bg-white/[0.03]'
+                              : message.is_derivhumano
+                                ? 'bg-orange-500/10 border border-orange-300 text-white'
+                                : 'bg-blue-600 text-white'
+                              }`}
+                          >
+                            {/* IA badge for assistant messages */}
+                            {message.role === 'assistant' && !message.is_derivhumano && (
+                              <div className="flex items-center gap-1 text-[10px] text-blue-200/60 mb-1">
+                                <Bot size={10} />
+                                <span className="font-medium uppercase tracking-wider">IA</span>
+                              </div>
+                            )}
+                            {message.is_derivhumano && (
+                              <div className="flex items-center gap-1 text-xs text-orange-600 mb-1">
+                                <User size={12} />
+                                <span className="font-medium">{t('chats.auto_handoff')}</span>
+                              </div>
+                            )}
+                            <p className="text-sm">{message.content}</p>
+                            <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/30' : 'text-blue-200'
+                              }`}>
+                              {new Date(message.created_at).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
                 <div ref={messagesEndRef} />
               </div>
 
               {/* Input */}
               <form onSubmit={handleSendMessage} className="p-4 border-t bg-white/[0.03]">
                 <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowHsmPanel(prev => !prev)}
+                    className={`p-2 rounded-lg flex items-center justify-center transition-colors min-w-[44px] ${
+                      showHsmPanel
+                        ? 'bg-medical-600 text-white'
+                        : 'bg-white/[0.04] text-white/50 hover:text-white hover:bg-white/[0.08]'
+                    }`}
+                    title="Plantillas HSM"
+                  >
+                    <FileText size={20} />
+                  </button>
                   <input
                     type="text"
                     value={newMessage}
@@ -1086,6 +1320,25 @@ export default function ChatsView() {
                   </button>
                 </div>
               </form>
+
+              {/* HSM Template Panel */}
+              <HsmTemplatePanel
+                isOpen={showHsmPanel}
+                onClose={() => setShowHsmPanel(false)}
+                phoneNumber={selectedSession.phone_number}
+                leadContext={{
+                  leadName: leadContext?.lead?.first_name
+                    ? `${leadContext.lead.first_name}${leadContext.lead.last_name ? ' ' + leadContext.lead.last_name : ''}`
+                    : undefined,
+                  phone: selectedSession.phone_number,
+                }}
+                vendorName={user?.email?.split('@')[0]}
+                tenantName={clinics.find(c => c.id === selectedSession.tenant_id)?.clinic_name}
+                onSendSuccess={() => {
+                  fetchMessages(selectedSession.phone_number, selectedSession.tenant_id);
+                  setShowHsmPanel(false);
+                }}
+              />
             </div>
           </div>
 
@@ -1118,8 +1371,109 @@ export default function ChatsView() {
             </div>
 
             <div className="flex-1 overflow-y-auto">
+              {/* Handoff Alert Banner */}
+              {(leadContext?.handoff_requested || selectedSession.handoff_requested) && (
+                <div className="mx-3 mt-3 p-3 bg-orange-500/15 border border-orange-500/30 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <AlertCircle size={16} className="text-orange-400 shrink-0" />
+                    <span className="font-semibold text-sm text-orange-300">Handoff solicitado</span>
+                  </div>
+                  {leadContext?.handoff_reason && (
+                    <p className="text-xs text-orange-300/70 mb-2 ml-6">{leadContext.handoff_reason}</p>
+                  )}
+                  <button
+                    onClick={async () => {
+                      // Take over: activate human mode
+                      await handleToggleHumanMode();
+                      // Clear handoff flag locally
+                      setSessions(prev => prev.map(s =>
+                        s.phone_number === selectedSession.phone_number
+                          ? { ...s, handoff_requested: false }
+                          : s
+                      ));
+                      setSelectedSession(prev => prev ? { ...prev, handoff_requested: false } : null);
+                      if (leadContext) {
+                        setLeadContext({ ...leadContext, handoff_requested: false });
+                      }
+                    }}
+                    className="ml-6 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors"
+                  >
+                    <HandMetal size={14} />
+                    Tomar conversacion
+                  </button>
+                </div>
+              )}
+
+              {/* Lead Score */}
+              {leadContext?.lead?.score != null && leadContext.lead.score > 0 && (() => {
+                const sc = getScoreConfig(leadContext.lead.score!);
+                return (
+                  <div className={`mx-3 mt-3 p-3 rounded-lg border ${sc.bg} ${sc.border}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star size={14} className={sc.color} />
+                        <span className="text-xs font-medium text-white/50">Lead Score</span>
+                      </div>
+                      <span className={`text-lg font-bold ${sc.color}`}>{leadContext.lead.score}</span>
+                    </div>
+                    <div className="mt-1.5 w-full bg-white/[0.06] rounded-full h-1.5">
+                      <div
+                        className="h-1.5 rounded-full transition-all"
+                        style={{ width: `${leadContext.lead.score}%`, backgroundColor: sc.color.includes('green') ? '#22c55e' : sc.color.includes('blue') ? '#3b82f6' : sc.color.includes('yellow') ? '#eab308' : sc.color.includes('orange') ? '#f97316' : '#6b7280' }}
+                      />
+                    </div>
+                    <p className={`text-[11px] mt-1 ${sc.color}`}>{sc.label}</p>
+                  </div>
+                );
+              })()}
+
+              {/* Tags */}
+              {leadContext?.lead?.tags && leadContext.lead.tags.length > 0 && (
+                <div className="mx-3 mt-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Tag size={12} className="text-white/40" />
+                    <span className="text-xs font-medium text-white/50">Etiquetas</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {leadContext.lead.tags.map(tag => (
+                      <TagBadge
+                        key={tag}
+                        tag={{ name: tag, color: getTagColor(tag) }}
+                        className="text-[11px]"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upcoming Meetings (AI-scheduled) */}
+              {leadContext?.upcoming_meetings && leadContext.upcoming_meetings.length > 0 && (
+                <div className="mx-3 mt-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Calendar size={12} className="text-white/40" />
+                    <span className="text-xs font-medium text-white/50">Reuniones programadas</span>
+                  </div>
+                  <div className="space-y-2">
+                    {leadContext.upcoming_meetings.map(mtg => (
+                      <div key={mtg.id} className="flex items-start gap-2 p-2 rounded bg-white/[0.02]">
+                        <Calendar size={14} className="text-primary shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-white/80 truncate">{mtg.title}</p>
+                          <p className="text-[11px] text-primary">
+                            {new Date(mtg.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {mtg.status && (
+                            <span className="text-[10px] text-white/30">{mtg.status}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* AI Status */}
-              <div className={`p-3 rounded-lg ${selectedSession.status === 'human_handling' || selectedSession.status === 'silenced'
+              <div className={`mx-3 mt-3 p-3 rounded-lg ${selectedSession.status === 'human_handling' || selectedSession.status === 'silenced'
                 ? 'bg-orange-500/10 border border-orange-500/20'
                 : 'bg-green-500/10 border border-green-500/20'
                 }`}>

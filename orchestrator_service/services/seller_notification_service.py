@@ -861,4 +861,6 @@ class SellerNotificationService:
         return None
 
 # Instancia global del servicio
-notification_service = SellerNotificationService()
+seller_notification_service = SellerNotificationService()
+# Alias for backward compatibility
+notification_service = seller_notification_service

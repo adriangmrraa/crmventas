@@ -7,9 +7,15 @@ from uuid import UUID
 from datetime import datetime, timedelta
 from db import db
 from core.security import get_resolved_tenant_id
-from services.seller_notification_service import seller_notification_service, Notification
 
 logger = logging.getLogger(__name__)
+
+try:
+    from services.seller_notification_service import seller_notification_service, Notification
+except Exception as e:
+    logger.warning(f"Could not import seller_notification_service: {e}. Notifications will be disabled.")
+    seller_notification_service = None
+    Notification = None
 
 class SellerAssignmentService:
     
@@ -28,7 +34,7 @@ class SellerAssignmentService:
         try:
             # 1. Validate seller exists and is active
             seller = await db.fetchrow("""
-                SELECT id, role, status FROM users 
+                SELECT id, first_name, last_name, role, status FROM users
                 WHERE id = $1 AND tenant_id = $2 AND status = 'active'
             """, seller_id, tenant_id)
             
@@ -152,11 +158,13 @@ class SellerAssignmentService:
         role_filter: Optional[str] = None
     ) -> List[Dict]:
         """
-        Get list of available sellers for assignment
+        Get list of available sellers for assignment.
+        First tries query with seller_metrics join, falls back to simple users query.
         """
         try:
+            # Try full query with metrics
             query = """
-                SELECT 
+                SELECT
                     u.id,
                     u.first_name,
                     u.last_name,
@@ -165,30 +173,54 @@ class SellerAssignmentService:
                     COALESCE(sm.active_conversations, 0) as active_conversations,
                     COALESCE(sm.conversion_rate, 0) as conversion_rate
                 FROM users u
-                LEFT JOIN seller_metrics sm ON u.id = sm.seller_id 
-                    AND sm.tenant_id = $1 
+                LEFT JOIN seller_metrics sm ON u.id = sm.seller_id
+                    AND sm.tenant_id = $1
                     AND sm.metrics_period_start >= NOW() - INTERVAL '7 days'
-                WHERE u.tenant_id = $1 
+                WHERE u.tenant_id = $1
                 AND u.status = 'active'
                 AND u.role IN ('setter', 'closer', 'professional', 'ceo')
-                -- Ensure they have a record in sellers table (B-01 requirement)
-                AND EXISTS (SELECT 1 FROM sellers s WHERE s.user_id = u.id)
             """
-            
+
             params = [tenant_id]
-            
+
             if role_filter:
                 query += " AND u.role = $2"
                 params.append(role_filter)
-            
+
             query += " ORDER BY u.role, u.first_name"
-            
+
             sellers = await db.fetch(query, *params)
             return [dict(seller) for seller in sellers]
-            
+
         except Exception as e:
-            logger.error(f"Error getting available sellers: {e}")
-            return []
+            logger.warning(f"Full sellers query failed ({e}), trying simple fallback")
+            try:
+                # Fallback: simple query without metrics join
+                fallback_query = """
+                    SELECT
+                        u.id,
+                        u.first_name,
+                        u.last_name,
+                        u.role,
+                        u.email,
+                        0 as active_conversations,
+                        0 as conversion_rate
+                    FROM users u
+                    WHERE u.tenant_id = $1
+                    AND u.status = 'active'
+                    AND u.role IN ('setter', 'closer', 'professional', 'ceo')
+                """
+                params = [tenant_id]
+                if role_filter:
+                    fallback_query += " AND u.role = $2"
+                    params.append(role_filter)
+                fallback_query += " ORDER BY u.role, u.first_name"
+
+                sellers = await db.fetch(fallback_query, *params)
+                return [dict(seller) for seller in sellers]
+            except Exception as e2:
+                logger.error(f"Fallback sellers query also failed: {e2}")
+                return []
     
     async def auto_assign_conversation(
         self,
@@ -501,6 +533,10 @@ class SellerAssignmentService:
         """
         Send notification to the assigned seller and a global copy to the CEO.
         """
+        if not seller_notification_service or not Notification:
+            logger.warning("Notification service not available, skipping assignment notification")
+            return
+
         try:
             from datetime import datetime
             timestamp = datetime.utcnow().timestamp()

@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Plus, Search, MessageSquare, Edit, Loader2, AlertCircle, UserPlus,
   Star, Mail, MapPin, Building2, Globe, Instagram, Facebook, Linkedin, ExternalLink,
-  History, MessageCircle, CheckCircle2, Layers, Check
+  History, MessageCircle, CheckCircle2, Layers, Check, Tag, X, Upload
 } from 'lucide-react';
-import api from '../../../api/axios';
+import api, { apiGet } from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import { LeadStatusSelector } from '../../../components/leads/LeadStatusSelector';
 import { LeadStatusBadge } from '../../../components/leads/LeadStatusBadge';
 import { BulkStatusUpdate } from '../../../components/leads/BulkStatusUpdate';
 import ScoreBadge from '../../../components/leads/ScoreBadge';
+import { TagBadge, type LeadTag } from '../../../components/leads/TagBadge';
+import LeadImportModal from '../../../components/leads/LeadImportModal';
 
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
 const STATUS_OPTIONS = ['new', 'contacted', 'interested', 'negotiation', 'closed_won', 'closed_lost'] as const;
@@ -101,11 +103,25 @@ function LeadsViewInner() {
   const [activeTab, setActiveTab] = useState<'all' | 'messages' | 'prospecting'>('all');
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<LeadTag[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchLeads();
+    fetchAvailableTags();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  const fetchAvailableTags = async () => {
+    try {
+      const data = await apiGet<LeadTag[]>('/admin/core/crm/lead-tags');
+      setAvailableTags(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('[LeadsView] Failed to fetch tags:', err);
+    }
+  };
 
   const handleConvertToClient = async (e: React.MouseEvent, lead: Lead) => {
     e.stopPropagation();
@@ -157,9 +173,14 @@ function LeadsViewInner() {
 
   const filteredLeads = leads.filter((lead) => {
     // Filter by Tab
-    if (activeTab === 'all') return true;
     if (activeTab === 'messages' && lead.source !== 'whatsapp_inbound' && lead.source !== 'whatsapp') return false;
     if (activeTab === 'prospecting' && lead.source !== 'apify_scrape') return false;
+
+    // Filter by tags (must have ALL selected tags)
+    if (tagFilter.length > 0) {
+      const leadTags = lead.tags || [];
+      if (!tagFilter.every((t) => leadTags.includes(t))) return false;
+    }
 
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
@@ -289,6 +310,83 @@ function LeadsViewInner() {
                   <option key={s} value={s}>{s.replace('_', ' ')}</option>
                 ))}
               </select>
+
+              {/* Tag multi-select filter */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 border rounded-xl text-sm font-medium transition-all ${
+                    tagFilter.length > 0
+                      ? 'border-medical-500/30 bg-medical-500/10 text-medical-400'
+                      : 'border-white/[0.06] bg-white/[0.03] text-white/70'
+                  }`}
+                >
+                  <Tag size={14} />
+                  <span className="hidden sm:inline">Etiquetas</span>
+                  {tagFilter.length > 0 && (
+                    <span className="bg-medical-500/20 text-medical-400 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                      {tagFilter.length}
+                    </span>
+                  )}
+                </button>
+                {isTagFilterOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-56 bg-[#1a1a2e] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/40 overflow-hidden">
+                    <div className="p-2 border-b border-white/[0.06] flex items-center justify-between">
+                      <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Filtrar por etiquetas</span>
+                      {tagFilter.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setTagFilter([])}
+                          className="text-[10px] text-white/30 hover:text-white/50 font-medium"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-48 overflow-y-auto p-1">
+                      {availableTags.length === 0 ? (
+                        <div className="px-3 py-3 text-xs text-white/30 text-center">Sin etiquetas</div>
+                      ) : (
+                        availableTags.map((tag) => {
+                          const isSelected = tagFilter.includes(tag.name);
+                          return (
+                            <button
+                              key={tag.name}
+                              type="button"
+                              onClick={() =>
+                                setTagFilter((prev) =>
+                                  isSelected ? prev.filter((t) => t !== tag.name) : [...prev, tag.name]
+                                )
+                              }
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors ${
+                                isSelected
+                                  ? 'bg-white/[0.06] text-white'
+                                  : 'text-white/60 hover:bg-white/[0.04] hover:text-white'
+                              }`}
+                            >
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              <span className="flex-1 text-left truncate">{tag.name}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-medical-500 shrink-0" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-white/[0.06] text-white/70 hover:text-white rounded-xl hover:bg-white/[0.1] text-sm font-medium border border-white/[0.08] transition-all active:scale-[0.98]"
+              >
+                <Upload size={16} />
+                Importar CSV
+              </button>
               <button
                 type="button"
                 onClick={() => handleOpenModal(null)}
@@ -410,6 +508,17 @@ function LeadsViewInner() {
                           </p>
                         )}
                         <p className="text-sm text-white/40 truncate">{String(lead.phone_number || '')}</p>
+                        {lead.tags && lead.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {lead.tags.slice(0, 3).map((tagName) => {
+                              const tagDef = availableTags.find((t) => t.name === tagName) || { name: tagName, color: '#6B7280' };
+                              return <TagBadge key={tagName} tag={tagDef} />;
+                            })}
+                            {lead.tags.length > 3 && (
+                              <span className="text-[10px] text-white/30 font-medium self-center">+{lead.tags.length - 3}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -699,6 +808,12 @@ function LeadsViewInner() {
             onCancel={() => setIsBulkModalOpen(false)}
           />
         )}
+
+        <LeadImportModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onComplete={() => fetchLeads()}
+        />
       </div>
     </div>
   );

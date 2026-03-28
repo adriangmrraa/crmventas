@@ -32,6 +32,30 @@ class Tenant(Base):
     clinic_website = Column(Text)
     system_prompt_template = Column(Text)
 
+    # Company profile (DEV-35)
+    logo_url = Column(Text)
+    contact_email = Column(Text)
+    contact_phone = Column(Text)
+    whatsapp_number = Column(Text)
+    timezone = Column(Text, default="America/Argentina/Buenos_Aires")
+    currency = Column(String(10), default="ARS")
+    business_hours_start = Column(String(5), default="09:00")
+    business_hours_end = Column(String(5), default="18:00")
+    ai_agent_name = Column(Text, default="Asistente")
+    ai_agent_active = Column(Boolean, default=True)
+    website = Column(Text)
+    address = Column(Text)
+    industry = Column(Text)
+
+    # AI Agent Personality & Script (DEV-36)
+    ai_system_prompt = Column(Text)
+    ai_tone = Column(Text, default="profesional_argentino")
+    ai_services_description = Column(Text)
+    ai_qualification_questions = Column(JSONB, default=[])
+    ai_objection_responses = Column(JSONB, default=[])
+    ai_company_description = Column(Text)
+    business_hours = Column(JSONB, default={"weekdays": "09:00-18:00", "saturday": "09:00-13:00", "sunday": "closed"})
+
     # Usage stats
     total_tokens_used = Column(BigInteger, default=0)
     total_tool_calls = Column(BigInteger, default=0)
@@ -848,4 +872,60 @@ class AssignmentRule(Base):
             "rule_type IN ('round_robin', 'performance', 'specialty', 'load_balance')",
             name="assignment_rules_type_check",
         ),
+    )
+
+
+# ============================================================
+# CRM CORE — LEAD TAGS SYSTEM
+# ============================================================
+
+class LeadNote(Base):
+    """Lead notes for handoff, internal comments, and follow-ups (DEV-21 + DEV-23)."""
+    __tablename__ = "lead_notes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    lead_id = Column(UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
+    note_type = Column(String(50), nullable=False, default="internal")
+    content = Column(Text, nullable=False)
+    structured_data = Column(JSONB, default={})
+    visibility = Column(String(50), nullable=False, default="all")
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True))
+    deleted_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        CheckConstraint(
+            "note_type IN ('handoff', 'post_call', 'internal', 'follow_up')",
+            name="lead_notes_type_check",
+        ),
+        CheckConstraint(
+            "visibility IN ('setter_closer', 'all', 'private')",
+            name="lead_notes_visibility_check",
+        ),
+        Index("idx_lead_notes_lead", "lead_id", created_at.desc()),
+        Index("idx_lead_notes_tenant", "tenant_id", created_at.desc()),
+        Index("idx_lead_notes_author", "author_id"),
+        Index("idx_lead_notes_type", "tenant_id", "note_type"),
+    )
+
+
+class LeadTag(Base):
+    __tablename__ = "lead_tags"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+    color = Column(String(7), nullable=False, default="#6B7280")
+    icon = Column(String(50))
+    category = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "name", name="lead_tags_tenant_name_unique"),
+        Index("idx_lead_tags_tenant", "tenant_id", "is_active"),
     )

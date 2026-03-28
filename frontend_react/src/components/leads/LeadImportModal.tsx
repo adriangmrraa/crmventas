@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, X, FileSpreadsheet, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, X, FileSpreadsheet, CheckCircle, AlertCircle, Loader2, Download } from 'lucide-react';
 import api from '../../api/axios';
 
 interface LeadImportModalProps {
@@ -20,9 +20,11 @@ interface PreviewData {
 }
 
 interface ImportResult {
+  total: number;
   created: number;
   updated: number;
   skipped: number;
+  errors: { row: number; reason: string }[];
 }
 
 const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onComplete }) => {
@@ -49,6 +51,24 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
     reset();
     onClose();
   }, [reset, onClose]);
+
+  const handleDownloadTemplate = useCallback(async () => {
+    try {
+      const res = await api.get('/admin/core/crm/leads/csv-template', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'leads_template.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError('Error al descargar la plantilla');
+    }
+  }, []);
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);
@@ -158,6 +178,16 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
         {/* UPLOAD state */}
         {state === 'UPLOAD' && (
           <div>
+            {/* Download template button */}
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white text-sm rounded-xl border border-white/[0.08] transition-all active:scale-[0.98]"
+            >
+              <Download size={16} />
+              Descargar plantilla CSV
+            </button>
+
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -340,6 +370,22 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
                 </div>
               </div>
             </div>
+
+            {/* Error details */}
+            {result.errors && result.errors.length > 0 && (
+              <div className="mb-4 rounded-xl border border-red-500/20 overflow-hidden">
+                <div className="px-3 py-2 bg-red-500/10 text-red-400 text-xs font-medium">
+                  {result.errors.length} errores
+                </div>
+                <div className="max-h-32 overflow-y-auto">
+                  {result.errors.map((e, i) => (
+                    <div key={i} className="px-3 py-1.5 text-xs text-white/50 border-t border-white/[0.04]">
+                      <span className="text-white/30">Fila {e.row}:</span> {e.reason}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end">
               <button

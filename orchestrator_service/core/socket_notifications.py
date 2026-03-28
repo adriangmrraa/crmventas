@@ -103,6 +103,34 @@ def register_notification_socket_handlers():
                 logger.info(f"User {user_id} unsubscribed from notifications")
         except Exception as e:
             logger.error(f"Error in unsubscribe_notifications: {e}")
+
+    @sio.on('subscribe_lead_notes')
+    async def handle_subscribe_lead_notes(sid, data):
+        """Subscribe to real-time lead note updates (DEV-23: setter<->closer channel)."""
+        try:
+            lead_id = data.get('lead_id')
+            if not lead_id:
+                logger.error(f"No lead_id in subscribe_lead_notes: {data}")
+                return
+            await sio.enter_room(sid, f"lead:{lead_id}")
+            logger.info(f"Client {sid} subscribed to lead notes for lead {lead_id}")
+            await sio.emit('lead_notes_subscribed', {
+                'lead_id': lead_id,
+                'status': 'subscribed'
+            }, room=sid)
+        except Exception as e:
+            logger.error(f"Error in subscribe_lead_notes: {e}")
+
+    @sio.on('unsubscribe_lead_notes')
+    async def handle_unsubscribe_lead_notes(sid, data):
+        """Unsubscribe from lead note updates."""
+        try:
+            lead_id = data.get('lead_id')
+            if lead_id:
+                await sio.leave_room(sid, f"lead:{lead_id}")
+                logger.info(f"Client {sid} unsubscribed from lead notes for lead {lead_id}")
+        except Exception as e:
+            logger.error(f"Error in unsubscribe_lead_notes: {e}")
     
     @sio.on('mark_notification_read')
     async def handle_mark_notification_read(sid, data):

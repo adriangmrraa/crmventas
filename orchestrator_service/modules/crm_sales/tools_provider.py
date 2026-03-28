@@ -13,8 +13,22 @@ try:
         lead_scoring,
         list_templates,
         book_sales_meeting,
+        assign_lead_tags,
+        get_lead_tags,
+        qualify_lead,
+        request_human_handoff,
+        derive_to_setter,
     )
-    _CRM_TOOLS = [lead_scoring, list_templates, book_sales_meeting]
+    _CRM_TOOLS = [
+        lead_scoring,
+        list_templates,
+        book_sales_meeting,
+        assign_lead_tags,
+        get_lead_tags,
+        qualify_lead,
+        request_human_handoff,
+        derive_to_setter,
+    ]
 except ImportError:
     _CRM_TOOLS = []
 

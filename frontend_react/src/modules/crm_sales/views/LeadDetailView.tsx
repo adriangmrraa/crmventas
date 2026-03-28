@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, History } from 'lucide-react';
+import { ArrowLeft, Save, History, Tag, ArrowRight } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
+import { useAuth } from '../../../context/AuthContext';
 import type { Lead } from './LeadsView';
 import { LeadStatusSelector } from '../../../components/leads/LeadStatusSelector';
 import { LeadHistoryTimeline } from '../../../components/leads/LeadHistoryTimeline';
 import TaskSection from '../../../components/leads/TaskSection';
+import { TagSelector } from '../../../components/leads/TagSelector';
+import LeadNotesThread from '../../../components/leads/LeadNotesThread';
+import DeriveToCloserModal from '../../../components/leads/DeriveToCloserModal';
 
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
 
@@ -14,7 +18,9 @@ export default function LeadDetailView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [lead, setLead] = useState<Lead | null>(null);
+  const [showDeriveModal, setShowDeriveModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,6 +154,17 @@ export default function LeadDetailView() {
               <span className="hidden sm:inline">Historial</span>
             </button>
           )}
+          {!isNew && user && (user.role === 'setter' || user.role === 'ceo') && (
+            <button
+              type="button"
+              onClick={() => setShowDeriveModal(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/50 hover:text-white bg-blue-500/5 hover:bg-blue-500/10 rounded-lg transition-colors border border-blue-500/20"
+              title="Derivar a closer"
+            >
+              <ArrowRight size={18} className="text-blue-400" />
+              <span className="hidden sm:inline">Derivar a closer</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -229,6 +246,27 @@ export default function LeadDetailView() {
                 </div>
               )}
             </div>
+            {/* Tags section — only for existing leads */}
+            {!isNew && id && (
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Tag size={14} className="text-white/40" />
+                    Etiquetas
+                  </span>
+                </label>
+                <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                  <TagSelector
+                    leadId={id}
+                    currentTags={lead?.tags || []}
+                    onTagsChange={(newTags) => {
+                      setLead((prev) => prev ? { ...prev, tags: newTags } : null);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={saving}
@@ -246,6 +284,13 @@ export default function LeadDetailView() {
             <TaskSection leadId={id} />
           </div>
         )}
+
+        {/* Notes thread — only for existing leads */}
+        {!isNew && id && !loading && (
+          <div className="max-w-lg mt-8 pt-6 border-t border-white/[0.06]">
+            <LeadNotesThread leadId={id} />
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -254,6 +299,17 @@ export default function LeadDetailView() {
           leadId={id}
           leadName={lead ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.phone_number : 'Lead'}
           onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {showDeriveModal && id && (
+        <DeriveToCloserModal
+          leadId={id}
+          onClose={() => setShowDeriveModal(false)}
+          onSuccess={() => {
+            setShowDeriveModal(false);
+            fetchLead();
+          }}
         />
       )}
     </div>

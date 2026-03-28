@@ -411,6 +411,7 @@ body {
   0% { opacity: 0; transform: scale(0.8) translateY(8px); }
   50% { opacity: 1; transform: scale(1.03) translateY(-2px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
+}
 
 /* ============================================
    NOVA BUTTON ANIMATIONS

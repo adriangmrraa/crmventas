@@ -87,9 +87,11 @@ app.include_router(admin_router)
 try:
     from routes.seller_routes import router as seller_router
     app.include_router(seller_router, tags=["Seller Management"])
-    logger.info("✅ Seller Management API mounted")
+    logger.info("✅ Seller Management API mounted at /admin/core/sellers")
 except Exception as e:
-    logger.error(f"❌ Could not mount Seller Management routes: {e}", exc_info=True)
+    logger.error(f"❌ Could not mount Seller Management routes: {e}")
+    import traceback
+    traceback.print_exc()
 
 # Notification Routes
 try:
@@ -128,6 +130,46 @@ try:
 except Exception as e:
     logger.warning(f"Could not mount CRM under /admin/core/crm: {e}")
 
+# Lead Status Routes (DEV-27: pipeline de estados)
+try:
+    from routes.lead_status_routes import router as lead_status_router
+    app.include_router(lead_status_router, tags=["Lead Status"])
+    logger.info("✅ Lead Status API mounted at /admin/core/crm/lead-statuses")
+except Exception as e:
+    logger.error(f"❌ Could not mount Lead Status routes: {e}", exc_info=True)
+
+# Lead Tags Routes
+try:
+    from routes.lead_tags_routes import router as lead_tags_router
+    app.include_router(lead_tags_router, tags=["Lead Tags"])
+    logger.info("✅ Lead Tags API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Lead Tags routes: {e}", exc_info=True)
+
+# Lead Notes & Derivation Routes (DEV-21)
+try:
+    from routes.lead_notes_routes import router as lead_notes_router
+    app.include_router(lead_notes_router, tags=["Lead Notes & Derivation"])
+    logger.info("✅ Lead Notes & Derivation API mounted")
+except Exception as e:
+    logger.error(f"❌ Could not mount Lead Notes routes: {e}", exc_info=True)
+
+# User Management Routes (DEV-29)
+try:
+    from routes.user_management_routes import router as user_mgmt_router
+    app.include_router(user_mgmt_router, tags=["User Management"])
+    logger.info("✅ User Management API mounted (seed-team, users CRUD)")
+except Exception as e:
+    logger.error(f"❌ Could not mount User Management routes: {e}", exc_info=True)
+
+# HSM Templates Routes (DEV-31)
+try:
+    from routes.hsm_templates_routes import router as hsm_templates_router
+    app.include_router(hsm_templates_router, tags=["HSM Templates"])
+    logger.info("✅ HSM Templates API mounted (seed + CRUD + send)")
+except Exception as e:
+    logger.error(f"❌ Could not mount HSM Templates routes: {e}", exc_info=True)
+
 # Meta Ads Marketing Routes
 try:
     from routes.marketing import router as marketing_router
@@ -152,22 +194,58 @@ try:
 except Exception as e:
     logger.error(f"❌ Could not mount Google Ads Marketing routes: {e}", exc_info=True)
 
+# Email Lead Monitor Routes (DEV-34 Part 2)
+try:
+    from routes.email_monitor_routes import router as email_monitor_router
+    app.include_router(email_monitor_router, tags=["Email Lead Monitor"])
+    logger.info("✅ Email Lead Monitor API mounted at /admin/core/email-monitor")
+except Exception as e:
+    logger.error(f"❌ Could not mount Email Lead Monitor routes: {e}", exc_info=True)
+
+# Company Settings Routes (DEV-35)
+try:
+    from routes.company_settings_routes import router as company_settings_router
+    from routes.company_settings_routes import setup_router as setup_router
+    app.include_router(company_settings_router, tags=["Company Settings"])
+    app.include_router(setup_router, tags=["Setup"])
+    logger.info("✅ Company Settings API mounted (GET/PUT /admin/core/settings/company + POST /admin/setup/configure-tenant)")
+except Exception as e:
+    logger.error(f"❌ Could not mount Company Settings routes: {e}", exc_info=True)
+
+# AI Agent Config Routes (DEV-36)
+try:
+    from routes.ai_agent_routes import router as ai_agent_router
+    from routes.ai_agent_routes import setup_router as ai_agent_setup_router
+    app.include_router(ai_agent_router, tags=["AI Agent Config"])
+    app.include_router(ai_agent_setup_router, tags=["Setup"])
+    logger.info("✅ AI Agent Config API mounted (GET/PUT /admin/core/settings/ai-agent + POST /admin/setup/seed-ai-agent)")
+except Exception as e:
+    logger.error(f"❌ Could not mount AI Agent Config routes: {e}", exc_info=True)
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 
 async def get_agent_executor(tenant_id: int):
     """
-    Creates an AgentExecutor with CRM Sales tools and prompt (single-niche: no sales).
+    Creates an AgentExecutor with CRM Sales tools and prompt.
+    DEV-36: Fetches tenant AI config to build dynamic or custom system prompt.
     """
-    niche_type = await db.fetchval("SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id) or "crm_sales"
-    tools = tool_registry.get_tools(niche_type, tenant_id)
-    # CRM: cuando agendan una reunión usá book_sales_meeting; la persona pasa a ser lead (no cliente).
-    system_prompt = (
-        "Sos un asistente de ventas inteligente. Cuando el usuario quiera agendar una reunión, "
-        "una demo o una llamada, usá la herramienta book_sales_meeting con la fecha/hora, el motivo y el nombre si lo da. "
-        "Al agendar, la persona se registra como lead (después el equipo puede pasarla a cliente activo desde el CRM)."
+    row = await db.fetchrow(
+        """SELECT COALESCE(niche_type, 'crm_sales') AS niche_type, clinic_name,
+                  ai_system_prompt, ai_agent_name, ai_tone, ai_services_description,
+                  ai_qualification_questions, ai_objection_responses,
+                  ai_company_description, business_hours,
+                  business_hours_start, business_hours_end
+           FROM tenants WHERE id = $1""",
+        tenant_id,
     )
-    
+    niche_type = (row["niche_type"] if row else "crm_sales") or "crm_sales"
+    tenant_name = (row["clinic_name"] if row else "nuestra empresa") or "nuestra empresa"
+    tools = tool_registry.get_tools(niche_type, tenant_id)
+
+    # --- DEV-36: Build system prompt from tenant AI config ---
+    system_prompt = _build_system_prompt(row, tenant_name)
+
     # Create dynamic prompt template
     prompt_template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -175,11 +253,221 @@ async def get_agent_executor(tenant_id: int):
         ("human", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
-    
+
     # Create agent with niche-specific tools and prompt
     from langchain.agents import create_openai_tools_agent
     agent = create_openai_tools_agent(llm, tools, prompt_template)
     return AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+
+def _build_system_prompt(tenant_row, tenant_name: str) -> str:
+    """
+    DEV-36: Builds the AI agent system prompt from tenant config.
+    If ai_system_prompt is set, uses it as full override.
+    Otherwise builds dynamically from ai_agent_name, ai_tone, etc.
+    """
+    if not tenant_row:
+        return _default_system_prompt(tenant_name, "Asistente")
+
+    # Full override: if tenant has a custom system prompt, use it directly
+    custom_prompt = tenant_row.get("ai_system_prompt")
+    if custom_prompt and custom_prompt.strip():
+        return custom_prompt
+
+    # Dynamic build from config fields
+    agent_name = tenant_row.get("ai_agent_name") or "Asistente"
+    ai_tone = tenant_row.get("ai_tone") or "profesional_argentino"
+    services_desc = tenant_row.get("ai_services_description") or ""
+    company_desc = tenant_row.get("ai_company_description") or ""
+    qualification_qs = tenant_row.get("ai_qualification_questions") or []
+    objection_resps = tenant_row.get("ai_objection_responses") or []
+    business_hours = tenant_row.get("business_hours") or {}
+    bh_start = tenant_row.get("business_hours_start") or "09:00"
+    bh_end = tenant_row.get("business_hours_end") or "18:00"
+
+    # Parse tone into prompt instructions
+    tone_instructions = _get_tone_instructions(ai_tone, agent_name)
+
+    # Build qualification section
+    qualification_section = _build_qualification_section(qualification_qs)
+
+    # Build objection handling section
+    objection_section = _build_objection_section(objection_resps)
+
+    # Build services section
+    services_section = ""
+    if services_desc:
+        services_section = f"""
+SERVICIOS QUE OFRECEMOS
+{services_desc}
+"""
+
+    # Build company description section
+    company_section = ""
+    if company_desc:
+        company_section = f"""
+PROPUESTA DE VALOR DE {tenant_name.upper()}
+{company_desc}
+"""
+
+    # Build business hours section
+    hours_section = _build_hours_section(business_hours, bh_start, bh_end)
+
+    return f"""Sos {agent_name} de {tenant_name}. Tu mision es atender a cada prospecto que escriba por WhatsApp o formulario web de forma profesional, calida y consultiva, operando 24/7 sin intervencion humana hasta que un vendedor tome el control.
+
+{tone_instructions}
+
+IDENTIDAD
+- Nunca reveles que sos una inteligencia artificial a menos que te lo pregunten directamente.
+- Si te preguntan, responde con honestidad: "Soy {agent_name}, asistente virtual de {tenant_name}".
+- Presentate brevemente al inicio de cada nueva conversacion: "Hola! Soy {agent_name} de {tenant_name}. En que puedo ayudarte hoy?"
+{company_section}{services_section}
+{qualification_section}
+
+PREGUNTAS FRECUENTES (FAQ)
+- **Precios**: "Los planes dependen del alcance del proyecto. Contame que necesitas y te paso un estimado, o puedo agendarte una llamada con el equipo."
+- **Servicios**: Describi brevemente lo que ofrece {tenant_name} basandote en la seccion de SERVICIOS. Si no tenes el detalle exacto, ofrece agendar una demo.
+- **Proceso**: "El proceso es simple: primero entendemos tu necesidad, armamos una propuesta y arrancamos."
+- **Disponibilidad**: "Estamos disponibles para charlar cuando quieras. Te agendo una reunion?"
+- Si el prospecto hace una pregunta que no podes responder con certeza, no inventes. Deci: "Esa consulta la maneja mejor nuestro equipo. Te conecto con un especialista?"
+{objection_section}
+HERRAMIENTAS
+- Cuando el prospecto quiera agendar una reunion, demo o llamada, usa **book_sales_meeting** con fecha/hora, motivo y nombre.
+- Cuando tengas datos de calificacion, usa **qualify_lead** para registrar interes, presupuesto, timeline y resumen.
+- Cuando necesites escalar a un humano, usa **request_human_handoff** indicando el motivo y la urgencia.
+- Usa **assign_lead_tags** proactivamente para etiquetar al lead segun el contexto de la conversacion.
+- Usa **get_lead_tags** para consultar las etiquetas actuales antes de agregar nuevas.
+- Usa **derive_to_setter** cuando termines la interaccion con un lead y debas pasarlo a un setter humano: si agendaste una llamada, si detectas potencial de cierre, o si el lead perdio interes. Inclui un resumen completo de los puntos clave del prospecto (necesidades, presupuesto, timeline, objeciones).
+
+DERIVACION A SETTER (derive_to_setter)
+Despues de completar la calificacion o agendar una reunion, deriva al lead al setter con un resumen detallado.
+Escenarios de derivacion:
+- **Llamada agendada**: Usaste book_sales_meeting -> deriva con resumen para que el setter se prepare.
+- **Potencial de cierre**: El lead muestra senales claras de compra (pregunta "como arrancamos?", pide propuesta formal).
+- **Lead perdio interes**: Despues de varios intercambios el prospecto se enfria -> deriva para seguimiento humano.
+- **Consulta compleja**: El prospecto tiene necesidades que requieren atencion personalizada.
+Siempre inclui en el summary: necesidad principal, presupuesto si lo menciono, timeline, objeciones, y cualquier dato relevante.
+
+ETIQUETADO AUTOMATICO DE LEADS (assign_lead_tags)
+Despues de CADA intercambio, evalua si corresponde asignar una o mas etiquetas al lead. Usa assign_lead_tags con la lista de tags y un motivo breve. Las etiquetas se mergean (no reemplazan).
+
+Mapa de etiquetas:
+- **caliente**: El prospecto muestra interes concreto en implementacion, compra o contratacion. Pide detalles operativos, pregunta "como arrancamos?" o similar.
+- **tibio**: Pregunta por precio o servicios pero no agenda ni se compromete. Interes exploratorio.
+- **precio_sensible**: Menciona presupuesto limitado, pide descuentos o compara precios explicitamente.
+- **llamada_pactada**: Se agendo una reunion o llamada (asigna este tag siempre que uses book_sales_meeting).
+- **handoff_solicitado**: El prospecto pide hablar con un humano o vendedor directamente.
+- **comparando_opciones**: Menciona competidores, alternativas o dice que esta evaluando otras opciones.
+- **urgente**: El prospecto expresa urgencia explicita ("lo necesito ya", "es para esta semana", etc.).
+
+Reglas:
+- Siempre inclui un "reason" claro y breve explicando por que asignas cada tag.
+- No repitas tags que el lead ya tiene (consulta con get_lead_tags si no estas seguro).
+- Podes asignar multiples tags en una sola llamada si aplican varios.
+- Prioriza la calidad: solo asigna tags cuando haya evidencia clara en la conversacion.
+
+REGLAS DE ESCALADO (request_human_handoff)
+- **Urgencia high**: El prospecto pide explicitamente hablar con una persona, muestra intencion de compra inminente (lead caliente), o hay un reclamo.
+- **Urgencia medium**: Pregunta tecnica compleja que no podes responder, o la conversacion se estanca despues de 3+ intercambios sin avance.
+- **Urgencia low**: El prospecto menciona que volvera despues, o la consulta es informativa sin intencion clara.
+{hours_section}
+OBJETIVO FINAL
+- Siempre intenta obtener datos de contacto (nombre, email) o agendar una reunion antes de cerrar la conversacion.
+- Si el prospecto se despide sin agendar, ofrece: "Te puedo mandar mas info por este medio? O preferis que te contacte un asesor?"
+- Se conciso: mensajes de 1-3 oraciones. Evita parrafos largos por WhatsApp.
+- Nunca presiones. Se servicial, no insistente."""
+
+
+def _get_tone_instructions(ai_tone: str, agent_name: str) -> str:
+    """Returns tone/language instructions based on the ai_tone config."""
+    tone_map = {
+        "profesional_argentino": """IDIOMA Y TONO
+- Responde en espanol por defecto. Si el prospecto escribe en ingles, cambia a ingles automaticamente.
+- Usa "vos" (espanol rioplatense) a menos que el prospecto use "tu", en cuyo caso adaptate.
+- Tono profesional pero cercano. Se calido sin ser demasiado formal.""",
+
+        "informal_argentino": f"""IDIOMA Y TONO
+- Responde en espanol por defecto. Si el prospecto escribe en ingles, cambia a ingles automaticamente.
+- Usa "vos" siempre (espanol rioplatense con voseo). Escribi como hablarias con un amigo que te pide consejo profesional.
+- Tono informal, natural y copado. {agent_name} es como un conocido que sabe mucho del tema y te ayuda con onda.
+- Podes usar expresiones argentinas naturales: "dale", "genial", "barbaro", "de una", "joya".
+- Evita sonar como un robot o como un vendedor de telemarketing. Se genuino.""",
+
+        "formal_neutro": """IDIOMA Y TONO
+- Responde en espanol neutro por defecto. Si el prospecto escribe en ingles, cambia a ingles.
+- Usa "usted" por defecto. Si el prospecto usa "tu" o "vos", adaptate a su registro.
+- Tono formal y profesional. Mantene la cortesia y claridad en cada mensaje.""",
+
+        "friendly_english": """LANGUAGE & TONE
+- Respond in English by default. If the prospect writes in Spanish, switch to Spanish.
+- Use a friendly, approachable tone. Be warm but professional.
+- Keep messages concise and conversational.""",
+    }
+    return tone_map.get(ai_tone, tone_map["profesional_argentino"])
+
+
+def _build_qualification_section(questions: list) -> str:
+    """Builds the qualification flow section from config questions."""
+    if not questions or not isinstance(questions, list) or len(questions) == 0:
+        return """FLUJO DE CALIFICACION (segui este orden natural, sin parecer un formulario):
+1. **Necesidad**: Pregunta en que servicio o solucion esta interesado/a.
+2. **Urgencia/timeline**: "Para cuando necesitarias esto?" o similar.
+3. **Presupuesto**: Abordalo con tacto, ej. "Tenes un rango de inversion en mente?".
+4. **Tamano de empresa / contexto**: "Me contas un poco sobre tu empresa/proyecto?".
+Cuando tengas suficiente informacion (al menos necesidad + timeline), usa la herramienta qualify_lead para registrar la calificacion."""
+
+    lines = ["FLUJO DE CALIFICACION (segui este orden natural, sin parecer un formulario):"]
+    for i, q in enumerate(questions, 1):
+        if isinstance(q, dict):
+            label = q.get("label", f"Pregunta {i}")
+            example = q.get("example", "")
+            lines.append(f'{i}. **{label}**: "{example}"' if example else f"{i}. **{label}**")
+        else:
+            lines.append(f"{i}. {q}")
+    lines.append("Cuando tengas suficiente informacion (al menos necesidad + timeline), usa la herramienta qualify_lead para registrar la calificacion.")
+    return "\n".join(lines)
+
+
+def _build_objection_section(objections: list) -> str:
+    """Builds the objection handling section from config."""
+    if not objections or not isinstance(objections, list) or len(objections) == 0:
+        return ""
+
+    lines = ["\nMANEJO DE OBJECIONES"]
+    for obj in objections:
+        if isinstance(obj, dict):
+            objection = obj.get("objection", "")
+            response = obj.get("response", "")
+            if objection and response:
+                lines.append(f'- Si dice "{objection}": {response}')
+        elif isinstance(obj, str):
+            lines.append(f"- {obj}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _build_hours_section(business_hours: dict, bh_start: str, bh_end: str) -> str:
+    """Builds business hours info for the prompt."""
+    if business_hours and isinstance(business_hours, dict) and len(business_hours) > 0:
+        lines = ["\nHORARIO DE ATENCION"]
+        for day, hours in business_hours.items():
+            lines.append(f"- {day}: {hours}")
+        lines.append(f"Fuera de horario, informa que el equipo respondera en el proximo dia habil, pero que vos podes seguir ayudando.\n")
+        return "\n".join(lines)
+    else:
+        return f"""
+HORARIO DE ATENCION
+- Lunes a Viernes: {bh_start} - {bh_end}
+Fuera de horario, informa que el equipo respondera en el proximo dia habil, pero que vos podes seguir ayudando.
+"""
+
+
+def _default_system_prompt(tenant_name: str, agent_name: str) -> str:
+    """Fallback system prompt when no tenant row is found."""
+    return f"""Sos {agent_name} de {tenant_name}. Tu mision es atender a cada prospecto que escriba por WhatsApp de forma profesional, calida y consultiva.
+Responde en espanol rioplatense con voseo. Se conciso (1-3 oraciones por mensaje). Nunca reveles que sos IA salvo que te pregunten directamente.
+Califica leads preguntando: necesidad, timeline, presupuesto, tamano de empresa.
+Usa las herramientas qualify_lead, book_sales_meeting, request_human_handoff, assign_lead_tags, derive_to_setter segun corresponda."""
 
 
 # --- PUBLIC WEBHOOK PROXIES ---
@@ -294,6 +582,50 @@ async def chat_inbound(
             except Exception as sio_err:
                 logger.error(f"⚠️ Error emitting Meta lead notification: {sio_err}")
 
+        # --- DEV-19: Auto-detect "sin_respuesta" tag ---
+        # If the last assistant message was sent >24h ago and no user message since,
+        # the lead was unresponsive. Auto-tag before processing current message.
+        try:
+            last_msg_row = await db.fetchrow(
+                """
+                SELECT role, created_at FROM chat_messages
+                WHERE from_number = $1 AND tenant_id = $2
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                from_number, tenant_id,
+            )
+            if last_msg_row and last_msg_row["role"] == "assistant":
+                from datetime import timedelta as _td
+                gap = datetime.now(last_msg_row["created_at"].tzinfo if last_msg_row["created_at"].tzinfo else None) - last_msg_row["created_at"]
+                if gap > _td(hours=24):
+                    # Lead was silent for >24h after our last message — auto-tag
+                    from core.utils import normalize_phone as _norm
+                    _phone = _norm(from_number)
+                    if _phone:
+                        _lead_row = await db.fetchrow(
+                            "SELECT id, tags FROM leads WHERE tenant_id = $1 AND phone_number = $2",
+                            tenant_id, _phone,
+                        )
+                        if _lead_row:
+                            _existing = _lead_row["tags"] if _lead_row["tags"] else []
+                            if isinstance(_existing, str):
+                                _existing = json.loads(_existing)
+                            if "sin_respuesta" not in _existing:
+                                _merged = list(dict.fromkeys(_existing + ["sin_respuesta"]))
+                                await db.execute(
+                                    "UPDATE leads SET tags = $1, updated_at = NOW() WHERE id = $2",
+                                    json.dumps(_merged), _lead_row["id"],
+                                )
+                                await db.execute(
+                                    "INSERT INTO lead_tag_log (tenant_id, lead_id, tags_added, reason, source) VALUES ($1, $2, $3, $4, 'system_auto')",
+                                    tenant_id, _lead_row["id"],
+                                    ["sin_respuesta"],
+                                    f"Lead no respondio por {gap.days}d {gap.seconds // 3600}h desde ultimo mensaje del asistente",
+                                )
+                                logger.info(f"Auto-tagged lead {from_number} as sin_respuesta (gap: {gap})")
+        except Exception as tag_err:
+            logger.warning(f"sin_respuesta auto-tag check failed: {tag_err}")
+
         await db.append_chat_message(
             from_number, "user", text, correlation_id, tenant_id
         )
@@ -384,8 +716,28 @@ async def startup_event():
         import traceback
         traceback.print_exc()
 
+    # DEV-34 Part 2: Start Email Lead Monitor polling if IMAP is configured
+    try:
+        imap_host = os.getenv("IMAP_HOST", "")
+        if imap_host:
+            from services.email_lead_monitor import email_lead_monitor
+            poll_interval = int(os.getenv("EMAIL_MONITOR_INTERVAL_SECONDS", "120"))
+            await email_lead_monitor.start_polling(interval_seconds=poll_interval)
+            logger.info(f"✅ Email Lead Monitor started (IMAP: {imap_host}, every {poll_interval}s)")
+        else:
+            logger.info("⚠️  Email Lead Monitor disabled (IMAP_HOST not set)")
+    except Exception as e:
+        logger.error(f"❌ Error starting Email Lead Monitor: {e}", exc_info=True)
+
 @app.on_event("shutdown")
 async def shutdown_event():
+    # Stop email lead monitor
+    try:
+        from services.email_lead_monitor import email_lead_monitor
+        email_lead_monitor.stop_polling()
+    except Exception:
+        pass
+
     # Stop scheduled tasks
     try:
         from services.scheduled_tasks import scheduled_tasks_service

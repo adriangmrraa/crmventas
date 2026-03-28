@@ -39,8 +39,10 @@ WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_servic
 # ============================================
 # ROUTERS AND DEPENDENCIES INCLUSION
 # ============================================
-from routes.lead_status_routes import router as lead_status_router
-router.include_router(lead_status_router)
+# NOTE (DEV-28): lead_status_routes is registered directly in main.py.
+# Do NOT include it here — the CRM router is mounted at /admin/core/crm
+# and lead_status_router already carries prefix /admin/core/crm, which
+# would produce a double-prefix (/admin/core/crm/admin/core/crm/...).
 
 # ============================================
 # LEADS ENDPOINTS
@@ -2034,75 +2036,135 @@ async def delete_task(task_id: int, user=Depends(verify_admin_token)):
 
 
 # =============================================================================
-# BULK LEAD IMPORT (CSV)
+# BULK LEAD IMPORT (CSV) — DEV-34 Part 3
 # =============================================================================
+
+# Column aliases (Spanish / English → internal field names)
+_CSV_ALIASES = {
+    "nombre": "first_name", "first_name": "first_name", "name": "first_name",
+    "apellido": "last_name", "last_name": "last_name", "surname": "last_name",
+    "telefono": "phone_number", "phone": "phone_number", "tel": "phone_number", "celular": "phone_number", "phone_number": "phone_number",
+    "email": "email", "correo": "email", "mail": "email",
+    "empresa": "company", "company": "company", "compañia": "company",
+    "fuente": "source", "source": "source", "origen": "source",
+    "campana": "campaign", "campaña": "campaign", "campaign": "campaign",
+    "notas": "notes", "notes": "notes", "comentarios": "notes",
+    "valor": "estimated_value", "value": "estimated_value", "monto": "estimated_value",
+}
+
+
+def _parse_csv_text(raw_bytes: bytes) -> str:
+    """Decode CSV bytes handling UTF-8 BOM and latin-1 fallback."""
+    # Strip UTF-8 BOM if present
+    if raw_bytes[:3] == b'\xef\xbb\xbf':
+        raw_bytes = raw_bytes[3:]
+    try:
+        return raw_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return raw_bytes.decode("latin-1")
+
+
+def _detect_delimiter(first_line: str) -> str:
+    """Auto-detect CSV delimiter from first header line."""
+    for delim in [",", ";", "\t", "|"]:
+        if delim in first_line:
+            return delim
+    return ","
+
+
+@router.get("/leads/csv-template")
+async def download_csv_template(user=Depends(verify_admin_token)):
+    """Return a standard CSV template for lead import with 2 example rows."""
+    import io
+    from fastapi.responses import StreamingResponse
+
+    output = io.StringIO()
+    output.write("nombre,apellido,telefono,email,empresa,fuente,campana,notas\n")
+    output.write("Juan,Perez,+5491155551234,juan@ejemplo.com,Acme Corp,referido,campaña_marzo,Cliente interesado en plan premium\n")
+    output.write("Maria,Garcia,+5491155559876,maria@ejemplo.com,Beta SA,web,campaña_marzo,Contacto desde landing page\n")
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="leads_template.csv"'},
+    )
+
 
 @router.post("/leads/import/preview")
 async def import_preview(file: UploadFile = File(...), user=Depends(verify_admin_token)):
-    """Preview CSV import: auto-detect columns, show sample rows, check duplicates."""
+    """Preview CSV import: auto-detect columns, show sample rows, check duplicates by phone AND email."""
     import csv
     import io
     tenant_id = user.get("tenant_id", 1)
 
     content = await file.read()
-    # Try UTF-8 first, fallback to latin-1
-    try:
-        text = content.decode("utf-8")
-    except UnicodeDecodeError:
-        text = content.decode("latin-1")
+    text = _parse_csv_text(content)
 
-    reader = csv.DictReader(io.StringIO(text))
+    # Auto-detect delimiter
+    lines = text.strip().splitlines()
+    if not lines:
+        raise HTTPException(status_code=400, detail="El archivo CSV está vacío")
+    delimiter = _detect_delimiter(lines[0])
+
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
     rows = list(reader)
 
+    if not rows:
+        raise HTTPException(status_code=400, detail="El archivo CSV no contiene filas de datos")
     if len(rows) > 1000:
-        raise HTTPException(status_code=400, detail="Max 1000 rows per import")
-
-    # Column aliases (Spanish → internal)
-    ALIASES = {
-        "nombre": "first_name", "first_name": "first_name", "name": "first_name",
-        "apellido": "last_name", "last_name": "last_name", "surname": "last_name",
-        "telefono": "phone_number", "phone": "phone_number", "tel": "phone_number", "celular": "phone_number",
-        "email": "email", "correo": "email", "mail": "email",
-        "empresa": "company", "company": "company", "compañia": "company",
-        "fuente": "source", "source": "source", "origen": "source",
-        "notas": "notes", "notes": "notes", "comentarios": "notes",
-        "valor": "estimated_value", "value": "estimated_value", "monto": "estimated_value",
-    }
+        raise HTTPException(status_code=400, detail="Máximo 1000 filas por importación")
 
     # Map columns
     headers = list(reader.fieldnames or [])
-    mapped = {}
-    unmapped = []
+    mapping: dict = {}
     for h in headers:
         key = h.lower().strip()
-        if key in ALIASES:
-            mapped[h] = ALIASES[key]
-        else:
-            unmapped.append(h)
+        if key in _CSV_ALIASES:
+            mapping[h] = _CSV_ALIASES[key]
 
-    # Check duplicates by phone
-    phones = [r.get(next((h for h, v in mapped.items() if v == "phone_number"), ""), "") for r in rows]
-    phones = [p for p in phones if p]
-    existing = await db.pool.fetch(
-        "SELECT phone_number FROM leads WHERE tenant_id = $1 AND phone_number = ANY($2::text[])",
-        tenant_id, phones
-    )
-    existing_phones = {r["phone_number"] for r in existing}
+    # Collect phones and emails for duplicate check
+    phone_col = next((h for h, v in mapping.items() if v == "phone_number"), None)
+    email_col = next((h for h, v in mapping.items() if v == "email"), None)
+
+    phones = [normalize_phone(r.get(phone_col, "")) for r in rows if phone_col and r.get(phone_col, "").strip()] if phone_col else []
+    emails = [r.get(email_col, "").strip().lower() for r in rows if email_col and r.get(email_col, "").strip()] if email_col else []
+
+    duplicate_count = 0
+    if phones:
+        existing_by_phone = await db.pool.fetch(
+            "SELECT phone_number FROM leads WHERE tenant_id = $1 AND phone_number = ANY($2::text[])",
+            tenant_id, phones
+        )
+        duplicate_count += len(existing_by_phone)
+    if emails:
+        existing_by_email = await db.pool.fetch(
+            "SELECT email FROM leads WHERE tenant_id = $1 AND LOWER(email) = ANY($2::text[])",
+            tenant_id, emails
+        )
+        duplicate_count += len(existing_by_email)
+
+    # Build sample rows mapped to internal field names
+    sample = []
+    for r in rows[:5]:
+        mapped_row: dict = {}
+        for csv_col, db_field in mapping.items():
+            mapped_row[db_field] = r.get(csv_col, "")
+        sample.append(mapped_row)
 
     return {
-        "total_rows": len(rows),
-        "headers": headers,
-        "mapped_columns": mapped,
-        "unmapped_columns": unmapped,
-        "sample_rows": rows[:5],
-        "duplicates_found": len(existing_phones),
-        "duplicate_phones": list(existing_phones)[:10],
+        "columns": headers,
+        "mapping": mapping,
+        "rows": rows,
+        "total": len(rows),
+        "duplicates": duplicate_count,
+        "sample": sample,
     }
 
 
 @router.post("/leads/import/execute")
 async def import_execute(body: dict, user=Depends(verify_admin_token)):
-    """Execute CSV import with mapped columns."""
+    """Execute CSV import with mapped columns. Checks duplicates by phone AND email."""
     tenant_id = user.get("tenant_id", 1)
     rows = body.get("rows", [])
     mapping = body.get("mapping", {})
@@ -2111,50 +2173,280 @@ async def import_execute(body: dict, user=Depends(verify_admin_token)):
     created = 0
     updated = 0
     skipped = 0
+    errors: list = []
 
-    for row in rows[:1000]:
-        data = {}
-        for csv_col, db_col in mapping.items():
-            if csv_col in row:
-                data[db_col] = row[csv_col]
+    for idx, row in enumerate(rows[:1000], start=1):
+        try:
+            data: dict = {}
+            for csv_col, db_col in mapping.items():
+                if csv_col in row:
+                    data[db_col] = row[csv_col]
 
-        phone = data.get("phone_number", "").strip()
-        if not phone:
-            skipped += 1
-            continue
+            phone = normalize_phone(data.get("phone_number", "").strip()) if data.get("phone_number") else ""
+            email = (data.get("email") or "").strip().lower()
 
-        existing = await db.pool.fetchval(
-            "SELECT id FROM leads WHERE tenant_id = $1 AND phone_number = $2", tenant_id, phone
-        )
+            if not phone and not email:
+                errors.append({"row": idx, "reason": "Sin teléfono ni email"})
+                skipped += 1
+                continue
 
-        if existing:
-            if on_duplicate == "update":
-                sets = []
-                params = [tenant_id, existing]
-                for field in ["first_name", "last_name", "email", "company", "notes"]:
-                    if field in data and data[field]:
-                        params.append(data[field])
-                        sets.append(f"{field} = COALESCE(NULLIF({field}, ''), ${len(params)})")
-                if sets:
-                    await db.pool.execute(
-                        f"UPDATE leads SET {', '.join(sets)}, updated_at = NOW() WHERE tenant_id = $1 AND id = $2",
-                        *params
-                    )
-                    updated += 1
+            # Check duplicate by phone OR email
+            existing_id = None
+            if phone:
+                existing_id = await db.pool.fetchval(
+                    "SELECT id FROM leads WHERE tenant_id = $1 AND phone_number = $2", tenant_id, phone
+                )
+            if not existing_id and email:
+                existing_id = await db.pool.fetchval(
+                    "SELECT id FROM leads WHERE tenant_id = $1 AND LOWER(email) = $2", tenant_id, email
+                )
+
+            if existing_id:
+                if on_duplicate == "update":
+                    sets = []
+                    params: list = [tenant_id, existing_id]
+                    for field in ["first_name", "last_name", "email", "company", "notes"]:
+                        if field in data and data[field]:
+                            params.append(data[field])
+                            sets.append(f"{field} = COALESCE(NULLIF({field}, ''), ${len(params)})")
+                    if sets:
+                        await db.pool.execute(
+                            f"UPDATE leads SET {', '.join(sets)}, updated_at = NOW() WHERE tenant_id = $1 AND id = $2",
+                            *params
+                        )
+                        updated += 1
+                    else:
+                        skipped += 1
                 else:
                     skipped += 1
             else:
-                skipped += 1
-        else:
-            await db.pool.execute("""
-                INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email, company, source, notes, estimated_value)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            """, tenant_id, phone,
-                data.get("first_name"), data.get("last_name"),
-                data.get("email"), data.get("company"),
-                data.get("source", "import"), data.get("notes"),
-                float(data.get("estimated_value", 0) or 0),
-            )
-            created += 1
+                source = data.get("source", "csv_import") or "csv_import"
+                await db.pool.execute("""
+                    INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email, company, source, notes, estimated_value)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                """, tenant_id, phone or None,
+                    data.get("first_name"), data.get("last_name"),
+                    email or None, data.get("company"),
+                    source, data.get("notes"),
+                    float(data.get("estimated_value", 0) or 0),
+                )
+                created += 1
+        except Exception as e:
+            errors.append({"row": idx, "reason": str(e)})
+            skipped += 1
 
-    return {"created": created, "updated": updated, "skipped": skipped, "total": len(rows)}
+    return {"total": len(rows), "created": created, "updated": updated, "skipped": skipped, "errors": errors}
+
+
+# =============================================================================
+# POST-CALL NOTES (DEV-24: Closer post-call structured notes)
+# =============================================================================
+
+from pydantic import BaseModel as _BaseModel, Field as _Field
+from typing import Optional as _Opt
+from datetime import datetime as _dt
+
+class PostCallNoteCreate(_BaseModel):
+    """Schema for creating a post-call note after a closing call."""
+    call_result: str = _Field(..., description="cerrado | no_cerrado | requiere_seguimiento")
+    objections: _Opt[str] = None
+    next_steps: _Opt[str] = None
+    next_contact_date: _Opt[_dt] = None
+    internal_notes: _Opt[str] = None
+
+
+# Mapping from call_result to lead status and tag
+_CALL_RESULT_MAP = {
+    "cerrado": {"status": "closed_won", "tag": "cerrado"},
+    "no_cerrado": {"status": "closed_lost", "tag": "perdido"},
+    "requiere_seguimiento": {"status": "follow_up", "tag": "requiere_seguimiento"},
+}
+
+
+@router.post("/leads/{lead_id}/post-call-note")
+async def create_post_call_note(
+    lead_id: UUID,
+    payload: PostCallNoteCreate,
+    context: dict = Depends(get_current_user_context),
+):
+    """
+    DEV-24: Register a structured post-call note on a lead.
+    - Creates a lead_note with type='post_call'
+    - Updates lead status based on call_result
+    - Adds tag to lead
+    - If next_contact_date: creates a follow-up agenda event for the setter
+    - Sends notification to the setter
+    - Emits Socket.IO event POST_CALL_NOTE_CREATED
+    """
+    tenant_id = context["tenant_id"]
+    user_id = context.get("user_id") or context.get("id")
+    role = context.get("role") or ""
+
+    # Validate call_result
+    if payload.call_result not in _CALL_RESULT_MAP:
+        raise HTTPException(
+            status_code=400,
+            detail=f"call_result must be one of: {', '.join(_CALL_RESULT_MAP.keys())}"
+        )
+
+    mapping = _CALL_RESULT_MAP[payload.call_result]
+    new_status = mapping["status"]
+    new_tag = mapping["tag"]
+
+    # 1. Verify lead exists and get current data
+    lead = await db.pool.fetchrow(
+        "SELECT id, tenant_id, assigned_seller_id, first_name, last_name, phone_number, tags, status "
+        "FROM leads WHERE id = $1 AND tenant_id = $2 AND (status IS NULL OR status != 'deleted')",
+        lead_id, tenant_id
+    )
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # 2. Build structured_data for the note
+    structured_data = {
+        "call_result": payload.call_result,
+        "objections": payload.objections,
+        "next_steps": payload.next_steps,
+        "next_contact_date": payload.next_contact_date.isoformat() if payload.next_contact_date else None,
+        "internal_notes": payload.internal_notes,
+        "previous_status": lead["status"],
+        "new_status": new_status,
+    }
+
+    # Build readable content
+    content_parts = [f"Resultado: {payload.call_result}"]
+    if payload.objections:
+        content_parts.append(f"Objeciones: {payload.objections}")
+    if payload.next_steps:
+        content_parts.append(f"Proximos pasos: {payload.next_steps}")
+    if payload.next_contact_date:
+        content_parts.append(f"Fecha proximo contacto: {payload.next_contact_date.strftime('%Y-%m-%d %H:%M')}")
+    if payload.internal_notes:
+        content_parts.append(f"Notas internas: {payload.internal_notes}")
+    content = " | ".join(content_parts)
+
+    async with db.pool.acquire() as conn:
+        async with conn.transaction():
+            # 3. Create lead_note with type='post_call'
+            note_row = await conn.fetchrow("""
+                INSERT INTO lead_notes (tenant_id, lead_id, author_id, note_type, content, structured_data, visibility)
+                VALUES ($1, $2, $3, 'post_call', $4, $5, 'setter_closer')
+                RETURNING id, tenant_id, lead_id, author_id, note_type, content, structured_data, visibility, created_at
+            """, tenant_id, lead_id, uuid_lib.UUID(user_id) if isinstance(user_id, str) else user_id,
+                content, json.dumps(structured_data))
+
+            # 4. Update lead status
+            await conn.execute("""
+                UPDATE leads SET status = $1, status_changed_at = NOW(), status_changed_by = $2,
+                    status_metadata = $3, updated_at = NOW()
+                WHERE id = $4 AND tenant_id = $5
+            """, new_status,
+                uuid_lib.UUID(user_id) if isinstance(user_id, str) else user_id,
+                json.dumps({"source": "post_call_note", "call_result": payload.call_result}),
+                lead_id, tenant_id)
+
+            # 5. Add tag to lead (JSONB array, append if not present)
+            current_tags = lead["tags"] if lead["tags"] else []
+            if isinstance(current_tags, str):
+                try:
+                    current_tags = json.loads(current_tags)
+                except (json.JSONDecodeError, TypeError):
+                    current_tags = []
+            if new_tag not in current_tags:
+                # Remove conflicting result tags before adding new one
+                result_tags = {"cerrado", "perdido", "requiere_seguimiento"}
+                updated_tags = [t for t in current_tags if t not in result_tags]
+                updated_tags.append(new_tag)
+                await conn.execute(
+                    "UPDATE leads SET tags = $1 WHERE id = $2 AND tenant_id = $3",
+                    json.dumps(updated_tags), lead_id, tenant_id
+                )
+
+            # 6. If next_contact_date and requiere_seguimiento: create follow-up agenda event for the setter
+            setter_user_id = lead["assigned_seller_id"]
+            agenda_event_id = None
+            if payload.next_contact_date and setter_user_id:
+                # Find the setter's professional ID for seller_agenda_events
+                seller_prof = await conn.fetchrow(
+                    "SELECT p.id FROM professionals p WHERE p.user_id = $1 AND p.tenant_id = $2",
+                    setter_user_id, tenant_id
+                )
+                if seller_prof:
+                    from datetime import timedelta
+                    end_dt = payload.next_contact_date + timedelta(minutes=30)
+                    lead_name = f"{lead['first_name'] or ''} {lead['last_name'] or ''}".strip() or lead["phone_number"]
+                    agenda_row = await conn.fetchrow("""
+                        INSERT INTO seller_agenda_events
+                            (tenant_id, seller_id, title, start_datetime, end_datetime, lead_id, source, status)
+                        VALUES ($1, $2, $3, $4, $5, $6, 'post_call', 'scheduled')
+                        RETURNING id
+                    """, tenant_id, seller_prof["id"],
+                        f"Seguimiento: {lead_name} ({payload.call_result})",
+                        payload.next_contact_date, end_dt, lead_id)
+                    agenda_event_id = str(agenda_row["id"]) if agenda_row else None
+
+    # 7. Send notification to the setter (outside transaction)
+    if setter_user_id and str(setter_user_id) != str(user_id):
+        try:
+            from services.seller_notification_service import seller_notification_service, Notification as _Notif
+            import datetime as _datetime_mod
+            timestamp = _datetime_mod.datetime.utcnow().timestamp()
+            lead_name = f"{lead['first_name'] or ''} {lead['last_name'] or ''}".strip() or lead["phone_number"]
+            result_label = {
+                "cerrado": "CERRADO",
+                "no_cerrado": "NO CERRADO",
+                "requiere_seguimiento": "REQUIERE SEGUIMIENTO",
+            }.get(payload.call_result, payload.call_result.upper())
+
+            notif_message = f"Lead {lead_name}: {result_label}"
+            if payload.next_steps:
+                notif_message += f". Proximos pasos: {payload.next_steps}"
+
+            notif = _Notif(
+                id=f"post_call_{lead_id}_{timestamp}",
+                tenant_id=tenant_id,
+                type="post_call_result",
+                title=f"Resultado post-llamada: {result_label}",
+                message=notif_message,
+                priority="high" if payload.call_result == "requiere_seguimiento" else "medium",
+                recipient_id=str(setter_user_id),
+                sender_id=str(user_id),
+                related_entity_type="lead",
+                related_entity_id=str(lead_id),
+                metadata={
+                    "call_result": payload.call_result,
+                    "next_contact_date": payload.next_contact_date.isoformat() if payload.next_contact_date else None,
+                    "next_steps": payload.next_steps,
+                    "objections": payload.objections,
+                    "agenda_event_id": agenda_event_id,
+                }
+            )
+            await seller_notification_service.save_notifications([notif])
+            await seller_notification_service.broadcast_notifications([notif])
+        except Exception as e:
+            logger.warning(f"Could not send post-call notification to setter: {e}")
+
+    # 8. Emit Socket.IO event
+    try:
+        from core.socket_manager import sio
+        await sio.emit("POST_CALL_NOTE_CREATED", {
+            "lead_id": str(lead_id),
+            "note_id": str(note_row["id"]),
+            "call_result": payload.call_result,
+            "new_status": new_status,
+            "tag": new_tag,
+            "next_contact_date": payload.next_contact_date.isoformat() if payload.next_contact_date else None,
+            "author_id": str(user_id),
+            "tenant_id": tenant_id,
+            "agenda_event_id": agenda_event_id,
+        })
+    except Exception as e:
+        logger.warning(f"Could not emit POST_CALL_NOTE_CREATED socket event: {e}")
+
+    return {
+        "success": True,
+        "note": dict(note_row),
+        "lead_status": new_status,
+        "tag_added": new_tag,
+        "agenda_event_id": agenda_event_id,
+    }

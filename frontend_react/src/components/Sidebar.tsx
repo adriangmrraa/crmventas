@@ -17,7 +17,8 @@ import {
   Megaphone,
   Layout,
   LayoutGrid,
-  BarChart3
+  BarChart3,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -32,6 +33,7 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   crm_agenda:     'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&q=60',
   chats:          'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=400&q=60',
   prospecting:    'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=60',
+  follow_ups:     'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=400&q=60',
   analytics:      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60',
   marketing:      'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&q=60',
   hsm_automation: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&q=60',
@@ -104,6 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={17} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Base de clientes convertidos con historial de compras' },
     { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={17} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Agenda de llamadas, demos y reuniones del equipo' },
     { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={17} />, path: '/crm/prospeccion', roles: ['ceo', 'setter', 'closer'], hint: 'Busqueda activa de prospectos y enriquecimiento de datos' },
+    { id: 'follow_ups', labelKey: 'nav.follow_ups' as const, icon: <Clock size={17} />, path: '/crm/seguimientos', roles: ['ceo', 'setter', 'closer'], hint: 'Cola de seguimientos pendientes ordenados por prioridad' },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={17} />, path: '/chats', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Conversaciones de WhatsApp e Instagram en un solo lugar' },
     { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={17} />, path: '/crm/analytics', roles: ['ceo'], hint: 'Rendimiento por vendedor, canal y campana' },
     { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={17} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'], hint: 'ROI de campanas publicitarias con atribucion de leads' },
@@ -125,6 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/clientes') return location.pathname === path || location.pathname.startsWith('/crm/clientes/');
     if (path === '/crm/agenda') return location.pathname === path;
     if (path === '/crm/prospeccion') return location.pathname === path;
+    if (path === '/crm/seguimientos') return location.pathname === path;
     if (path === '/crm/marketing') return location.pathname === path;
     if (path === '/crm/hsm') return location.pathname === path;
     return location.pathname === path;

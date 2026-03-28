@@ -1220,6 +1220,77 @@ class Database:
             EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE 'Parche 29: Error: %', SQLERRM;
             END $$;
+            """,
+
+            # Parche 30: Activity Events — Team Activity Panel (DEV-39)
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'activity_events') THEN
+                    CREATE TABLE activity_events (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        actor_id UUID NOT NULL REFERENCES users(id),
+                        event_type VARCHAR(50) NOT NULL,
+                        entity_type VARCHAR(30) NOT NULL,
+                        entity_id VARCHAR(100) NOT NULL,
+                        metadata JSONB DEFAULT '{}',
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
+                    CREATE INDEX idx_activity_events_tenant_created ON activity_events (tenant_id, created_at DESC);
+                    CREATE INDEX idx_activity_events_actor ON activity_events (actor_id, created_at DESC);
+                    CREATE INDEX idx_activity_events_entity ON activity_events (entity_type, entity_id);
+                    RAISE NOTICE 'Parche 30: activity_events table created (DEV-39)';
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 30: Error: %', SQLERRM;
+            END $$;
+            """,
+
+            # Parche 31: SLA Rules (DEV-42)
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sla_rules') THEN
+                    CREATE TABLE sla_rules (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        trigger_type VARCHAR(50) NOT NULL,
+                        threshold_minutes INTEGER NOT NULL,
+                        applies_to_statuses TEXT[],
+                        applies_to_roles TEXT[],
+                        escalate_to_ceo BOOLEAN DEFAULT true,
+                        escalate_after_minutes INTEGER DEFAULT 30,
+                        is_active BOOLEAN DEFAULT true,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                    CREATE INDEX idx_sla_rules_tenant_active ON sla_rules (tenant_id, is_active);
+                    RAISE NOTICE 'Parche 31: sla_rules table created (DEV-42)';
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 31: Error: %', SQLERRM;
+            END $$;
+            """,
+
+            # Parche 32: Note Mentions (DEV-43)
+            """
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'note_mentions') THEN
+                    CREATE TABLE note_mentions (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        note_id UUID NOT NULL REFERENCES lead_notes(id) ON DELETE CASCADE,
+                        mentioned_user_id UUID NOT NULL REFERENCES users(id),
+                        tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                    CREATE INDEX idx_note_mentions_user ON note_mentions (mentioned_user_id, created_at DESC);
+                    CREATE INDEX idx_note_mentions_note ON note_mentions (note_id);
+                    RAISE NOTICE 'Parche 32: note_mentions table created (DEV-43)';
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 32: Error: %', SQLERRM;
+            END $$;
             """
         ]
 

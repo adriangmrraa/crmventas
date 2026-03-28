@@ -259,6 +259,22 @@ try:
 except Exception as e:
     logger.error(f"❌ Could not mount Channel Routing routes: {e}", exc_info=True)
 
+# Team Activity Routes (DEV-39 + DEV-40 + DEV-41)
+try:
+    from routes.team_activity_routes import router as team_activity_router
+    app.include_router(team_activity_router, tags=["Team Activity"])
+    logger.info("✅ Team Activity API mounted at /admin/core/team-activity")
+except Exception as e:
+    logger.error(f"❌ Could not mount Team Activity routes: {e}", exc_info=True)
+
+# SLA Rules Routes (DEV-42)
+try:
+    from routes.sla_routes import router as sla_router
+    app.include_router(sla_router, tags=["SLA Rules"])
+    logger.info("✅ SLA Rules API mounted at /admin/core/sla-rules")
+except Exception as e:
+    logger.error(f"❌ Could not mount SLA Rules routes: {e}", exc_info=True)
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 

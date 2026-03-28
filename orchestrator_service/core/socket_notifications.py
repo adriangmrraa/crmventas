@@ -199,7 +199,47 @@ def register_notification_socket_handlers():
         except Exception as e:
             logger.error(f"Error in get_notification_count: {e}")
     
+    # ============================================
+    # TEAM ACTIVITY HANDLERS (DEV-39)
+    # ============================================
+
+    @sio.on('subscribe_team_activity')
+    async def handle_subscribe_team_activity(sid, data):
+        """Subscribe CEO to team activity feed. Only ceo role allowed."""
+        try:
+            tenant_id = data.get('tenant_id')
+            role = data.get('role')
+            if not tenant_id:
+                logger.error(f"No tenant_id in subscribe_team_activity: {data}")
+                return
+            if role != 'ceo':
+                logger.warning(f"Non-CEO role '{role}' tried to subscribe to team_activity")
+                await sio.emit('team_activity:error', {
+                    'message': 'Solo el rol CEO puede acceder al panel de actividad'
+                }, room=sid)
+                return
+            await sio.enter_room(sid, f"team_activity:{tenant_id}")
+            logger.info(f"Client {sid} subscribed to team_activity for tenant {tenant_id}")
+            await sio.emit('team_activity:subscribed', {
+                'tenant_id': tenant_id,
+                'status': 'subscribed'
+            }, room=sid)
+        except Exception as e:
+            logger.error(f"Error in subscribe_team_activity: {e}")
+
+    @sio.on('unsubscribe_team_activity')
+    async def handle_unsubscribe_team_activity(sid, data):
+        """Unsubscribe from team activity feed."""
+        try:
+            tenant_id = data.get('tenant_id')
+            if tenant_id:
+                await sio.leave_room(sid, f"team_activity:{tenant_id}")
+                logger.info(f"Client {sid} unsubscribed from team_activity for tenant {tenant_id}")
+        except Exception as e:
+            logger.error(f"Error in unsubscribe_team_activity: {e}")
+
     logger.info("✅ Notification socket handlers registered")
+    logger.info("✅ Team Activity socket handlers registered (DEV-39)")
 
 async def emit_notification_count_update(user_id: str):
     """Emitir actualización de count de notificaciones"""

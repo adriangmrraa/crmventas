@@ -26,7 +26,9 @@
     "companies": "Empresas",
     "follow_ups": "Seguimientos",
     "clients": "Clientes",
-    "integrations": "Integraciones"
+    "integrations": "Integraciones",
+    "team_activity": "Actividad Equipo",
+    "audit_log": "Auditoría"
   },
   "common": {
     "save": "Guardar",

@@ -21,6 +21,9 @@ import SalesAnalyticsView from './modules/crm_sales/views/SalesAnalyticsView';
 import FollowUpQueueView from './modules/crm_sales/views/FollowUpQueueView';
 import SetterQueueView from './modules/crm_sales/views/SetterQueueView';
 import CloserPanelView from './modules/crm_sales/views/CloserPanelView';
+import TeamActivityView from './modules/crm_sales/views/TeamActivityView';
+import AuditLogView from './modules/crm_sales/views/AuditLogView';
+import SellerPerformanceView from './modules/crm_sales/views/SellerPerformanceView';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import IntegrationsView from './components/integrations/IntegrationsView';
@@ -115,6 +118,21 @@ function App() {
                         <Route path="crm/prospeccion" element={
                           <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
                             <ProspectingView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/actividad-equipo" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <TeamActivityView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/auditoria" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <AuditLogView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/vendedores/:userId/performance" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <SellerPerformanceView />
                           </ProtectedRoute>
                         } />
                         <Route path="crm/vendedores" element={

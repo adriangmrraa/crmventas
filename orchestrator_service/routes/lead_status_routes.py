@@ -90,6 +90,24 @@ async def update_lead_status(
         except Exception:
             pass  # Don't fail the request if socket emit fails
 
+        # DEV-39: Registrar evento de actividad
+        try:
+            from services.activity_service import record_event
+            from uuid import UUID as _UUID
+            lead_info = await db.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id)
+            lead_name = f"{lead_info['first_name'] or ''} {lead_info['last_name'] or ''}".strip() if lead_info else str(lead_id)
+            if not lead_name and lead_info:
+                lead_name = lead_info["phone_number"] or str(lead_id)
+            actor_id = _UUID(user_data["user_id"]) if isinstance(user_data, dict) else _UUID(user_data.user_id) if hasattr(user_data, 'user_id') else None
+            if actor_id:
+                await record_event(
+                    tenant_id=tenant_id, actor_id=actor_id,
+                    event_type="lead_status_changed", entity_type="lead", entity_id=str(lead_id),
+                    metadata={"lead_name": lead_name, "from_status": old_status, "to_status": status_update.new_status_id},
+                )
+        except Exception as act_err:
+            pass  # Non-critical
+
         return updated_status
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

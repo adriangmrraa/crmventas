@@ -274,6 +274,20 @@ async def list_users(
     return {"success": True, "count": len(users), "users": users}
 
 
+# ─── 3.6 Search Users for @mention Autocomplete (DEV-43) ─────────────────────
+
+@router.get("/admin/core/users/search")
+async def search_users_for_mentions(
+    q: str = "",
+    tenant_id: int = Depends(get_resolved_tenant_id),
+    user_data=Depends(verify_admin_token),
+):
+    """Search users by name for @mention autocomplete. Any authenticated CRM role."""
+    from services.mention_service import search_users_for_mention
+    results = await search_users_for_mention(tenant_id, q, limit=10)
+    return {"users": results}
+
+
 # ─── 3.5 Migrate Lead Statuses from English to Spanish ────────────────────────
 
 @router.post("/admin/setup/migrate-lead-statuses")

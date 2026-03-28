@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+  Activity,
   Calendar,
+  ClipboardList,
   Users,
   MessageSquare,
   Settings,
@@ -35,6 +37,8 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   chats:          'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=400&q=60',
   prospecting:    'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=60',
   follow_ups:     'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=400&q=60',
+  team_activity:  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=60',
+  audit_log:      'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&q=60',
   analytics:      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60',
   marketing:      'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&q=60',
   hsm_automation: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&q=60',
@@ -110,6 +114,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'prospecting', labelKey: 'nav.prospecting' as const, icon: <Search size={17} />, path: '/crm/prospeccion', roles: ['ceo', 'setter', 'closer'], hint: 'Busqueda activa de prospectos y enriquecimiento de datos' },
     { id: 'follow_ups', labelKey: 'nav.follow_ups' as const, icon: <Clock size={17} />, path: '/crm/seguimientos', roles: ['ceo', 'setter', 'closer'], hint: 'Cola de seguimientos pendientes ordenados por prioridad' },
     { id: 'chats', labelKey: 'nav.chats' as const, icon: <MessageSquare size={17} />, path: '/chats', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Conversaciones de WhatsApp e Instagram en un solo lugar' },
+    { id: 'team_activity', labelKey: 'nav.team_activity' as const, icon: <Activity size={17} />, path: '/crm/actividad-equipo', roles: ['ceo'], hint: 'Feed en vivo de lo que hace cada vendedor ahora mismo' },
+    { id: 'audit_log', labelKey: 'nav.audit_log' as const, icon: <ClipboardList size={17} />, path: '/crm/auditoria', roles: ['ceo'], hint: 'Historial completo de acciones por lead y vendedor' },
     { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={17} />, path: '/crm/analytics', roles: ['ceo'], hint: 'Rendimiento por vendedor, canal y campana' },
     { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={17} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'], hint: 'ROI de campanas publicitarias con atribucion de leads' },
     { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={17} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'], hint: 'Plantillas HSM y secuencias de automatizacion' },
@@ -135,6 +141,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/marketing') return location.pathname === path;
     if (path === '/crm/hsm') return location.pathname === path;
     if (path === '/crm/integraciones') return location.pathname === path;
+    if (path === '/crm/actividad-equipo') return location.pathname === path;
+    if (path === '/crm/auditoria') return location.pathname === path;
     return location.pathname === path;
   };
 

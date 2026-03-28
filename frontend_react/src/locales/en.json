@@ -25,7 +25,9 @@
     "prospecting": "Prospecting",
     "marketing": "Marketing Hub",
     "hsm_automation": "HSM Automation",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "team_activity": "Team Activity",
+    "audit_log": "Audit Log"
   },
   "common": {
     "save": "Save",

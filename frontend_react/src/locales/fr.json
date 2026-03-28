@@ -23,7 +23,9 @@
     "follow_ups": "Suivis",
     "clients": "Clients",
     "prospecting": "Prospection",
-    "integrations": "Intégrations"
+    "integrations": "Intégrations",
+    "team_activity": "Activité Équipe",
+    "audit_log": "Journal d'Audit"
   },
   "header": {
     "tenant_selector": "Sélecteur de Clinique",

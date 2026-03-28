@@ -404,6 +404,74 @@ class LeadStatusTriggerLog(Base):
 
 
 # ============================================================
+# CRM CORE — ACTIVITY EVENTS (DEV-39)
+# ============================================================
+
+class ActivityEvent(Base):
+    __tablename__ = "activity_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    event_type = Column(String(50), nullable=False)
+    entity_type = Column(String(30), nullable=False)
+    entity_id = Column(String(100), nullable=False)
+    metadata_ = Column("metadata", JSONB, default={})
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_activity_events_tenant_created", "tenant_id", created_at.desc()),
+        Index("idx_activity_events_actor", "actor_id", created_at.desc()),
+        Index("idx_activity_events_entity", "entity_type", "entity_id"),
+    )
+
+
+# ============================================================
+# CRM CORE — SLA RULES (DEV-42)
+# ============================================================
+
+class SlaRule(Base):
+    __tablename__ = "sla_rules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    name = Column(Text, nullable=False)
+    description = Column(Text)
+    trigger_type = Column(String(50), nullable=False)
+    threshold_minutes = Column(Integer, nullable=False)
+    applies_to_statuses = Column(ARRAY(Text))
+    applies_to_roles = Column(ARRAY(Text))
+    escalate_to_ceo = Column(Boolean, default=True)
+    escalate_after_minutes = Column(Integer, default=30)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index("idx_sla_rules_tenant_active", "tenant_id", "is_active"),
+    )
+
+
+# ============================================================
+# CRM CORE — NOTE MENTIONS (DEV-43)
+# ============================================================
+
+class NoteMention(Base):
+    __tablename__ = "note_mentions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    note_id = Column(UUID(as_uuid=True), ForeignKey("lead_notes.id", ondelete="CASCADE"), nullable=False)
+    mentioned_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_note_mentions_user", "mentioned_user_id", created_at.desc()),
+        Index("idx_note_mentions_note", "note_id"),
+    )
+
+
+# ============================================================
 # CRM CORE — TASKS (Patch 16)
 # ============================================================
 

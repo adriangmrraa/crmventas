@@ -304,7 +304,22 @@ async def derive_lead_to_closer(
             "visibility": "setter_closer",
         }, tenant_id)
 
-        # 13. Return updated lead
+        # 13. DEV-39: Registrar evento de actividad (handoff)
+        try:
+            from services.activity_service import record_event
+            lead_info = await db.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id)
+            lead_name = f"{lead_info['first_name'] or ''} {lead_info['last_name'] or ''}".strip() if lead_info else str(lead_id)
+            if not lead_name and lead_info:
+                lead_name = lead_info["phone_number"] or str(lead_id)
+            await record_event(
+                tenant_id=tenant_id, actor_id=author_id,
+                event_type="lead_handoff", entity_type="lead", entity_id=str(lead_id),
+                metadata={"lead_name": lead_name, "from_seller": setter_name, "to_seller": structured_data["derived_to_name"]},
+            )
+        except Exception:
+            pass  # Non-critical
+
+        # 14. Return updated lead
         updated_lead = await db.fetchrow(
             "SELECT * FROM leads WHERE id = $1 AND tenant_id = $2",
             lead_id, tenant_id
@@ -497,10 +512,42 @@ async def create_lead_note(
         # Emit LEAD_NOTE_CREATED via Socket.IO (DEV-23)
         await _emit_note_event("LEAD_NOTE_CREATED", lead_id, note_data, tenant_id)
 
+        # DEV-39: Registrar evento de actividad
+        try:
+            from services.activity_service import record_event
+            lead_info = await db.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id)
+            lead_name = f"{lead_info['first_name'] or ''} {lead_info['last_name'] or ''}".strip() if lead_info else str(lead_id)
+            if not lead_name and lead_info:
+                lead_name = lead_info["phone_number"] or str(lead_id)
+            await record_event(
+                tenant_id=tenant_id, actor_id=author_id,
+                event_type="note_added", entity_type="lead", entity_id=str(lead_id),
+                metadata={"lead_name": lead_name, "note_type": request.note_type},
+            )
+        except Exception as act_err:
+            logger.warning(f"DEV-39: Could not record activity event: {act_err}")
+
+        # DEV-43: Parsear @menciones y notificar
+        mentions = []
+        try:
+            from services.mention_service import parse_and_notify_mentions
+            lead_info_m = await db.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id)
+            lead_name_m = f"{lead_info_m['first_name'] or ''} {lead_info_m['last_name'] or ''}".strip() if lead_info_m else str(lead_id)
+            if not lead_name_m and lead_info_m:
+                lead_name_m = lead_info_m["phone_number"] or str(lead_id)
+            mentions = await parse_and_notify_mentions(
+                content=request.content, tenant_id=tenant_id,
+                note_id=UUID(str(row["id"])), author_id=author_id,
+                lead_id=lead_id, lead_name=lead_name_m,
+            )
+        except Exception as mention_err:
+            logger.warning(f"DEV-43: Could not process mentions: {mention_err}")
+
         return {
             "success": True,
             "message": "Note created successfully",
             "note": note_data,
+            "mentions": mentions,
         }
 
     except HTTPException:

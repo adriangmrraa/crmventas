@@ -181,32 +181,32 @@ export default function LeadDetailView() {
           <form onSubmit={handleSave} className="max-w-lg space-y-4">
             {isNew && (
               <div>
-                <label className="block text-sm font-medium text-white/70 mb-1">Phone number *</label>
+                <label className="block text-sm font-medium text-white/70 mb-1">Teléfono *</label>
                 <input
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData((f) => ({ ...f, phone_number: e.target.value }))}
-                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
                   required
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-1">First name</label>
+              <label className="block text-sm font-medium text-white/70 mb-1">Nombre</label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
-                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-1">Last name</label>
+              <label className="block text-sm font-medium text-white/70 mb-1">Apellido</label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
-                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function LeadDetailView() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
@@ -224,14 +224,15 @@ export default function LeadDetailView() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-medical-500 bg-white/[0.03]"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
                 >
-                  <option value="new">New</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="interested">Interested</option>
-                  <option value="negotiation">Negotiation</option>
-                  <option value="closed_won">Closed Won</option>
-                  <option value="closed_lost">Closed Lost</option>
+                  <option value="nuevo" className="bg-[#1a1a2e] text-white">Nuevo</option>
+                  <option value="contactado" className="bg-[#1a1a2e] text-white">Contactado</option>
+                  <option value="calificado" className="bg-[#1a1a2e] text-white">Calificado</option>
+                  <option value="llamada_agendada" className="bg-[#1a1a2e] text-white">Llamada Agendada</option>
+                  <option value="negociacion" className="bg-[#1a1a2e] text-white">En Negociación</option>
+                  <option value="cerrado_ganado" className="bg-[#1a1a2e] text-white">Cerrado Ganado</option>
+                  <option value="cerrado_perdido" className="bg-[#1a1a2e] text-white">Cerrado Perdido</option>
                 </select>
               ) : (
                 <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl flex items-center justify-between">
@@ -268,14 +269,23 @@ export default function LeadDetailView() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 disabled:opacity-50 font-medium"
-            >
-              <Save size={18} />
-              {saving ? t('common.saving') : isNew ? 'Create lead' : t('common.save_changes')}
-            </button>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+              >
+                <Save size={18} />
+                {saving ? 'Guardando...' : isNew ? 'Crear lead' : 'Guardar cambios'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/crm/leads')}
+                className="px-4 py-2.5 text-white/50 hover:text-white border border-white/[0.08] rounded-lg hover:bg-white/[0.04] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </form>
         )}
 

@@ -2,10 +2,11 @@
 CRM Sales Module - Pydantic Models
 Data validation models for CRM endpoints
 """
-from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, Field, EmailStr, field_validator
+from typing import Optional, List, Any
 from datetime import datetime
 from uuid import UUID
+import json
 
 # ============================================
 # LEADS
@@ -131,6 +132,30 @@ class ProspectingLeadResponse(BaseModel):
     social_links: Optional[dict] = {}
     created_at: datetime
     updated_at: datetime
+
+    @field_validator('tags', mode='before')
+    @classmethod
+    def parse_tags(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        if v is None:
+            return []
+        return v
+
+    @field_validator('social_links', mode='before')
+    @classmethod
+    def parse_social_links(cls, v: Any) -> dict:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return {}
+        if v is None:
+            return {}
+        return v
 
     class Config:
         from_attributes = True

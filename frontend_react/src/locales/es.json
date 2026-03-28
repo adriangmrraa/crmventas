@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "agenda": "Agenda",
     "leads": "Leads",
+    "pipeline": "Pipeline",
     "meta_leads": "Leads Forms",
     "patients": "Pacientes",
     "chats": "Conversaciones",
@@ -515,6 +516,10 @@
     "suggestion_more_conversations": "Tomar más conversaciones activas",
     "suggestion_engagement": "Aumentar engagement con más mensajes",
     "metrics_updated": "Métricas actualizadas"
+  },
+  "pipeline": {
+    "title": "Pipeline de Ventas",
+    "subtitle": "Arrastra leads entre etapas para actualizar su estado"
   },
   "leads": {
     "convert_to_client": "Convertir a cliente",

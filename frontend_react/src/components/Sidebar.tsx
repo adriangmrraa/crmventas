@@ -15,7 +15,8 @@ import {
   X,
   Search,
   Megaphone,
-  Layout
+  Layout,
+  LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -36,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
   const menuItems = [
     { id: 'dashboard', labelKey: 'nav.dashboard' as const, icon: <Home size={20} />, path: '/', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
     { id: 'leads', labelKey: 'nav.leads' as const, icon: <Users size={20} />, path: '/crm/leads', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
+    { id: 'pipeline', labelKey: 'nav.pipeline' as const, icon: <LayoutGrid size={20} />, path: '/crm/pipeline', roles: ['ceo', 'setter', 'closer'] },
     { id: 'meta_leads', labelKey: 'nav.meta_leads' as const, icon: <Megaphone size={20} />, path: '/crm/meta-leads', roles: ['ceo', 'setter', 'closer', 'secretary'] },
     { id: 'clients', labelKey: 'nav.clients' as const, icon: <Users size={20} />, path: '/crm/clientes', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },
     { id: 'crm_agenda', labelKey: 'nav.agenda' as const, icon: <Calendar size={20} />, path: '/crm/agenda', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'] },

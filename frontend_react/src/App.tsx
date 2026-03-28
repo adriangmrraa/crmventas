@@ -16,6 +16,7 @@ import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
 import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
 import ProspectingView from './modules/crm_sales/views/ProspectingView';
+import KanbanPipelineView from './modules/crm_sales/views/KanbanPipelineView';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 // Optional Notifications Pages
@@ -77,6 +78,7 @@ function App() {
                         } />
                         <Route path="crm/agenda" element={<CrmAgendaView />} />
                         <Route path="crm/leads" element={<LeadsView />} />
+                        <Route path="crm/pipeline" element={<KanbanPipelineView />} />
                         <Route path="crm/leads/:id" element={<LeadDetailView />} />
                         <Route path="crm/meta-leads" element={
                           <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer', 'secretary']}>

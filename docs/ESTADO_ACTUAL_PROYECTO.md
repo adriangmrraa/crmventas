@@ -1,7 +1,7 @@
 # Estado Actual del Proyecto - CRM Ventas (Nexus Core)
 
-**Fecha:** 2026-03-19
-**Versión:** Nexus v8.0
+**Fecha:** 2026-03-28
+**Versión:** Nexus v9.0 — Dark Theme Premium
 **Despliegue:** VPS en EasyPanel
 **Repositorio:** github.com/adriangmrraa/crmventas
 
@@ -509,6 +509,57 @@ Interceptors:
 **AuthContext**: Sesión de usuario, login/logout, verificación automática al montar
 **SocketContext**: Socket.IO, notificaciones en tiempo real, hook `useSocketNotifications()`
 **LanguageContext**: i18n con `t('key')`, soporta es/en/fr, persiste en tenant config
+
+### 6.5 UI Design System — ClinicForge Premium Dark Theme (v9.0)
+
+**Implementado:** 2026-03-28 | **Archivos convertidos:** 51 componentes + index.css
+
+El frontend usa un **dark theme premium** basado en el sistema de diseño ClinicForge. No existe light mode.
+
+#### Paleta de colores
+
+| Elemento | Valor | Tailwind |
+|----------|-------|----------|
+| Root background | `#06060e` | `bg-[#06060e]` |
+| Surface Level 1 | `#0a0e1a` | `bg-[#0a0e1a]` |
+| Surface Level 2 | `#0d1117` | `bg-[#0d1117]` |
+| Glass surfaces | `rgba(255,255,255, 0.02-0.08)` | `bg-white/[0.03]` |
+| Cards | `bg-white/[0.03]` + `border-white/[0.06]` | — |
+| Inputs | `bg-white/[0.04]` + `border-white/[0.08]` | — |
+| Modals | `bg-[#0d1117]` + `border-white/[0.08]` | — |
+| Text primary | `rgba(255,255,255, 0.9)` | `text-white` |
+| Text secondary | `rgba(255,255,255, 0.5)` | `text-white/50` |
+| Text muted | `rgba(255,255,255, 0.30)` | `text-white/30` |
+
+#### Componentes globales (index.css)
+
+| Clase | Estilo dark |
+|-------|-------------|
+| `.card` | `bg-white/[0.03] rounded-xl border border-white/[0.06]` |
+| `.btn-primary` | `bg-medical-600 text-white` |
+| `.btn-secondary` | `bg-white/[0.06] text-white/70 border border-white/[0.08]` |
+| `.input` | `bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30` |
+| `.modal-content` | `bg-[#0d1117] rounded-2xl border border-white/[0.08]` |
+| `.badge-*` | `bg-{color}-500/10 text-{color}-400` |
+| `.toast-*` | `bg-{color}-500/10 border-{color}-500 text-{color}-400` |
+| `.skeleton` | `bg-white/[0.06] animate-pulse` |
+| `.table th` | `bg-white/[0.03] text-white/50 border-white/[0.06]` |
+
+#### Scrollbar dark
+```css
+::-webkit-scrollbar-track { background: #0a0e1a; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+```
+
+#### Convenciones para nuevos componentes
+
+1. **Fondos**: Siempre `bg-white/[0.02-0.08]`, nunca `bg-white` ni `bg-gray-*`
+2. **Texto**: Escala `text-white` → `text-white/70` → `text-white/50` → `text-white/40` → `text-white/30`
+3. **Bordes**: `border-white/[0.04-0.08]`, nunca `border-gray-*`
+4. **Semánticos**: `bg-{color}-500/10 text-{color}-400` (no `bg-{color}-50 text-{color}-800`)
+5. **Hover**: `hover:bg-white/[0.04-0.08]`, nunca `hover:bg-gray-*`
+6. **Shadows**: Evitar `shadow-sm`. Usar `shadow-lg shadow-black/20` para elevation
+7. **Touch**: Agregar `active:scale-95 transition-all touch-manipulation` a todo botón
 
 ---
 

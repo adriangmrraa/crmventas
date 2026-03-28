@@ -185,4 +185,45 @@ Ver **README** (sección Landing / Demo pública) y **`docs/SPECS_IMPLEMENTADOS_
 
 ---
 
+## 24. Dark Theme Premium — Guía para Desarrolladores (v9.0)
+
+**Fecha:** 2026-03-28
+
+### 24.1 Regla fundamental
+El proyecto usa **dark theme exclusivo** (sin light mode). Todo componente nuevo DEBE usar las clases dark directamente.
+
+### 24.2 Patrón de un componente nuevo
+
+```tsx
+<div className="bg-white/[0.03] rounded-2xl border border-white/[0.06] p-4">
+  <h3 className="text-white font-bold">Título</h3>
+  <p className="text-white/40 text-sm">Subtítulo</p>
+  <input className="bg-white/[0.04] border border-white/[0.08] text-white rounded-lg px-4 py-2
+    placeholder-white/30 focus:bg-white/[0.06] focus:border-blue-500 transition-all" />
+  <button className="bg-white/[0.06] text-white/70 border border-white/[0.08]
+    hover:bg-white/[0.10] active:scale-95 transition-all rounded-lg px-4 py-2">
+    Acción
+  </button>
+</div>
+```
+
+### 24.3 Colores semánticos (dark)
+
+| Light (PROHIBIDO) | Dark (USAR) |
+|---|---|
+| `bg-green-50 text-green-800` | `bg-green-500/10 text-green-400` |
+| `bg-red-50 text-red-700` | `bg-red-500/10 text-red-400` |
+| `bg-blue-100 text-blue-800` | `bg-blue-500/10 text-blue-400` |
+| `bg-gray-50` | `bg-white/[0.02]` |
+| `bg-gray-100` | `bg-white/[0.04]` |
+| `bg-white` | `bg-white/[0.03]` |
+| `border-gray-200` | `border-white/[0.06]` |
+| `text-gray-600` | `text-white/50` |
+| `shadow-sm` | (no usar) |
+
+### 24.4 Referencia completa
+Ver sección 6.5 de este documento (ESTADO_ACTUAL_PROYECTO) para la paleta completa y convenciones.
+
+---
+
 *Guía de Desarrolladores CRM Ventas © 2026*

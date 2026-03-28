@@ -2,7 +2,8 @@
 
 Este documento lista **todos** los archivos activos de la carpeta `docs/` con una breve descripción. Sirve como mapa para encontrar rápidamente qué documento consultar.
 **Proyecto:** CRM Ventas (Nexus Core) – single-niche CRM de ventas (leads, pipeline, vendedores, agenda, chats, marketing).
-**Protocolo:** Non-Destructive Fusion. Última revisión: 2026-03.
+**Protocolo:** Non-Destructive Fusion. Última revisión: 2026-03-28.
+**Versión:** Nexus v9.0 — Dark Theme Premium
 
 ---
 

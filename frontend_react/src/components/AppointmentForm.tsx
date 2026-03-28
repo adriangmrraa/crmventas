@@ -41,6 +41,26 @@ export default function AppointmentForm({
     const [error, setError] = useState<string | null>(null);
     const [collisionWarning, setCollisionWarning] = useState<string | null>(null);
 
+    // Treatment types with base_price
+    const [treatmentTypes, setTreatmentTypes] = useState<any[]>([]);
+    useEffect(() => {
+        api.get('/admin/treatment_types', { params: { only_active: true } })
+            .then(res => setTreatmentTypes(res.data))
+            .catch(() => setTreatmentTypes([
+                { code: 'checkup', name: 'Consulta' },
+                { code: 'cleaning', name: 'Limpieza' },
+                { code: 'emergency', name: 'Urgencia' }
+            ]));
+    }, []);
+
+    // Billing state
+    const [billingData, setBillingData] = useState({
+        billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending',
+    });
+    const [billingSaving, setBillingSaving] = useState(false);
+    const [billingSuccess, setBillingSuccess] = useState<string | null>(null);
+    const [fullAppointment, setFullAppointment] = useState<any>(null);
+
     // Format date for datetime-local input: local YYYY-MM-DDTHH:mm (avoid UTC display bug)
     const toLocalDatetimeInput = (isoOrDate: string | Date): string => {
         const d = new Date(isoOrDate);
@@ -62,8 +82,48 @@ export default function AppointmentForm({
             setError(null);
             setCollisionWarning(null);
             setActiveTab('general');
+            setBillingSuccess(null);
+            setFullAppointment(null);
+
+            // Fetch full appointment for billing data
+            if (isEditing && initialData.id) {
+                api.get(`/admin/appointments/${initialData.id}`)
+                    .then(res => {
+                        const apt = res.data;
+                        setFullAppointment(apt);
+                        let amount = apt.billing_amount != null && apt.billing_amount > 0 ? String(apt.billing_amount) : '';
+                        if (!amount && apt.appointment_type && treatmentTypes.length > 0) {
+                            const tt = treatmentTypes.find((t: any) => t.code === apt.appointment_type);
+                            if (tt?.base_price && tt.base_price > 0) amount = String(tt.base_price);
+                        }
+                        setBillingData({
+                            billing_amount: amount,
+                            billing_installments: apt.billing_installments != null ? String(apt.billing_installments) : '',
+                            billing_notes: apt.billing_notes || '',
+                            payment_status: apt.payment_status || 'pending',
+                        });
+                    })
+                    .catch(() => {
+                        setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending' });
+                    });
+            } else {
+                setBillingData({ billing_amount: '', billing_installments: '', billing_notes: '', payment_status: 'pending' });
+            }
         }
-    }, [isOpen, initialData, professionals]);
+    }, [isOpen, initialData, professionals, isEditing]);
+
+    // Fix race condition: auto-fill billing when treatmentTypes load after appointment data
+    useEffect(() => {
+        if (!fullAppointment || !treatmentTypes.length) return;
+        setBillingData(prev => {
+            if (prev.billing_amount || !fullAppointment.appointment_type) return prev;
+            const tt = treatmentTypes.find((t: any) => t.code === fullAppointment.appointment_type);
+            if (tt?.base_price && tt.base_price > 0) {
+                return { ...prev, billing_amount: String(tt.base_price) };
+            }
+            return prev;
+        });
+    }, [treatmentTypes, fullAppointment]);
 
     // Check collisions
     const checkCollisions = async (profId: string, dateStr: string) => {
@@ -208,7 +268,7 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06]/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
                                         value={formData.patient_id}
                                         onChange={(e) => handleChange('patient_id', e.target.value)}
                                         disabled={isEditing}
@@ -226,7 +286,7 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06]/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none cursor-pointer"
                                         value={formData.professional_id}
                                         onChange={(e) => handleChange('professional_id', e.target.value)}
                                     >
@@ -245,7 +305,7 @@ export default function AppointmentForm({
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                         <input
                                             type="datetime-local"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06]/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm"
                                             value={formData.appointment_datetime}
                                             onChange={(e) => handleChange('appointment_datetime', e.target.value)}
                                         />
@@ -256,7 +316,7 @@ export default function AppointmentForm({
                                     <div className="relative">
                                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                         <select
-                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06]/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm appearance-none"
                                             value={formData.duration_minutes}
                                             onChange={(e) => handleChange('duration_minutes', parseInt(e.target.value))}
                                         >
@@ -280,18 +340,27 @@ export default function AppointmentForm({
 
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t('agenda.appointment_type')}</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {['checkup', 'cleaning', 'ortho', 'surgery', 'emergency'].map(type => (
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(treatmentTypes.length > 0 ? treatmentTypes : [
+                                        { code: 'checkup', name: 'Consulta' }, { code: 'cleaning', name: 'Limpieza' },
+                                        { code: 'ortho', name: 'Ortodoncia' }, { code: 'surgery', name: 'Cirugía' },
+                                        { code: 'emergency', name: 'Urgencia' }
+                                    ]).map((s: any) => (
                                         <button
-                                            key={type}
+                                            key={s.code}
                                             type="button"
-                                            onClick={() => handleChange('appointment_type', type)}
-                                            className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${formData.appointment_type === type
+                                            onClick={() => {
+                                                handleChange('appointment_type', s.code);
+                                                if (s.base_price && s.base_price > 0) {
+                                                    setBillingData(prev => ({ ...prev, billing_amount: String(s.base_price) }));
+                                                }
+                                            }}
+                                            className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${formData.appointment_type === s.code
                                                 ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
                                                 : 'bg-white/[0.03] border-white/[0.06] text-white/50 hover:bg-white/[0.04]'
                                                 }`}
                                         >
-                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                            {s.name || s.code}
                                         </button>
                                     ))}
                                 </div>
@@ -300,7 +369,7 @@ export default function AppointmentForm({
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t('agenda.notes')}</label>
                                 <textarea
-                                    className="w-full p-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-lg focus:bg-white/[0.06]/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm min-h-[100px]"
+                                    className="w-full p-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-lg focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm min-h-[100px]"
                                     placeholder={t('agenda.notes_placeholder')}
                                     value={formData.notes}
                                     onChange={(e) => handleChange('notes', e.target.value)}
@@ -317,9 +386,83 @@ export default function AppointmentForm({
                     )}
 
                     {activeTab === 'billing' && (
-                        <div className="text-center py-10 text-white/30">
-                            <DollarSign size={48} className="mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">{t('agenda.billing_coming')}</p>
+                        <div className="space-y-5 p-1">
+                            {!isEditing && (
+                                <div className="text-center py-6 text-white/30 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+                                    <DollarSign size={32} className="mx-auto mb-2 opacity-30" />
+                                    <p className="text-sm">{t('agenda.billing_save_first') || 'Guardá el turno primero para facturar'}</p>
+                                </div>
+                            )}
+                            {isEditing && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold text-white/50">{t('agenda.billing_amount') || 'Monto ($)'}</label>
+                                            <input type="number" step="0.01" placeholder="0.00"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40"
+                                                value={billingData.billing_amount}
+                                                onChange={(e) => setBillingData(prev => ({ ...prev, billing_amount: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-white/50">{t('agenda.billing_installments') || 'Cuotas'}</label>
+                                            <input type="number" min="1" placeholder="1"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40"
+                                                value={billingData.billing_installments}
+                                                onChange={(e) => setBillingData(prev => ({ ...prev, billing_installments: e.target.value }))} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-white/50">{t('agenda.billing_notes') || 'Notas de facturación'}</label>
+                                        <textarea rows={3} placeholder={t('agenda.billing_notes_placeholder') || 'Observaciones...'}
+                                            className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40"
+                                            value={billingData.billing_notes}
+                                            onChange={(e) => setBillingData(prev => ({ ...prev, billing_notes: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-white/50 mb-2 block">{t('agenda.payment_status') || 'Estado de pago'}</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['pending', 'partial', 'paid'].map(ps => (
+                                                <button key={ps} type="button"
+                                                    onClick={() => setBillingData(prev => ({ ...prev, payment_status: ps }))}
+                                                    className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${
+                                                        billingData.payment_status === ps
+                                                            ? ps === 'paid' ? 'bg-green-500/15 border-green-500/30 text-green-400'
+                                                            : ps === 'partial' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400'
+                                                            : 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                                                        : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
+                                                    }`}>
+                                                    {ps === 'pending' ? '⏳ Pendiente' : ps === 'partial' ? '🔄 Parcial' : '✅ Pagado'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                                        {billingSuccess && (
+                                            <span className="text-xs text-green-400 flex items-center gap-1">✓ {billingSuccess}</span>
+                                        )}
+                                        {!billingSuccess && <span />}
+                                        <button type="button" disabled={billingSaving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 active:scale-95 transition-all disabled:opacity-50"
+                                            onClick={async () => {
+                                                setBillingSaving(true); setBillingSuccess(null);
+                                                try {
+                                                    await api.put(`/admin/appointments/${initialData.id}/billing`, {
+                                                        billing_amount: billingData.billing_amount ? parseFloat(billingData.billing_amount) : null,
+                                                        billing_installments: billingData.billing_installments ? parseInt(billingData.billing_installments) : null,
+                                                        billing_notes: billingData.billing_notes || null,
+                                                        payment_status: billingData.payment_status,
+                                                    });
+                                                    setBillingSuccess(t('agenda.billing_saved') || 'Guardado');
+                                                    setTimeout(() => setBillingSuccess(null), 3000);
+                                                } catch (err) { console.error('Error saving billing:', err); }
+                                                finally { setBillingSaving(false); }
+                                            }}>
+                                            {billingSaving ? <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" /> : <DollarSign size={16} />}
+                                            {t('agenda.billing_save') || 'Guardar facturación'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(mkdir -p docs/archive/scripts)",
+      "Bash(mv AUDITORIA_CLINICFORGE_VS_CRMVENTAS.py AUDITORIA_COMPARATIVA.py UPDATE_META_ADS_DOCUMENTATION.py audit_all_tags.py audit_bell.py audit_module_tags.py audit_module_tags_v2.py audit_refined.py audit_tenant_queries.py check_jsx_balance.py check_leads_simple.sh check_react_components.py check_schema.py check_stack_sellers.py count_frags_leads.py count_tags_leads.py debug_divs.py debug_layout.py debug_marketing_stats.py deep_audit_layout.py deep_audit_meta.py deep_audit_v2.py deployment_fix.py diagnose_leads.py diagnostic_leads.py exhaustive_check.py final_audit.py final_fix.py final_fix_v2.py final_verification_fixed.py fix_backend_terminology.py fix_div_balance.py fix_frontend_terminology.py fix_jsx.py fix_jsx_syntax.py massive_audit.py optimize_queries.py quick_diagnosis.py robust_audit_meta.py run_seller_assignment_migration.py simple_fix_chatsview.py sprint2_automated_test.py test_assign.py test_background_jobs.py test_google_integration.py test_google_routes.py test_imports.py test_performance_metrics.py test_security_hardening.py test_seller_system.py test_socket_integration.py test_sprint2_complete.py verify_backend_final.py verify_deployment.py verify_final_implementation.py verify_frontend_build.py verify_phases.py verify_seller_tables.py docs/archive/scripts/)",
+      "Bash(ls -1 *.json)",
+      "Bash(ls -1 *.py)",
+      "Bash(ls -1 .agent/workflows/*.md)",
+      "Bash(ls -1 *.md)",
+      "Bash(ls -1 docs/*.md)"
+    ]
+  }
+}

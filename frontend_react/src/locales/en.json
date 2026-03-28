@@ -171,6 +171,43 @@
     "to_date": "To",
     "professionals_filter": "Professionals"
   },
+  "header": {
+    "tenant_selector": "Clinic Selector",
+    "tenant_switcher": "Switch Clinic",
+    "search_placeholder": "Search patient, appointment or ID...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filters",
+    "filters_active": "Active filters",
+    "filters_clear": "Clear filters",
+    "help": "Help",
+    "help_tooltip": "Press ? to open guide",
+    "online": "Online",
+    "offline": "Offline",
+    "status_online": "Online",
+    "status_unstable": "Unstable connection",
+    "notifications": "Notifications"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "agenda": "Agenda",
+    "edit_appointment": "Edit Appointment",
+    "patients": "Patients",
+    "leads": "Leads",
+    "pipeline": "Pipeline",
+    "chats": "Chats",
+    "settings": "Settings",
+    "prospecting": "Prospecting",
+    "marketing": "Marketing",
+    "analytics": "Analytics"
+  },
+  "actions": {
+    "new_appointment": "+ New Appointment",
+    "new_patient": "+ New Patient",
+    "new_lead": "+ New Lead",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
   "agenda": {
     "title": "Agenda",
     "subtitle": "Appointments and scheduling",
@@ -1007,5 +1044,38 @@
     "using_api": "Using API polling",
     "connection_status": "Connection status",
     "real_time_updates": "Real-time updates"
+  },
+  "header": {
+    "tenant_switcher": "Switch tenant",
+    "tenant_selector": "Clinic Selector",
+    "search_placeholder": "Search patient, appointment or ID...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filters",
+    "filters_active": "Active filters",
+    "filters_clear": "Clear filters",
+    "help": "Help",
+    "help_tooltip": "Press ? to open guide",
+    "online": "Online",
+    "offline": "Offline",
+    "status_online": "Online",
+    "status_unstable": "Unstable connection"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "agenda": "Agenda",
+    "edit_appointment": "Edit appointment",
+    "patients": "Patients",
+    "leads": "Leads",
+    "pipeline": "Pipeline",
+    "chats": "Chats",
+    "settings": "Settings"
+  },
+  "actions": {
+    "new_appointment": "+ New appointment",
+    "new_patient": "+ New patient",
+    "new_lead": "+ New lead",
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }

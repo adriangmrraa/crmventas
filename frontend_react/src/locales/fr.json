@@ -23,6 +23,43 @@
     "clients": "Clients",
     "prospecting": "Prospection"
   },
+  "header": {
+    "tenant_selector": "Sélecteur de Clinique",
+    "tenant_switcher": "Changer de Clinique",
+    "search_placeholder": "Rechercher patient, rendez-vous ou ID...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filtres",
+    "filters_active": "Filtres actifs",
+    "filters_clear": "Effacer les filtres",
+    "help": "Aide",
+    "help_tooltip": "Appuyez sur ? pour ouvrir le guide",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "status_online": "En ligne",
+    "status_unstable": "Connexion instable",
+    "notifications": "Notifications"
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "agenda": "Agenda",
+    "edit_appointment": "Modifier le rendez-vous",
+    "patients": "Patients",
+    "leads": "Prospects",
+    "pipeline": "Pipeline",
+    "chats": "Chats",
+    "settings": "Paramètres",
+    "prospecting": "Prospection",
+    "marketing": "Marketing",
+    "analytics": "Analytique"
+  },
+  "actions": {
+    "new_appointment": "+ Nouveau rendez-vous",
+    "new_patient": "+ Nouveau patient",
+    "new_lead": "+ Nouveau prospect",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -860,5 +897,38 @@
     "using_api": "Utilisation de l'API",
     "connection_status": "Statut de connexion",
     "real_time_updates": "Mises à jour en temps réel"
+  },
+  "header": {
+    "tenant_switcher": "Changer de clinique",
+    "tenant_selector": "Sélecteur de clinique",
+    "search_placeholder": "Rechercher patient, rendez-vous ou ID...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filtres",
+    "filters_active": "Filtres actifs",
+    "filters_clear": "Effacer les filtres",
+    "help": "Aide",
+    "help_tooltip": "Appuyez sur ? pour ouvrir le guide",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "status_online": "En ligne",
+    "status_unstable": "Connexion instable"
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "agenda": "Agenda",
+    "edit_appointment": "Modifier le rendez-vous",
+    "patients": "Patients",
+    "leads": "Leads",
+    "pipeline": "Pipeline",
+    "chats": "Conversations",
+    "settings": "Paramètres"
+  },
+  "actions": {
+    "new_appointment": "+ Nouveau rendez-vous",
+    "new_patient": "+ Nouveau patient",
+    "new_lead": "+ Nouveau lead",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
   }
 }

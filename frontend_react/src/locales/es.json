@@ -173,6 +173,43 @@
     "to_date": "Hasta",
     "professionals_filter": "Profesionales"
   },
+  "header": {
+    "tenant_selector": "Selector de Clínica",
+    "tenant_switcher": "Cambiar Clínica",
+    "search_placeholder": "Buscar paciente, turno o DNI...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filtros",
+    "filters_active": "Filtros activos",
+    "filters_clear": "Limpiar filtros",
+    "help": "Ayuda",
+    "help_tooltip": "Pulsa ? para abrir guía",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "status_online": "En línea",
+    "status_unstable": "Conexión inestable",
+    "notifications": "Notificaciones"
+  },
+  "breadcrumb": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "agenda": "Agenda",
+    "edit_appointment": "Editar Turno",
+    "patients": "Pacientes",
+    "leads": "Leads",
+    "pipeline": "Pipeline",
+    "chats": "Chats",
+    "settings": "Configuración",
+    "prospecting": "Prospección",
+    "marketing": "Marketing",
+    "analytics": "Analíticas"
+  },
+  "actions": {
+    "new_appointment": "+ Nuevo Turno",
+    "new_patient": "+ Nuevo Paciente",
+    "new_lead": "+ Nuevo Lead",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
   "agenda": {
     "title": "Agenda",
     "subtitle": "Gestión de turnos y citas",
@@ -1009,5 +1046,38 @@
     "using_api": "Usando API polling",
     "connection_status": "Estado conexión",
     "real_time_updates": "Actualizaciones tiempo real"
+  },
+  "header": {
+    "tenant_switcher": "Cambiar de sede",
+    "tenant_selector": "Selector de Clínica",
+    "search_placeholder": "Buscar paciente, turno o DNI...",
+    "search_shortcut": "Cmd+K",
+    "filters": "Filtros",
+    "filters_active": "Filtros activos",
+    "filters_clear": "Limpiar filtros",
+    "help": "Ayuda",
+    "help_tooltip": "Pulsa ? para abrir guía",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "status_online": "En línea",
+    "status_unstable": "Conexión inestable"
+  },
+  "breadcrumb": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "agenda": "Agenda",
+    "edit_appointment": "Editar Turno",
+    "patients": "Pacientes",
+    "leads": "Leads",
+    "pipeline": "Pipeline",
+    "chats": "Conversaciones",
+    "settings": "Configuración"
+  },
+  "actions": {
+    "new_appointment": "+ Nuevo Turno",
+    "new_patient": "+ Nuevo Paciente",
+    "new_lead": "+ Nuevo Lead",
+    "save": "Guardar",
+    "cancel": "Cancelar"
   }
 }

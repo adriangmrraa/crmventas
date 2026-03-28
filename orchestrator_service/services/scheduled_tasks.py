@@ -181,7 +181,17 @@ class ScheduledTasksService:
                 
         except Exception as e:
             logger.error(f"Error in scheduled daily reports: {e}")
-    
+
+    async def sync_dentalogic_leads(self):
+        """Sincronizar leads de alta intención desde Dentalogic"""
+        logger.info("Running scheduled Dentalogic leads sync")
+        try:
+            from .dentalogic_sync_service import dentalogic_sync_service
+            await dentalogic_sync_service.sync_leads()
+            logger.info("Dentalogic leads sync completed")
+        except Exception as e:
+            logger.error(f"Error in Dentalogic leads sync: {e}")
+            
     def start_all_tasks(self):
         """Iniciar todas las tareas programadas"""
         if not self.scheduler:
@@ -222,6 +232,15 @@ class ScheduledTasksService:
                 CronTrigger(hour=8, minute=0),
                 id='daily_reports',
                 name='Daily Reports',
+                replace_existing=True
+            )
+            
+            # 5. Sync con Dentalogic (Frecuencia: 5 minutos)
+            self.scheduler.add_job(
+                self.sync_dentalogic_leads,
+                IntervalTrigger(minutes=5),
+                id='dentalogic_sync',
+                name='Dentalogic Leads Sync',
                 replace_existing=True
             )
             

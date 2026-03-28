@@ -8,6 +8,15 @@ import { BACKEND_URL } from '../api/axios';
 import { AlertCircle, X, HelpCircle } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import OnboardingGuide from './OnboardingGuide';
+import axios from 'axios';
+import { GlobalTopBar, ContextualSubheader, StatusAlertsCluster } from './Header';
+import type { BreadcrumbItem } from './Header/types';
+
+interface Tenant {
+  id: number;
+  clinic_name: string;
+  logo_url?: string;
+}
 
 interface LayoutProps {
   children: ReactNode;
@@ -23,6 +32,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [guideTooltip, setGuideTooltip] = useState(false);
   const tooltipShownRef = useRef(false);
+
+  // Tenant Management
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | undefined>();
+  const [tenantsLoading, setTenantsLoading] = useState(false);
 
   // Tooltip on first visit
   useEffect(() => {
@@ -42,6 +56,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     reason: string;
   } | null>(null);
 
+  // Contextual subheader state
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
+    { label: t('breadcrumb.home') || 'Home', path: '/' }
+  ]);
+  const [filterActive, setFilterActive] = useState(false);
+  const [filterCount, setFilterCount] = useState(0);
+
   // Global Socket Listener for Handoffs
   useEffect(() => {
     if (!user) return;
@@ -52,7 +73,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       socketRef.current = io(BACKEND_URL);
     }
 
-    // Listener
     // Listener
     const handleHandoff = (data: { phone_number: string; reason: string }) => {
 
@@ -80,12 +100,38 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return () => {
       socketRef.current?.off('HUMAN_HANDOFF', handleHandoff);
-      // No desconectamos el socket aquí porque Layout se monta/desmonta poco, 
-      // pero si navegamos fuera de app (logout), el socket debería morir.
-      // Ojo: ChatsView también crea socket. Idealmente debería ser un Context.
-      // Por ahora para cumplir el requerimiento rápido, duplicamos la conexión (low cost).
     };
   }, [user]);
+
+  // Load tenants for current user
+  useEffect(() => {
+    if (!user) return;
+
+    const loadTenants = async () => {
+      try {
+        setTenantsLoading(true);
+        const response = await axios.get('/admin/tenants', {
+          headers: {
+            'X-Admin-Token': localStorage.getItem('admin_token') || '',
+          }
+        });
+        
+        if (Array.isArray(response.data)) {
+          setTenants(response.data);
+          // Set first tenant as default if not already set
+          if (!currentTenant && response.data.length > 0) {
+            setCurrentTenant(response.data[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load tenants:', error);
+      } finally {
+        setTenantsLoading(false);
+      }
+    };
+
+    loadTenants();
+  }, [user, currentTenant]);
 
   const handleNotificationClick = () => {
     if (notification) {
@@ -119,75 +165,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - includes header and scrollable area */}
       <main
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 w-full min-w-0`}
       >
-        {/* Top Header */}
-        <header className="h-14 bg-[#0a0e1a]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-3 lg:gap-4">
-            {/* Hamburger Button for Mobile */}
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-white/[0.06] rounded-lg text-white/50"
-            >
-              <div className="w-6 h-5 flex flex-col justify-between">
-                <span className="w-full h-0.5 bg-current rounded-full"></span>
-                <span className="w-full h-0.5 bg-current rounded-full"></span>
-                <span className="w-full h-0.5 bg-current rounded-full"></span>
-              </div>
-            </button>
-            <h1 className="text-lg lg:text-xl font-semibold text-white truncate max-w-[150px] md:max-w-none">
-              {t('layout.app_title_crm')}
-            </h1>
-          </div>
+        {/* Global Top Bar (fixed at top) */}
+        <GlobalTopBar
+          currentTenant={currentTenant}
+          tenants={tenants}
+          onTenantChange={(tenantId) => {
+            const tenant = tenants.find(t => t.id === tenantId);
+            if (tenant) setCurrentTenant(tenant);
+          }}
+          isLoading={tenantsLoading}
+        />
 
-          <div className="flex items-center gap-2 lg:gap-4">
-            {/* Tenant/Entity Selector - Hidden on small mobile */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-lg text-sm border border-white/[0.06]">
-              <span className="text-white/40">{t('layout.entity')}:</span>
-              <span className="font-medium text-white/80">{t('layout.entity_principal')}</span>
-            </div>
+        {/* Contextual Subheader (sticky below top bar) */}
+        <ContextualSubheader
+          breadcrumbs={breadcrumbs}
+          filterActive={filterActive}
+          filterCount={filterCount}
+          onFilterClick={() => setFilterActive(!filterActive)}
+          visible={true}
+        />
 
-            {/* User Menu */}
-            <div className="flex items-center gap-2 lg:gap-3">
-              {/* Guide Button */}
-              <div className="relative">
-                <button
-                  onClick={() => { setShowGuide(true); setGuideTooltip(false); }}
-                  className="guide-btn relative flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 hover:scale-110 active:scale-90 transition-all duration-200"
-                  title="Guia de la pagina"
-                >
-                  <HelpCircle size={18} className="guide-icon" />
-                  <span className="absolute inset-0 rounded-full border-2 border-blue-400/40 animate-[guidePing_3s_ease-out_infinite]" />
-                </button>
-                {guideTooltip && (
-                  <div
-                    className="absolute top-12 right-0 w-52 px-3 py-2 rounded-xl bg-blue-500/90 backdrop-blur-md text-white text-[11px] leading-snug shadow-xl shadow-blue-500/20 pointer-events-none z-50"
-                    style={{ animation: 'tooltipIn 0.4s cubic-bezier(0.16,1,0.3,1)' }}
-                  >
-                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-blue-500/90 rotate-45" />
-                    Toca para ver la guia de esta pagina y aprender cada funcion
-                  </div>
-                )}
-              </div>
-
-              {/* Notification Bell */}
-              <NotificationBell className="block" />
-
-              <div className="hidden xs:flex flex-col items-end">
-                <span className="text-xs lg:text-sm font-medium text-white/80">{user?.email?.split('@')[0]}</span>
-                <span className="text-[10px] lg:text-xs text-white/40 uppercase leading-none">{user?.role}</span>
-              </div>
-              <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/[0.08] flex items-center justify-center text-white/70 font-semibold text-sm lg:text-base">
-                {user?.email?.[0].toUpperCase() || 'U'}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div className="flex-1 min-h-0 bg-transparent overflow-hidden">
+        {/* Page Content Area - scrollable */}
+        <div className="flex-1 min-h-0 bg-transparent overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </main>

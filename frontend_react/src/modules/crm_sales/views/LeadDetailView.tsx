@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, History, Tag, ArrowRight } from 'lucide-react';
 import api from '../../../api/axios';
+import { parseTags } from '../../../utils/parseTags';
 import { useTranslation } from '../../../context/LanguageContext';
 import { useAuth } from '../../../context/AuthContext';
 import type { Lead } from './LeadsView';
@@ -258,7 +259,7 @@ export default function LeadDetailView() {
                 <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
                   <TagSelector
                     leadId={id}
-                    currentTags={lead?.tags || []}
+                    currentTags={parseTags(lead?.tags)}
                     onTagsChange={(newTags) => {
                       setLead((prev) => prev ? { ...prev, tags: newTags } : null);
                     }}

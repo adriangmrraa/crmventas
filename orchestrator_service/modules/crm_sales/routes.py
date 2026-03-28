@@ -213,7 +213,7 @@ async def get_lead_context_by_phone(
     }
 
 
-@router.get("/leads/{lead_id}", response_model=LeadResponse)
+@router.get("/leads/{lead_id}", )
 async def get_lead(
     lead_id: UUID,
     context: dict = Depends(get_current_user_context)
@@ -235,7 +235,7 @@ async def get_lead(
     return dict(row)
 
 
-@router.put("/leads/{lead_id}", response_model=LeadResponse)
+@router.put("/leads/{lead_id}", )
 async def update_lead(
     lead_id: UUID,
     lead: LeadUpdate,
@@ -290,7 +290,7 @@ async def update_lead(
     return dict(row)
 
 
-@router.post("/leads/{lead_id}/assign", response_model=LeadResponse)
+@router.post("/leads/{lead_id}/assign", )
 async def assign_lead(
     lead_id: UUID,
     request: LeadAssignRequest,
@@ -321,7 +321,7 @@ async def assign_lead(
     return dict(row)
 
 
-@router.put("/leads/{lead_id}/stage", response_model=LeadResponse)
+@router.put("/leads/{lead_id}/stage", )
 async def update_lead_stage(
     lead_id: UUID,
     request: LeadStageUpdateRequest,

@@ -100,6 +100,20 @@ try:
     logger.info("✅ Notification API mounted")
 except Exception as e:
     logger.error(f"❌ Could not mount Notification routes: {e}", exc_info=True)
+    # Fallback: minimal notifications/count endpoint so frontend doesn't break
+    @app.get("/admin/core/notifications/count")
+    async def _fallback_notifications_count(user_data=Depends(verify_admin_token)):
+        try:
+            user_id = user_data.get("user_id") or user_data.get("id") or user_data.get("sub")
+            tenant_id = user_data.get("tenant_id", 1)
+            count = await db.fetchval(
+                "SELECT COUNT(*) FROM notifications WHERE user_id = $1::uuid AND tenant_id = $2 AND is_read = false",
+                str(user_id), int(tenant_id)
+            )
+            return {"count": count or 0}
+        except Exception:
+            return {"count": 0}
+    logger.info("✅ Fallback /admin/core/notifications/count endpoint registered")
 
 # Scheduled Tasks Routes
 try:

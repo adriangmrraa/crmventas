@@ -77,7 +77,8 @@ async def list_leads(
                l.outreach_message_sent, l.outreach_send_requested, l.outreach_last_requested_at, l.outreach_last_sent_at,
                l.score,
                CASE WHEN u.id IS NOT NULL THEN TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) ELSE NULL END AS seller_name,
-               l.created_at, l.updated_at
+               l.created_at, l.updated_at,
+               COALESCE(l.tags::text, '[]') AS tags_raw
         FROM leads l
         LEFT JOIN users u ON u.id = l.assigned_seller_id
         WHERE l.tenant_id = $1 AND (l.status IS NULL OR l.status != 'deleted')
@@ -108,9 +109,31 @@ async def list_leads(
 
     query += f" ORDER BY l.created_at DESC LIMIT ${param_idx} OFFSET ${param_idx + 1}"
     params.extend([limit, offset])
-    
+
+    import json as _json
     rows = await db.pool.fetch(query, *params)
-    return [dict(row) for row in rows]
+    results = []
+    for row in rows:
+        d = dict(row)
+        # Parse JSONB fields returned as strings by asyncpg
+        raw = d.pop('tags_raw', None)
+        if raw is not None:
+            try:
+                d['tags'] = _json.loads(raw) if raw else []
+            except (ValueError, TypeError):
+                d['tags'] = []
+        elif isinstance(d.get('tags'), str):
+            try:
+                d['tags'] = _json.loads(d['tags'])
+            except (ValueError, TypeError):
+                d['tags'] = []
+        if isinstance(d.get('social_links'), str):
+            try:
+                d['social_links'] = _json.loads(d['social_links'])
+            except (ValueError, TypeError):
+                d['social_links'] = {}
+        results.append(d)
+    return results
 
 
 @router.post("/leads", response_model=LeadResponse, status_code=201)

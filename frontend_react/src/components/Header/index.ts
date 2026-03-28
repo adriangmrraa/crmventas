@@ -20,13 +20,3 @@ export {
 } from './AnimationDefinitions';
 
 export * from './types';
-
-export default {
-  GlobalTopBar: require('./GlobalTopBar').GlobalTopBar,
-  TenantSwitcher: require('./TenantSwitcher').TenantSwitcher,
-  CommandBar: require('./CommandBar').CommandBar,
-  StatusAlertsCluster: require('./StatusAlertsCluster').StatusAlertsCluster,
-  ContextualSubheader: require('./ContextualSubheader').default,
-  BreadcrumbNav: require('./BreadcrumbNav').default,
-  FilterPopover: require('./FilterPopover').default,
-};

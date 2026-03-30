@@ -28,7 +28,8 @@
     "clients": "Clientes",
     "integrations": "Integraciones",
     "team_activity": "Actividad Equipo",
-    "audit_log": "Auditoría"
+    "audit_log": "Auditoría",
+    "supervisor": "Modo Supervisor"
   },
   "common": {
     "save": "Guardar",
@@ -51,6 +52,10 @@
     "yes": "Sí",
     "no": "No",
     "format_error": "Formato inválido"
+  },
+  "search": {
+    "no_results": "No se encontraron resultados",
+    "placeholder": "Buscar leads, notas, mensajes..."
   },
   "config": {
     "title": "Configuración",
@@ -107,8 +112,10 @@
     "role_professional": "Profesional",
     "company": "Empresa",
     "choose_company": "Elegir empresa",
+    "clinic_required": "Elegí una clínica para registrarte.",
     "company_required": "Elegí una empresa para registrarte.",
     "company_name": "Nombre de Empresa",
+    "ceo_company_hint": "Crearás tu primera empresa con este nombre.",
     "phone": "Teléfono",
     "login_error": "Error al iniciar sesión. Verifique sus credenciales.",
     "register_error": "Error al registrarse. Intente nuevamente.",
@@ -886,21 +893,6 @@
     "errors": {
       "missing_tenant": "Error: Falta Tenant ID",
       "auth_failed": "Error de autenticación con Meta",
-      "token_exchange_failed": "Error al intercambiar token"
-    },
-    "webhook_title": "Configuración de Webhook",
-    "webhook_desc": "Copiá esta URL y pegala en el panel de Meta for Developers (Webhook > Leadgen) para recibir leads en tiempo real.",
-    "copy_url": "Copiar URL del Webhook",
-    "google_connection": "Conexión con Google Ads",
-    "google_connected_desc": "Tu cuenta de Google Ads está activa. Los datos de campañas y ROI se sincronizan automáticamente.",
-    "google_disconnected_desc": "Conectá tu cuenta de Google Ads para ver métricas en tiempo real.",
-    "google_connect": "Conectar con Google",
-    "google_reconnect": "Reconectar Google",
-    "google_not_connected": "Google Ads no está conectado. Conecta tu cuenta para ver datos.",
-    "google_no_data": "Aún no hay datos de Google Ads para mostrar en este período.",
-    "errors": {
-      "missing_tenant": "Error: Falta Tenant ID",
-      "auth_failed": "Error de autenticación con Meta",
       "token_exchange_failed": "Error al intercambiar token",
       "google_auth_failed": "Error de autenticación con Google",
       "google_init_failed": "Error al iniciar conexión con Google",
@@ -1064,45 +1056,7 @@
     "socket_disconnected": "Socket.IO desconectado",
     "using_api": "Usando API polling",
     "connection_status": "Estado conexión",
-    "real_time_updates": "Actualizaciones tiempo real"
-  },
-  "header": {
-    "tenant_switcher": "Cambiar de sede",
-    "tenant_selector": "Selector de Clínica",
-    "search_placeholder": "Buscar paciente, turno o DNI...",
-    "search_shortcut": "Cmd+K",
-    "filters": "Filtros",
-    "filters_active": "Filtros activos",
-    "filters_clear": "Limpiar filtros",
-    "help": "Ayuda",
-    "help_tooltip": "Centro de ayuda",
-    "help_title": "Ayuda y Soporte",
-    "help_subtitle": "Estamos para ayudarte",
-    "help_docs": "Documentación",
-    "help_docs_desc": "Guías y tutoriales",
-    "help_whatsapp": "WhatsApp",
-    "help_whatsapp_desc": "Chat de soporte directo",
-    "online": "En línea",
-    "offline": "Sin conexión",
-    "status_online": "En línea",
-    "status_unstable": "Conexión inestable"
-  },
-  "breadcrumb": {
-    "home": "Inicio",
-    "dashboard": "Dashboard",
-    "agenda": "Agenda",
-    "edit_appointment": "Editar Turno",
-    "patients": "Pacientes",
-    "leads": "Leads",
-    "pipeline": "Pipeline",
-    "chats": "Conversaciones",
+    "real_time_updates": "Actualizaciones tiempo real",
     "settings": "Configuración"
-  },
-  "actions": {
-    "new_appointment": "+ Nuevo Turno",
-    "new_patient": "+ Nuevo Paciente",
-    "new_lead": "+ Nuevo Lead",
-    "save": "Guardar",
-    "cancel": "Cancelar"
   }
 }

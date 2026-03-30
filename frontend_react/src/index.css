@@ -22,6 +22,16 @@
   --danger: #dc3545;
   --info: #17a2b8;
 
+  /* Accent Colors */
+  --accent: var(--medical-400);
+  --accent-rgb: 0, 115, 230;
+
+  /* White Shades */
+  --white-100: rgba(255, 255, 255, 0.1);
+  --white-300: rgba(255, 255, 255, 0.3);
+  --white-500: rgba(255, 255, 255, 0.5);
+  --white-700: rgba(255, 255, 255, 0.7);
+
   /* Shadows (dark-optimized) */
   --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
@@ -50,6 +60,19 @@ body {
 .glass-container {
   display: flex;
   min-height: 100vh;
+}
+
+.glass {
+  background: #0d1117;
+  border: 1px solid var(--white-100);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.glass:hover {
+  box-shadow: var(--shadow-soft);
+  border-color: var(--medical-300);
 }
 
 /* Custom Scrollbar — Dark */
@@ -88,6 +111,19 @@ body {
 
 .card {
   @apply bg-white/[0.03] rounded-xl p-6 border border-white/[0.06];
+}
+
+.glass {
+  background: #0d1117;
+  border: 1px solid var(--white-300);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.glass:hover {
+  box-shadow: var(--shadow-soft);
+  border-color: var(--medical-300);
 }
 
 .card-header {

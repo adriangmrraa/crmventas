@@ -269,8 +269,12 @@ const LoginView: React.FC = () => {
                     value={registrationId}
                     onChange={(e) => setRegistrationId(e.target.value)}
                     placeholder="Nombre de tu empresa"
+                    required
                   />
                 </div>
+                <p className="text-sm mt-1.5 text-white/80">
+                  {t('login.ceo_company_hint')}
+                </p>
               </div>
             </>
           )}

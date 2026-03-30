@@ -16,13 +16,17 @@ logger = logging.getLogger("auth_routes")
 
 # Detectar entorno para configurar cookie.secure
 IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() != "development"
-ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 7  # 1 semana (igual que ACCESS_TOKEN_EXPIRE_MINUTES)
+ACCESS_TOKEN_MAX_AGE = (
+    60 * 60 * 24 * 7
+)  # 1 semana (igual que ACCESS_TOKEN_EXPIRE_MINUTES)
 
 # --- MODELS ---
+
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -36,19 +40,30 @@ class UserRegister(BaseModel):
     registration_id: Optional[str] = None  # Matrícula
     google_calendar_id: Optional[str] = None
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     user: dict
 
+
 # --- ROUTES ---
+
 
 def _default_working_hours():
     start = "09:00"
     end = "18:00"
     slot = {"start": start, "end": end}
     wh = {}
-    for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+    for day in [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]:
         is_working_day = day != "sunday"
         wh[day] = {"enabled": is_working_day, "slots": [slot] if is_working_day else []}
     return wh
@@ -74,25 +89,77 @@ async def list_companies_public():
 @limiter.limit("3/minute")
 async def register(request: Request, payload: UserRegister):
     """
-    Registers a new user in 'pending' status.
+    Registers a new user in 'pending' status (or 'active' for first CEO).
     CRM mode: roles válidos son seller, closer, setter, secretary, admin, ceo.
     Para seller/closer/setter/secretary exige tenant_id. Crea fila en sellers con is_active=FALSE.
+    CEO puede registrarse sin tenant_id; si no existe ningún CEO, se crea un tenant automáticamente usando registration_id como clinic_name y el CEO es auto-aprobado (status='active', is_active=TRUE).
     """
     existing = await db.fetchval("SELECT id FROM users WHERE email = $1", payload.email)
     if existing:
-        raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado.")
+        raise HTTPException(
+            status_code=400, detail="El correo ya se encuentra registrado."
+        )
 
-    CRM_TENANT_ROLES = ("seller", "closer", "setter", "secretary", "ceo", "professional")
+    CRM_TENANT_ROLES = (
+        "seller",
+        "closer",
+        "setter",
+        "secretary",
+        "ceo",
+        "professional",
+    )
+
+    # CEO special handling: can register without tenant_id, auto-create tenant if first CEO
+    is_ceo = payload.role == "ceo"
+    assigned_tenant_id = None
+    auto_approve = False
 
     if payload.role in CRM_TENANT_ROLES:
-        if payload.tenant_id is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Debés elegir una sede o empresa para registrarte.",
+        if is_ceo:
+            # CEO may or may not provide tenant_id
+            if payload.tenant_id is not None:
+                tenant_exists = await db.pool.fetchval(
+                    "SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id
+                )
+                if not tenant_exists:
+                    raise HTTPException(
+                        status_code=400, detail="La empresa elegida no existe."
+                    )
+                assigned_tenant_id = payload.tenant_id
+            else:
+                # No tenant_id provided: create a new tenant
+                clinic_name = payload.registration_id or "Clínica Principal"
+                # Check if any CEO already exists (any status)
+                existing_ceo_count = await db.pool.fetchval(
+                    "SELECT COUNT(*) FROM users WHERE role = 'ceo'"
+                )
+                if existing_ceo_count == 0:
+                    auto_approve = True  # First CEO gets auto-approved
+                # Insert new tenant
+                config = json.dumps({"calendar_provider": "local"})
+                result = await db.pool.fetchrow(
+                    "INSERT INTO tenants (clinic_name, bot_phone_number, config, niche_type) VALUES ($1, $2, $3::jsonb, $4) RETURNING id",
+                    clinic_name,
+                    None,
+                    config,
+                    "crm_sales",
+                )
+                assigned_tenant_id = result["id"]
+        else:
+            # Non-CEO roles require tenant_id
+            if payload.tenant_id is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Debés elegir una sede o empresa para registrarte.",
+                )
+            tenant_exists = await db.pool.fetchval(
+                "SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id
             )
-        tenant_exists = await db.pool.fetchval("SELECT 1 FROM tenants WHERE id = $1", payload.tenant_id)
-        if not tenant_exists:
-            raise HTTPException(status_code=400, detail="La empresa elegida no existe.")
+            if not tenant_exists:
+                raise HTTPException(
+                    status_code=400, detail="La empresa elegida no existe."
+                )
+            assigned_tenant_id = payload.tenant_id
 
     password_hash = auth_service.get_password_hash(payload.password)
     user_id = str(uuid.uuid4())
@@ -100,32 +167,62 @@ async def register(request: Request, payload: UserRegister):
     last_name = (payload.last_name or "").strip() or " "
 
     try:
-        # Determine tenant_id (defaults to 1 for CEO/Admin if not provided, though they usually aren't registered this way)
-        assigned_tenant_id = int(payload.tenant_id) if payload.tenant_id is not None else 1
+        # Determine tenant_id (use assigned_tenant_id from earlier logic, default to 1)
+        if assigned_tenant_id is None:
+            assigned_tenant_id = (
+                int(payload.tenant_id) if payload.tenant_id is not None else 1
+            )
+        else:
+            assigned_tenant_id = int(assigned_tenant_id)
 
-        await db.execute("""
+        user_status = "active" if auto_approve else "pending"
+
+        await db.execute(
+            f"""
             INSERT INTO users (id, email, password_hash, role, status, first_name, last_name, tenant_id)
-            VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7)
-        """, user_id, payload.email, password_hash, payload.role, first_name, last_name, assigned_tenant_id)
+            VALUES ($1, $2, $3, $4, '{user_status}', $5, $6, $7)
+        """,
+            user_id,
+            payload.email,
+            password_hash,
+            payload.role,
+            first_name,
+            last_name,
+            assigned_tenant_id,
+        )
 
         # CRM: Crear fila en sellers para roles que requieren tenant
         if payload.role in CRM_TENANT_ROLES:
-            tenant_id = int(payload.tenant_id)
+            tenant_id = assigned_tenant_id
             uid = uuid.UUID(user_id)
             phone_val = (payload.phone_number or "").strip() or None
-            await db.pool.execute("""
+            await db.pool.execute(
+                """
                 INSERT INTO sellers (user_id, tenant_id, first_name, last_name, email, phone_number, is_active, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
                 ON CONFLICT (user_id) DO NOTHING
-            """, uid, tenant_id, first_name, last_name, payload.email, phone_val)
+            """,
+                uid,
+                tenant_id,
+                first_name,
+                last_name,
+                payload.email,
+                phone_val,
+                auto_approve,
+            )
 
         activation_token = str(uuid.uuid4())
         auth_service.log_protocol_omega_activation(payload.email, activation_token)
 
+        if auto_approve:
+            message = "¡Registro exitoso! Tu cuenta ha sido creada y została automáticamente aprobada. Ya podés iniciar sesión."
+        else:
+            message = "¡Registro exitoso! Tu cuenta ha sido creada y está pendiente de aprobación por el CEO. Recibirás un correo cuando sea activada."
+
         return {
             "success": True,
-            "status": "pending",
-            "message": "¡Registro exitoso! Tu cuenta ha sido creada y está pendiente de aprobación por el CEO. Recibirás un correo cuando sea activada.",
+            "status": user_status,
+            "message": message,
             "user_id": user_id,
         }
     except HTTPException:
@@ -133,7 +230,10 @@ async def register(request: Request, payload: UserRegister):
     except Exception as e:
         logger.error(f"Error registering user: {e}")
         # Intentar limpiar si falló a mitad (aunque db.pool suele ser atómico si usas transacción, aquí son llamadas separadas)
-        raise HTTPException(status_code=500, detail="Error interno durante el registro. Por favor, intenta de nuevo.")
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno durante el registro. Por favor, intenta de nuevo.",
+        )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -149,13 +249,13 @@ async def login(request: Request, payload: UserLogin):
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
 
-    if not auth_service.verify_password(payload.password, user['password_hash']):
+    if not auth_service.verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
 
-    if user['status'] != 'active':
+    if user["status"] != "active":
         raise HTTPException(
             status_code=403,
-            detail=f"Tu cuenta está en estado '{user['status']}'. Contactá al administrador."
+            detail=f"Tu cuenta está en estado '{user['status']}'. Contactá al administrador.",
         )
 
     # Resolver tenant_id: sellers (CRM) → professionals (legacy) → primer tenant
@@ -163,7 +263,7 @@ async def login(request: Request, payload: UserLogin):
     tenant_id = None
     try:
         tenant_id = await db.fetchval(
-            "SELECT tenant_id FROM sellers WHERE user_id = $1", user['id']
+            "SELECT tenant_id FROM sellers WHERE user_id = $1", user["id"]
         )
     except Exception:
         pass  # Tabla sellers no existe aún, continuar con fallback
@@ -171,52 +271,61 @@ async def login(request: Request, payload: UserLogin):
     if tenant_id is None:
         try:
             tenant_id = await db.fetchval(
-                "SELECT tenant_id FROM professionals WHERE user_id = $1", user['id']
+                "SELECT tenant_id FROM professionals WHERE user_id = $1", user["id"]
             )
         except Exception:
             pass
 
     if tenant_id is None:
-        tenant_id = await db.fetchval("SELECT id FROM tenants ORDER BY id ASC LIMIT 1") or 1
+        tenant_id = (
+            await db.fetchval("SELECT id FROM tenants ORDER BY id ASC LIMIT 1") or 1
+        )
     tenant_id = int(tenant_id)
 
-
-    niche_type = await db.fetchval(
-        "SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1", tenant_id
-    ) or "crm_sales"
+    niche_type = (
+        await db.fetchval(
+            "SELECT COALESCE(niche_type, 'crm_sales') FROM tenants WHERE id = $1",
+            tenant_id,
+        )
+        or "crm_sales"
+    )
 
     token_data = {
-        "user_id": str(user['id']),
-        "email": user['email'],
-        "role": user['role'],
+        "user_id": str(user["id"]),
+        "email": user["email"],
+        "role": user["role"],
         "tenant_id": tenant_id,
         "niche_type": niche_type,
     }
     token = auth_service.create_access_token(token_data)
 
     user_profile = {
-        "id": str(user['id']),
-        "email": user['email'],
-        "role": user['role'],
+        "id": str(user["id"]),
+        "email": user["email"],
+        "role": user["role"],
         "tenant_id": tenant_id,
         "niche_type": niche_type,
     }
 
     # Nexus Security v7.6: emitir Set-Cookie HttpOnly (mitigación XSS)
-    response = JSONResponse(content={
-        "access_token": token,   # Mantenido para compatibilidad durante transición
-        "token_type": "bearer",
-        "user": user_profile,
-    })
+    response = JSONResponse(
+        content={
+            "access_token": token,  # Mantenido para compatibilidad durante transición
+            "token_type": "bearer",
+            "user": user_profile,
+        }
+    )
     response.set_cookie(
         key="access_token",
         value=token,
-        httponly=True,         # No accesible via JavaScript
+        httponly=True,  # No accesible via JavaScript
         secure=IS_PRODUCTION,  # Solo HTTPS en producción
-        samesite="lax",        # Permite OAuth redirects (Meta, Google)
+        samesite="lax",  # Permite OAuth redirects (Meta, Google)
         max_age=ACCESS_TOKEN_MAX_AGE,
     )
-    logger.info(f"✅ Login exitoso: {user['email']} (tenant_id={tenant_id}, role={user['role']})")
+    logger.info(
+        f"✅ Login exitoso: {user['email']} (tenant_id={tenant_id}, role={user['role']})"
+    )
     return response
 
 
@@ -239,14 +348,14 @@ async def get_me(request: Request):
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No autenticado. Se requiere Bearer Token o Cookie de sesión."
+            detail="No autenticado. Se requiere Bearer Token o Cookie de sesión.",
         )
 
     token_data = auth_service.decode_token(token)
     if not token_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expirado o inválido."
+            detail="Token expirado o inválido.",
         )
 
     return token_data
@@ -258,7 +367,9 @@ async def logout():
     Cierra sesión del usuario limpiando la Cookie HttpOnly del servidor.
     El cliente debe también limpiar localStorage si almacena tokens.
     """
-    response = JSONResponse(content={"status": "ok", "message": "Sesión cerrada exitosamente."})
+    response = JSONResponse(
+        content={"status": "ok", "message": "Sesión cerrada exitosamente."}
+    )
     response.delete_cookie(
         key="access_token",
         httponly=True,
@@ -267,59 +378,72 @@ async def logout():
     )
     return response
 
+
 class ProfileUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     google_calendar_id: Optional[str] = None
 
+
 @router.get("/profile")
 async def get_profile(request: Request):
-    """ Returns the detailed clinical profile of the current professional/user. """
+    """Returns the detailed clinical profile of the current professional/user."""
     user_data = await get_me(request)
     user_id = user_data.user_id
-    
+
     # Base user data
-    user = await db.fetchrow("SELECT id, email, role, first_name, last_name FROM users WHERE id = $1", user_id)
+    user = await db.fetchrow(
+        "SELECT id, email, role, first_name, last_name FROM users WHERE id = $1",
+        user_id,
+    )
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
-    
+
     profile = dict(user)
-    
+
     # Professional specific data
-    if user['role'] == 'professional':
-        prof = await db.fetchrow("SELECT google_calendar_id, is_active FROM professionals WHERE user_id = $1", uuid.UUID(user_id))
+    if user["role"] == "professional":
+        prof = await db.fetchrow(
+            "SELECT google_calendar_id, is_active FROM professionals WHERE user_id = $1",
+            uuid.UUID(user_id),
+        )
         if prof:
             profile.update(dict(prof))
-            
+
     return profile
+
 
 @router.patch("/profile")
 async def update_profile(payload: ProfileUpdate, request: Request):
-    """ Updates the clinical profile of the current professional/user. """
+    """Updates the clinical profile of the current professional/user."""
     user_data = await get_me(request)
     user_id = user_data.user_id
-    
+
     # Update users table
     update_users_fields = []
     params = []
     if payload.first_name is not None:
-        update_users_fields.append(f"first_name = ${len(params)+1}")
+        update_users_fields.append(f"first_name = ${len(params) + 1}")
         params.append(payload.first_name)
     if payload.last_name is not None:
-        update_users_fields.append(f"last_name = ${len(params)+1}")
+        update_users_fields.append(f"last_name = ${len(params) + 1}")
         params.append(payload.last_name)
-        
+
     if update_users_fields:
         params.append(user_id)
         query = f"UPDATE users SET {', '.join(update_users_fields)} WHERE id = ${len(params)}"
         await db.execute(query, *params)
-        
+
     # Update professionals table if applicable
-    if user_data.role == 'professional' and payload.google_calendar_id is not None:
-        await db.execute("""
+    if user_data.role == "professional" and payload.google_calendar_id is not None:
+        await db.execute(
+            """
             UPDATE professionals 
             SET google_calendar_id = $1 
             WHERE user_id = $2
-        """, payload.google_calendar_id, uuid.UUID(user_id))
-        
+        """,
+            payload.google_calendar_id,
+            uuid.UUID(user_id),
+        )
+
     return {"message": "Perfil actualizado correctamente."}

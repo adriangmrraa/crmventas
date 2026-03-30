@@ -756,7 +756,7 @@ async def _add_meta_ads_tag(conn, tenant_id: int, lead_id, lead_row=None):
 async def _update_meta_fields(conn, lead_id, *, meta_lead_id: str = None,
                                meta_campaign_id: str = None, meta_ad_id: str = None,
                                meta_ad_headline: str = None, meta_ad_body: str = None,
-                               email: str = None):
+                               email: str = None, external_ids: dict = None):
     """Set Meta-specific columns on the lead row."""
     updates: Dict[str, Any] = {}
     if meta_lead_id:
@@ -771,12 +771,26 @@ async def _update_meta_fields(conn, lead_id, *, meta_lead_id: str = None,
         updates["meta_ad_body"] = meta_ad_body
     if email:
         updates["email"] = email
-    if not updates:
+    
+    # DEV-46: External IDs for attribution/dedup (Merge)
+    if external_ids:
+        # Use simple dict update for now; we'll merge in the SQL query
+        pass
+
+    if not updates and not external_ids:
         return
-    updates["updated_at"] = datetime.utcnow()
+
+    params = list(updates.values())
     set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(updates.keys())]
-    query = f"UPDATE leads SET {', '.join(set_clauses)} WHERE id = ${len(updates)+1}"
-    await conn.execute(query, *updates.values(), lead_id)
+    
+    if external_ids:
+        # JSONB merge operator || in Postgres
+        params.append(json.dumps(external_ids))
+        set_clauses.append(f"external_ids = COALESCE(external_ids, '{{}}'::jsonb) || ${len(params)}::jsonb")
+
+    params.append(lead_id)
+    query = f"UPDATE leads SET {', '.join(set_clauses)}, updated_at = NOW() WHERE id = ${len(params)}"
+    await conn.execute(query, *params)
 
 
 # ---------------------------------------------------------------------------
@@ -877,6 +891,14 @@ async def process_standard_meta_lead(
 
         # 6. Update meta-specific fields (meta_lead_id, campaign, ad, email)
         async with db.pool.acquire() as conn:
+            ext_ids = {
+                "meta_lead_id": leadgen_id,
+                "meta_ad_id": ad_id,
+                "meta_form_id": form_id,
+                "meta_page_id": page_id,
+                "meta_adgroup_id": adgroup_id
+            }
+            ext_ids = {k: v for k, v in ext_ids.items() if v}
             await _update_meta_fields(
                 conn,
                 lead_id,
@@ -885,6 +907,7 @@ async def process_standard_meta_lead(
                 meta_ad_id=ad_id,
                 meta_ad_headline=ad_name,
                 email=email,
+                external_ids=ext_ids
             )
             # 7. Add "meta_ads" tag
             await _add_meta_ads_tag(conn, tenant_id, lead_id)

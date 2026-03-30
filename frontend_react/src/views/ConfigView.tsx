@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, User, Plus, Info, Database, AlertTriangle, Clock, Bell } from 'lucide-react';
+import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, Plus, Info, Database, AlertTriangle, Clock, Bell, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { Modal } from '../components/Modal';
+import BlacklistManager from '../components/config/BlacklistManager';
+import CalComSettings from '../components/config/CalComSettings';
 
 type UiLanguage = 'es' | 'en' | 'fr';
 
@@ -58,7 +60,7 @@ export default function ConfigView() {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
     const initialTab = (searchParams.get('tab') as any) || 'general';
-    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance' | 'notifications'>(initialTab);
+    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance' | 'notifications' | 'security' | 'calendar'>(initialTab);
 
     // General Settings State
     const [settings, setSettings] = useState<ClinicSettings | null>(null);
@@ -83,7 +85,7 @@ export default function ConfigView() {
     const [baseMetaWebhookUrl, setBaseMetaWebhookUrl] = useState<string | null>(null);
 
     // Status State
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -109,14 +111,14 @@ export default function ConfigView() {
 
     const loadGeneralSettings = async () => {
         try {
-            setLoading(true);
+            setIsLoading(true);
             const res = await api.get<ClinicSettings>('/admin/core/settings/clinic');
             setSettings(res.data);
             setSelectedLang((res.data.ui_language as UiLanguage) || 'en');
         } catch (err) {
             console.error(err);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -157,7 +159,7 @@ export default function ConfigView() {
 
     const loadIntegrationConfig = async (provider: 'ycloud', tenantId: number | null) => {
         try {
-            setLoading(true);
+            setIsLoading(true);
             const tenantParam = tenantId ? tenantId.toString() : 'global';
 
             let configData: Partial<IntegrationConfig> = {};
@@ -192,7 +194,7 @@ export default function ConfigView() {
         } catch (err) {
             console.error("Unexpected error in loadIntegrationConfig", err);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -615,7 +617,7 @@ export default function ConfigView() {
         </div>
     );
 
-    if (loading && !settings) {
+    if (isLoading && !settings) {
         return (
             <div className="p-6 flex items-center justify-center min-h-[400px]">
                 <Loader2 className="w-8 h-8 animate-spin text-white/30" />
@@ -680,6 +682,18 @@ export default function ConfigView() {
                                 <Bell size={18} /> Notificaciones
                             </button>
                             <button
+                                onClick={() => setActiveTab('calendar')}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'border-orange-500 text-orange-400 font-semibold' : 'border-transparent text-white/40 hover:text-orange-400 hover:border-orange-500/20'}`}
+                            >
+                                <Clock size={18} /> Calendario
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('security')}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'security' ? 'border-red-500 text-red-500 font-semibold' : 'border-transparent text-white/40 hover:text-red-500 hover:border-red-500/20'}`}
+                            >
+                                <ShieldCheck size={18} /> Seguridad
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('maintenance')}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'maintenance' ? 'border-amber-600 text-amber-600 font-semibold' : 'border-transparent text-white/40 hover:text-amber-600 hover:border-amber-500/20'}`}
                             >
@@ -698,6 +712,8 @@ export default function ConfigView() {
                     {activeTab === 'meta' && user?.role === 'ceo' && renderMetaTab()}
                     {activeTab === 'others' && user?.role === 'ceo' && renderOthersTab()}
                     {activeTab === 'notifications' && user?.role === 'ceo' && renderNotificationsTab()}
+                    {activeTab === 'calendar' && user?.role === 'ceo' && <CalComSettings />}
+                    {activeTab === 'security' && user?.role === 'ceo' && <BlacklistManager />}
                     {activeTab === 'maintenance' && user?.role === 'ceo' && renderMaintenanceTab()}
                 </div>
             </div>

@@ -1989,44 +1989,215 @@ async def get_velocity(days: int = 90, user=Depends(verify_admin_token)):
 
 
 # =============================================================================
-# TASK MANAGEMENT (per lead)
+# TASK MANAGEMENT (per lead) — DEV-44: Micro-tareas asignables
 # =============================================================================
 
 @router.get("/tasks")
-async def list_tasks(lead_id: str = None, status: str = None, limit: int = 50, user=Depends(verify_admin_token)):
-    """List tasks, optionally filtered by lead_id or status."""
+async def list_tasks(
+    lead_id: str = None,
+    status: str = None,
+    assigned_to: str = None,
+    limit: int = 50,
+    user=Depends(verify_admin_token),
+):
+    """List tasks, optionally filtered by lead_id, status or assigned_to user_id."""
     tenant_id = user.get("tenant_id", 1)
-    query = "SELECT * FROM lead_tasks WHERE tenant_id = $1"
+    query = """
+        SELECT lt.*,
+               u_creator.first_name AS creator_first_name, u_creator.last_name AS creator_last_name,
+               u_assigned.first_name AS assignee_first_name, u_assigned.last_name AS assignee_last_name
+        FROM lead_tasks lt
+        LEFT JOIN users u_creator ON u_creator.id = lt.created_by_user_id
+        LEFT JOIN users u_assigned ON u_assigned.id = lt.assigned_to_user_id
+        WHERE lt.tenant_id = $1
+    """
     params = [tenant_id]
     if lead_id:
         params.append(uuid.UUID(lead_id))
-        query += f" AND lead_id = ${len(params)}"
+        query += f" AND lt.lead_id = ${len(params)}"
     if status:
         params.append(status)
-        query += f" AND status = ${len(params)}"
-    query += " ORDER BY CASE WHEN status='completed' THEN 1 ELSE 0 END, due_date ASC NULLS LAST LIMIT $" + str(len(params) + 1)
+        query += f" AND lt.status = ${len(params)}"
+    if assigned_to:
+        params.append(uuid.UUID(assigned_to))
+        query += f" AND lt.assigned_to_user_id = ${len(params)}"
+    query += " ORDER BY CASE WHEN lt.status='completed' THEN 1 ELSE 0 END, lt.due_date ASC NULLS LAST LIMIT $" + str(len(params) + 1)
     params.append(limit)
     rows = await db.pool.fetch(query, *params)
-    return [dict(r) for r in rows]
+    result = []
+    for r in rows:
+        row = dict(r)
+        row["creator_name"] = f"{row.pop('creator_first_name') or ''} {row.pop('creator_last_name') or ''}".strip() or None
+        row["assignee_name"] = f"{row.pop('assignee_first_name') or ''} {row.pop('assignee_last_name') or ''}".strip() or None
+        result.append(row)
+    return result
+
+
+@router.get("/my-tasks")
+async def get_my_tasks(
+    status: str = None,
+    overdue_only: bool = False,
+    limit: int = 50,
+    user=Depends(verify_admin_token),
+):
+    """DEV-44: Tareas asignadas al usuario autenticado."""
+    tenant_id = user.get("tenant_id", 1)
+    user_id = user.get("user_id") or user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id not found in token")
+
+    query = """
+        SELECT lt.*,
+               l.first_name AS lead_first_name, l.last_name AS lead_last_name,
+               l.phone_number AS lead_phone,
+               u_creator.first_name AS creator_first_name, u_creator.last_name AS creator_last_name
+        FROM lead_tasks lt
+        LEFT JOIN leads l ON l.id = lt.lead_id AND l.tenant_id = lt.tenant_id
+        LEFT JOIN users u_creator ON u_creator.id = lt.created_by_user_id
+        WHERE lt.tenant_id = $1 AND lt.assigned_to_user_id = $2
+    """
+    params: list = [tenant_id, uuid.UUID(user_id) if isinstance(user_id, str) else user_id]
+    if status:
+        params.append(status)
+        query += f" AND lt.status = ${len(params)}"
+    if overdue_only:
+        query += " AND lt.due_date < NOW() AND lt.status != 'completed'"
+    query += " ORDER BY CASE WHEN lt.due_date < NOW() THEN 0 ELSE 1 END, lt.due_date ASC NULLS LAST LIMIT $" + str(len(params) + 1)
+    params.append(limit)
+    rows = await db.pool.fetch(query, *params)
+    result = []
+    for r in rows:
+        row = dict(r)
+        row["lead_name"] = f"{row.pop('lead_first_name') or ''} {row.pop('lead_last_name') or ''}".strip() or row.get("lead_phone", "")
+        row["creator_name"] = f"{row.pop('creator_first_name') or ''} {row.pop('creator_last_name') or ''}".strip() or None
+        # Calcular estado de vencimiento
+        if row.get("due_date") and row.get("status") != "completed":
+            from datetime import datetime, timezone
+            due = row["due_date"]
+            if hasattr(due, "replace"):
+                due_aware = due.replace(tzinfo=timezone.utc) if due.tzinfo is None else due
+                now = datetime.now(timezone.utc)
+                if due_aware < now:
+                    row["due_status"] = "overdue"
+                elif (due_aware - now).total_seconds() < 86400:
+                    row["due_status"] = "today"
+                else:
+                    row["due_status"] = "future"
+        result.append(row)
+    return result
 
 
 @router.post("/tasks")
 async def create_task(body: dict, user=Depends(verify_admin_token)):
-    """Create a task linked to a lead."""
+    """DEV-44: Crear tarea con asignación. Notifica al asignado via Socket.IO."""
     tenant_id = user.get("tenant_id", 1)
+    user_id = user.get("user_id") or user.get("id")
     lead_id = body.get("lead_id")
+    assigned_to = body.get("assigned_to_user_id")
+
     row = await db.pool.fetchrow("""
-        INSERT INTO lead_tasks (tenant_id, lead_id, seller_id, title, description, due_date, priority)
-        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
-    """, tenant_id,
+        INSERT INTO lead_tasks (tenant_id, lead_id, seller_id, title, description,
+            due_date, priority, created_by_user_id, assigned_to_user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+    """,
+        tenant_id,
         uuid.UUID(lead_id) if lead_id else None,
         body.get("seller_id"),
         body.get("title", ""),
         body.get("description"),
         body.get("due_date"),
         body.get("priority", "medium"),
+        uuid.UUID(user_id) if user_id else None,
+        uuid.UUID(assigned_to) if assigned_to else None,
     )
-    return dict(row)
+
+    task = dict(row)
+
+    # Notificar al asignado si es diferente al creador
+    if assigned_to and str(assigned_to) != str(user_id):
+        try:
+            from core.socket_manager import sio
+            import time
+            lead_name = ""
+            if lead_id:
+                lead_row = await db.pool.fetchrow(
+                    "SELECT first_name, last_name FROM leads WHERE id = $1 AND tenant_id = $2",
+                    uuid.UUID(lead_id), tenant_id
+                )
+                if lead_row:
+                    lead_name = f" — Lead: {lead_row['first_name'] or ''} {lead_row['last_name'] or ''}".strip()
+
+            await sio.emit("TASK_ASSIGNED", {
+                "task_id": task["id"],
+                "tenant_id": tenant_id,
+                "assignee_id": str(assigned_to),
+                "creator_id": str(user_id),
+                "title": body.get("title", ""),
+                "lead_id": lead_id,
+                "lead_name": lead_name,
+                "due_date": body.get("due_date"),
+                "priority": body.get("priority", "medium"),
+            })
+
+            # Notificación en DB
+            notif_id = f"task_{task['id']}_{int(time.time())}"
+            await db.pool.execute("""
+                INSERT INTO notifications (id, tenant_id, type, title, message, priority,
+                    recipient_id, related_entity_type, related_entity_id, metadata)
+                VALUES ($1, $2, 'task_assigned', $3, $4, $5, $6, 'task', $7, $8)
+                ON CONFLICT (id) DO NOTHING
+            """,
+                notif_id, tenant_id,
+                f"📋 Nueva tarea asignada",
+                f"{body.get('title', 'Sin título')}{lead_name}",
+                "medium",
+                str(assigned_to),
+                str(task["id"]),
+                json.dumps({"due_date": str(body.get("due_date")), "priority": body.get("priority", "medium")}),
+            )
+        except Exception as e:
+            logger.warning(f"DEV-44: Could not emit TASK_ASSIGNED: {e}")
+
+    return task
+
+
+@router.patch("/tasks/{task_id}/complete")
+async def complete_task(task_id: int, body: dict, user=Depends(verify_admin_token)):
+    """DEV-44: Completar tarea con comentario opcional. Notifica al creador."""
+    tenant_id = user.get("tenant_id", 1)
+    user_id = user.get("user_id") or user.get("id")
+    comment = body.get("completion_comment", "")
+
+    row = await db.pool.fetchrow("""
+        UPDATE lead_tasks
+        SET status = 'completed', completed_at = NOW(), completion_comment = $1, updated_at = NOW()
+        WHERE id = $2 AND tenant_id = $3
+        RETURNING *, created_by_user_id
+    """, comment, task_id, tenant_id)
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task = dict(row)
+
+    # Notificar al creador si es diferente al que completó
+    creator_id = task.get("created_by_user_id")
+    if creator_id and str(creator_id) != str(user_id):
+        try:
+            from core.socket_manager import sio
+            import time
+            await sio.emit("TASK_COMPLETED", {
+                "task_id": task_id,
+                "tenant_id": tenant_id,
+                "creator_id": str(creator_id),
+                "completed_by": str(user_id),
+                "title": task.get("title", ""),
+                "completion_comment": comment,
+            })
+        except Exception as e:
+            logger.warning(f"DEV-44: Could not emit TASK_COMPLETED: {e}")
+
+    return task
 
 
 @router.patch("/tasks/{task_id}")
@@ -2035,9 +2206,12 @@ async def update_task(task_id: int, body: dict, user=Depends(verify_admin_token)
     tenant_id = user.get("tenant_id", 1)
     sets = []
     params = [tenant_id, task_id]
-    for field in ["title", "description", "due_date", "status", "priority", "seller_id"]:
+    for field in ["title", "description", "due_date", "status", "priority", "seller_id", "assigned_to_user_id"]:
         if field in body:
-            params.append(body[field])
+            val = body[field]
+            if field == "assigned_to_user_id" and val:
+                val = uuid.UUID(val) if isinstance(val, str) else val
+            params.append(val)
             sets.append(f"{field} = ${len(params)}")
     if not sets:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -2059,6 +2233,276 @@ async def delete_task(task_id: int, user=Depends(verify_admin_token)):
     if result == "DELETE 0":
         raise HTTPException(status_code=404, detail="Task not found")
     return {"status": "deleted"}
+
+
+# =============================================================================
+# UNIFIED TIMELINE — DEV-45
+# =============================================================================
+
+@router.get("/leads/{lead_id}/timeline")
+async def get_lead_timeline(
+    lead_id: str,
+    page: int = 1,
+    limit: int = 50,
+    types: Optional[List[str]] = Query(None),
+    user=Depends(verify_admin_token),
+):
+    """
+    DEV-45: Timeline unificado del lead.
+    Agrega eventos de: status_history, notes, tasks, chat_messages, activity_events.
+    Retorna lista ordenada DESC por timestamp, paginada.
+    """
+    tenant_id = user.get("tenant_id", 1)
+    try:
+        lead_uuid = uuid.UUID(lead_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid lead ID")
+
+    # Verificar soberanía
+    lead_row = await db.pool.fetchrow(
+        "SELECT id, phone_number FROM leads WHERE id = $1 AND tenant_id = $2",
+        lead_uuid, tenant_id,
+    )
+    if not lead_row:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    phone = lead_row["phone_number"]
+    offset = (page - 1) * limit
+    all_types = types or ["status_change", "note", "task_created", "task_completed", "message", "assignment"]
+    events = []
+
+    import asyncio
+    from datetime import timezone as tz
+
+    async def fetch_status_changes():
+        if "status_change" not in all_types:
+            return []
+        rows = await db.pool.fetch("""
+            SELECT id::text, from_status_code, to_status_code,
+                   changed_by_user_id, changed_by_name, changed_by_role, comment, created_at
+            FROM lead_status_history
+            WHERE lead_id = $1 AND tenant_id = $2
+            ORDER BY created_at DESC LIMIT 100
+        """, lead_uuid, tenant_id)
+        return [{
+            "id": r["id"], "type": "status_change",
+            "timestamp": r["created_at"],
+            "actor_id": str(r["changed_by_user_id"]) if r["changed_by_user_id"] else None,
+            "actor_name": r["changed_by_name"],
+            "actor_role": r["changed_by_role"],
+            "data": {"from": r["from_status_code"], "to": r["to_status_code"], "comment": r["comment"]},
+        } for r in rows]
+
+    async def fetch_notes():
+        if "note" not in all_types:
+            return []
+        rows = await db.pool.fetch("""
+            SELECT n.id::text, n.note_type, n.content, n.structured_data,
+                   n.visibility, n.created_at, n.author_id,
+                   u.first_name, u.last_name, u.role
+            FROM lead_notes n
+            LEFT JOIN users u ON u.id = n.author_id
+            WHERE n.lead_id = $1 AND n.tenant_id = $2
+              AND COALESCE(n.is_deleted, FALSE) = FALSE
+            ORDER BY n.created_at DESC LIMIT 100
+        """, lead_uuid, tenant_id)
+        return [{
+            "id": r["id"], "type": "note",
+            "timestamp": r["created_at"],
+            "actor_id": str(r["author_id"]) if r["author_id"] else None,
+            "actor_name": f"{r['first_name'] or ''} {r['last_name'] or ''}".strip() or "Sistema",
+            "actor_role": r["role"],
+            "data": {
+                "note_type": r["note_type"],
+                "content": r["content"],
+                "visibility": r["visibility"],
+                "structured_data": r["structured_data"] if r["structured_data"] else {},
+            },
+        } for r in rows]
+
+    async def fetch_tasks():
+        task_types = [t for t in all_types if t in ("task_created", "task_completed")]
+        if not task_types:
+            return []
+        rows = await db.pool.fetch("""
+            SELECT lt.id, lt.title, lt.status, lt.priority, lt.due_date,
+                   lt.created_at, lt.completed_at, lt.completion_comment,
+                   lt.created_by_user_id, lt.assigned_to_user_id,
+                   uc.first_name AS creator_fn, uc.last_name AS creator_ln, uc.role AS creator_role,
+                   ua.first_name AS assignee_fn, ua.last_name AS assignee_ln
+            FROM lead_tasks lt
+            LEFT JOIN users uc ON uc.id = lt.created_by_user_id
+            LEFT JOIN users ua ON ua.id = lt.assigned_to_user_id
+            WHERE lt.lead_id = $1 AND lt.tenant_id = $2
+            ORDER BY lt.created_at DESC LIMIT 100
+        """, lead_uuid, tenant_id)
+
+        result = []
+        for r in rows:
+            if "task_created" in task_types:
+                result.append({
+                    "id": f"tc_{r['id']}", "type": "task_created",
+                    "timestamp": r["created_at"],
+                    "actor_id": str(r["created_by_user_id"]) if r["created_by_user_id"] else None,
+                    "actor_name": f"{r['creator_fn'] or ''} {r['creator_ln'] or ''}".strip() or "Sistema",
+                    "actor_role": r["creator_role"],
+                    "data": {
+                        "task_id": r["id"], "title": r["title"],
+                        "priority": r["priority"], "due_date": r["due_date"].isoformat() if r["due_date"] else None,
+                        "assignee": f"{r['assignee_fn'] or ''} {r['assignee_ln'] or ''}".strip() or None,
+                    },
+                })
+            if "task_completed" in task_types and r["status"] == "completed" and r["completed_at"]:
+                result.append({
+                    "id": f"tco_{r['id']}", "type": "task_completed",
+                    "timestamp": r["completed_at"],
+                    "actor_id": str(r["assigned_to_user_id"]) if r["assigned_to_user_id"] else None,
+                    "actor_name": f"{r['assignee_fn'] or ''} {r['assignee_ln'] or ''}".strip() or "Sistema",
+                    "actor_role": None,
+                    "data": {"task_id": r["id"], "title": r["title"], "comment": r["completion_comment"]},
+                })
+        return result
+
+    async def fetch_messages():
+        if "message" not in all_types or not phone:
+            return []
+        rows = await db.pool.fetch("""
+            SELECT id::text, role, content, created_at
+            FROM chat_messages
+            WHERE tenant_id = $1 AND from_number = $2
+            ORDER BY created_at DESC LIMIT 30
+        """, tenant_id, phone)
+        return [{
+            "id": r["id"], "type": "message",
+            "timestamp": r["created_at"],
+            "actor_id": None,
+            "actor_name": "Lead" if r["role"] == "user" else "Agente IA",
+            "actor_role": r["role"],
+            "data": {"content": (r["content"] or "")[:300], "direction": r["role"]},
+        } for r in rows]
+
+    async def fetch_assignments():
+        if "assignment" not in all_types:
+            return []
+        rows = await db.pool.fetch("""
+            SELECT ae.id::text, ae.event_type, ae.metadata, ae.created_at,
+                   ae.actor_id, u.first_name, u.last_name, u.role
+            FROM activity_events ae
+            LEFT JOIN users u ON u.id = ae.actor_id
+            WHERE ae.tenant_id = $1 AND ae.entity_type = 'lead' AND ae.entity_id = $2
+            ORDER BY ae.created_at DESC LIMIT 50
+        """, tenant_id, str(lead_uuid))
+        return [{
+            "id": r["id"], "type": "assignment",
+            "timestamp": r["created_at"],
+            "actor_id": str(r["actor_id"]) if r["actor_id"] else None,
+            "actor_name": f"{r['first_name'] or ''} {r['last_name'] or ''}".strip() or "Sistema",
+            "actor_role": r["role"],
+            "data": {"event_type": r["event_type"], **(r["metadata"] or {})},
+        } for r in rows]
+
+    # Ejecutar todas las consultas en paralelo
+    results = await asyncio.gather(
+        fetch_status_changes(),
+        fetch_notes(),
+        fetch_tasks(),
+        fetch_messages(),
+        fetch_assignments(),
+        return_exceptions=True,
+    )
+
+    for r in results:
+        if isinstance(r, Exception):
+            logger.warning(f"DEV-45: Timeline fetch error: {r}")
+        else:
+            events.extend(r)
+
+    # Ordenar DESC por timestamp
+    def _ts(e):
+        ts = e.get("timestamp")
+        if ts is None:
+            return 0
+        if hasattr(ts, "timestamp"):
+            return ts.timestamp()
+        return 0
+
+    events.sort(key=_ts, reverse=True)
+
+    # Serializar timestamps
+    for e in events:
+        ts = e.get("timestamp")
+        if ts and hasattr(ts, "isoformat"):
+            e["timestamp"] = ts.isoformat()
+
+    total = len(events)
+    paginated = events[offset: offset + limit]
+
+    return {
+        "events": paginated,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "has_more": (offset + limit) < total,
+    }
+
+
+# =============================================================================
+# AI SUMMARY — DEV-48
+# =============================================================================
+
+@router.post("/leads/{lead_id}/ai-summary")
+async def generate_lead_ai_summary(
+    lead_id: str,
+    body: dict = None,
+    user=Depends(verify_admin_token),
+):
+    """
+    DEV-48: Genera resumen IA del lead para el handoff setter→closer.
+    Guarda como lead_note type='handoff' y actualiza el score del lead.
+    """
+    tenant_id = user.get("tenant_id", 1)
+    user_id = user.get("user_id") or user.get("id")
+    body = body or {}
+    model = body.get("model", "gpt-4o-mini")
+
+    try:
+        lead_uuid = uuid.UUID(lead_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid lead ID")
+
+    # Verificar soberanía
+    exists = await db.pool.fetchval(
+        "SELECT COUNT(*) FROM leads WHERE id = $1 AND tenant_id = $2",
+        lead_uuid, tenant_id,
+    )
+    if not exists:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    from services.ai_lead_summary_service import generate_handoff_summary, save_handoff_note
+
+    summary = await generate_handoff_summary(
+        tenant_id=tenant_id,
+        lead_id=lead_id,
+        pool=db.pool,
+        model=model,
+    )
+
+    note_id = None
+    if summary.get("summary"):
+        note_id = await save_handoff_note(
+            tenant_id=tenant_id,
+            lead_id=lead_id,
+            author_id=user_id,
+            summary_data=summary,
+            pool=db.pool,
+        )
+
+    return {
+        "success": True,
+        "summary": summary,
+        "note_id": note_id,
+        "model_used": model,
+    }
 
 
 # =============================================================================

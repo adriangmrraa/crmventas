@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Zap, Target, RefreshCw } from 'lucide-react';
 import api from '../../../api/axios';
 import PageHeader from '../../../components/PageHeader';
 import GlassCard, { CARD_IMAGES } from '../../../components/GlassCard';
+import SalesFunnelChart from '../components/SalesFunnelChart';
 
 type Tab = 'funnel' | 'forecast' | 'velocity';
 
@@ -57,7 +58,7 @@ export default function SalesAnalyticsView() {
     { value: 365, label: '1 año' },
   ];
 
-  const maxFunnelCount = funnel?.funnel?.reduce((max: number, s: FunnelStage) => Math.max(max, s.count), 1) || 1;
+  // const maxFunnelCount = funnel?.funnel?.reduce((max: number, s: FunnelStage) => Math.max(max, s.count), 1) || 1;
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6 space-y-6">
@@ -138,37 +139,22 @@ export default function SalesAnalyticsView() {
                 </GlassCard>
               </div>
 
-              {/* Funnel bars */}
-              <div className="bg-white/[0.03] rounded-2xl border border-white/[0.06] p-4 sm:p-6">
-                <h3 className="text-sm font-bold text-white mb-4">Embudo de Conversion</h3>
-                <div className="space-y-3">
-                  {funnel.funnel.map((stage: FunnelStage, i: number) => (
-                    <div key={stage.code} className="flex items-center gap-3">
-                      <div className="w-28 sm:w-36 shrink-0">
-                        <p className="text-xs font-semibold text-white truncate">{stage.name}</p>
-                        <p className="text-[10px] text-white/30">{stage.conversion_from_top}% del total</p>
-                      </div>
-                      <div className="flex-1 h-8 bg-white/[0.04] rounded-lg overflow-hidden relative">
-                        <div
-                          className="h-full rounded-lg transition-all duration-700 ease-out flex items-center px-2"
-                          style={{
-                            width: `${Math.max(3, (stage.count / maxFunnelCount) * 100)}%`,
-                            backgroundColor: stage.color || '#6B7280',
-                            opacity: 0.7,
-                          }}
-                        >
-                          <span className="text-[11px] font-bold text-white drop-shadow">{stage.count}</span>
-                        </div>
-                        {i > 0 && (
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/30">
-                            {stage.conversion_from_prev}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              {/* Funnel chart (Professional) */}
+              <GlassCard className="p-4 sm:p-6 border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <BarChart3 size={16} className="text-blue-400" />
+                    Distribución de Leads por Etapa
+                  </h3>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Datos en tiempo real</p>
                 </div>
-              </div>
+                <SalesFunnelChart 
+                  data={funnel.funnel.map((s: FunnelStage) => ({
+                    stage: s.name,
+                    count: s.count
+                  }))} 
+                />
+              </GlassCard>
             </div>
           )}
 

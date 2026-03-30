@@ -143,44 +143,68 @@ class ScheduledTasksService:
         except Exception as e:
             logger.error(f"Error in scheduled data cleanup: {e}")
     
-    async def generate_daily_reports(self):
-        """Generar reportes diarios para CEO"""
-        logger.info("Running scheduled daily reports generation")
-        
+    async def run_reactivation_checks(self):
+        """DEV-47: Buscar leads inactivos para iniciar secuencias de reactivación"""
+        logger.info("Running scheduled reactivation checks")
         try:
-            async with get_db() as db:
-                # Obtener todos los tenants con CEO
-                result = await db.execute("""
-                    SELECT DISTINCT t.id as tenant_id, u.id as ceo_id, u.email as ceo_email
-                    FROM tenants t
-                    JOIN users u ON t.id = u.tenant_id
-                    WHERE u.role = 'ceo' 
-                        AND u.status = 'active'
-                        AND t.status = 'active'
-                """)
-                ceo_tenants = result.fetchall()
+            from services.reactivation_service import check_and_trigger_sequences
+            async with get_db() as db_session:
+                # Obtener todos los tenants activos
+                result = await db_session.execute("SELECT id FROM tenants WHERE status = 'active'")
+                tenants = result.fetchall()
                 
-                for tenant in ceo_tenants:
-                    try:
-                        # Generar reporte de métricas del día
-                        daily_metrics = await seller_metrics_service.get_daily_summary(tenant.tenant_id)
-                        
-                        # Crear notificación de reporte diario
-                        notification = await notification_service.create_daily_report_notification(
-                            tenant_id=tenant.tenant_id,
-                            ceo_id=tenant.ceo_id,
-                            metrics=daily_metrics
-                        )
-                        
-                        logger.info(f"Daily report generated for tenant {tenant.tenant_id}, CEO: {tenant.ceo_email}")
-                        
-                    except Exception as e:
-                        logger.error(f"Error generating daily report for tenant {tenant.tenant_id}: {e}")
-                
-                logger.info(f"Daily reports generation completed for {len(ceo_tenants)} tenants")
-                
+                for tenant in tenants:
+                    # check_and_trigger_sequences usa el pool de db.py, no el session de SQLAlchemy por ahora
+                    # pero pasamos el tenant_id
+                    from db import db as pg_db
+                    await check_and_trigger_sequences(tenant.id, pg_db.pool)
+            logger.info("Reactivation checks completed")
         except Exception as e:
-            logger.error(f"Error in scheduled daily reports: {e}")
+            logger.error(f"Error in scheduled reactivation checks: {e}")
+
+    async def run_pending_reactivations(self):
+        """DEV-47: Ejecutar pasos de reactivación pendientes (envío de mensajes)"""
+        logger.info("Running scheduled pending reactivations execution")
+        try:
+            from services.reactivation_service import execute_pending_steps
+            async with get_db() as db_session:
+                result = await db_session.execute("SELECT id FROM tenants WHERE status = 'active'")
+                tenants = result.fetchall()
+                
+                for tenant in tenants:
+                    from db import db as pg_db
+                    await execute_pending_steps(tenant.id, pg_db.pool)
+            logger.info("Pending reactivations execution completed")
+        except Exception as e:
+            logger.error(f"Error in scheduled pending reactivations: {e}")
+
+    async def run_deduplication_checks(self):
+        """DEV-50: Buscar candidatos duplicados para todos los leads activos"""
+        logger.info("Running scheduled deduplication checks")
+        try:
+            from services.deduplication_service import find_duplicates_for_lead, create_duplicate_candidates
+            from db import db as pg_db
+            
+            async with get_db() as db_session:
+                result = await db_session.execute("SELECT id FROM tenants WHERE status = 'active'")
+                tenants = result.fetchall()
+                
+                for tenant in tenants:
+                    # Buscar leads actualizados recientemente (últimas 3 horas) para no procesar todo siempre
+                    leads = await pg_db.pool.fetch(
+                        "SELECT id, phone_number, email, first_name, last_name FROM leads WHERE tenant_id = $1 AND updated_at > NOW() - INTERVAL '3 hours'",
+                        tenant.id
+                    )
+                    for lead in leads:
+                        duplicates = await find_duplicates_for_lead(
+                            tenant.id, str(lead['id']), lead['phone_number'], 
+                            lead['email'], lead['first_name'], lead['last_name'], pg_db.pool
+                        )
+                        if duplicates:
+                            await create_duplicate_candidates(tenant.id, str(lead['id']), duplicates, pg_db.pool)
+            logger.info("Deduplication checks completed")
+        except Exception as e:
+            logger.error(f"Error in scheduled deduplication checks: {e}")
 
     async def sync_dentalogic_leads(self):
         """Sincronizar leads de alta intención desde Dentalogic"""
@@ -241,6 +265,33 @@ class ScheduledTasksService:
                 IntervalTrigger(minutes=5),
                 id='dentalogic_sync',
                 name='Dentalogic Leads Sync',
+                replace_existing=True
+            )
+
+            # 6. Reactivation Checks (Frecuencia: 30 minutos)
+            self.scheduler.add_job(
+                self.run_reactivation_checks,
+                IntervalTrigger(minutes=30),
+                id='reactivation_checks',
+                name='Lead Reactivation Checks',
+                replace_existing=True
+            )
+
+            # 7. Pending Reactivations (Frecuencia: 15 minutos)
+            self.scheduler.add_job(
+                self.run_pending_reactivations,
+                IntervalTrigger(minutes=15),
+                id='pending_reactivations',
+                name='Execute Pending Reactivations',
+                replace_existing=True
+            )
+
+            # 8. Deduplication Checks (Frecuencia: 2 horas)
+            self.scheduler.add_job(
+                self.run_deduplication_checks,
+                IntervalTrigger(hours=2),
+                id='deduplication_checks',
+                name='Lead Deduplication Checks',
                 replace_existing=True
             )
             

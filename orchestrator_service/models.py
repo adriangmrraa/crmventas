@@ -26,7 +26,7 @@ class Tenant(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     clinic_name = Column(Text, nullable=False, default="Clinica Dental")
-    bot_phone_number = Column(Text, unique=True, nullable=False)
+    bot_phone_number = Column(Text, unique=True, nullable=True)
     owner_email = Column(Text)
     clinic_location = Column(Text)
     clinic_website = Column(Text)

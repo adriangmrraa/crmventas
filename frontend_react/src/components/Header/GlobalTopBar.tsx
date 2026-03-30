@@ -55,7 +55,7 @@ import { useTranslation } from '../../context/LanguageContext';
 import { Stethoscope, Menu } from 'lucide-react';
 import type { GlobalTopBarProps } from './types';
 import { TenantSwitcher } from './TenantSwitcher';
-import { CommandBar } from './CommandBar';
+import { GlobalSearch } from './GlobalSearch';
 import { StatusAlertsCluster } from './StatusAlertsCluster';
 
 /**
@@ -143,18 +143,8 @@ export const GlobalTopBar: React.FC<GlobalTopBarProps> = ({
             )}
           </div>
 
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* CENTER: CommandBar (Omnipresent Search + Cmd+K) */}
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* Flexible width container (flex-1), centered */}
-          {/* Input with glass effect, icon left, shortcut right */}
-          {/* Focus auto-triggers on Cmd+K (Mac) or Ctrl+K (Windows) */}
-          {/* Debounce: 300ms before firing onSearch callback */}
-          {/* Mobile: Collapses to search icon with modal overlay */}
-          <CommandBar
-            placeholder={t('header.search_placeholder')}
-            isLoading={isLoading}
-          />
+          {/* Center: GlobalSearch (Omnipresent Search + Cmd+K) */}
+          <GlobalSearch />
 
           {/* ───────────────────────────────────────────────────────────── */}
           {/* RIGHT: StatusAlertsCluster (Help icon + Bell + Status) */}

@@ -24,6 +24,7 @@ import CloserPanelView from './modules/crm_sales/views/CloserPanelView';
 import TeamActivityView from './modules/crm_sales/views/TeamActivityView';
 import AuditLogView from './modules/crm_sales/views/AuditLogView';
 import SellerPerformanceView from './modules/crm_sales/views/SellerPerformanceView';
+import SupervisorDashboard from './modules/crm_sales/views/SupervisorDashboard';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import IntegrationsView from './components/integrations/IntegrationsView';
@@ -138,6 +139,11 @@ function App() {
                         <Route path="crm/vendedores" element={
                           <ProtectedRoute allowedRoles={['ceo']}>
                             <SellersView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/supervisor" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <SupervisorDashboard />
                           </ProtectedRoute>
                         } />
                         {/* Marketing Routes */}

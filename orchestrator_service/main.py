@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 import logging
 import asyncio
 import socketio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Any
 
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, WebSocket
@@ -20,13 +20,15 @@ from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
+from services.calcom_service import calcom_service
+
 # --- APP SETUP ---
 from core.rate_limiter import limiter
 
 from db import db
 from admin_routes import router as admin_router
 from auth_routes import router as auth_router
-import modules.crm_sales.tools_provider  # Import to register CRM Sales tools (single-niche: CRM only)
+from modules.crm_sales.tools_provider import tool_registry  # Registered via import
 from core.socket_manager import sio
 from core.socket_notifications import register_notification_socket_handlers
 from core.context import current_customer_phone, current_patient_id, current_tenant_id
@@ -56,6 +58,7 @@ _default_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://crmventas-frontend.ugwrjq.easypanel.host",  # EasyPanel CRM Ventas frontend
+    "https://crmfusa-frontend.a6pys6.easypanel.host",  # Current Fusa Labs deployment
 ]
 _env_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if _env_origins:
@@ -73,6 +76,7 @@ app.add_middleware(
 
 # Nexus Security Middleware: CSP, HSTS, X-Frame-Options (se aplica DESPUÉS de CORS)
 from core.security_middleware import SecurityHeadersMiddleware
+
 app.add_middleware(SecurityHeadersMiddleware)
 
 
@@ -86,20 +90,24 @@ app.include_router(admin_router)
 # Seller Assignment Routes
 try:
     from routes.seller_routes import router as seller_router
+
     app.include_router(seller_router, tags=["Seller Management"])
     logger.info("✅ Seller Management API mounted at /admin/core/sellers")
 except Exception as e:
     logger.error(f"❌ Could not mount Seller Management routes: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Notification Routes
 try:
     from routes.notification_routes import router as notification_router
+
     app.include_router(notification_router, tags=["Notifications"])
     logger.info("✅ Notification API mounted")
 except Exception as e:
     logger.error(f"❌ Could not mount Notification routes: {e}", exc_info=True)
+
     # Fallback: minimal notifications/count endpoint so frontend doesn't break
     @app.get("/admin/core/notifications/count")
     async def _fallback_notifications_count(x_admin_token: str = Header(None)):
@@ -110,11 +118,13 @@ except Exception as e:
             return {"count": count or 0}
         except Exception:
             return {"count": 0}
+
     logger.info("✅ Fallback /admin/core/notifications/count endpoint registered")
 
 # Scheduled Tasks Routes
 try:
     from routes.scheduled_tasks_routes import router as scheduled_tasks_router
+
     app.include_router(scheduled_tasks_router, tags=["Scheduled Tasks"])
     logger.info("✅ Scheduled Tasks API mounted")
 except Exception as e:
@@ -123,6 +133,7 @@ except Exception as e:
 # Health Check Routes
 try:
     from routes.health_routes import router as health_router
+
     app.include_router(health_router, tags=["Health"])
     logger.info("✅ Health Check API mounted")
 except Exception as e:
@@ -136,7 +147,10 @@ for niche in SUPPORTED_NICHES:
 # CRM Sales under /admin/core/crm so proxy/CORS work (same path as other admin routes)
 try:
     from modules.crm_sales import routes as crm_routes
-    app.include_router(crm_routes.router, prefix="/admin/core/crm", tags=["CRM Sales (Admin)"])
+
+    app.include_router(
+        crm_routes.router, prefix="/admin/core/crm", tags=["CRM Sales (Admin)"]
+    )
     logger.info("✅ CRM API also mounted at /admin/core/crm")
 except Exception as e:
     logger.warning(f"Could not mount CRM under /admin/core/crm: {e}")
@@ -144,6 +158,7 @@ except Exception as e:
 # Lead Status Routes (DEV-27: pipeline de estados)
 try:
     from routes.lead_status_routes import router as lead_status_router
+
     app.include_router(lead_status_router, tags=["Lead Status"])
     logger.info("✅ Lead Status API mounted at /admin/core/crm/lead-statuses")
 except Exception as e:
@@ -152,6 +167,7 @@ except Exception as e:
 # Lead Tags Routes
 try:
     from routes.lead_tags_routes import router as lead_tags_router
+
     app.include_router(lead_tags_router, tags=["Lead Tags"])
     logger.info("✅ Lead Tags API mounted")
 except Exception as e:
@@ -160,6 +176,7 @@ except Exception as e:
 # Lead Notes & Derivation Routes (DEV-21)
 try:
     from routes.lead_notes_routes import router as lead_notes_router
+
     app.include_router(lead_notes_router, tags=["Lead Notes & Derivation"])
     logger.info("✅ Lead Notes & Derivation API mounted")
 except Exception as e:
@@ -168,6 +185,7 @@ except Exception as e:
 # User Management Routes (DEV-29)
 try:
     from routes.user_management_routes import router as user_mgmt_router
+
     app.include_router(user_mgmt_router, tags=["User Management"])
     logger.info("✅ User Management API mounted (seed-team, users CRUD)")
 except Exception as e:
@@ -176,6 +194,7 @@ except Exception as e:
 # HSM Templates Routes (DEV-31)
 try:
     from routes.hsm_templates_routes import router as hsm_templates_router
+
     app.include_router(hsm_templates_router, tags=["HSM Templates"])
     logger.info("✅ HSM Templates API mounted (seed + CRUD + send)")
 except Exception as e:
@@ -184,6 +203,7 @@ except Exception as e:
 # Free-text Chat Send Routes
 try:
     from routes.chat_routes import router as chat_routes_router
+
     app.include_router(chat_routes_router, tags=["Chat Send"])
     logger.info("✅ Chat Send API mounted (POST /admin/core/chat/send)")
 except Exception as e:
@@ -194,7 +214,7 @@ try:
     from routes.marketing import router as marketing_router
     from routes.meta_auth import router as meta_auth_router
     from routes.meta_webhooks import router as meta_webhooks_router
-    
+
     app.include_router(marketing_router, prefix="/crm/marketing", tags=["Marketing"])
     app.include_router(meta_auth_router, prefix="/crm/auth/meta", tags=["Meta OAuth"])
     app.include_router(meta_webhooks_router, prefix="/webhooks", tags=["Webhooks"])
@@ -205,7 +225,10 @@ except Exception as e:
 # Meta Embedded Signup — WhatsApp, Instagram, Facebook Pages connection
 try:
     from routes.meta_connect import router as meta_connect_router
-    app.include_router(meta_connect_router, prefix="/admin/meta", tags=["Meta Embedded Signup"])
+
+    app.include_router(
+        meta_connect_router, prefix="/admin/meta", tags=["Meta Embedded Signup"]
+    )
     logger.info("✅ Meta Embedded Signup routes mounted at /admin/meta")
 except Exception as e:
     logger.error(f"❌ Could not mount Meta Embedded Signup routes: {e}", exc_info=True)
@@ -214,9 +237,13 @@ except Exception as e:
 try:
     from routes.google_auth import router as google_auth_router
     from routes.google_ads_routes import router as google_ads_routes_router
-    
-    app.include_router(google_auth_router, prefix="/crm/auth/google", tags=["Google OAuth"])
-    app.include_router(google_ads_routes_router, prefix="/crm/marketing", tags=["Google Ads"])
+
+    app.include_router(
+        google_auth_router, prefix="/crm/auth/google", tags=["Google OAuth"]
+    )
+    app.include_router(
+        google_ads_routes_router, prefix="/crm/marketing", tags=["Google Ads"]
+    )
     logger.info("✅ Google Ads Marketing API mounted")
 except Exception as e:
     logger.error(f"❌ Could not mount Google Ads Marketing routes: {e}", exc_info=True)
@@ -224,6 +251,7 @@ except Exception as e:
 # Email Lead Monitor Routes (DEV-34 Part 2)
 try:
     from routes.email_monitor_routes import router as email_monitor_router
+
     app.include_router(email_monitor_router, tags=["Email Lead Monitor"])
     logger.info("✅ Email Lead Monitor API mounted at /admin/core/email-monitor")
 except Exception as e:
@@ -233,9 +261,12 @@ except Exception as e:
 try:
     from routes.company_settings_routes import router as company_settings_router
     from routes.company_settings_routes import setup_router as setup_router
+
     app.include_router(company_settings_router, tags=["Company Settings"])
     app.include_router(setup_router, tags=["Setup"])
-    logger.info("✅ Company Settings API mounted (GET/PUT /admin/core/settings/company + POST /admin/setup/configure-tenant)")
+    logger.info(
+        "✅ Company Settings API mounted (GET/PUT /admin/core/settings/company + POST /admin/setup/configure-tenant)"
+    )
 except Exception as e:
     logger.error(f"❌ Could not mount Company Settings routes: {e}", exc_info=True)
 
@@ -243,9 +274,12 @@ except Exception as e:
 try:
     from routes.ai_agent_routes import router as ai_agent_router
     from routes.ai_agent_routes import setup_router as ai_agent_setup_router
+
     app.include_router(ai_agent_router, tags=["AI Agent Config"])
     app.include_router(ai_agent_setup_router, tags=["Setup"])
-    logger.info("✅ AI Agent Config API mounted (GET/PUT /admin/core/settings/ai-agent + POST /admin/setup/seed-ai-agent)")
+    logger.info(
+        "✅ AI Agent Config API mounted (GET/PUT /admin/core/settings/ai-agent + POST /admin/setup/seed-ai-agent)"
+    )
 except Exception as e:
     logger.error(f"❌ Could not mount AI Agent Config routes: {e}", exc_info=True)
 
@@ -253,15 +287,19 @@ except Exception as e:
 try:
     from routes.channel_routes import internal_router as channel_internal_router
     from routes.channel_routes import admin_router as channel_admin_router
+
     app.include_router(channel_internal_router, tags=["Internal Routing"])
     app.include_router(channel_admin_router, tags=["Channel Management"])
-    logger.info("✅ Channel Routing API mounted (GET /internal/routing/resolve + /admin/core/channels CRUD)")
+    logger.info(
+        "✅ Channel Routing API mounted (GET /internal/routing/resolve + /admin/core/channels CRUD)"
+    )
 except Exception as e:
     logger.error(f"❌ Could not mount Channel Routing routes: {e}", exc_info=True)
 
 # Team Activity Routes (DEV-39 + DEV-40 + DEV-41)
 try:
     from routes.team_activity_routes import router as team_activity_router
+
     app.include_router(team_activity_router, tags=["Team Activity"])
     logger.info("✅ Team Activity API mounted at /admin/core/team-activity")
 except Exception as e:
@@ -270,13 +308,44 @@ except Exception as e:
 # SLA Rules Routes (DEV-42)
 try:
     from routes.sla_routes import router as sla_router
+
     app.include_router(sla_router, tags=["SLA Rules"])
     logger.info("✅ SLA Rules API mounted at /admin/core/sla-rules")
 except Exception as e:
     logger.error(f"❌ Could not mount SLA Rules routes: {e}", exc_info=True)
 
+# Reactivation Routes (DEV-47)
+try:
+    from routes.reactivation_routes import router as reactivation_router
+
+    app.include_router(reactivation_router, tags=["Reactivation DEV-47"])
+    logger.info("✅ Reactivation API mounted at /admin/core/crm/reactivation")
+except Exception as e:
+    logger.error(f"❌ Could not mount Reactivation routes: {e}", exc_info=True)
+
+# Deduplication Routes (DEV-50)
+try:
+    from routes.deduplication_routes import router as deduplication_router
+
+    app.include_router(deduplication_router, tags=["Deduplication DEV-50"])
+    logger.info("✅ Deduplication API mounted at /admin/core/crm/duplicates")
+except Exception as e:
+    logger.error(f"❌ Could not mount Deduplication routes: {e}", exc_info=True)
+
+# Analytics Dashboard Routes (Integrated from Dashboard_Analytics_Sovereign)
+try:
+    from routes.analytics_routes import router as analytics_router
+
+    app.include_router(analytics_router)
+    logger.info(
+        "✅ Analytics Dashboard API mounted at /admin/analytics/ceo, /admin/analytics/secretary"
+    )
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Analytics routes: {e}")
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
+
 
 async def get_agent_executor(tenant_id: int):
     """
@@ -293,22 +362,27 @@ async def get_agent_executor(tenant_id: int):
         tenant_id,
     )
     niche_type = (row["niche_type"] if row else "crm_sales") or "crm_sales"
-    tenant_name = (row["clinic_name"] if row else "nuestra empresa") or "nuestra empresa"
+    tenant_name = (
+        row["clinic_name"] if row else "nuestra empresa"
+    ) or "nuestra empresa"
     tools = tool_registry.get_tools(niche_type, tenant_id)
 
     # --- DEV-36: Build system prompt from tenant AI config ---
     system_prompt = _build_system_prompt(row, tenant_name)
 
     # Create dynamic prompt template
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+    prompt_template = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     # Create agent with niche-specific tools and prompt
     from langchain.agents import create_openai_tools_agent
+
     agent = create_openai_tools_agent(llm, tools, prompt_template)
     return AgentExecutor(agent=agent, tools=tools, verbose=True)
 
@@ -438,19 +512,16 @@ def _get_tone_instructions(ai_tone: str, agent_name: str) -> str:
 - Responde en espanol por defecto. Si el prospecto escribe en ingles, cambia a ingles automaticamente.
 - Usa "vos" (espanol rioplatense) a menos que el prospecto use "tu", en cuyo caso adaptate.
 - Tono profesional pero cercano. Se calido sin ser demasiado formal.""",
-
         "informal_argentino": f"""IDIOMA Y TONO
 - Responde en espanol por defecto. Si el prospecto escribe en ingles, cambia a ingles automaticamente.
 - Usa "vos" siempre (espanol rioplatense con voseo). Escribi como hablarias con un amigo que te pide consejo profesional.
 - Tono informal, natural y copado. {agent_name} es como un conocido que sabe mucho del tema y te ayuda con onda.
 - Podes usar expresiones argentinas naturales: "dale", "genial", "barbaro", "de una", "joya".
 - Evita sonar como un robot o como un vendedor de telemarketing. Se genuino.""",
-
         "formal_neutro": """IDIOMA Y TONO
 - Responde en espanol neutro por defecto. Si el prospecto escribe en ingles, cambia a ingles.
 - Usa "usted" por defecto. Si el prospecto usa "tu" o "vos", adaptate a su registro.
 - Tono formal y profesional. Mantene la cortesia y claridad en cada mensaje.""",
-
         "friendly_english": """LANGUAGE & TONE
 - Respond in English by default. If the prospect writes in Spanish, switch to Spanish.
 - Use a friendly, approachable tone. Be warm but professional.
@@ -469,15 +540,21 @@ def _build_qualification_section(questions: list) -> str:
 4. **Tamano de empresa / contexto**: "Me contas un poco sobre tu empresa/proyecto?".
 Cuando tengas suficiente informacion (al menos necesidad + timeline), usa la herramienta qualify_lead para registrar la calificacion."""
 
-    lines = ["FLUJO DE CALIFICACION (segui este orden natural, sin parecer un formulario):"]
+    lines = [
+        "FLUJO DE CALIFICACION (segui este orden natural, sin parecer un formulario):"
+    ]
     for i, q in enumerate(questions, 1):
         if isinstance(q, dict):
             label = q.get("label", f"Pregunta {i}")
             example = q.get("example", "")
-            lines.append(f'{i}. **{label}**: "{example}"' if example else f"{i}. **{label}**")
+            lines.append(
+                f'{i}. **{label}**: "{example}"' if example else f"{i}. **{label}**"
+            )
         else:
             lines.append(f"{i}. {q}")
-    lines.append("Cuando tengas suficiente informacion (al menos necesidad + timeline), usa la herramienta qualify_lead para registrar la calificacion.")
+    lines.append(
+        "Cuando tengas suficiente informacion (al menos necesidad + timeline), usa la herramienta qualify_lead para registrar la calificacion."
+    )
     return "\n".join(lines)
 
 
@@ -505,7 +582,9 @@ def _build_hours_section(business_hours: dict, bh_start: str, bh_end: str) -> st
         lines = ["\nHORARIO DE ATENCION"]
         for day, hours in business_hours.items():
             lines.append(f"- {day}: {hours}")
-        lines.append(f"Fuera de horario, informa que el equipo respondera en el proximo dia habil, pero que vos podes seguir ayudando.\n")
+        lines.append(
+            f"Fuera de horario, informa que el equipo respondera en el proximo dia habil, pero que vos podes seguir ayudando.\n"
+        )
         return "\n".join(lines)
     else:
         return f"""
@@ -527,29 +606,37 @@ Usa las herramientas qualify_lead, book_sales_meeting, request_human_handoff, as
 import httpx
 from fastapi.responses import Response
 
+
 @app.post("/webhook/ycloud/{tenant_id}", tags=["Webhooks"])
 async def proxy_ycloud_webhook(tenant_id: int, request: Request):
     """
     Proxies inbound YCloud webhooks from the public orchestrator domain to the internal whatsapp_service.
     """
-    WHATSAPP_SERVICE_URL = os.getenv("WHATSAPP_SERVICE_URL", "http://whatsapp_service:8002")
-    
+    WHATSAPP_SERVICE_URL = os.getenv(
+        "WHATSAPP_SERVICE_URL", "http://whatsapp_service:8002"
+    )
+
     body = await request.body()
     headers = dict(request.headers)
-    headers.pop("host", None) # Remove host to avoid conflicts
-    
+    headers.pop("host", None)  # Remove host to avoid conflicts
+
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
                 f"{WHATSAPP_SERVICE_URL}/webhook/ycloud/{tenant_id}",
                 content=body,
                 headers=headers,
-                timeout=15.0
+                timeout=15.0,
             )
-            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
+            return Response(
+                content=resp.content,
+                status_code=resp.status_code,
+                media_type=resp.headers.get("content-type"),
+            )
         except httpx.RequestError as e:
             logger.error(f"Error proxying webhook to whatsapp_service: {e}")
             raise HTTPException(status_code=502, detail="Bad Gateway")
+
 
 # --- INTERNAL CHAT (Multi-Channel inbound: WhatsApp / Instagram / Facebook) ---
 INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "internal-secret-token")
@@ -610,9 +697,14 @@ async def chat_inbound(
 
     # Validation: need at least one identifier
     if channel_source == "whatsapp" and not from_number:
-        raise HTTPException(status_code=400, detail="from_number required for whatsapp channel")
+        raise HTTPException(
+            status_code=400, detail="from_number required for whatsapp channel"
+        )
     if channel_source in ("instagram", "facebook") and not external_user_id:
-        raise HTTPException(status_code=400, detail="external_user_id or sender_id required for instagram/facebook channel")
+        raise HTTPException(
+            status_code=400,
+            detail="external_user_id or sender_id required for instagram/facebook channel",
+        )
     if text is None:
         raise HTTPException(status_code=400, detail="text is required")
 
@@ -634,14 +726,16 @@ async def chat_inbound(
         )
         if row:
             tenant_id = row["id"]
-    
+
     if not tenant_id:
-        tenant_id = 1 # Extreme fallback
-    
+        tenant_id = 1  # Extreme fallback
+
     # Critical: Ensure tenant_id is int for asyncpg (Spec Database Evolution)
     tenant_id = int(tenant_id)
 
-    logger.info(f"chat_inbound: channel={channel_source} ext_id={external_user_id} from={from_number} tenant={tenant_id}")
+    logger.info(
+        f"chat_inbound: channel={channel_source} ext_id={external_user_id} from={from_number} tenant={tenant_id}"
+    )
 
     is_new = await db.try_insert_inbound(
         provider, provider_message_id, event_id, conversation_key, body, correlation_id
@@ -662,10 +756,15 @@ async def chat_inbound(
         }.get(channel_source, "whatsapp_inbound")
 
         # For WhatsApp: phone_number is from_number; for IG/FB: phone may be empty, lead identified by PSID
-        _phone_for_lead = from_number if channel_source == "whatsapp" else (body.get("from_number") or "")
+        _phone_for_lead = (
+            from_number
+            if channel_source == "whatsapp"
+            else (body.get("from_number") or "")
+        )
 
         lead = await db.ensure_lead_exists(
-            tenant_id, _phone_for_lead,
+            tenant_id,
+            _phone_for_lead,
             customer_name=customer_name,
             source=source_label,
             referral=referral,
@@ -673,22 +772,103 @@ async def chat_inbound(
             external_user_id=external_user_id,
         )
 
+        # --- DEV-49: Check for Human Override / Silence ---
+        if lead and lead.get("human_override_until"):
+            until = lead["human_override_until"]
+            # Ensure TZ awareness
+            if until.tzinfo is None:
+                from core.utils import ARG_TZ
+
+                until = until.replace(tzinfo=ARG_TZ)
+
+            if until > datetime.now(until.tzinfo):
+                logger.info(
+                    f"Chat inbound: Lead {from_number} is silenciated (Human Override) until {until}"
+                )
+                # Append user message so it shows in history, but don't respond
+                await db.append_chat_message(
+                    conversation_key,
+                    "user",
+                    text,
+                    correlation_id,
+                    tenant_id,
+                    platform=channel_source,
+                    platform_message_id=platform_msg_id,
+                    channel_source=channel_source,
+                    external_user_id=external_user_id,
+                )
+                await db.mark_inbound_done(provider, provider_message_id)
+
+                # Emit to supervisor even if silenced (monitoring)
+                try:
+                    await sio.emit(
+                        "SUPERVISOR_CHAT_EVENT",
+                        {
+                            "tenant_id": tenant_id,
+                            "lead_id": str(lead.get("id")) if lead else None,
+                            "phone_number": from_number,
+                            "content": text,
+                            "role": "user",
+                            "channel_source": channel_source,
+                            "external_user_id": external_user_id,
+                            "is_silenced": True,
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        },
+                        room=f"supervisors:{tenant_id}",
+                    )
+                except Exception as e:
+                    logger.error(f"Error emitting supervisor event (silenced): {e}")
+
+                return {
+                    "status": "silenced",
+                    "send": False,
+                    "text": "Human override active",
+                    "channel_source": channel_source,
+                    "external_user_id": external_user_id,
+                }
+
         # Notify via Socket.IO if attributed (Spec Mission 4)
         if referral and lead and lead.get("lead_source") == "META_ADS":
             try:
-                await sio.emit('META_LEAD_RECEIVED', {
-                    "tenant_id": tenant_id,
-                    "lead_id": str(lead.get("id")),
-                    "phone_number": conversation_key,
-                    "channel_source": channel_source,
-                    "name": f"{lead.get('first_name', '')} {lead.get('last_name', '')}".strip(),
-                    "ad_id": referral.get("ad_id"),
-                    "headline": referral.get("headline"),
-                    "timestamp": datetime.now().isoformat()
-                })
+                await sio.emit(
+                    "META_LEAD_RECEIVED",
+                    {
+                        "tenant_id": tenant_id,
+                        "lead_id": str(lead.get("id")),
+                        "phone_number": conversation_key,
+                        "channel_source": channel_source,
+                        "name": f"{lead.get('first_name', '')} {lead.get('last_name', '')}".strip(),
+                        "ad_id": referral.get("ad_id"),
+                        "headline": referral.get("headline"),
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                )
                 logger.info(f"Socket META_LEAD_RECEIVED emitted for {conversation_key}")
             except Exception as sio_err:
                 logger.error(f"Error emitting Meta lead notification: {sio_err}")
+
+        # --- DEV-52: Broadcast to Supervisor Mode ---
+        try:
+            await sio.emit(
+                "SUPERVISOR_CHAT_EVENT",
+                {
+                    "tenant_id": tenant_id,
+                    "lead_id": str(lead.get("id")) if lead else None,
+                    "phone_number": from_number,
+                    "content": text,
+                    "role": "user",
+                    "channel_source": channel_source,
+                    "external_user_id": external_user_id,
+                    "is_silenced": False,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                },
+                room=f"supervisors:{tenant_id}",
+            )
+            logger.info(
+                f"Supervisor event emitted for {from_number} in tenant {tenant_id}"
+            )
+        except Exception as e:
+            logger.error(f"Error emitting supervisor event: {e}")
 
         # --- DEV-19: Auto-detect "sin_respuesta" tag ---
         # If the last assistant message was sent >24h ago and no user message since,
@@ -702,7 +882,9 @@ async def chat_inbound(
                     WHERE tenant_id = $1 AND channel_source = $2 AND external_user_id = $3
                     ORDER BY created_at DESC LIMIT 1
                     """,
-                    tenant_id, channel_source, external_user_id,
+                    tenant_id,
+                    channel_source,
+                    external_user_id,
                 )
             else:
                 last_msg_row = await db.fetchrow(
@@ -711,11 +893,20 @@ async def chat_inbound(
                     WHERE from_number = $1 AND tenant_id = $2
                     ORDER BY created_at DESC LIMIT 1
                     """,
-                    from_number, tenant_id,
+                    from_number,
+                    tenant_id,
                 )
             if last_msg_row and last_msg_row["role"] == "assistant":
                 from datetime import timedelta as _td
-                gap = datetime.now(last_msg_row["created_at"].tzinfo if last_msg_row["created_at"].tzinfo else None) - last_msg_row["created_at"]
+
+                gap = (
+                    datetime.now(
+                        last_msg_row["created_at"].tzinfo
+                        if last_msg_row["created_at"].tzinfo
+                        else None
+                    )
+                    - last_msg_row["created_at"]
+                )
                 if gap > _td(hours=24):
                     # Lead was silent for >24h after our last message -- auto-tag
                     # Find lead by channel-appropriate lookup
@@ -723,21 +914,25 @@ async def chat_inbound(
                     if channel_source == "instagram":
                         _lead_row = await db.fetchrow(
                             "SELECT id, tags FROM leads WHERE tenant_id = $1 AND instagram_psid = $2",
-                            tenant_id, external_user_id,
+                            tenant_id,
+                            external_user_id,
                         )
                     elif channel_source == "facebook":
                         _lead_row = await db.fetchrow(
                             "SELECT id, tags FROM leads WHERE tenant_id = $1 AND facebook_psid = $2",
-                            tenant_id, external_user_id,
+                            tenant_id,
+                            external_user_id,
                         )
                     if not _lead_row:
                         # Fallback to phone lookup (works for WhatsApp or cross-channel leads)
                         from core.utils import normalize_phone as _norm
+
                         _phone = _norm(from_number)
                         if _phone:
                             _lead_row = await db.fetchrow(
                                 "SELECT id, tags FROM leads WHERE tenant_id = $1 AND phone_number = $2",
-                                tenant_id, _phone,
+                                tenant_id,
+                                _phone,
                             )
                     if _lead_row:
                         _existing = _lead_row["tags"] if _lead_row["tags"] else []
@@ -747,33 +942,82 @@ async def chat_inbound(
                             _merged = list(dict.fromkeys(_existing + ["sin_respuesta"]))
                             await db.execute(
                                 "UPDATE leads SET tags = $1, updated_at = NOW() WHERE id = $2",
-                                json.dumps(_merged), _lead_row["id"],
+                                json.dumps(_merged),
+                                _lead_row["id"],
                             )
                             await db.execute(
                                 "INSERT INTO lead_tag_log (tenant_id, lead_id, tags_added, reason, source) VALUES ($1, $2, $3, $4, 'system_auto')",
-                                tenant_id, _lead_row["id"],
+                                tenant_id,
+                                _lead_row["id"],
                                 ["sin_respuesta"],
                                 f"Lead no respondio por {gap.days}d {gap.seconds // 3600}h desde ultimo mensaje del asistente",
                             )
-                            logger.info(f"Auto-tagged lead {channel_source}:{external_user_id} as sin_respuesta (gap: {gap})")
+                            logger.info(
+                                f"Auto-tagged lead {channel_source}:{external_user_id} as sin_respuesta (gap: {gap})"
+                            )
         except Exception as tag_err:
             logger.warning(f"sin_respuesta auto-tag check failed: {tag_err}")
 
         await db.append_chat_message(
-            conversation_key, "user", text, correlation_id, tenant_id,
-            platform=channel_source, platform_message_id=platform_msg_id,
-            channel_source=channel_source, external_user_id=external_user_id,
+            conversation_key,
+            "user",
+            text,
+            correlation_id,
+            tenant_id,
+            platform=channel_source,
+            platform_message_id=platform_msg_id,
+            channel_source=channel_source,
+            external_user_id=external_user_id,
         )
+
+        # --- DEV-49: Frustration Detection ---
+        try:
+            from services.frustration_detection_service import (
+                detect_frustration,
+                handle_escalation,
+            )
+
+            frustration_result = await detect_frustration(
+                tenant_id, str(lead["id"]), text
+            )
+            if frustration_result["score"] >= 70:
+                logger.warning(
+                    f"DEV-49: High frustration detected for lead {lead['id']}: {frustration_result['score']}"
+                )
+                # Escalar: pausa 24h, notificar, etc.
+                escalation = await handle_escalation(
+                    tenant_id, str(lead["id"]), frustration_result, db.pool
+                )
+                # No respondemos con IA
+                await db.mark_inbound_done(provider, provider_message_id)
+                return {
+                    "status": "escalated",
+                    "send": False,
+                    "text": "Frustration detected. Escalated to human.",
+                    "score": frustration_result["score"],
+                    "channel_source": channel_source,
+                    "external_user_id": external_user_id,
+                }
+        except Exception as frustrate_err:
+            logger.error(f"Error in frustration detection: {frustrate_err}")
 
         # Build history (previous messages only; current turn is "input")
         history_raw = await db.get_chat_history(
-            conversation_key, limit=15, tenant_id=tenant_id,
-            channel_source=channel_source, external_user_id=external_user_id,
+            conversation_key,
+            limit=15,
+            tenant_id=tenant_id,
+            channel_source=channel_source,
+            external_user_id=external_user_id,
         )
         # Exclude the message we just added (last one is current user)
-        if history_raw and history_raw[-1].get("content") == text and history_raw[-1].get("role") == "user":
+        if (
+            history_raw
+            and history_raw[-1].get("content") == text
+            and history_raw[-1].get("role") == "user"
+        ):
             history_raw = history_raw[:-1]
         from langchain_core.messages import HumanMessage, AIMessage
+
         lc_history = []
         for m in history_raw:
             if m.get("role") == "user":
@@ -788,13 +1032,21 @@ async def chat_inbound(
         output = (result.get("output") or "").strip()
 
         await db.append_chat_message(
-            conversation_key, "assistant", output, correlation_id, tenant_id,
-            platform=channel_source, platform_message_id=None,
-            channel_source=channel_source, external_user_id=external_user_id,
+            conversation_key,
+            "assistant",
+            output,
+            correlation_id,
+            tenant_id,
+            platform=channel_source,
+            platform_message_id=None,
+            channel_source=channel_source,
+            external_user_id=external_user_id,
         )
         await db.mark_inbound_done(provider, provider_message_id)
         return {
-            "status": "ok", "send": True, "text": output,
+            "status": "ok",
+            "send": True,
+            "text": output,
             "messages": [{"text": output}],
             "channel_source": channel_source,
             "external_user_id": external_user_id,
@@ -812,55 +1064,65 @@ async def chat_inbound(
 async def startup_event():
     await db.connect()
     logger.info("🚀 Nexus Orchestrator v7.6 Started")
-    
+
     # Initialize notification socket handlers
     try:
         from core.socket_notifications import register_notification_socket_handlers
+
         register_notification_socket_handlers()
         logger.info("✅ Notification socket handlers registered")
     except Exception as e:
         logger.error(f"❌ Error registering notification socket handlers: {e}")
-    
+
     # Start scheduled tasks if enabled
     try:
         from services.scheduled_tasks import scheduled_tasks_service
-        
+
         # Check if scheduled tasks should be enabled
         enable_tasks = os.getenv("ENABLE_SCHEDULED_TASKS", "true").lower() == "true"
-        
+
         if enable_tasks:
             # Configurar intervalos personalizados si están definidos
-            notification_interval = int(os.getenv("NOTIFICATION_CHECK_INTERVAL_MINUTES", "5"))
+            notification_interval = int(
+                os.getenv("NOTIFICATION_CHECK_INTERVAL_MINUTES", "5")
+            )
             metrics_interval = int(os.getenv("METRICS_REFRESH_INTERVAL_MINUTES", "15"))
             cleanup_interval = int(os.getenv("CLEANUP_INTERVAL_HOURS", "1"))
-            
+
             logger.info(f"📅 Scheduled tasks configuration:")
-            logger.info(f"   • Notification checks: every {notification_interval} minutes")
+            logger.info(
+                f"   • Notification checks: every {notification_interval} minutes"
+            )
             logger.info(f"   • Metrics refresh: every {metrics_interval} minutes")
             logger.info(f"   • Data cleanup: every {cleanup_interval} hours")
-            
+
             # Iniciar tareas
             scheduled_tasks_service.start_all_tasks()
-            
+
             # Verificar que se iniciaron correctamente
             task_status = scheduled_tasks_service.get_task_status()
             if task_status.get("scheduler_running", False):
-                logger.info(f"✅ Scheduled tasks started ({task_status.get('total_tasks', 0)} tasks)")
-                
+                logger.info(
+                    f"✅ Scheduled tasks started ({task_status.get('total_tasks', 0)} tasks)"
+                )
+
                 # Log de tareas programadas
                 for task in task_status.get("tasks", []):
                     logger.info(f"   • {task.get('name')}: {task.get('trigger')}")
             else:
                 logger.warning("⚠️  Scheduler started but not running")
         else:
-            logger.info("⚠️  Scheduled tasks disabled by environment variable (ENABLE_SCHEDULED_TASKS=false)")
-            
+            logger.info(
+                "⚠️  Scheduled tasks disabled by environment variable (ENABLE_SCHEDULED_TASKS=false)"
+            )
+
     except ImportError as e:
         logger.error(f"❌ Could not import scheduled tasks service: {e}")
         logger.info("💡 Install apscheduler: pip install apscheduler")
     except Exception as e:
         logger.error(f"❌ Error starting scheduled tasks: {e}")
         import traceback
+
         traceback.print_exc()
 
     # DEV-34 Part 2: Start Email Lead Monitor polling if IMAP is configured
@@ -868,19 +1130,24 @@ async def startup_event():
         imap_host = os.getenv("IMAP_HOST", "")
         if imap_host:
             from services.email_lead_monitor import email_lead_monitor
+
             poll_interval = int(os.getenv("EMAIL_MONITOR_INTERVAL_SECONDS", "120"))
             await email_lead_monitor.start_polling(interval_seconds=poll_interval)
-            logger.info(f"✅ Email Lead Monitor started (IMAP: {imap_host}, every {poll_interval}s)")
+            logger.info(
+                f"✅ Email Lead Monitor started (IMAP: {imap_host}, every {poll_interval}s)"
+            )
         else:
             logger.info("⚠️  Email Lead Monitor disabled (IMAP_HOST not set)")
     except Exception as e:
         logger.error(f"❌ Error starting Email Lead Monitor: {e}", exc_info=True)
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
     # Stop email lead monitor
     try:
         from services.email_lead_monitor import email_lead_monitor
+
         email_lead_monitor.stop_polling()
     except Exception:
         pass
@@ -888,21 +1155,26 @@ async def shutdown_event():
     # Stop scheduled tasks
     try:
         from services.scheduled_tasks import scheduled_tasks_service
+
         scheduled_tasks_service.stop_all_tasks()
         logger.info("✅ Scheduled tasks stopped")
     except Exception as e:
         logger.error(f"❌ Error stopping scheduled tasks: {e}")
-    
+
     await db.disconnect()
     await engine.dispose()
 
+
 async def emit_event_shim(event: str, data: dict):
     await sio.emit(event, data)
+
+
 app.state.emit_appointment_event = emit_event_shim
 
 # =============================================================================
 # NOVA VOICE — WebSocket Handler (CRM Sales)
 # =============================================================================
+
 
 @app.websocket("/public/nova/voice")
 async def nova_voice_crm(websocket: WebSocket):
@@ -918,6 +1190,7 @@ async def nova_voice_crm(websocket: WebSocket):
     # Validate JWT
     try:
         from auth import decode_token
+
         payload = decode_token(token)
         user_id = payload.get("user_id", "")
         user_role = payload.get("role", "ceo")
@@ -927,13 +1200,18 @@ async def nova_voice_crm(websocket: WebSocket):
         return
 
     await websocket.accept()
-    logger.info(f"🎙️ NOVA CRM: Connected tenant={tenant_id} role={user_role} page={page}")
+    logger.info(
+        f"🎙️ NOVA CRM: Connected tenant={tenant_id} role={user_role} page={page}"
+    )
 
     # Get model from DB config
     model = "gpt-4o-realtime-preview"
     try:
         from dashboard.config_manager import get_config
-        model = await get_config(db.pool, tenant_id, "MODEL_NOVA_VOICE", "gpt-4o-realtime-preview")
+
+        model = await get_config(
+            db.pool, tenant_id, "MODEL_NOVA_VOICE", "gpt-4o-realtime-preview"
+        )
     except Exception:
         pass
 
@@ -965,6 +1243,7 @@ REGLAS:
 
     # Connect to OpenAI Realtime
     import websockets
+
     openai_key = os.getenv("OPENAI_API_KEY", "")
     openai_url = f"wss://api.openai.com/v1/realtime?model={model}"
 
@@ -991,7 +1270,9 @@ REGLAS:
                 },
             }
             await openai_ws.send(json_mod.dumps(session_config))
-            logger.info(f"🎙️ NOVA CRM: session.update sent with {len(NOVA_CRM_TOOLS_SCHEMA)} tools")
+            logger.info(
+                f"🎙️ NOVA CRM: session.update sent with {len(NOVA_CRM_TOOLS_SCHEMA)} tools"
+            )
 
             async def relay_browser_to_openai():
                 """Forward browser audio/text to OpenAI."""
@@ -1003,11 +1284,16 @@ REGLAS:
                         except (json_mod.JSONDecodeError, ValueError):
                             # Raw audio bytes
                             import base64
+
                             audio_b64 = base64.b64encode(message).decode()
-                            await openai_ws.send(json_mod.dumps({
-                                "type": "input_audio_buffer.append",
-                                "audio": audio_b64,
-                            }))
+                            await openai_ws.send(
+                                json_mod.dumps(
+                                    {
+                                        "type": "input_audio_buffer.append",
+                                        "audio": audio_b64,
+                                    }
+                                )
+                            )
                 except Exception as e:
                     logger.info(f"🎙️ NOVA CRM: Browser disconnected: {e}")
 
@@ -1036,20 +1322,30 @@ REGLAS:
                                 tool_name, tool_args, tenant_id, user_role, user_id
                             )
 
-                            logger.info(f"🎙️ NOVA CRM RESULT: {tool_name} → {result[:100]}")
+                            logger.info(
+                                f"🎙️ NOVA CRM RESULT: {tool_name} → {result[:100]}"
+                            )
 
                             # Send result back to OpenAI
-                            await openai_ws.send(json_mod.dumps({
-                                "type": "conversation.item.create",
-                                "item": {
-                                    "type": "function_call_output",
-                                    "call_id": call_id,
-                                    "output": result,
-                                },
-                            }))
-                            await openai_ws.send(json_mod.dumps({
-                                "type": "response.create",
-                            }))
+                            await openai_ws.send(
+                                json_mod.dumps(
+                                    {
+                                        "type": "conversation.item.create",
+                                        "item": {
+                                            "type": "function_call_output",
+                                            "call_id": call_id,
+                                            "output": result,
+                                        },
+                                    }
+                                )
+                            )
+                            await openai_ws.send(
+                                json_mod.dumps(
+                                    {
+                                        "type": "response.create",
+                                    }
+                                )
+                            )
 
                         # Forward everything to browser
                         await websocket.send_text(json_mod.dumps(data))
@@ -1070,9 +1366,11 @@ REGLAS:
         except:
             pass
 
+
 # --- MAIN ENTRYPOINT (For Uvicorn) ---
 final_app = socketio.ASGIApp(sio, app)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(final_app, host="0.0.0.0", port=8000)

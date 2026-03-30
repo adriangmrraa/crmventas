@@ -21,7 +21,8 @@ import {
   Layout,
   LayoutGrid,
   BarChart3,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -47,6 +48,7 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   profile:        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=60',
   integrations:   'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&q=60',
   settings:       'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=60',
+  supervisor:     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=60',
 };
 
 interface SidebarProps {
@@ -120,6 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={17} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'], hint: 'ROI de campanas publicitarias con atribucion de leads' },
     { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={17} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'], hint: 'Plantillas HSM y secuencias de automatizacion' },
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
+    { id: 'supervisor', labelKey: 'nav.supervisor' as const, icon: <Eye size={17} />, path: '/crm/supervisor', roles: ['ceo'], hint: 'Monitoreo en tiempo real de conversaciones y alertas de IA' },
     { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={17} />, path: '/empresas', roles: ['ceo'], hint: 'Empresas y organizaciones registradas en la plataforma' },
     { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={17} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Tu perfil, cuenta y preferencias personales' },
     { id: 'integrations', labelKey: 'nav.integrations' as const, icon: <Link2 size={17} />, path: '/crm/integraciones', roles: ['ceo'], hint: 'WhatsApp, Instagram y Facebook: canales de mensajeria' },
@@ -143,6 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/integraciones') return location.pathname === path;
     if (path === '/crm/actividad-equipo') return location.pathname === path;
     if (path === '/crm/auditoria') return location.pathname === path;
+    if (path === '/crm/supervisor') return location.pathname === path;
     return location.pathname === path;
   };
 

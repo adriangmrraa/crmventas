@@ -1,3 +1,0 @@
-Ejecuta el **workflow Review** (revisión de código).
-
-**Instrucción:** Sigue `CRM VENTAS/.agent/workflows/review.md`. Revisión multi-perspectiva: arquitectura, seguridad (credenciales, inyecciones, fugas), clean code. Consolidar recomendaciones Minor y Critical.

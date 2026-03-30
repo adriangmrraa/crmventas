@@ -8,7 +8,11 @@
       "Bash(ls -1 *.py)",
       "Bash(ls -1 .agent/workflows/*.md)",
       "Bash(ls -1 *.md)",
-      "Bash(ls -1 docs/*.md)"
+      "Bash(ls -1 docs/*.md)",
+      "mcp__claude_ai_Atlassian_Rovo__lookupJiraAccountId",
+      "mcp__claude_ai_Atlassian_Rovo__getTransitionsForJiraIssue",
+      "mcp__claude_ai_Atlassian_Rovo__getAccessibleAtlassianResources",
+      "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql"
     ]
   }
 }

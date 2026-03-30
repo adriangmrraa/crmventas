@@ -17,6 +17,9 @@ from core.security import verify_admin_token, get_resolved_tenant_id, get_allowe
 from core.utils import normalize_phone, ARG_TZ
 
 from core.services.chat_service import ChatService
+from services.analytics_service import analytics_service
+from services.search_service import search_service
+from services.blacklist_service import blacklist_service
 
 logger = logging.getLogger(__name__)
 
@@ -582,3 +585,43 @@ async def get_audit_logs(
     except Exception as e:
         logger.error(f"Error fetching audit logs: {e}")
         raise HTTPException(status_code=500, detail="Error al consultar logs de auditoría.")
+
+# --- ANALYTICS (DEV-51) ---
+@router.get("/analytics/funnel", dependencies=[Depends(verify_admin_token)], tags=["Estadísticas"])
+async def get_funnel_analytics(tenant_id: int = Depends(get_resolved_tenant_id)):
+    """Returns sales funnel and revenue analytics."""
+    try:
+        return await analytics_service.get_funnel_analytics(tenant_id)
+    except Exception as e:
+        logger.error(f"Error in get_funnel_analytics: {e}")
+        raise HTTPException(status_code=500, detail="Error calculating funnel analytics")
+
+# --- GLOBAL SEARCH (DEV-54) ---
+@router.get("/search", dependencies=[Depends(verify_admin_token)], tags=["Búsqueda"])
+async def global_search(query: str, tenant_id: int = Depends(get_resolved_tenant_id)):
+    """Performs full-text search across leads, notes and messages."""
+    try:
+        return await search_service.global_search(tenant_id, query)
+    except Exception as e:
+        logger.error(f"Error in global_search: {e}")
+        raise HTTPException(status_code=500, detail="Error performing global search")
+
+# --- BLACKLIST MANAGEMENT (DEV-55) ---
+class BlacklistAdd(BaseModel):
+    value: str
+    type: str # 'phone' | 'email' | 'domain'
+    reason: Optional[str] = None
+
+@router.get("/blacklist", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
+async def list_blacklist(tenant_id: int = Depends(get_resolved_tenant_id)):
+    return await blacklist_service.list_blacklist(tenant_id)
+
+@router.post("/blacklist", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
+async def add_to_blacklist(payload: BlacklistAdd, tenant_id: int = Depends(get_resolved_tenant_id)):
+    await blacklist_service.add_to_blacklist(tenant_id, payload.value, payload.type, payload.reason)
+    return {"status": "added"}
+
+@router.delete("/blacklist/{value}", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
+async def remove_from_blacklist(value: str, tenant_id: int = Depends(get_resolved_tenant_id)):
+    await blacklist_service.remove_from_blacklist(tenant_id, value)
+    return {"status": "removed"}

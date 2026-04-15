@@ -15,6 +15,7 @@ All exports are re-exported from here for backward compatibility.
 
 import os
 import json
+import uuid
 import asyncpg
 from typing import Optional, List, Tuple, Dict, Any
 from contextlib import asynccontextmanager
@@ -264,5 +265,4 @@ async def chat_get_messages(
     )
 
 
-# Import uuid for lead updates
-import uuid
+# uuid imported at top of file

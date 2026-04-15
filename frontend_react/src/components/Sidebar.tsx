@@ -121,6 +121,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'analytics', labelKey: 'nav.analytics' as const, icon: <BarChart3 size={17} />, path: '/crm/analytics', roles: ['ceo'], hint: 'Rendimiento por vendedor, canal y campana' },
     { id: 'marketing', labelKey: 'nav.marketing' as const, icon: <Megaphone size={17} />, path: '/crm/marketing', roles: ['ceo', 'admin', 'marketing'], hint: 'ROI de campanas publicitarias con atribucion de leads' },
     { id: 'hsm_automation', labelKey: 'nav.hsm_automation' as const, icon: <Layout size={17} />, path: '/crm/hsm', roles: ['ceo', 'admin', 'setter', 'closer'], hint: 'Plantillas HSM y secuencias de automatizacion' },
+    { id: 'internal_chat', labelKey: 'nav.internal_chat' as const, icon: <MessageSquare size={17} />, path: '/crm/chat-interno', roles: ['ceo', 'setter', 'closer', 'secretary', 'professional'], hint: 'Chat interno del equipo: canales y mensajes directos' },
+    { id: 'plantillas', labelKey: 'nav.plantillas' as const, icon: <Layout size={17} />, path: '/crm/plantillas', roles: ['ceo', 'setter', 'closer'], hint: 'Plantillas de mensajes reutilizables con variables' },
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
     { id: 'supervisor', labelKey: 'nav.supervisor' as const, icon: <Eye size={17} />, path: '/crm/supervisor', roles: ['ceo'], hint: 'Monitoreo en tiempo real de conversaciones y alertas de IA' },
     { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={17} />, path: '/empresas', roles: ['ceo'], hint: 'Empresas y organizaciones registradas en la plataforma' },
@@ -143,6 +145,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/seguimientos') return location.pathname === path;
     if (path === '/crm/marketing') return location.pathname === path;
     if (path === '/crm/hsm') return location.pathname === path;
+    if (path === '/crm/chat-interno') return location.pathname === path;
+    if (path === '/crm/plantillas') return location.pathname === path;
     if (path === '/crm/integraciones') return location.pathname === path;
     if (path === '/crm/actividad-equipo') return location.pathname === path;
     if (path === '/crm/auditoria') return location.pathname === path;

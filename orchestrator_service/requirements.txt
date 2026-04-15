@@ -44,3 +44,6 @@ redis==5.0.1
 alembic
 websockets
 
+# SPEC-07 Telegram Notifications
+bleach>=6.1
+

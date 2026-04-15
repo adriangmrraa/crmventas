@@ -28,6 +28,8 @@ import SupervisorDashboard from './modules/crm_sales/views/SupervisorDashboard';
 import MarketingHubView from './views/marketing/MarketingHubView';
 import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import IntegrationsView from './components/integrations/IntegrationsView';
+import PlantillasView from './modules/crm_sales/views/PlantillasView';
+import InternalChatView from './modules/crm_sales/views/InternalChatView';
 // Optional Notifications Pages
 import NotificationsView from './views/NotificationsView';
 // Legal Pages
@@ -155,6 +157,12 @@ function App() {
                         <Route path="crm/hsm" element={
                           <ProtectedRoute allowedRoles={['ceo', 'admin', 'setter', 'closer']}>
                             <MetaTemplatesView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/chat-interno" element={<InternalChatView />} />
+                        <Route path="crm/plantillas" element={
+                          <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
+                            <PlantillasView />
                           </ProtectedRoute>
                         } />
                         <Route path="crm/integraciones" element={

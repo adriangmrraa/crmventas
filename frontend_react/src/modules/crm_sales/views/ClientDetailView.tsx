@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, Trash2, FolderOpen } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import type { Client } from './ClientsView';
+import DriveExplorer from '../components/drive/DriveExplorer';
 
 const CRM_CLIENTS_BASE = '/admin/core/crm/clients';
 
@@ -15,6 +16,7 @@ export default function ClientDetailView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'data' | 'drive'>('data');
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -137,6 +139,37 @@ export default function ClientDetailView() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="shrink-0 flex border-b border-white/[0.06] px-4 lg:px-6">
+        <button
+          onClick={() => setActiveTab('data')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'data'
+              ? 'border-primary text-white'
+              : 'border-transparent text-white/50 hover:text-white/70'
+          }`}
+        >
+          <User size={14} className="inline mr-1.5" />
+          {t('clients.personal_data')}
+        </button>
+        <button
+          onClick={() => setActiveTab('drive')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'drive'
+              ? 'border-primary text-white'
+              : 'border-transparent text-white/50 hover:text-white/70'
+          }`}
+        >
+          <FolderOpen size={14} className="inline mr-1.5" />
+          {t('drive.title')}
+        </button>
+      </div>
+
+      {activeTab === 'drive' && client ? (
+        <div className="flex-1 min-h-0">
+          <DriveExplorer clientId={client.id} />
+        </div>
+      ) : (
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
         {error && (
           <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
@@ -216,6 +249,7 @@ export default function ClientDetailView() {
           </div>
         </form>
       </div>
+      )}
     </div>
   );
 }

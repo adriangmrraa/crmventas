@@ -343,6 +343,42 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not mount Analytics routes: {e}")
 
+# Drive Storage Routes (SPEC-01)
+try:
+    from routes.drive_routes import router as drive_router
+
+    app.include_router(drive_router, tags=["Drive Storage"])
+    logger.info("✅ Drive Storage API mounted at /api/v1/drive")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Drive routes: {e}")
+
+# Internal Chat Routes (SPEC-04)
+try:
+    from routes.internal_chat_routes import router as internal_chat_router
+
+    app.include_router(internal_chat_router, tags=["Internal Chat"])
+    logger.info("✅ Internal Chat API mounted at /admin/core/internal-chat")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Internal Chat routes: {e}")
+
+# Plantillas Routes (SPEC-02)
+try:
+    from routes.plantillas_routes import router as plantillas_router
+
+    app.include_router(plantillas_router, tags=["Plantillas"])
+    logger.info("✅ Plantillas API mounted at /api/v1/plantillas")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Plantillas routes: {e}")
+
+# Telegram Notification Routes (SPEC-07)
+try:
+    from routes.telegram_routes import router as telegram_router
+
+    app.include_router(telegram_router, tags=["Telegram Notifications"])
+    logger.info("✅ Telegram Notification API mounted at /internal/telegram/notify")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Telegram routes: {e}")
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 

@@ -108,7 +108,7 @@ const SellersView: React.FC = () => {
             setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: action } : u)));
             if (action === 'active') fetchSellers();
         } catch {
-            alert(t('alerts.error_process'));
+            setError(t('alerts.error_process'));
         }
     };
 
@@ -143,7 +143,7 @@ const SellersView: React.FC = () => {
             fetchUsers();
             fetchSellers();
         } catch {
-            alert(t('approvals.error_process'));
+            setError(t('approvals.error_process'));
         }
     };
 
@@ -151,7 +151,7 @@ const SellersView: React.FC = () => {
         if (!selectedSeller) return;
         const tenant_id = linkFormData.tenant_id ?? entities[0]?.id;
         if (!tenant_id) {
-            alert(t('sellers.select_entity'));
+            setError(t('sellers.select_entity'));
             return;
         }
         e.preventDefault();
@@ -171,7 +171,7 @@ const SellersView: React.FC = () => {
             setLinkFormData({ tenant_id: null, phone: '' });
             fetchSellers();
         } catch (err: any) {
-            alert(err?.response?.data?.detail || t('sellers.error_link_entity'));
+            setError(err?.response?.data?.detail || t('sellers.error_link_entity'));
         } finally {
             setLinkFormSubmitting(false);
         }
@@ -211,7 +211,7 @@ const SellersView: React.FC = () => {
             }
             fetchSellers();
         } catch (err: any) {
-            alert(err?.response?.data?.detail || t('approvals.error_save'));
+            setError(err?.response?.data?.detail || t('approvals.error_save'));
         } finally {
             setEditFormSubmitting(false);
         }

@@ -200,28 +200,28 @@ export default function CrmDashboardView() {
             value={stats?.total_leads || 0}
             icon={Users}
             color="bg-violet-500/100"
-            trend="+12%"
+            trend={stats?.total_leads_trend || undefined}
           />
           <KPICard
             title="Active Leads"
             value={stats?.active_leads || 0}
             icon={UserCheck}
             color="bg-emerald-500"
-            trend="+8%"
+            trend={stats?.active_leads_trend || undefined}
           />
           <KPICard
             title="Conversion Rate"
             value={`${stats?.conversion_rate || 0}%`}
             icon={Target}
             color="bg-amber-500"
-            trend="+2.5%"
+            trend={stats?.conversion_rate_trend || undefined}
           />
           <KPICard
             title="Total Revenue"
             value={`$${(stats?.total_revenue || 0).toLocaleString()}`}
             icon={DollarSign}
             color="bg-purple-500"
-            trend="+15%"
+            trend={stats?.revenue_trend || undefined}
           />
         </div>
 

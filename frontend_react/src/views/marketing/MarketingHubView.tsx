@@ -73,7 +73,7 @@ export default function MarketingHubView() {
     const loadStats = async () => {
         try {
             // Use combined endpoint to get both Meta and Google stats
-            const { data } = await api.get(`/crm/marketing/combined-stats?range=${timeRange}&google_date_range=LAST_30_DAYS`);
+            const { data } = await api.get(`/crm/marketing/combined-stats?time_range=${timeRange}&google_date_range=${timeRange}`);
             console.log("[MarketingHub] Combined stats data loaded:", data);
             
             const statsData = data.data || data;

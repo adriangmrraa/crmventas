@@ -25,6 +25,9 @@
     "prospecting": "Prospecting",
     "marketing": "Marketing Hub",
     "hsm_automation": "HSM Automation",
+    "checkin": "Check-in",
+    "mis_notas": "My Notes",
+    "manuales": "Manuals",
     "internal_chat": "Team Chat",
     "plantillas": "Templates",
     "integrations": "Integrations",
@@ -1098,6 +1101,10 @@
     "save": "Save",
     "cancel": "Cancel"
   },
+  "checkin": { "title": "Daily Check-in", "ceo_panel": "Daily Panel", "total": "Total", "active": "Active", "completed": "Completed", "no_checkin": "No check-in", "start_day": "Start your day by logging planned calls.", "planned_calls": "Planned calls", "do_checkin": "Check In", "in_progress": "Day in progress", "planned": "Planned", "achieved_calls": "Achieved calls", "achieved": "Achieved", "contacts": "Contacts", "notes": "Notes", "do_checkout": "Close Day", "day_completed": "Day completed", "compliance": "Compliance" },
+  "vendor_tasks": { "title": "My Notes", "assigned": "Assigned Tasks", "admin_notes": "Admin Notes", "personal": "Personal Tasks", "no_tasks": "No assigned tasks.", "no_notes": "No notes.", "no_personal": "No personal tasks.", "new_personal": "New personal task...", "search_notes": "Search notes..." },
+  "manuales": { "title": "Manuals", "create": "New Manual", "edit": "Edit Manual", "all": "All", "search": "Search by title or content...", "titulo": "Title", "content_hint": "Content (supports basic Markdown)", "markdown_hint": "Supports Markdown: # title, ## section, **bold**, - list", "confirm_delete": "Delete this manual?", "empty": "No manuals yet." },
+  "client360": { "notes": "Notes", "calls": "Calls", "notes_placeholder": "Client notes will be shown here.", "calls_placeholder": "Call history will be shown here.", "whatsapp_placeholder": "WhatsApp messages will be shown here." },
   "chat": {
     "title": "Team Chat",
     "channels": "Channels",

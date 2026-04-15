@@ -352,6 +352,30 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not mount Drive routes: {e}")
 
+# Daily Check-in Routes (SPEC-05)
+try:
+    from routes.checkin_routes import router as checkin_router
+    app.include_router(checkin_router, tags=["Daily Check-in"])
+    logger.info("✅ Daily Check-in API mounted at /admin/core/checkin")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Check-in routes: {e}")
+
+# Vendor Tasks Routes (SPEC-06)
+try:
+    from routes.vendor_tasks_routes import router as vendor_tasks_router
+    app.include_router(vendor_tasks_router, tags=["Vendor Tasks"])
+    logger.info("✅ Vendor Tasks API mounted at /admin/core/crm/vendor-tasks")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Vendor Tasks routes: {e}")
+
+# Knowledge Base Routes (SPEC-03)
+try:
+    from routes.manuales_routes import router as manuales_router
+    app.include_router(manuales_router, tags=["Knowledge Base"])
+    logger.info("✅ Knowledge Base API mounted at /admin/core/manuales")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Manuales routes: {e}")
+
 # Internal Chat Routes (SPEC-04)
 try:
     from routes.internal_chat_routes import router as internal_chat_router

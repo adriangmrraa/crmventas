@@ -23,6 +23,9 @@
     "follow_ups": "Suivis",
     "clients": "Clients",
     "prospecting": "Prospection",
+    "checkin": "Check-in",
+    "mis_notas": "Mes Notes",
+    "manuales": "Manuels",
     "internal_chat": "Chat Interne",
     "plantillas": "Modeles",
     "integrations": "Intégrations",
@@ -954,6 +957,10 @@
     "save": "Enregistrer",
     "cancel": "Annuler"
   },
+  "checkin": { "title": "Check-in Quotidien", "ceo_panel": "Panel Journalier", "total": "Total", "active": "Actifs", "completed": "Termines", "no_checkin": "Pas de check-in", "start_day": "Commencez votre journee.", "planned_calls": "Appels prevus", "do_checkin": "Check In", "in_progress": "Journee en cours", "planned": "Prevus", "achieved_calls": "Appels realises", "achieved": "Realises", "contacts": "Contacts", "notes": "Notes", "do_checkout": "Fermer la Journee", "day_completed": "Journee terminee", "compliance": "Conformite" },
+  "vendor_tasks": { "title": "Mes Notes", "assigned": "Taches Assignees", "admin_notes": "Notes Admin", "personal": "Taches Personnelles", "no_tasks": "Pas de taches.", "no_notes": "Pas de notes.", "no_personal": "Pas de taches personnelles.", "new_personal": "Nouvelle tache...", "search_notes": "Rechercher..." },
+  "manuales": { "title": "Manuels", "create": "Nouveau Manuel", "edit": "Modifier", "all": "Tous", "search": "Rechercher...", "titulo": "Titre", "content_hint": "Contenu (Markdown basique)", "markdown_hint": "Markdown: # titre, ## section, **gras**, - liste", "confirm_delete": "Supprimer ce manuel?", "empty": "Pas de manuels." },
+  "client360": { "notes": "Notes", "calls": "Appels", "notes_placeholder": "Les notes du client seront affichees ici.", "calls_placeholder": "L'historique des appels sera affiche ici.", "whatsapp_placeholder": "Les messages WhatsApp seront affiches ici." },
   "chat": {
     "title": "Chat Interne",
     "channels": "Canaux",

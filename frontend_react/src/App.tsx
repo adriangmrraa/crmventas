@@ -30,6 +30,9 @@ import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import IntegrationsView from './components/integrations/IntegrationsView';
 import PlantillasView from './modules/crm_sales/views/PlantillasView';
 import InternalChatView from './modules/crm_sales/views/InternalChatView';
+import DailyCheckinView from './modules/crm_sales/views/DailyCheckinView';
+import MisNotasView from './modules/crm_sales/views/MisNotasView';
+import ManualesView from './modules/crm_sales/views/ManualesView';
 // Optional Notifications Pages
 import NotificationsView from './views/NotificationsView';
 // Legal Pages
@@ -160,6 +163,9 @@ function App() {
                           </ProtectedRoute>
                         } />
                         <Route path="crm/chat-interno" element={<InternalChatView />} />
+                        <Route path="crm/checkin" element={<DailyCheckinView />} />
+                        <Route path="mis-notas" element={<MisNotasView />} />
+                        <Route path="crm/manuales" element={<ManualesView />} />
                         <Route path="crm/plantillas" element={
                           <ProtectedRoute allowedRoles={['ceo', 'setter', 'closer']}>
                             <PlantillasView />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, Trash2, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, Trash2, FolderOpen, MessageSquare, FileText } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import type { Client } from './ClientsView';
@@ -16,7 +16,10 @@ export default function ClientDetailView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'data' | 'drive'>('data');
+  const [activeTab, setActiveTab] = useState<'data' | 'notes' | 'calls' | 'whatsapp' | 'drive'>('data');
+  const [clientNotes, setClientNotes] = useState<any[]>([]);
+  const [clientCalls, setClientCalls] = useState<any[]>([]);
+  const [tabLoading, setTabLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -153,11 +156,36 @@ export default function ClientDetailView() {
           {t('clients.personal_data')}
         </button>
         <button
+          onClick={() => setActiveTab('notes')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'notes' ? 'border-primary text-white' : 'border-transparent text-white/50 hover:text-white/70'
+          }`}
+        >
+          <FileText size={14} className="inline mr-1.5" />
+          {t('client360.notes')}
+        </button>
+        <button
+          onClick={() => setActiveTab('calls')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'calls' ? 'border-primary text-white' : 'border-transparent text-white/50 hover:text-white/70'
+          }`}
+        >
+          <Phone size={14} className="inline mr-1.5" />
+          {t('client360.calls')}
+        </button>
+        <button
+          onClick={() => setActiveTab('whatsapp')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'whatsapp' ? 'border-primary text-white' : 'border-transparent text-white/50 hover:text-white/70'
+          }`}
+        >
+          <MessageSquare size={14} className="inline mr-1.5" />
+          WhatsApp
+        </button>
+        <button
           onClick={() => setActiveTab('drive')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'drive'
-              ? 'border-primary text-white'
-              : 'border-transparent text-white/50 hover:text-white/70'
+            activeTab === 'drive' ? 'border-primary text-white' : 'border-transparent text-white/50 hover:text-white/70'
           }`}
         >
           <FolderOpen size={14} className="inline mr-1.5" />
@@ -165,7 +193,19 @@ export default function ClientDetailView() {
         </button>
       </div>
 
-      {activeTab === 'drive' && client ? (
+      {activeTab === 'notes' && client ? (
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          <p className="text-white/40 text-sm">{t('client360.notes_placeholder')}</p>
+        </div>
+      ) : activeTab === 'calls' && client ? (
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          <p className="text-white/40 text-sm">{t('client360.calls_placeholder')}</p>
+        </div>
+      ) : activeTab === 'whatsapp' && client ? (
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          <p className="text-white/40 text-sm">{t('client360.whatsapp_placeholder')}</p>
+        </div>
+      ) : activeTab === 'drive' && client ? (
         <div className="flex-1 min-h-0">
           <DriveExplorer clientId={client.id} />
         </div>

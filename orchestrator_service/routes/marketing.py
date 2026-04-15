@@ -266,6 +266,46 @@ async def update_automation_rules(
         logger.error(f"Error updating automation rules: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error updating automation rules: {str(e)}")
 
+@router.put("/automation/rules/{rule_id}")
+@audit_access("update_single_automation_rule")
+@limiter.limit("10/minute")
+async def update_single_rule(
+    request: Request,
+    rule_id: str,
+    data: Dict[str, Any],
+    user_data: Dict = Depends(verify_admin_token),
+    tenant_id: int = Depends(get_resolved_tenant_id)
+) -> Dict[str, Any]:
+    """Update a single automation rule."""
+    try:
+        result = await AutomationService.update_automation_rules(tenant_id, {rule_id: data})
+        return {"success": True, "data": result}
+    except Exception as e:
+        logger.error(f"Error updating rule {rule_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/automation/rules/{rule_id}")
+@audit_access("delete_automation_rule")
+@limiter.limit("10/minute")
+async def delete_automation_rule(
+    request: Request,
+    rule_id: str,
+    user_data: Dict = Depends(verify_admin_token),
+    tenant_id: int = Depends(get_resolved_tenant_id)
+) -> Dict[str, Any]:
+    """Delete an automation rule."""
+    try:
+        # Get current rules, remove the one with matching ID
+        current = await AutomationService.get_automation_rules(tenant_id)
+        rules = current.get("rules", {})
+        if rule_id in rules:
+            del rules[rule_id]
+            await AutomationService.update_automation_rules(tenant_id, rules)
+        return {"success": True, "deleted": rule_id}
+    except Exception as e:
+        logger.error(f"Error deleting rule {rule_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== CAMPAIGN MANAGEMENT ====================
 
 @router.get("/campaigns")

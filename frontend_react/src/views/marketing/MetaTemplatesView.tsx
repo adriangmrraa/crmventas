@@ -104,7 +104,11 @@ const MetaTemplatesView: React.FC = () => {
                             <div>
                                 <h3 className="font-bold text-white">{t('hsm.motor_active')}</h3>
                                 <p className="text-xs text-white/40">{t('hsm.motor_desc')}</p>
-                                <span className="mt-2 inline-block px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] font-bold rounded uppercase">{t('hsm.motor_operational')}</span>
+                                {logs.some(l => new Date(l.created_at) > new Date(Date.now() - 24*60*60*1000)) ? (
+                                  <span className="mt-2 inline-block px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] font-bold rounded uppercase">{t('hsm.motor_operational')}</span>
+                                ) : (
+                                  <span className="mt-2 inline-block px-2 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-bold rounded uppercase">Sin actividad 24h</span>
+                                )}
                             </div>
                         </div>
                         <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04] flex items-start gap-4">
@@ -123,7 +127,9 @@ const MetaTemplatesView: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="font-bold text-white">{t('hsm.conversion')}</h3>
-                                <p className="text-2xl font-black text-white">85%</p>
+                                <p className="text-2xl font-black text-white">
+                                  {logs.length > 0 ? `${Math.round((logs.filter(l => l.status === 'delivered' || l.status === 'read').length / logs.length) * 100)}%` : '—'}
+                                </p>
                                 <p className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">{t('hsm.delivery_rate')}</p>
                             </div>
                         </div>
@@ -209,8 +215,7 @@ const MetaTemplatesView: React.FC = () => {
                                 <select
                                     value={timezone}
                                     onChange={(e) => setTimezone(e.target.value)}
-                                    className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm font-bold text-white/70 outline-none focus:ring-2 focus:ring-violet-500 transition-all cursor-not-allowed opacity-70"
-                                    disabled
+                                    className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm font-bold text-white/70 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 >
                                     <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
                                     <option value="America/Mexico_City">Ciudad de México (GMT-6)</option>

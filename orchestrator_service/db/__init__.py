@@ -98,6 +98,23 @@ class Database:
         if self.pool:
             await self.pool.close()
 
+    # Delegate methods for backward compatibility (used by auth_routes, admin_routes, etc.)
+    async def fetch(self, query: str, *args) -> List[dict]:
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(query, *args)
+
+    async def fetchrow(self, query: str, *args) -> Optional[dict]:
+        async with self.pool.acquire() as conn:
+            return await conn.fetchrow(query, *args)
+
+    async def fetchval(self, query: str, *args):
+        async with self.pool.acquire() as conn:
+            return await conn.fetchval(query, *args)
+
+    async def execute(self, query: str, *args) -> str:
+        async with self.pool.acquire() as conn:
+            return await conn.execute(query, *args)
+
 
 # Backward compatibility: single instance
 db = Database()

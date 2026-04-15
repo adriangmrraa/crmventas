@@ -10,7 +10,10 @@ import {
   Phone,
   Building,
   MapPin,
-  Filter
+  Filter,
+  Plus,
+  Calendar,
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -192,6 +195,19 @@ export default function CrmDashboardView() {
 
       {/* MAIN SCROLLABLE CONTENT */}
       <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 scroll-smooth">
+
+        {/* QUICK ACTIONS */}
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => navigate('/crm/leads')} className="flex items-center gap-2 px-3 py-2 bg-violet-500/10 text-violet-400 rounded-lg hover:bg-violet-500/20 text-sm font-medium">
+            <Plus size={14} /> Nuevo Lead
+          </button>
+          <button onClick={() => navigate('/crm/agenda')} className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 text-amber-400 rounded-lg hover:bg-amber-500/20 text-sm font-medium">
+            <Calendar size={14} /> Nueva Cita
+          </button>
+          <button onClick={() => navigate('/crm/pipeline')} className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 text-sm font-medium">
+            <Zap size={14} /> Pipeline
+          </button>
+        </div>
 
         {/* TOP ROW: KPI CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

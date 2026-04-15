@@ -310,7 +310,7 @@ function LeadsViewInner() {
                 <button
                   type="button"
                   onClick={() => setIsBulkModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-blue-100 animate-in fade-in slide-in-from-left-2"
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-violet-100 animate-in fade-in slide-in-from-left-2"
                 >
                   <Layers size={18} />
                   <span className="hidden sm:inline">Actualización Masiva</span>
@@ -409,7 +409,7 @@ function LeadsViewInner() {
               <button
                 type="button"
                 onClick={() => handleOpenModal(null)}
-                className="hidden lg:inline-flex items-center gap-2 px-6 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-blue-900 active:scale-[0.98]"
+                className="hidden lg:inline-flex items-center gap-2 px-6 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-violet-900 active:scale-[0.98]"
               >
                 <Plus size={18} />
                 Añadir Lead
@@ -490,7 +490,7 @@ function LeadsViewInner() {
                 return (
                   <li
                     key={lead.id}
-                    className={`group bg-white/[0.03] border ${selectedLeads.includes(lead.id) ? 'border-violet-300 ring-2 ring-blue-50 shadow-md' : 'border-white/[0.06]'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-white/[0.02] relative overflow-visible`}
+                    className={`group bg-white/[0.03] border ${selectedLeads.includes(lead.id) ? 'border-violet-300 ring-2 ring-violet-50 shadow-md' : 'border-white/[0.06]'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-white/[0.02] relative overflow-visible`}
                     onClick={() => handleOpenModal(lead)}
                   >
                     <div className="flex items-center gap-4 min-w-0">

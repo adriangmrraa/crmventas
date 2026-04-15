@@ -102,7 +102,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white">Meta Ads Wizard</h2>
-                            <p className="text-blue-100 text-sm">Conecta tu cuenta publicitaria de Meta</p>
+                            <p className="text-violet-100 text-sm">Conecta tu cuenta publicitaria de Meta</p>
                         </div>
                     </div>
 

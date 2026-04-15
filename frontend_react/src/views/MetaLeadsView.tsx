@@ -809,18 +809,18 @@ const MetaLeadsView: React.FC = () => {
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold leading-tight">Gestión Estratégica de Leads</h3>
-              <p className="text-blue-100/80 text-sm mt-1 max-w-2xl">
+              <p className="text-violet-100/80 text-sm mt-1 max-w-2xl">
                 Los contactos generados desde formularios de Facebook e Instagram se centralizan aquí automáticamente.
                 Asigna responsables rápidamente para maximizar la conversión.
               </p>
             </div>
             <div className="flex flex-wrap lg:flex-nowrap items-center gap-6 w-full lg:w-auto pt-4 lg:pt-0 border-t lg:border-t-0 border-white/10 lg:pl-6 lg:border-l border-white/20">
               <div className="flex-1 lg:flex-none">
-                <p className="text-[10px] font-black text-blue-200/60 uppercase tracking-widest text-center lg:text-left">DKG Central</p>
-                <p className="text-xl font-black text-center lg:text-left tracking-tight">{(stats.total > 0 ? (stats.converted / stats.total) * 100 : 0).toFixed(1)}% <span className="text-xs font-normal text-blue-200 opacity-60">ROI Est.</span></p>
+                <p className="text-[10px] font-black text-violet-200/60 uppercase tracking-widest text-center lg:text-left">DKG Central</p>
+                <p className="text-xl font-black text-center lg:text-left tracking-tight">{(stats.total > 0 ? (stats.converted / stats.total) * 100 : 0).toFixed(1)}% <span className="text-xs font-normal text-violet-200 opacity-60">ROI Est.</span></p>
               </div>
               <div className="flex-1 lg:flex-none">
-                <p className="text-[10px] font-black text-blue-200/60 uppercase tracking-widest text-center lg:text-left">Sin Asignar</p>
+                <p className="text-[10px] font-black text-violet-200/60 uppercase tracking-widest text-center lg:text-left">Sin Asignar</p>
                 <p className="text-xl font-black text-center lg:text-left tracking-tight">{leads.filter(l => !l.assigned_seller_id).length}</p>
               </div>
             </div>

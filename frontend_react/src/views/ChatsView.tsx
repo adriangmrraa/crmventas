@@ -1175,7 +1175,7 @@ export default function ChatsView() {
                     onClick={() => setShowSellerSelector(!showSellerSelector)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all
                       ${sellerAssignment?.assigned_seller_id
-                        ? 'bg-violet-500/10 text-violet-400 hover:bg-blue-200 border border-violet-500/20'
+                        ? 'bg-violet-500/10 text-violet-400 hover:bg-violet-200 border border-violet-500/20'
                         : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.06] border border-white/[0.06]'
                       }`}
                     title={sellerAssignment?.assigned_seller_id ? "Reasignar vendedor" : "Asignar vendedor"}
@@ -1339,7 +1339,7 @@ export default function ChatsView() {
                           >
                             {/* IA badge for assistant messages */}
                             {message.role === 'assistant' && !message.is_derivhumano && (
-                              <div className="flex items-center gap-1 text-[10px] text-blue-200/60 mb-1">
+                              <div className="flex items-center gap-1 text-[10px] text-violet-200/60 mb-1">
                                 <Bot size={10} />
                                 <span className="font-medium uppercase tracking-wider">IA</span>
                               </div>
@@ -1351,7 +1351,7 @@ export default function ChatsView() {
                               </div>
                             )}
                             <p className="text-sm">{message.content}</p>
-                            <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/30' : 'text-blue-200'
+                            <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/30' : 'text-violet-200'
                               }`}>
                               {new Date(message.created_at).toLocaleTimeString()}
                             </p>

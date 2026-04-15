@@ -7,7 +7,7 @@ const CRM_TAGS_BASE = '/admin/core/crm/lead-tags';
 const CRM_LEADS_BASE = '/admin/core/crm/leads';
 
 const PRESET_COLORS = [
-  '#3B82F6', // blue
+  '#8F3DFF', // blue
   '#10B981', // emerald
   '#F59E0B', // amber
   '#EF4444', // red

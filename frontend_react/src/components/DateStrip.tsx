@@ -70,7 +70,7 @@ export default function DateStrip({ selectedDate, onDateSelect }: DateStripProps
                                 }
               `}
                         >
-                            <span className={`text-[10px] uppercase font-semibold ${selected ? 'text-blue-100' : 'text-white/30'}`}>
+                            <span className={`text-[10px] uppercase font-semibold ${selected ? 'text-violet-100' : 'text-white/30'}`}>
                                 {dayName}
                             </span>
                             <span className={`text-xl font-bold leading-none ${selected ? 'text-white' : 'text-white/70'}`}>

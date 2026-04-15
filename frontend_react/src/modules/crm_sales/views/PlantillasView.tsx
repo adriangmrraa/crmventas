@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  MessageCircle, Mail, UserCheck, Target, Handshake,
+  MessageCircle, Mail, UserCheck, Target, Trophy,
   Plus, Search, Copy, Edit3, Trash2, Eye, X, Check
 } from 'lucide-react';
 import api from '../../../api/axios';
@@ -32,7 +32,7 @@ const CATEGORIES: { key: Categoria; icon: typeof MessageCircle; color: string }[
   { key: 'email', icon: Mail, color: 'text-violet-400' },
   { key: 'seguimiento', icon: UserCheck, color: 'text-amber-400' },
   { key: 'prospeccion', icon: Target, color: 'text-purple-400' },
-  { key: 'cierre', icon: Handshake, color: 'text-emerald-400' },
+  { key: 'cierre', icon: Trophy, color: 'text-emerald-400' },
 ];
 
 const CATEGORY_BG: Record<string, string> = {

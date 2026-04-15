@@ -71,7 +71,7 @@ const ProfileView: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin text-blue-400" size={40} />
+                <Loader2 className="animate-spin text-violet-400" size={40} />
             </div>
         );
     }
@@ -88,7 +88,7 @@ const ProfileView: React.FC = () => {
                 {/* Left: Summary Card */}
                 <div className="md:col-span-1">
                     <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.04] flex flex-col items-center text-center">
-                        <div className="w-24 h-24 rounded-full bg-blue-500/15 flex items-center justify-center text-blue-400 font-bold text-3xl mb-4 border-4 border-white/[0.15]">
+                        <div className="w-24 h-24 rounded-full bg-violet-500/15 flex items-center justify-center text-violet-400 font-bold text-3xl mb-4 border-4 border-white/[0.15]">
                             {firstName?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase()}
                         </div>
                         <h2 className="text-xl font-bold text-white">{firstName} {lastName}</h2>
@@ -117,7 +117,7 @@ const ProfileView: React.FC = () => {
                                         type="text"
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-blue-500 transition-all outline-none"
+                                        className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-violet-500 transition-all outline-none"
                                         placeholder={t('profile.placeholder_first_name')}
                                         required
                                     />
@@ -128,7 +128,7 @@ const ProfileView: React.FC = () => {
                                         type="text"
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-blue-500 transition-all outline-none"
+                                        className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-violet-500 transition-all outline-none"
                                         placeholder={t('profile.placeholder_last_name')}
                                     />
                                 </div>
@@ -137,10 +137,10 @@ const ProfileView: React.FC = () => {
                             {authUser?.role === 'professional' && (
                                 <div className="pt-6 border-t border-white/[0.04]">
                                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                        <Calendar size={20} className="text-blue-400" />
+                                        <Calendar size={20} className="text-violet-400" />
                                         {t('profile.agenda_settings')}
                                     </h3>
-                                    <div className="bg-blue-500/10 p-4 rounded-xl mb-4 text-sm text-blue-400 leading-relaxed border border-blue-500/20">
+                                    <div className="bg-violet-500/10 p-4 rounded-xl mb-4 text-sm text-violet-400 leading-relaxed border border-violet-500/20">
                                         <p>{t('profile.calendar_help')}</p>
                                     </div>
                                     <div>
@@ -149,7 +149,7 @@ const ProfileView: React.FC = () => {
                                             type="text"
                                             value={calendarId}
                                             onChange={(e) => setCalendarId(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-blue-500 transition-all font-mono text-sm outline-none"
+                                            className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-medical-500 focus:bg-white/[0.06] focus:border-violet-500 transition-all font-mono text-sm outline-none"
                                             placeholder={t('profile.calendar_id_placeholder')}
                                         />
                                     </div>

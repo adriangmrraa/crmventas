@@ -133,7 +133,7 @@ export default function ProfessionalAnalyticsView() {
                                     <Tooltip
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                     />
-                                    <Bar dataKey="completionRate" name={t('analytics.completion_rate')} fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+                                    <Bar dataKey="completionRate" name={t('analytics.completion_rate')} fill="#8F3DFF" radius={[4, 4, 0, 0]} barSize={20} />
                                     <Bar dataKey="retentionRate" name={t('analytics.retention_rate')} fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -148,7 +148,7 @@ export default function ProfessionalAnalyticsView() {
                         <div className="space-y-4">
                             {data.slice(0, 5).map((prof) => (
                                 <div key={prof.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-white/[0.03]/[0.02] transition-colors">
-                                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold shrink-0">
+                                    <div className="w-10 h-10 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-400 font-bold shrink-0">
                                         {prof.name.charAt(0)}
                                     </div>
                                     <div>

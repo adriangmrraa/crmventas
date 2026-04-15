@@ -69,7 +69,7 @@ export default function DailyCheckinView() {
           <h1 className="text-lg font-semibold text-white">{t('checkin.ceo_panel')}</h1>
           <div className="flex gap-4 mt-2 text-sm">
             <span className="text-white/50">{t('checkin.total')}: {ceoData.total_sellers}</span>
-            <span className="text-blue-400">{t('checkin.active')}: {ceoData.con_checkin}</span>
+            <span className="text-violet-400">{t('checkin.active')}: {ceoData.con_checkin}</span>
             <span className="text-green-400">{t('checkin.completed')}: {ceoData.completados}</span>
           </div>
         </div>
@@ -110,14 +110,14 @@ export default function DailyCheckinView() {
               <input type="number" value={planeadas} onChange={e => setPlaneadas(Number(e.target.value))} min={1}
                 className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm" />
             </div>
-            <button onClick={handleCheckin} className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+            <button onClick={handleCheckin} className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-violet-700 flex items-center justify-center gap-2">
               <Clock size={16} /> {t('checkin.do_checkin')}
             </button>
           </div>
         ) : checkin.estado === 'active' ? (
           <div className="max-w-sm mx-auto space-y-4">
-            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-center">
-              <p className="text-blue-400 text-sm font-medium">{t('checkin.in_progress')}</p>
+            <div className="p-4 bg-violet-500/10 border border-violet-500/20 rounded-lg text-center">
+              <p className="text-violet-400 text-sm font-medium">{t('checkin.in_progress')}</p>
               <p className="text-white/50 text-xs mt-1">{t('checkin.planned')}: {checkin.llamadas_planeadas}</p>
             </div>
             <div>

@@ -28,7 +28,7 @@ const KPICard: React.FC<KPICardProps> = ({ title, value, subtext, trend, icon, c
 
     const getColorClasses = () => {
         switch (color) {
-            case 'blue': return 'bg-blue-500/10 text-blue-400';
+            case 'blue': return 'bg-violet-500/10 text-violet-400';
             case 'green': return 'bg-green-500/10 text-green-400';
             case 'purple': return 'bg-purple-500/10 text-purple-400';
             case 'orange': return 'bg-orange-500/10 text-orange-600';

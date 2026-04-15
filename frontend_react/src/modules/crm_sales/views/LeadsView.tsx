@@ -78,7 +78,7 @@ class LeadsErrorBoundary extends Component<{ children: ReactNode }, { error: str
           <h2 className="text-lg font-bold text-white mb-2">Error al cargar Leads</h2>
           <p className="text-sm text-white/40 max-w-md font-mono bg-red-500/10 p-3 rounded-lg border border-red-500/20">{this.state.error}</p>
           <button
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-bold hover:bg-violet-700"
             onClick={() => window.location.reload()}
           >Recargar página</button>
         </div>
@@ -271,7 +271,7 @@ function LeadsViewInner() {
       {/* FIXED TITLE BAR */}
       <div className="flex items-center justify-between p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5 text-medical-700" />
           </div>
           <div>
@@ -282,7 +282,7 @@ function LeadsViewInner() {
         <button
           type="button"
           onClick={() => handleOpenModal(null)}
-          className="lg:hidden inline-flex items-center p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-transform"
+          className="lg:hidden inline-flex items-center p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 active:scale-95 transition-transform"
         >
           <Plus size={20} />
         </button>
@@ -301,7 +301,7 @@ function LeadsViewInner() {
                   placeholder={t('common.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-white/[0.06] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full pl-9 pr-3 py-2 border border-white/[0.06] rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                 />
               </div>
             </div>
@@ -310,11 +310,11 @@ function LeadsViewInner() {
                 <button
                   type="button"
                   onClick={() => setIsBulkModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold transition-all shadow-md shadow-blue-100 animate-in fade-in slide-in-from-left-2"
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-blue-100 animate-in fade-in slide-in-from-left-2"
                 >
                   <Layers size={18} />
                   <span className="hidden sm:inline">Actualización Masiva</span>
-                  <span className="bg-blue-500 text-[10px] px-1.5 py-0.5 rounded-full ml-1">
+                  <span className="bg-violet-500 text-[10px] px-1.5 py-0.5 rounded-full ml-1">
                     {selectedLeads.length}
                   </span>
                 </button>
@@ -322,7 +322,7 @@ function LeadsViewInner() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex-1 px-3 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-white/70"
+                className="flex-1 px-3 py-2 border border-white/[0.06] rounded-xl text-sm bg-white/[0.03] outline-none focus:ring-2 focus:ring-violet-500 transition-all font-medium text-white/70"
               >
                 <option value="">Todos los estados</option>
                 {statusOptions.map(s => (
@@ -337,14 +337,14 @@ function LeadsViewInner() {
                   onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
                   className={`flex items-center gap-2 px-3 py-2 border rounded-xl text-sm font-medium transition-all ${
                     tagFilter.length > 0
-                      ? 'border-blue-500/30 bg-blue-500/10 text-blue-400'
+                      ? 'border-violet-500/30 bg-violet-500/10 text-violet-400'
                       : 'border-white/[0.06] bg-white/[0.03] text-white/70'
                   }`}
                 >
                   <Tag size={14} />
                   <span className="hidden sm:inline">Etiquetas</span>
                   {tagFilter.length > 0 && (
-                    <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    <span className="bg-violet-500/20 text-violet-400 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                       {tagFilter.length}
                     </span>
                   )}
@@ -389,7 +389,7 @@ function LeadsViewInner() {
                                 style={{ backgroundColor: tag.color }}
                               />
                               <span className="flex-1 text-left truncate">{tag.name}</span>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-violet-500 shrink-0" />}
                             </button>
                           );
                         })
@@ -409,7 +409,7 @@ function LeadsViewInner() {
               <button
                 type="button"
                 onClick={() => handleOpenModal(null)}
-                className="hidden lg:inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold transition-all shadow-md shadow-blue-900 active:scale-[0.98]"
+                className="hidden lg:inline-flex items-center gap-2 px-6 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 text-sm font-bold transition-all shadow-md shadow-blue-900 active:scale-[0.98]"
               >
                 <Plus size={18} />
                 Añadir Lead
@@ -423,21 +423,21 @@ function LeadsViewInner() {
           <div className="flex overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('all')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-medical-600 text-medical-700 bg-violet-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Todos
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'messages' ? 'border-medical-600 text-medical-700 bg-violet-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Mensajes
             </button>
             <button
               onClick={() => setActiveTab('prospecting')}
-              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-blue-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'prospecting' ? 'border-medical-600 text-medical-700 bg-violet-500/10/30' : 'border-transparent text-white/30 hover:text-white/50'
                 }`}
             >
               Prospección
@@ -445,11 +445,11 @@ function LeadsViewInner() {
           </div>
 
           {activeTab === 'prospecting' && (
-            <div className="p-3 bg-blue-500/10/50 border-t border-white/[0.04] flex items-center justify-between">
+            <div className="p-3 bg-violet-500/10/50 border-t border-white/[0.04] flex items-center justify-between">
               <span className="text-xs font-bold text-medical-700 uppercase tracking-tight">Opciones de prospección</span>
               <button
                 onClick={() => navigate('/crm/prospeccion')}
-                className="text-[10px] font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-all"
+                className="text-[10px] font-bold uppercase tracking-wider text-white bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-lg transition-all"
               >
                 Ir a Prospección →
               </button>
@@ -473,7 +473,7 @@ function LeadsViewInner() {
               <button
                 type="button"
                 onClick={() => handleOpenModal(null)}
-                className="mt-3 text-blue-400 hover:underline font-medium"
+                className="mt-3 text-violet-400 hover:underline font-medium"
               >
                 Add your first lead
               </button>
@@ -490,13 +490,13 @@ function LeadsViewInner() {
                 return (
                   <li
                     key={lead.id}
-                    className={`group bg-white/[0.03] border ${selectedLeads.includes(lead.id) ? 'border-blue-300 ring-2 ring-blue-50 shadow-md' : 'border-white/[0.06]'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-white/[0.02] relative overflow-visible`}
+                    className={`group bg-white/[0.03] border ${selectedLeads.includes(lead.id) ? 'border-violet-300 ring-2 ring-blue-50 shadow-md' : 'border-white/[0.06]'} rounded-xl p-4 lg:p-5 hover:border-medical-300 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 active:bg-white/[0.02] relative overflow-visible`}
                     onClick={() => handleOpenModal(lead)}
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       {/* Selection Checkbox */}
                       <div
-                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedLeads.includes(lead.id) ? 'bg-blue-600 border-blue-600 opacity-100' : 'bg-white/[0.03] border-white/[0.06] opacity-0 group-hover:opacity-100'}`}
+                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedLeads.includes(lead.id) ? 'bg-violet-600 border-violet-600 opacity-100' : 'bg-white/[0.03] border-white/[0.06] opacity-0 group-hover:opacity-100'}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedLeads(prev =>
@@ -509,7 +509,7 @@ function LeadsViewInner() {
                         {selectedLeads.includes(lead.id) && <Check className="w-3 h-3 text-white" />}
                       </div>
 
-                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-white/[0.06]">
+                      <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0 border border-white/[0.06]">
                         <span className="text-medical-700 font-bold text-base">
                           {firstChar}
                         </span>
@@ -522,7 +522,7 @@ function LeadsViewInner() {
                           <ScoreBadge score={lead.score} />
                         </div>
                         {businessName && (
-                          <p className="text-xs text-blue-400 font-medium truncate mb-0.5">
+                          <p className="text-xs text-violet-400 font-medium truncate mb-0.5">
                             {safeName !== businessName ? safeName : String(lead.phone_number || '')}
                           </p>
                         )}
@@ -567,7 +567,7 @@ function LeadsViewInner() {
                             e.stopPropagation();
                             navigate('/chats');
                           }}
-                          className="p-3 bg-blue-500/10 text-blue-400 rounded-xl hover:bg-blue-500/15 transition-colors"
+                          className="p-3 bg-violet-500/10 text-violet-400 rounded-xl hover:bg-violet-500/15 transition-colors"
                           title="Open chat"
                         >
                           <MessageSquare size={20} />
@@ -586,7 +586,7 @@ function LeadsViewInner() {
             <div className={`bg-white/[0.03] rounded-xl shadow-2xl w-full ${editingLead?.source === 'apify_scrape' ? 'max-w-4xl' : 'max-w-md'} max-h-[90vh] flex flex-col`}>
               <div className="p-6 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                  {editingLead ? <Edit className="text-blue-400" size={22} /> : <Plus className="text-blue-400" size={22} />}
+                  {editingLead ? <Edit className="text-violet-400" size={22} /> : <Plus className="text-violet-400" size={22} />}
                   {editingLead ? (editingLead.source === 'apify_scrape' ? 'Business Detail' : 'Edit lead') : 'New lead'}
                 </h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-white/30 hover:text-white/50">
@@ -606,7 +606,7 @@ function LeadsViewInner() {
                     )}
 
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-medical-700 font-bold text-lg">
+                      <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center text-medical-700 font-bold text-lg">
                         {(formData.first_name || editingLead?.apify_title || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -614,7 +614,7 @@ function LeadsViewInner() {
                           {editingLead?.apify_title || (formData.first_name ? `${formData.first_name} ${formData.last_name}` : editingLead?.phone_number)}
                         </h3>
                         {editingLead?.source === 'apify_scrape' && (
-                          <span className="text-xs bg-blue-500/10 text-medical-700 px-2 py-0.5 rounded-full font-medium">Prospección</span>
+                          <span className="text-xs bg-violet-500/10 text-medical-700 px-2 py-0.5 rounded-full font-medium">Prospección</span>
                         )}
                       </div>
                     </div>
@@ -626,7 +626,7 @@ function LeadsViewInner() {
                           <input
                             required
                             type="tel"
-                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30 outline-none transition-all"
+                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30 outline-none transition-all"
                             value={formData.phone_number}
                             onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                           />
@@ -638,7 +638,7 @@ function LeadsViewInner() {
                           <label className="text-xs font-bold text-white/40 uppercase tracking-wider">First name</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30 outline-none"
+                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30 outline-none"
                             value={formData.first_name}
                             onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                           />
@@ -647,7 +647,7 @@ function LeadsViewInner() {
                           <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Last name</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30 outline-none"
+                            className="w-full px-4 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30 outline-none"
                             value={formData.last_name}
                             onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                           />
@@ -660,7 +660,7 @@ function LeadsViewInner() {
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <input
                             type="email"
-                            className="w-full pl-10 pr-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-violet-500 outline-none"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           />
@@ -670,7 +670,7 @@ function LeadsViewInner() {
                       <div className="space-y-1">
                         <label className="text-xs font-bold text-white/40 uppercase tracking-wider">Status</label>
                         <select
-                          className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white/[0.03] font-medium"
+                          className="w-full px-4 py-2 border border-white/[0.06] rounded-lg focus:ring-2 focus:ring-violet-500 outline-none bg-white/[0.03] font-medium"
                           value={formData.status}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         >
@@ -687,7 +687,7 @@ function LeadsViewInner() {
                     <div className="space-y-6">
                       <div className="bg-white/[0.02] rounded-xl p-5 border border-white/[0.04] space-y-4">
                         <h4 className="text-sm font-bold text-white border-b border-white/[0.06] pb-2 flex items-center gap-2">
-                          <Building2 size={18} className="text-blue-400" />
+                          <Building2 size={18} className="text-violet-400" />
                           Business Insights
                         </h4>
 
@@ -724,7 +724,7 @@ function LeadsViewInner() {
                                 href={editingLead.apify_website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-blue-400 font-medium flex items-center gap-1.5 hover:underline"
+                                className="text-sm text-violet-400 font-medium flex items-center gap-1.5 hover:underline"
                               >
                                 <Globe size={16} />
                                 {editingLead.apify_website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
@@ -742,12 +742,12 @@ function LeadsViewInner() {
                                 </a>
                               ) : <Instagram size={20} className="opacity-25" />}
                               {editingLead.social_links?.facebook ? (
-                                <a href={editingLead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+                                <a href={editingLead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-violet-400">
                                   <Facebook size={20} />
                                 </a>
                               ) : <Facebook size={20} className="opacity-25" />}
                               {editingLead.social_links?.linkedin ? (
-                                <a href={editingLead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+                                <a href={editingLead.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-violet-400">
                                   <Linkedin size={20} />
                                 </a>
                               ) : <Linkedin size={20} className="opacity-25" />}
@@ -807,7 +807,7 @@ function LeadsViewInner() {
                   form="lead-form"
                   type="submit"
                   disabled={saving}
-                  className="w-full sm:flex-[2] py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md shadow-medical-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-[2] py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 shadow-md shadow-medical-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saving ? <Loader2 className="animate-spin" size={20} /> : (editingLead ? 'Update Lead' : t('common.save'))}
                 </button>

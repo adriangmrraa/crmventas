@@ -16,7 +16,7 @@ import { useTeamActivity, ActivityEvent, SellerStatus, InactiveLeadAlert } from 
 // ──────────────────────────────────────────
 const EVENT_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   lead_created:        { label: 'Creo lead',           icon: <UserPlus size={14} />,       color: 'text-emerald-400' },
-  lead_status_changed: { label: 'Cambio estado',       icon: <ArrowRightLeft size={14} />, color: 'text-blue-400' },
+  lead_status_changed: { label: 'Cambio estado',       icon: <ArrowRightLeft size={14} />, color: 'text-violet-400' },
   lead_assigned:       { label: 'Asigno lead',         icon: <Users size={14} />,          color: 'text-violet-400' },
   note_added:          { label: 'Dejo nota',           icon: <FileText size={14} />,       color: 'text-amber-400' },
   call_logged:         { label: 'Registro llamada',    icon: <Phone size={14} />,          color: 'text-cyan-400' },
@@ -231,7 +231,7 @@ const TeamActivityView: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg transition-colors ${hasActiveFilters ? 'bg-blue-500/20 text-blue-400' : 'bg-white/[0.06] text-white/60 hover:text-white'}`}
+              className={`p-2 rounded-lg transition-colors ${hasActiveFilters ? 'bg-violet-500/20 text-violet-400' : 'bg-white/[0.06] text-white/60 hover:text-white'}`}
             >
               <Filter size={16} />
             </button>
@@ -352,7 +352,7 @@ const TeamActivityView: React.FC = () => {
             <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider flex items-center gap-2">
               <Activity size={13} />
               Feed de actividad
-              {hasActiveFilters && <span className="text-blue-400">(filtrado)</span>}
+              {hasActiveFilters && <span className="text-violet-400">(filtrado)</span>}
             </h2>
             <span className="text-xs text-white/30">{total} eventos</span>
           </div>
@@ -362,7 +362,7 @@ const TeamActivityView: React.FC = () => {
               <Activity size={32} className="mb-3 opacity-30" />
               <p className="text-sm">Sin actividad registrada</p>
               {hasActiveFilters && (
-                <button onClick={handleClearFilters} className="mt-2 text-xs text-blue-400 hover:underline">
+                <button onClick={handleClearFilters} className="mt-2 text-xs text-violet-400 hover:underline">
                   Quitar filtros
                 </button>
               )}

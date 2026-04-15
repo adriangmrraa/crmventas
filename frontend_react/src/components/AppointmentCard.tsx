@@ -23,9 +23,9 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; text: string; 
         icon: CheckCircle
     },
     scheduled: {
-        bg: 'bg-blue-500/10',
-        border: 'border-l-blue-500',
-        text: 'text-blue-400',
+        bg: 'bg-violet-500/10',
+        border: 'border-l-violet-500',
+        text: 'text-violet-400',
         icon: Clock
     },
     pending: {

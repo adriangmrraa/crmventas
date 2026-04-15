@@ -157,7 +157,7 @@ export default function CloserPanelView() {
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/crm/leads/${call.lead_id}`); }}
-                  className="text-sm font-semibold text-white hover:text-blue-400 transition-colors"
+                  className="text-sm font-semibold text-white hover:text-violet-400 transition-colors"
                 >
                   {call.lead_name || 'Sin nombre'}
                 </button>
@@ -246,7 +246,7 @@ export default function CloserPanelView() {
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => navigate(`/crm/leads/${call.lead_id}`)}
-                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                className="text-xs text-violet-400 hover:text-violet-300 font-medium"
               >
                 Ver lead completo
               </button>
@@ -325,7 +325,7 @@ export default function CloserPanelView() {
           <>
             {renderGroup('Hoy', calls.hoy, 'bg-red-400')}
             {renderGroup('Manana', calls.manana, 'bg-orange-400')}
-            {renderGroup('Esta semana', calls.esta_semana, 'bg-blue-400')}
+            {renderGroup('Esta semana', calls.esta_semana, 'bg-violet-400')}
             {renderGroup('Mas adelante', calls.mas_adelante, 'bg-white/30')}
           </>
         )}

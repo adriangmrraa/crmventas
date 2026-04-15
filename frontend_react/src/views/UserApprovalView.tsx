@@ -253,7 +253,7 @@ const UserApprovalView: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('requests')}
                     className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests'
-                        ? 'text-blue-400'
+                        ? 'text-violet-400'
                         : 'text-white/40 hover:text-medical-700'
                         }`}
                 >
@@ -275,7 +275,7 @@ const UserApprovalView: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('staff')}
                     className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'staff'
-                        ? 'text-blue-400'
+                        ? 'text-violet-400'
                         : 'text-white/40 hover:text-medical-700'
                         }`}
                 >
@@ -488,7 +488,7 @@ const UserApprovalView: React.FC = () => {
                     <div className="bg-white/[0.03] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in duration-200">
                         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 border-b border-white/[0.04] shrink-0">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 shrink-0">
                                     <Edit size={22} />
                                 </div>
                                 <div className="min-w-0">
@@ -518,14 +518,14 @@ const UserApprovalView: React.FC = () => {
                                 <input type="text" value={editFormData.phone} onChange={(e) => setEditFormData((p) => ({ ...p, phone: e.target.value }))} className="edit-profile-input" placeholder={t('approvals.phone_edit_placeholder')} />
                             </div>
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-white/[0.06] text-blue-400 focus:ring-blue-500" />
+                                <input type="checkbox" checked={editFormData.is_active} onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 rounded border-white/[0.06] text-violet-400 focus:ring-violet-500" />
                                 <span className="text-sm font-medium text-white/70">{t('approvals.active')}</span>
                             </label>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={closeEditProfileModal} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/70 font-medium hover:bg-white/[0.02] touch-manipulation">
                                     {t('common.cancel')}
                                 </button>
-                                <button type="submit" disabled={editFormSubmitting} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 touch-manipulation">
+                                <button type="submit" disabled={editFormSubmitting} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-violet-600 text-white font-medium hover:bg-violet-700 disabled:opacity-50 touch-manipulation">
                                     {editFormSubmitting ? t('common.saving') : t('common.save_changes')}
                                 </button>
                             </div>
@@ -657,7 +657,7 @@ const UserApprovalView: React.FC = () => {
         }
         .edit-profile-input:focus {
           outline: none;
-          border-color: #3b82f6;
+          border-color: #8F3DFF;
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         .animate-fadeIn {

@@ -31,7 +31,7 @@ const CRM_LEADS_BASE = '/admin/core/crm/leads';
 
 const ROLE_COLORS: Record<string, string> = {
   ceo: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  setter: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  setter: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
   closer: 'bg-green-500/20 text-green-400 border-green-500/30',
   secretary: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   professional: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
@@ -42,7 +42,7 @@ const RESULT_LABELS: Record<string, { label: string; color: string }> = {
   connected: { label: 'Conectada', color: 'text-green-400 bg-green-500/10 border-green-500/20' },
   no_answer: { label: 'No contesto', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
   voicemail: { label: 'Buzon de voz', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
-  rescheduled: { label: 'Reagendada', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  rescheduled: { label: 'Reagendada', color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
   closed_won: { label: 'Cerrada - Ganada', color: 'text-green-400 bg-green-500/10 border-green-500/20' },
   closed_lost: { label: 'Cerrada - Perdida', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
   follow_up: { label: 'Requiere seguimiento', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },

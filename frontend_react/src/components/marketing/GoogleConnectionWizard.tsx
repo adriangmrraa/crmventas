@@ -182,9 +182,9 @@ export default function GoogleConnectionWizard({ isOpen, onClose, onSuccess }: G
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl">
+                                        <div className="bg-violet-500/10 border border-violet-500/20 p-4 rounded-2xl">
                                             <div className="flex items-start gap-3">
-                                                <Zap className="w-5 h-5 text-blue-400 mt-0.5" />
+                                                <Zap className="w-5 h-5 text-violet-400 mt-0.5" />
                                                 <div>
                                                     <p className="text-sm font-medium text-white">
                                                         {t('marketing.google_wizard.oauth_completed')}

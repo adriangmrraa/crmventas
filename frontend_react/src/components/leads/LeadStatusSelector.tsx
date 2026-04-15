@@ -96,7 +96,7 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
                         <div className="p-3">
                             <p className="text-xs font-semibold text-white/50 mb-2">{t('leads.status_selector.comment_required')}</p>
                             <textarea
-                                className="w-full text-sm border border-white/[0.06] bg-white/[0.04] text-white rounded-md focus:ring-blue-500 focus:border-blue-500 p-2 mb-2 resize-none placeholder:text-white/30"
+                                className="w-full text-sm border border-white/[0.06] bg-white/[0.04] text-white rounded-md focus:ring-violet-500 focus:border-violet-500 p-2 mb-2 resize-none placeholder:text-white/30"
                                 rows={2}
                                 value={commentValue}
                                 onChange={(e) => setCommentValue(e.target.value)}
@@ -107,7 +107,7 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
                                 <button
                                     disabled={!commentValue.trim() || isUpdating}
                                     onClick={() => pendingStatusCode && submitStatusChange(pendingStatusCode)}
-                                    className="text-xs text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+                                    className="text-xs text-white bg-violet-600 px-3 py-1 rounded hover:bg-violet-700 disabled:opacity-50 active:scale-95 transition-all"
                                 >
                                     {t('common.confirm') || 'Confirmar'}
                                 </button>
@@ -140,7 +140,7 @@ export const LeadStatusSelector: React.FC<LeadStatusSelectorProps> = ({
                                                 />
                                                 <span className="font-medium">{transition.to_status_name}</span>
                                             </div>
-                                            <span className="text-xs text-white/30 ml-4 group-hover:text-blue-400 transition-colors">
+                                            <span className="text-xs text-white/30 ml-4 group-hover:text-violet-400 transition-colors">
                                                 {transition.label}
                                             </span>
                                         </div>

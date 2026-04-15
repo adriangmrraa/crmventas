@@ -149,7 +149,7 @@ export default function FollowUpQueueView() {
   if (loading && leads.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
         <span className="ml-3 text-white/60">Cargando seguimientos...</span>
       </div>
     );
@@ -162,7 +162,7 @@ export default function FollowUpQueueView() {
         <h2 className="text-lg font-bold text-white mb-2">Error al cargar seguimientos</h2>
         <p className="text-sm text-white/40 max-w-md font-mono bg-red-500/10 p-3 rounded-lg border border-red-500/20">{error}</p>
         <button
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700"
+          className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-bold hover:bg-violet-700"
           onClick={fetchQueue}
         >Reintentar</button>
       </div>
@@ -175,7 +175,7 @@ export default function FollowUpQueueView() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-            <Clock className="w-6 h-6 text-blue-400" />
+            <Clock className="w-6 h-6 text-violet-400" />
             Cola de Seguimientos
           </h1>
           <p className="text-sm text-white/50 mt-1">
@@ -190,7 +190,7 @@ export default function FollowUpQueueView() {
         <button
           onClick={fetchQueue}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white/70 hover:text-white hover:border-blue-500/50 transition-all text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white/70 hover:text-white hover:border-violet-500/50 transition-all text-sm"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Actualizar
@@ -226,7 +226,7 @@ export default function FollowUpQueueView() {
             placeholder="Buscar por nombre, telefono, empresa..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
+            className="w-full pl-10 pr-4 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-violet-500/50"
           />
         </div>
         <div className="flex gap-2">
@@ -236,7 +236,7 @@ export default function FollowUpQueueView() {
               onClick={() => setTimeFilter(f)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeFilter === f
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-violet-600 text-white'
                   : 'bg-white/[0.03] text-white/50 hover:text-white border border-white/[0.06]'
               }`}
             >
@@ -282,8 +282,8 @@ export default function FollowUpQueueView() {
                         <AlertTriangle className="w-5 h-5 text-red-400" />
                       </div>
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-blue-400" />
+                      <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-violet-400" />
                       </div>
                     )}
                   </div>
@@ -372,7 +372,7 @@ export default function FollowUpQueueView() {
                     <div className="flex gap-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); openCompleteModal(lead); }}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all"
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg transition-all"
                       >
                         <CheckCircle2 className="w-4 h-4" />
                         Completar Seguimiento
@@ -416,7 +416,7 @@ export default function FollowUpQueueView() {
                 <select
                   value={form.result}
                   onChange={(e) => setForm({ ...form, result: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/50"
                 >
                   <option value="contacted" className="bg-[#1a1a2e] text-white">Contactado</option>
                   <option value="no_answer" className="bg-[#1a1a2e] text-white">No contesto</option>
@@ -434,7 +434,7 @@ export default function FollowUpQueueView() {
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   rows={3}
                   placeholder="Describe el resultado del seguimiento..."
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50 resize-none"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-violet-500/50 resize-none"
                 />
               </div>
 
@@ -447,7 +447,7 @@ export default function FollowUpQueueView() {
                   type="datetime-local"
                   value={form.reschedule_date}
                   onChange={(e) => setForm({ ...form, reschedule_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/50"
                 />
                 <p className="text-[10px] text-white/30 mt-1">
                   Si se completa, se creara un nuevo evento en agenda y se re-agrega la etiqueta "requiere_seguimiento".
@@ -466,7 +466,7 @@ export default function FollowUpQueueView() {
               <button
                 onClick={handleCompleteFollowUp}
                 disabled={submitting || !form.notes.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

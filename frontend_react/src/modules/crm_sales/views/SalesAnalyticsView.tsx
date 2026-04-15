@@ -67,7 +67,7 @@ export default function SalesAnalyticsView() {
         subtitle="Embudo, forecast y velocidad de cierre"
         icon={<Target size={20} />}
         action={
-          <button onClick={fetchData} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-all active:scale-95">
+          <button onClick={fetchData} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-all active:scale-95">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             Actualizar
           </button>
@@ -112,7 +112,7 @@ export default function SalesAnalyticsView() {
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
         </div>
       ) : (
         <>
@@ -135,7 +135,7 @@ export default function SalesAnalyticsView() {
                 </GlassCard>
                 <GlassCard image={CARD_IMAGES.analytics} className="p-4">
                   <p className="text-white/40 text-xs">Win Rate</p>
-                  <p className="text-2xl font-bold text-blue-400 mt-1">{funnel.win_rate}%</p>
+                  <p className="text-2xl font-bold text-violet-400 mt-1">{funnel.win_rate}%</p>
                 </GlassCard>
               </div>
 
@@ -143,7 +143,7 @@ export default function SalesAnalyticsView() {
               <GlassCard className="p-4 sm:p-6 border-white/5">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <BarChart3 size={16} className="text-blue-400" />
+                    <BarChart3 size={16} className="text-violet-400" />
                     Distribución de Leads por Etapa
                   </h3>
                   <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Datos en tiempo real</p>
@@ -168,7 +168,7 @@ export default function SalesAnalyticsView() {
                 </GlassCard>
                 <GlassCard image={CARD_IMAGES.analytics} className="p-4">
                   <p className="text-white/40 text-xs">Forecast Ponderado</p>
-                  <p className="text-xl font-bold text-blue-400 mt-1">${forecast.weighted_forecast?.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-violet-400 mt-1">${forecast.weighted_forecast?.toLocaleString()}</p>
                 </GlassCard>
                 <GlassCard image={CARD_IMAGES.pipeline} className="p-4 col-span-2 sm:col-span-1">
                   <p className="text-white/40 text-xs">Revenue Ganado</p>
@@ -187,7 +187,7 @@ export default function SalesAnalyticsView() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-white">${stage.total_value?.toLocaleString()}</p>
-                        <p className="text-[11px] text-blue-400">${stage.weighted_value?.toLocaleString()} pond.</p>
+                        <p className="text-[11px] text-violet-400">${stage.weighted_value?.toLocaleString()} pond.</p>
                       </div>
                     </div>
                   ))}
@@ -211,7 +211,7 @@ export default function SalesAnalyticsView() {
                 </GlassCard>
                 <GlassCard image={CARD_IMAGES.calendar} className="p-4">
                   <p className="text-white/40 text-xs">Ciclo Promedio</p>
-                  <p className="text-2xl font-bold text-blue-400 mt-1">{velocity.avg_cycle_days} dias</p>
+                  <p className="text-2xl font-bold text-violet-400 mt-1">{velocity.avg_cycle_days} dias</p>
                 </GlassCard>
               </div>
 
@@ -225,7 +225,7 @@ export default function SalesAnalyticsView() {
                 </GlassCard>
                 <GlassCard image={CARD_IMAGES.pipeline} className="p-4">
                   <p className="text-white/40 text-xs">Sales Velocity</p>
-                  <p className="text-3xl font-bold text-blue-400 mt-1">${velocity.velocity?.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-violet-400 mt-1">${velocity.velocity?.toLocaleString()}</p>
                   <p className="text-[10px] text-white/30 mt-1">$/dia (deals × size × rate / ciclo)</p>
                 </GlassCard>
               </div>

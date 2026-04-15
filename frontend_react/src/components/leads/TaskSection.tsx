@@ -21,7 +21,7 @@ interface TaskSectionProps {
 const PRIORITY_STYLES: Record<string, { badge: string; label: string }> = {
   urgent: { badge: 'bg-red-500/10 text-red-400', label: 'Urgente' },
   high: { badge: 'bg-orange-500/10 text-orange-400', label: 'Alta' },
-  medium: { badge: 'bg-blue-500/10 text-blue-400', label: 'Media' },
+  medium: { badge: 'bg-violet-500/10 text-violet-400', label: 'Media' },
   low: { badge: 'bg-gray-500/10 text-gray-400', label: 'Baja' },
 };
 
@@ -125,12 +125,12 @@ export default function TaskSection({ leadId }: TaskSectionProps) {
               handleAdd();
             }
           }}
-          className="flex-1 min-w-[180px] px-3 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+          className="flex-1 min-w-[180px] px-3 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
         />
         <select
           value={newPriority}
           onChange={(e) => setNewPriority(e.target.value)}
-          className="px-2 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+          className="px-2 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50"
         >
           <option value="urgent">Urgente</option>
           <option value="high">Alta</option>
@@ -141,7 +141,7 @@ export default function TaskSection({ leadId }: TaskSectionProps) {
           type="date"
           value={newDueDate}
           onChange={(e) => setNewDueDate(e.target.value)}
-          className="px-2 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+          className="px-2 py-2 text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50"
         />
         <button
           type="button"

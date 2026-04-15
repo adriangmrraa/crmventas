@@ -86,8 +86,8 @@ export const GlobalSearch: React.FC = () => {
                         onClick={() => navigateToLead(lead.id)}
                         className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors text-left group"
                       >
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                          <User size={14} className="text-blue-400" />
+                        <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
+                          <User size={14} className="text-violet-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate">{lead.first_name} {lead.last_name}</p>

@@ -154,7 +154,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
         <p className="text-red-500 text-sm mt-3">{error}</p>
         <button
           onClick={fetchMetrics}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 mx-auto"
+          className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 flex items-center gap-2 mx-auto"
         >
           <RefreshCw size={16} />
           {t('sellers.retry')}
@@ -177,7 +177,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       title: t('sellers.total_conversations'),
       value: metrics.total_conversations,
       icon: Users,
-      color: 'bg-blue-500/100/10 text-blue-400',
+      color: 'bg-violet-500/100/10 text-violet-400',
       trend: metrics.active_conversations > 0 ? 'positive' : 'neutral'
     },
     {
@@ -266,7 +266,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
       <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/100/10 text-blue-400 rounded-lg">
+            <div className="p-2 bg-violet-500/100/10 text-violet-400 rounded-lg">
               <BarChart3 size={20} />
             </div>
             <div>
@@ -301,7 +301,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
             <select
               value={period}
               onChange={(e) => setPeriod(Number(e.target.value))}
-              className="px-3 py-1.5 text-sm border border-white/[0.06] rounded-lg bg-white/[0.03]/[0.04] text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="px-3 py-1.5 text-sm border border-white/[0.06] rounded-lg bg-white/[0.03]/[0.04] text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
             >
               <option value={1}>{t('sellers.last_1_day')}</option>
               <option value={7}>{t('sellers.last_7_days')}</option>
@@ -354,7 +354,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="border border-white/[0.06] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <PieChart size={18} className="text-blue-400" />
+              <PieChart size={18} className="text-violet-400" />
               <h4 className="font-medium text-white">{t('sellers.conversion_insights')}</h4>
             </div>
             
@@ -379,7 +379,7 @@ const SellerMetricsDashboard: React.FC<SellerMetricsDashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/[0.03]/[0.06] rounded-full h-2">
                   <div 
-                    className="bg-blue-500/100 h-2 rounded-full" 
+                    className="bg-violet-500/100 h-2 rounded-full" 
                     style={{ width: `${(metrics.prospects_converted / Math.max(metrics.prospects_generated, 1)) * 100}%` }}
                   />
                 </div>

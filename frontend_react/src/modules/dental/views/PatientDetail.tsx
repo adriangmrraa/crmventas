@@ -133,7 +133,7 @@ export default function PatientDetail() {
 
   const getRecordIcon = (type: string) => {
     switch (type) {
-      case 'initial': return <Stethoscope className="text-blue-500" size={18} />;
+      case 'initial': return <Stethoscope className="text-violet-500" size={18} />;
       case 'evolution': return <Activity className="text-green-500" size={18} />;
       case 'procedure': return <Heart className="text-purple-500" size={18} />;
       case 'prescription': return <Pill className="text-orange-500" size={18} />;
@@ -303,7 +303,7 @@ export default function PatientDetail() {
                       <div className="bg-white/[0.03]/[0.02] rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-full">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded-full">
                               {getRecordTypeLabel(record.record_type)}
                             </span>
                             <span className="ml-2 text-sm text-white/40">

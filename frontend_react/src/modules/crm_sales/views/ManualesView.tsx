@@ -9,7 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const API = '/admin/core/manuales';
 const CATS = ['general', 'guion_ventas', 'objeciones', 'producto', 'proceso', 'onboarding'];
-const CAT_COLORS: Record<string, string> = { general: 'bg-blue-500/10 text-blue-400', guion_ventas: 'bg-violet-500/10 text-violet-400', objeciones: 'bg-rose-500/10 text-rose-400', producto: 'bg-emerald-500/10 text-emerald-400', proceso: 'bg-amber-500/10 text-amber-400', onboarding: 'bg-cyan-500/10 text-cyan-400' };
+const CAT_COLORS: Record<string, string> = { general: 'bg-violet-500/10 text-violet-400', guion_ventas: 'bg-violet-500/10 text-violet-400', objeciones: 'bg-rose-500/10 text-rose-400', producto: 'bg-emerald-500/10 text-emerald-400', proceso: 'bg-amber-500/10 text-amber-400', onboarding: 'bg-cyan-500/10 text-cyan-400' };
 
 function renderMarkdown(text: string): string {
   return text
@@ -79,7 +79,7 @@ export default function ManualesView() {
       <div className="shrink-0 px-4 py-4 border-b border-white/[0.06]">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-semibold text-white flex items-center gap-2"><Book size={18} /> {t('manuales.title')}</h1>
-          {canEdit && <button onClick={() => { setEditing(null); setShowForm(true); }} className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm rounded-lg hover:bg-blue-700"><Plus size={16} /> {t('manuales.create')}</button>}
+          {canEdit && <button onClick={() => { setEditing(null); setShowForm(true); }} className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm rounded-lg hover:bg-violet-700"><Plus size={16} /> {t('manuales.create')}</button>}
         </div>
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
           <button onClick={() => setCatFilter('')} className={`px-3 py-1.5 rounded-full text-xs font-medium ${!catFilter ? 'bg-white/[0.1] text-white ring-1 ring-white/20' : 'bg-white/[0.03] text-white/50'}`}>{t('manuales.all')}</button>

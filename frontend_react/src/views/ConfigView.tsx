@@ -306,7 +306,7 @@ export default function ConfigView() {
                             onClick={() => handleLanguageChange(opt.value)}
                             disabled={saving}
                             className={`px-4 py-2.5 rounded-xl font-medium transition-colors border-2 min-h-[44px] ${selectedLang === opt.value
-                                ? 'border-blue-600 bg-blue-500/10 text-blue-400'
+                                ? 'border-violet-600 bg-violet-500/10 text-violet-400'
                                 : 'border-white/[0.06] bg-white/[0.03] text-white/70 hover:border-white/[0.06] hover:bg-white/[0.02]'
                                 }`}
                         >
@@ -452,17 +452,17 @@ export default function ConfigView() {
 
         return (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-2 text-blue-400">
+                <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-6">
+                    <div className="flex items-center gap-2 mb-2 text-violet-400">
                         <Globe className="w-5 h-5" />
                         <h3 className="font-semibold">{t('config.webhook_title_meta')}</h3>
                     </div>
-                    <p className="text-sm text-blue-400 mb-6">{t('config.webhook_hint_meta')}</p>
+                    <p className="text-sm text-violet-400 mb-6">{t('config.webhook_hint_meta')}</p>
 
                     <div className="mb-4">
                         <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.field_tenant')}</label>
                         <select
-                            className="w-full sm:w-80 px-4 py-2 bg-white/[0.04] border border-blue-500/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-white"
+                            className="w-full sm:w-80 px-4 py-2 bg-white/[0.04] border border-violet-500/20 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none transition-all text-sm text-white"
                             value={metaTenantId === null ? '' : metaTenantId}
                             onChange={(e) => setMetaTenantId(e.target.value ? Number(e.target.value) : null)}
                         >
@@ -472,8 +472,8 @@ export default function ConfigView() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                        <input readOnly value={fullWebhookUrl} className="flex-1 px-3 py-2 bg-white/[0.03] rounded-lg border border-blue-500/20 text-sm font-mono text-white/50 focus:outline-none" />
-                        <button onClick={() => fullWebhookUrl !== 'Cargando...' && copyToClipboard(fullWebhookUrl)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 font-medium">
+                        <input readOnly value={fullWebhookUrl} className="flex-1 px-3 py-2 bg-white/[0.03] rounded-lg border border-violet-500/20 text-sm font-mono text-white/50 focus:outline-none" />
+                        <button onClick={() => fullWebhookUrl !== 'Cargando...' && copyToClipboard(fullWebhookUrl)} className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition flex items-center justify-center gap-2 font-medium">
                             <Copy size={16} /> <span className="sm:hidden">{t('config.copy_url')}</span>
                         </button>
                     </div>
@@ -582,12 +582,12 @@ export default function ConfigView() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 border-dashed">
+                    <div className="p-4 bg-violet-500/10 rounded-xl border border-violet-500/20 border-dashed">
                         <div className="flex gap-3">
-                            <Info size={20} className="text-blue-400 shrink-0" />
+                            <Info size={20} className="text-violet-400 shrink-0" />
                             <div>
-                                <h4 className="text-sm font-semibold text-blue-400">{t('config.smart_storage_title')}</h4>
-                                <p className="text-xs text-blue-400 leading-relaxed mt-1">
+                                <h4 className="text-sm font-semibold text-violet-400">{t('config.smart_storage_title')}</h4>
+                                <p className="text-xs text-violet-400 leading-relaxed mt-1">
                                     {t('config.smart_storage_hint')}
                                 </p>
                             </div>
@@ -665,7 +665,7 @@ export default function ConfigView() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('meta')}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'meta' ? 'border-blue-600 text-blue-400 font-semibold' : 'border-transparent text-white/40 hover:text-blue-400 hover:border-blue-500/20'}`}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'meta' ? 'border-violet-600 text-violet-400 font-semibold' : 'border-transparent text-white/40 hover:text-violet-400 hover:border-violet-500/20'}`}
                             >
                                 <Globe size={18} /> Meta Ads (Leadgen)
                             </button>

@@ -108,7 +108,7 @@ interface AIActivityEvent {
 const TAG_COLORS: Record<string, string> = {
   caliente: '#ef4444',
   tibio: '#f59e0b',
-  frio: '#3b82f6',
+  frio: '#8F3DFF',
   interesado: '#10b981',
   no_interesado: '#6b7280',
   seguimiento: '#8b5cf6',
@@ -128,7 +128,7 @@ const getTagColor = (tagName: string): string => {
 /** Score display helper */
 const getScoreConfig = (score: number) => {
   if (score >= 80) return { label: 'Muy calificado', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' };
-  if (score >= 60) return { label: 'Calificado', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
+  if (score >= 60) return { label: 'Calificado', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' };
   if (score >= 40) return { label: 'Tibio', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' };
   if (score >= 20) return { label: 'Bajo interes', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' };
   return { label: 'Sin calificar', color: 'text-white/40', bg: 'bg-white/[0.02]', border: 'border-white/[0.06]' };
@@ -864,7 +864,7 @@ export default function ChatsView() {
       case 'instagram':
         return <Instagram size={size} className="text-purple-400" />;
       case 'facebook':
-        return <Facebook size={size} className="text-blue-400" />;
+        return <Facebook size={size} className="text-violet-400" />;
       case 'whatsapp':
       default:
         return <MessageCircle size={size} className="text-green-400" />;
@@ -916,7 +916,7 @@ export default function ChatsView() {
   // ============================================
 
   return (
-    <div className="flex h-full min-h-0 bg-blue-500/10 overflow-hidden font-sans">
+    <div className="flex h-full min-h-0 bg-violet-500/10 overflow-hidden font-sans">
       {/* Audio para notificaciones */}
       <audio ref={audioRef} src="/notification.mp3" preload="auto" />
 
@@ -991,7 +991,7 @@ export default function ChatsView() {
               { id: 'all' as const, label: 'Todos', icon: null },
               { id: 'whatsapp' as const, label: 'WA', icon: <MessageCircle size={12} className="text-green-400" /> },
               { id: 'instagram' as const, label: 'IG', icon: <Instagram size={12} className="text-purple-400" /> },
-              { id: 'facebook' as const, label: 'FB', icon: <Facebook size={12} className="text-blue-400" /> },
+              { id: 'facebook' as const, label: 'FB', icon: <Facebook size={12} className="text-violet-400" /> },
             ]).map(tab => (
               <button
                 key={tab.id}
@@ -1025,7 +1025,7 @@ export default function ChatsView() {
                   key={session.phone_number}
                   onClick={() => setSelectedSession(session)}
                   className={`px-4 py-3 border-b cursor-pointer transition-all relative
-                    ${isSelected ? 'bg-blue-500/10' : 'hover:bg-white/[0.02] active:bg-white/[0.04]'}
+                    ${isSelected ? 'bg-violet-500/10' : 'hover:bg-white/[0.02] active:bg-white/[0.04]'}
                     ${isHighlighted ? 'bg-orange-500/10 animate-pulse' : ''}
                   `}
                 >
@@ -1061,7 +1061,7 @@ export default function ChatsView() {
                           <ChannelIcon channel={session.channel} size={13} />
                           {session.lead_name || session.phone_number}
                         </span>
-                        <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-blue-400 font-bold' : 'text-white/30'}`}>
+                        <span className={`text-[11px] shrink-0 ml-2 ${session.unread_count > 0 ? 'text-violet-400 font-bold' : 'text-white/30'}`}>
                           {formatTime(session.last_message_time)}
                         </span>
                       </div>
@@ -1175,7 +1175,7 @@ export default function ChatsView() {
                     onClick={() => setShowSellerSelector(!showSellerSelector)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all
                       ${sellerAssignment?.assigned_seller_id
-                        ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-200 border border-blue-500/20'
+                        ? 'bg-violet-500/10 text-violet-400 hover:bg-blue-200 border border-violet-500/20'
                         : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.06] border border-white/[0.06]'
                       }`}
                     title={sellerAssignment?.assigned_seller_id ? "Reasignar vendedor" : "Asignar vendedor"}
@@ -1206,7 +1206,7 @@ export default function ChatsView() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     onClick={() => setShowMobileContext(!showMobileContext)}
-                    className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-full lg:hidden transition-colors"
+                    className="p-2 text-violet-400 hover:bg-violet-500/10 rounded-full lg:hidden transition-colors"
                     title={t('chats.view_lead_info')}
                   >
                     <Activity size={20} />
@@ -1244,14 +1244,14 @@ export default function ChatsView() {
                   </button>
                 </div>
               ) : (selectedSession.status === 'silenced' || selectedSession.status === 'human_handling') && (
-                <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-2 flex items-center gap-2">
-                  <Pause size={16} className="text-blue-500" />
-                  <span className="text-sm text-blue-400">
+                <div className="bg-violet-500/10 border-b border-violet-500/20 px-4 py-2 flex items-center gap-2">
+                  <Pause size={16} className="text-violet-500" />
+                  <span className="text-sm text-violet-400">
                     ✋ {t('chats.manual_mode_active')}
                   </span>
                   <button
                     onClick={handleToggleHumanMode}
-                    className="ml-auto text-xs text-blue-400 hover:underline"
+                    className="ml-auto text-xs text-violet-400 hover:underline"
                   >
                     {t('chats.activate_ai')}
                   </button>
@@ -1274,7 +1274,7 @@ export default function ChatsView() {
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="mx-auto py-2 px-4 text-xs text-blue-400 hover:text-medical-700 font-medium bg-white/[0.03] rounded-full border border-white/[0.06] mb-4 transition-all disabled:opacity-50 shrink-0"
+                    className="mx-auto py-2 px-4 text-xs text-violet-400 hover:text-medical-700 font-medium bg-white/[0.03] rounded-full border border-white/[0.06] mb-4 transition-all disabled:opacity-50 shrink-0"
                   >
                     {loadingMore ? t('common.loading') : t('chats.load_older_messages')}
                   </button>
@@ -1334,7 +1334,7 @@ export default function ChatsView() {
                               ? 'bg-white/[0.03]'
                               : message.is_derivhumano
                                 ? 'bg-orange-500/10 border border-orange-300 text-white'
-                                : 'bg-blue-600 text-white'
+                                : 'bg-violet-600 text-white'
                               }`}
                           >
                             {/* IA badge for assistant messages */}
@@ -1443,7 +1443,7 @@ export default function ChatsView() {
             {/* Context Header (Mobile only) */}
             <div className="p-4 border-b flex justify-between items-center xl:hidden">
               <div className="flex items-center gap-2">
-                <User className="text-blue-400" size={20} />
+                <User className="text-violet-400" size={20} />
                 <h3 className="font-bold">{t('chats.lead_profile_title')}</h3>
               </div>
               <button
@@ -1509,7 +1509,7 @@ export default function ChatsView() {
                     <div className="mt-1.5 w-full bg-white/[0.06] rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full transition-all"
-                        style={{ width: `${leadContext.lead.score}%`, backgroundColor: sc.color.includes('green') ? '#22c55e' : sc.color.includes('blue') ? '#3b82f6' : sc.color.includes('yellow') ? '#eab308' : sc.color.includes('orange') ? '#f97316' : '#6b7280' }}
+                        style={{ width: `${leadContext.lead.score}%`, backgroundColor: sc.color.includes('green') ? '#22c55e' : sc.color.includes('blue') ? '#8F3DFF' : sc.color.includes('yellow') ? '#eab308' : sc.color.includes('orange') ? '#f97316' : '#6b7280' }}
                       />
                     </div>
                     <p className={`text-[11px] mt-1 ${sc.color}`}>{sc.label}</p>

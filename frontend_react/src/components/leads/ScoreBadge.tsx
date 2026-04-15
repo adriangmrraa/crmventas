@@ -26,9 +26,9 @@ const getScoreConfig = (score: number) => {
   if (score >= 20) return {
     label: 'Cool',
     icon: Wind,
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-400',
-    border: 'border-blue-500/30',
+    bg: 'bg-violet-500/15',
+    text: 'text-violet-400',
+    border: 'border-violet-500/30',
     glow: '',
   };
   return {

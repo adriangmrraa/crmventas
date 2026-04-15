@@ -29,7 +29,7 @@ type Categoria = 'all' | 'whatsapp' | 'email' | 'seguimiento' | 'prospeccion' | 
 const CATEGORIES: { key: Categoria; icon: typeof MessageCircle; color: string }[] = [
   { key: 'all', icon: Check, color: 'text-white/60' },
   { key: 'whatsapp', icon: MessageCircle, color: 'text-green-400' },
-  { key: 'email', icon: Mail, color: 'text-blue-400' },
+  { key: 'email', icon: Mail, color: 'text-violet-400' },
   { key: 'seguimiento', icon: UserCheck, color: 'text-amber-400' },
   { key: 'prospeccion', icon: Target, color: 'text-purple-400' },
   { key: 'cierre', icon: Handshake, color: 'text-emerald-400' },
@@ -37,7 +37,7 @@ const CATEGORIES: { key: Categoria; icon: typeof MessageCircle; color: string }[
 
 const CATEGORY_BG: Record<string, string> = {
   whatsapp: 'bg-green-500/10 text-green-400 border-green-500/20',
-  email: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  email: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   seguimiento: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   prospeccion: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   cierre: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -141,7 +141,7 @@ export default function PlantillasView() {
           <h1 className="text-lg font-semibold text-white">{t('plantillas.title')}</h1>
           <button
             onClick={() => { setEditingPlantilla(null); setShowForm(true); }}
-            className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm rounded-lg hover:bg-violet-700"
           >
             <Plus size={16} /> {t('plantillas.create')}
           </button>
@@ -172,7 +172,7 @@ export default function PlantillasView() {
             type="text"
             placeholder={t('plantillas.search')}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-white/[0.05] text-white text-sm border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 placeholder:text-white/30"
+            className="w-full pl-9 pr-3 py-2 bg-white/[0.05] text-white text-sm border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 placeholder:text-white/30"
           />
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function PlantillasView() {
                 {p.variables.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {p.variables.map(v => (
-                      <span key={v} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] rounded">
+                      <span key={v} className="px-1.5 py-0.5 bg-violet-500/10 text-violet-400 text-[10px] rounded">
                         {`{{${v}}}`}
                       </span>
                     ))}
@@ -346,7 +346,7 @@ function PlantillaFormDialog({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               maxLength={100}
-              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30"
+              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-violet-500/30"
             />
           </div>
 
@@ -356,7 +356,7 @@ function PlantillaFormDialog({
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30"
+              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-violet-500/30"
             >
               {['whatsapp', 'email', 'seguimiento', 'prospeccion', 'cierre'].map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -373,7 +373,7 @@ function PlantillaFormDialog({
                   key={v}
                   type="button"
                   onClick={() => insertVariable(v)}
-                  className="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs rounded hover:bg-blue-500/20 border border-blue-500/20"
+                  className="px-2 py-1 bg-violet-500/10 text-violet-400 text-xs rounded hover:bg-violet-500/20 border border-violet-500/20"
                 >
                   {`{{${v}}}`}
                 </button>
@@ -404,7 +404,7 @@ function PlantillaFormDialog({
                 onChange={(e) => setContenido(e.target.value)}
                 maxLength={4000}
                 rows={5}
-                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30 resize-none"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-violet-500/30 resize-none"
               />
             )}
             <div className="flex justify-between mt-1">
@@ -434,7 +434,7 @@ function PlantillaFormDialog({
           <button
             onClick={handleSubmit}
             disabled={saving || !nombre.trim() || !contenido.trim()}
-            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-violet-700 disabled:opacity-50"
           >
             {saving ? t('common.saving') : (plantilla ? t('common.save_changes') : t('plantillas.create'))}
           </button>

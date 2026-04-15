@@ -34,7 +34,7 @@ export interface CrmAgendaEvent {
 }
 
 const SOURCE_COLORS: Record<string, { hex: string; label: string }> = {
-  ai: { hex: '#3b82f6', label: 'Ventas IA' },
+  ai: { hex: '#8F3DFF', label: 'Ventas IA' },
   nova: { hex: '#a855f7', label: 'Nova' },
   manual: { hex: '#22c55e', label: 'Manual' },
   gcalendar: { hex: '#6b7280', label: 'GCal' },
@@ -335,12 +335,12 @@ export default function CrmAgendaView() {
       <div className="flex-shrink-0 px-4 lg:px-6 pt-4 lg:pt-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full lg:w-auto gap-4">
-            <div className="border-l-4 border-blue-500 pl-3 sm:pl-4 min-w-0">
+            <div className="border-l-4 border-violet-500 pl-3 sm:pl-4 min-w-0">
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{t('agenda_crm.title')}</h1>
               <p className="text-xs sm:text-sm text-white/50 mt-0.5">{t('agenda_crm.subtitle')}</p>
             </div>
             <div className="flex items-center gap-2 bg-white/[0.03] px-3 py-2 rounded-xl border border-white/[0.04] w-full sm:w-auto">
-              <User size={16} className="text-blue-400 shrink-0" />
+              <User size={16} className="text-violet-400 shrink-0" />
               <select
                 value={selectedSellerId}
                 onChange={(e) => setSelectedSellerId(e.target.value)}
@@ -368,7 +368,7 @@ export default function CrmAgendaView() {
               ))}
             </div>
             {isBackgroundSyncing && (
-              <RefreshCw size={16} className="text-blue-500 animate-spin opacity-60" />
+              <RefreshCw size={16} className="text-violet-500 animate-spin opacity-60" />
             )}
           </div>
         </div>
@@ -398,7 +398,7 @@ export default function CrmAgendaView() {
             <div className="h-[calc(100vh-140px)] bg-white/[0.03] backdrop-blur-lg border border-white/[0.06] shadow-xl rounded-2xl p-2 sm:p-4 overflow-y-auto">
               {loading && events.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
-                  <RefreshCw className="w-12 h-12 text-blue-500 animate-spin" />
+                  <RefreshCw className="w-12 h-12 text-violet-500 animate-spin" />
                   <p className="ml-3 text-white/40 font-medium">{t('common.loading')}</p>
                 </div>
               ) : (

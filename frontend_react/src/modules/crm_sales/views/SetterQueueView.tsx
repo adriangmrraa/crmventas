@@ -123,8 +123,8 @@ export default function SetterQueueView() {
       {/* Header */}
       <div className="flex items-center gap-4 p-4 lg:p-6 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
-            <Inbox size={22} className="text-blue-400" />
+          <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20">
+            <Inbox size={22} className="text-violet-400" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-white">Cola del Setter</h1>
@@ -154,7 +154,7 @@ export default function SetterQueueView() {
               placeholder="Buscar por nombre o telefono..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
+              className="w-full pl-9 pr-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40"
             />
             {search && (
               <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -166,7 +166,7 @@ export default function SetterQueueView() {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
               showFilters || priorityFilter !== 'all' || tagFilter
-                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
                 : 'bg-white/[0.03] text-white/50 border-white/[0.06] hover:bg-white/[0.04]'
             }`}
           >
@@ -206,7 +206,7 @@ export default function SetterQueueView() {
                 <select
                   value={tagFilter || ''}
                   onChange={(e) => setTagFilter(e.target.value || null)}
-                  className="appearance-none bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 pr-7 text-xs text-white/70 focus:ring-2 focus:ring-blue-500/40"
+                  className="appearance-none bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1.5 pr-7 text-xs text-white/70 focus:ring-2 focus:ring-violet-500/40"
                 >
                   <option value="" className="bg-[#1a1a2e] text-white">Todas las etiquetas</option>
                   {allTags.map((tag) => (
@@ -266,7 +266,7 @@ export default function SetterQueueView() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => navigate(`/crm/leads/${lead.id}`)}
-                        className="text-base font-semibold text-white hover:text-blue-400 transition-colors truncate"
+                        className="text-base font-semibold text-white hover:text-violet-400 transition-colors truncate"
                       >
                         {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || 'Sin nombre'}
                       </button>

@@ -252,12 +252,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
 
                 {/* Gradient edge on hover/active */}
                 {showImage && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.06] to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/[0.06] to-transparent pointer-events-none" />
                 )}
 
                 {/* Active indicator bar */}
                 {active && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-blue-400 rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#8F3DFF] rounded-r-full glow-violet-sm" />
                 )}
 
                 {/* Content */}

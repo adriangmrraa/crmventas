@@ -317,12 +317,12 @@ export default function InternalChatView() {
               maxLength={2000}
               rows={1}
               placeholder={t('chat.type_message')}
-              className="flex-1 px-3 py-2 bg-white/[0.05] text-white text-sm border border-white/[0.08] rounded-lg resize-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-white/30"
+              className="flex-1 px-3 py-2 bg-white/[0.05] text-white text-sm border border-white/[0.08] rounded-lg resize-none focus:ring-2 focus:ring-violet-500/30 placeholder:text-white/30"
             />
             <button
               onClick={handleSend}
               disabled={!inputText.trim()}
-              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 disabled:opacity-30"
+              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-violet-700 disabled:opacity-30"
             >
               <Send size={16} />
             </button>

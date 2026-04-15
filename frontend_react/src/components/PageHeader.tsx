@@ -13,7 +13,7 @@ export default function PageHeader({ title, subtitle, action, icon }: PageHeader
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           {icon && (
-            <div className="hidden sm:flex shrink-0 w-10 h-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div className="hidden sm:flex shrink-0 w-10 h-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
               {icon}
             </div>
           )}

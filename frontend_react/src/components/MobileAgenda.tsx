@@ -58,7 +58,7 @@ export default function MobileAgenda({
             case 'cancelled': return 'border-l-red-500';
             case 'completed': return 'border-l-gray-500';
             case 'no_show': return 'border-l-orange-500';
-            default: return 'border-l-blue-500';
+            default: return 'border-l-violet-500';
         }
     };
 

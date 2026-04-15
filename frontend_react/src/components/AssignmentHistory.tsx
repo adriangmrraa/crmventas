@@ -142,7 +142,7 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
       case 'ceo':
         return 'bg-purple-500/10 text-purple-400';
       case 'setter':
-        return 'bg-blue-500/100/10 text-blue-400';
+        return 'bg-violet-500/100/10 text-violet-400';
       case 'closer':
         return 'bg-green-500/100/10 text-green-400';
       default:
@@ -165,7 +165,7 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
         <p className="text-red-500 text-sm">{error}</p>
         <button
           onClick={fetchHistory}
-          className="mt-2 text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 mx-auto"
+          className="mt-2 text-sm text-violet-400 hover:text-violet-300 font-medium flex items-center gap-1 mx-auto"
         >
           <RefreshCw size={14} />
           {t('sellers.retry')}
@@ -257,7 +257,7 @@ const AssignmentHistory: React.FC<AssignmentHistoryProps> = ({
         <div className="p-3 border-t border-white/[0.04] text-center">
           <button
             onClick={() => {/* TODO: Show full history modal */}}
-            className="text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 mx-auto"
+            className="text-sm text-violet-400 hover:text-violet-300 font-medium flex items-center gap-1 mx-auto"
           >
             {t('sellers.view_all_history')} ({history.length})
             <ExternalLink size={14} />

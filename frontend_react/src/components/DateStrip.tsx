@@ -63,9 +63,9 @@ export default function DateStrip({ selectedDate, onDateSelect }: DateStripProps
                             onClick={() => onDateSelect(date)}
                             className={`flex flex-col items-center justify-center min-w-[56px] h-16 rounded-xl transition-all duration-200 snap-center
                 ${selected
-                                    ? 'bg-blue-600 text-white shadow-md scale-105'
+                                    ? 'bg-violet-600 text-white shadow-md scale-105'
                                     : today
-                                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                        ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
                                         : 'bg-white/[0.03] text-white/40 hover:bg-white/[0.04] border border-transparent'
                                 }
               `}
@@ -77,7 +77,7 @@ export default function DateStrip({ selectedDate, onDateSelect }: DateStripProps
                                 {dayNum}
                             </span>
                             {today && !selected && (
-                                <span className="w-1 h-1 bg-blue-500 rounded-full mt-1"></span>
+                                <span className="w-1 h-1 bg-violet-500 rounded-full mt-1"></span>
                             )}
                         </button>
                     );

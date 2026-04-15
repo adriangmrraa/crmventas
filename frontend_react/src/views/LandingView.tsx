@@ -14,10 +14,10 @@ export default function LandingView() {
         <div className="w-full max-w-md sm:max-w-lg mx-auto space-y-6 sm:space-y-8">
           {/* Hero */}
           <header className="text-center pt-2 sm:pt-0">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/25 mb-4 sm:mb-5 ring-4 ring-blue-600/10">
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-violet-600 text-white shadow-xl shadow-violet-600/25 mb-4 sm:mb-5 ring-4 ring-violet-600/10">
               <BarChart3 size={28} className="sm:w-8 sm:h-8" strokeWidth={2} />
             </div>
-            <p className="text-xs sm:text-sm font-semibold text-blue-400 uppercase tracking-widest mb-2">
+            <p className="text-xs sm:text-sm font-semibold text-violet-400 uppercase tracking-widest mb-2">
               CRM de Ventas con Automatización Meta Ads
             </p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
@@ -32,7 +32,7 @@ export default function LandingView() {
           <div className="space-y-3 sm:space-y-4">
             <Link
               to="/login?demo=1"
-              className="landing-cta-primary flex items-center justify-center gap-3 w-full rounded-2xl py-4 sm:py-5 text-base sm:text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-600/30 min-h-[52px] sm:min-h-[56px] touch-manipulation"
+              className="landing-cta-primary flex items-center justify-center gap-3 w-full rounded-2xl py-4 sm:py-5 text-base sm:text-lg font-bold text-white bg-violet-600 hover:bg-violet-700 active:scale-[0.98] transition-all shadow-xl shadow-violet-600/25 hover:shadow-violet-600/30 min-h-[52px] sm:min-h-[56px] touch-manipulation"
             >
               <Zap size={22} className="shrink-0" />
               Probar CRM
@@ -46,24 +46,24 @@ export default function LandingView() {
           <section className="landing-glass rounded-2xl sm:rounded-3xl border border-white/[0.06]/80 overflow-hidden">
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
-                <Sparkles className="text-blue-400 shrink-0" size={20} />
+                <Sparkles className="text-violet-400 shrink-0" size={20} />
                 Qué incluye la demo del CRM
               </h2>
               <ul className="space-y-2.5 sm:space-y-3 text-white/70 text-sm sm:text-base">
                 <li className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 shrink-0">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-violet-500/10 text-violet-400 shrink-0">
                     <Calendar size={16} />
                   </span>
                   <span>Agenda por sede y profesional, sincronizable con Google Calendar.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 shrink-0">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-violet-500/10 text-violet-400 shrink-0">
                     <MessageCircle size={16} />
                   </span>
                   <span>Agente IA por WhatsApp: turnos, triaje y derivación a humano.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 shrink-0">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-violet-500/10 text-violet-400 shrink-0">
                     <BarChart3 size={16} />
                   </span>
                   <span>Analíticas para CEO y profesionales.</span>
@@ -72,7 +72,7 @@ export default function LandingView() {
               <details className="group">
                 <summary className="flex items-center justify-between gap-2 py-2 cursor-pointer list-none text-sm font-medium text-white/50 hover:text-white select-none touch-manipulation min-h-[44px]">
                   <span>Credenciales de prueba</span>
-                  <ChevronDown size={18} className="shrink-0 transition-transform group-open:rotate-180 text-blue-400" />
+                  <ChevronDown size={18} className="shrink-0 transition-transform group-open:rotate-180 text-violet-400" />
                 </summary>
                 <div className="mt-2 pt-3 border-t border-white/[0.04] rounded-xl bg-white/[0.02]/80 px-4 py-3 text-sm text-white/70 font-mono">
                   <p><span className="text-white/40">Email:</span> [REDACTED]</p>
@@ -88,7 +88,7 @@ export default function LandingView() {
               href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 w-full rounded-2xl py-3.5 sm:py-4 text-sm sm:text-base font-semibold border-2 border-medical-600 text-blue-400 bg-white/[0.03] hover:bg-blue-500/10 active:scale-[0.98] transition-all min-h-[48px] touch-manipulation"
+              className="flex items-center justify-center gap-3 w-full rounded-2xl py-3.5 sm:py-4 text-sm sm:text-base font-semibold border-2 border-medical-600 text-violet-400 bg-white/[0.03] hover:bg-violet-500/10 active:scale-[0.98] transition-all min-h-[48px] touch-manipulation"
             >
               <MessageCircle size={20} className="shrink-0" />
               Probar Agente IA por WhatsApp

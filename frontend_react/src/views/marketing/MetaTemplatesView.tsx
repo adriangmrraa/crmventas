@@ -57,7 +57,7 @@ const MetaTemplatesView: React.FC = () => {
     };
 
     const statusColors: Record<string, string> = {
-        'sent': 'bg-blue-500/10 text-blue-400',
+        'sent': 'bg-violet-500/10 text-violet-400',
         'failed': 'bg-red-500/10 text-red-400',
         'delivered': 'bg-green-500/10 text-green-400',
         'read': 'bg-purple-500/10 text-purple-700'
@@ -68,7 +68,7 @@ const MetaTemplatesView: React.FC = () => {
             {/* Header */}
             <header className="bg-white/[0.03] border-b px-6 py-4 flex items-center justify-between shrink-0 z-10">
                 <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-md">
+                    <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-2 rounded-lg shadow-md">
                         <Layout className="text-white" size={24} />
                     </div>
                     <div>
@@ -108,8 +108,8 @@ const MetaTemplatesView: React.FC = () => {
                             </div>
                         </div>
                         <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04] flex items-start gap-4">
-                            <div className="bg-blue-500/10 p-3 rounded-xl">
-                                <Send className="text-blue-400" size={24} />
+                            <div className="bg-violet-500/10 p-3 rounded-xl">
+                                <Send className="text-violet-400" size={24} />
                             </div>
                             <div>
                                 <h3 className="font-bold text-white">{t('hsm.sent_count')}</h3>
@@ -200,7 +200,7 @@ const MetaTemplatesView: React.FC = () => {
                             {/* Timezone Config */}
                             <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.04]">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Globe size={18} className="text-blue-400" />
+                                    <Globe size={18} className="text-violet-400" />
                                     <h4 className="font-bold text-white">{t('hsm.regional_config')}</h4>
                                 </div>
                                 <p className="text-xs text-white/40 mb-4 leading-relaxed">
@@ -209,14 +209,14 @@ const MetaTemplatesView: React.FC = () => {
                                 <select
                                     value={timezone}
                                     onChange={(e) => setTimezone(e.target.value)}
-                                    className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm font-bold text-white/70 outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-not-allowed opacity-70"
+                                    className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm font-bold text-white/70 outline-none focus:ring-2 focus:ring-violet-500 transition-all cursor-not-allowed opacity-70"
                                     disabled
                                 >
                                     <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
                                     <option value="America/Mexico_City">Ciudad de México (GMT-6)</option>
                                     <option value="Europe/Madrid">Madrid (GMT+1)</option>
                                 </select>
-                                <p className="mt-2 text-[10px] text-blue-400 font-bold bg-blue-500/10 p-2 rounded-lg">
+                                <p className="mt-2 text-[10px] text-violet-400 font-bold bg-violet-500/10 p-2 rounded-lg">
                                     {t('hsm.timezone_disclaimer')}
                                 </p>
                             </div>

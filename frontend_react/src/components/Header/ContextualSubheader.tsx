@@ -77,12 +77,12 @@ const ContextualSubheader: React.FC<ContextualSubheaderProps> = ({
                   primaryAction.disabled
                     ? 'opacity-50 cursor-not-allowed'
                     : `
-                        bg-gradient-to-br from-blue-600 to-blue-700
-                        border border-blue-500/30
-                        text-white hover:from-blue-500 hover:to-blue-600
-                        hover:border-blue-400/50
+                        bg-gradient-to-br from-violet-600 to-violet-700
+                        border border-violet-500/30
+                        text-white hover:from-violet-500 hover:to-violet-600
+                        hover:border-violet-400/50
                         active:scale-95
-                        shadow-lg hover:shadow-xl hover:shadow-blue-500/20
+                        shadow-lg hover:shadow-xl hover:shadow-violet-500/20
                         hover:translate-y-[-2px]
                       `
                 }

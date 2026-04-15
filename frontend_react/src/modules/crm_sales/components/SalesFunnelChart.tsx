@@ -11,7 +11,7 @@ interface SalesFunnelChartProps {
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  'Nuevo': '#3b82f6',        // Blue
+  'Nuevo': '#8F3DFF',        // Blue
   'Contactado': '#8b5cf6',   // Violet
   'Calificado': '#ec4899',   // Pink
   'Propuesta': '#f59e0b',    // Amber

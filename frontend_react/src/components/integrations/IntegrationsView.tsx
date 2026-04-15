@@ -62,7 +62,7 @@ export default function IntegrationsView() {
   const tabs: { id: ChannelTab; label: string; icon: React.ReactNode; color: string }[] = [
     { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={18} />, color: 'text-green-400' },
     { id: 'instagram', label: 'Instagram', icon: <Instagram size={18} />, color: 'text-purple-400' },
-    { id: 'facebook', label: 'Facebook', icon: <Facebook size={18} />, color: 'text-blue-400' },
+    { id: 'facebook', label: 'Facebook', icon: <Facebook size={18} />, color: 'text-violet-400' },
     { id: 'meta', label: 'Meta Connection', icon: <Link2 size={18} />, color: 'text-white/70' },
   ];
 
@@ -276,8 +276,8 @@ export default function IntegrationsView() {
             <div className="space-y-4">
               <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <Facebook size={20} className="text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Facebook size={20} className="text-violet-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Facebook Messenger</h3>
@@ -301,7 +301,7 @@ export default function IntegrationsView() {
                       <p className="text-sm text-white/40 mb-3">Facebook Messenger no esta conectado</p>
                       <button
                         onClick={() => { setActiveTab('meta'); setShowMetaWizard(true); }}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm hover:bg-blue-500/20 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20 text-sm hover:bg-violet-500/20 transition-colors"
                       >
                         <ExternalLink size={14} />
                         Conectar via Meta
@@ -333,7 +333,7 @@ export default function IntegrationsView() {
 
                 <button
                   onClick={() => setShowMetaWizard(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
                 >
                   <Link2 size={16} />
                   Configurar conexion Meta
@@ -349,7 +349,7 @@ export default function IntegrationsView() {
                     const channelConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
                       whatsapp: { icon: <MessageCircle size={16} />, label: 'WhatsApp', color: 'text-green-400' },
                       instagram: { icon: <Instagram size={16} />, label: 'Instagram', color: 'text-purple-400' },
-                      facebook: { icon: <Facebook size={16} />, label: 'Facebook', color: 'text-blue-400' },
+                      facebook: { icon: <Facebook size={16} />, label: 'Facebook', color: 'text-violet-400' },
                     };
                     const cfg = channelConfig[ch]!;
 

@@ -89,7 +89,7 @@ import { LeadHistoryTimeline } from '../components/leads/LeadHistoryTimeline';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
-    'new': 'bg-blue-500/100/10 text-blue-400 border-blue-500/20',
+    'new': 'bg-violet-500/100/10 text-violet-400 border-violet-500/20',
     'contacted': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
     'interested': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     'negotiation': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
@@ -153,7 +153,7 @@ export default function CrmDashboardView() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#06060e]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export default function CrmDashboardView() {
             title="Total Leads"
             value={stats?.total_leads || 0}
             icon={Users}
-            color="bg-blue-500/100"
+            color="bg-violet-500/100"
             trend="+12%"
           />
           <KPICard
@@ -264,7 +264,7 @@ export default function CrmDashboardView() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-white">Revenue & Leads Trend</h2>
               <div className="hidden sm:flex gap-4 text-xs font-medium text-white/40">
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500/100"></div> Revenue</span>
+                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-violet-500/100"></div> Revenue</span>
                 <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Leads</span>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function CrmDashboardView() {
                       return [value, 'Leads'];
                     }}
                   />
-                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#8F3DFF" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="leads" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -296,12 +296,12 @@ export default function CrmDashboardView() {
               <h2 className="text-lg font-semibold text-white">Recent Leads</h2>
               {isAdvancedLeadStatusEnabled && selectedLeads.length > 0 && (
                 <div className="animate-in fade-in slide-in-from-left-4 flex items-center gap-3">
-                  <span className="text-sm font-medium text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full">
+                  <span className="text-sm font-medium text-violet-400 bg-violet-500/10 px-3 py-1 rounded-full">
                     {selectedLeads.length} seleccionados
                   </span>
                   <button
                     onClick={() => setShowBulkModal(true)}
-                    className="text-white text-sm font-semibold hover:bg-blue-700 bg-blue-600 px-4 py-1.5 rounded-xl transition-all flex items-center gap-2"
+                    className="text-white text-sm font-semibold hover:bg-violet-700 bg-violet-600 px-4 py-1.5 rounded-xl transition-all flex items-center gap-2"
                   >
                     Actualizar Estado Múltiple
                   </button>
@@ -311,7 +311,7 @@ export default function CrmDashboardView() {
 
             <button
               onClick={() => navigate('/crm/leads')}
-              className="text-blue-400 text-sm font-semibold hover:underline px-3 py-2"
+              className="text-violet-400 text-sm font-semibold hover:underline px-3 py-2"
             >
               See All Leads
             </button>
@@ -324,7 +324,7 @@ export default function CrmDashboardView() {
                     <th className="px-6 py-4 w-12 text-center text-xs font-bold text-white/40 uppercase tracking-wider">
                       <input
                         type="checkbox"
-                        className="rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
+                        className="rounded border-white/[0.06] text-violet-400 focus:ring-violet-500 cursor-pointer"
                         checked={selectedLeads.length > 0 && selectedLeads.length === (stats?.recent_leads ? stats.recent_leads.length : 0)}
                         onChange={toggleAllSelection}
                       />
@@ -341,12 +341,12 @@ export default function CrmDashboardView() {
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {(stats?.recent_leads || []).map((lead) => (
-                  <tr key={lead.id} className={`hover:bg-white/[0.04] transition-colors group ${selectedLeads.includes(lead.id) && isAdvancedLeadStatusEnabled ? 'bg-blue-500/100/10' : ''}`}>
+                  <tr key={lead.id} className={`hover:bg-white/[0.04] transition-colors group ${selectedLeads.includes(lead.id) && isAdvancedLeadStatusEnabled ? 'bg-violet-500/100/10' : ''}`}>
                     {isAdvancedLeadStatusEnabled && (
                       <td className="px-6 py-4 text-center">
                         <input
                           type="checkbox"
-                          className="rounded border-white/[0.06] text-blue-400 focus:ring-blue-500 cursor-pointer"
+                          className="rounded border-white/[0.06] text-violet-400 focus:ring-violet-500 cursor-pointer"
                           checked={selectedLeads.includes(lead.id)}
                           onChange={() => toggleLeadSelection(lead.id)}
                         />
@@ -354,7 +354,7 @@ export default function CrmDashboardView() {
                     )}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
+                        <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-violet-500/10 group-hover:text-violet-400 transition-colors">
                           <Users size={18} />
                         </div>
                         <div>
@@ -417,7 +417,7 @@ export default function CrmDashboardView() {
                           <button
                             title="Ver Historial de Estados"
                             onClick={() => setHistoryModalLead({ id: lead.id, name: lead.name })}
-                            className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-violet-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                           >
                             <Clock size={18} />
                           </button>
@@ -425,7 +425,7 @@ export default function CrmDashboardView() {
                         <button
                           title="Ver Detalles del Lead"
                           onClick={() => navigate(`/crm/leads/${lead.id}`)}
-                          className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-violet-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                         >
                           <ArrowUpRight size={20} />
                         </button>

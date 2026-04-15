@@ -20,7 +20,7 @@ export const LeadHistoryTimeline: React.FC<LeadHistoryTimelineProps> = ({ leadId
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-white/[0.04] flex justify-between items-center bg-white/[0.03]/[0.02] shrink-0">
                     <div className="flex items-center gap-2 text-white font-semibold">
-                        <History className="w-5 h-5 text-blue-400" />
+                        <History className="w-5 h-5 text-violet-400" />
                         <div>
                             <h3>Historial de Estados</h3>
                             <p className="text-xs text-white/40 font-normal">Lead: {leadName}</p>
@@ -48,8 +48,8 @@ export const LeadHistoryTimeline: React.FC<LeadHistoryTimelineProps> = ({ leadId
                             {history.map((event: LeadStatusHistoryItem) => (
                                 <div key={event.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                     {/* Timeline Marker */}
-                                    <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-[#0d1117] bg-blue-500/100/10 text-blue-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                        <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-[#0d1117] bg-violet-500/100/10 text-violet-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                        <div className="w-2 h-2 rounded-full bg-violet-600"></div>
                                     </div>
 
                                     {/* Card */}

@@ -3,39 +3,89 @@
 @tailwind utilities;
 
 /* ============================================
-   CLINICFORGE PREMIUM DARK THEME
+   CODEXY DESIGN SYSTEM — Violet Neon Dark Theme
+   Migrated from crmcodexy globals.css (SPEC-10)
+   Primary: #8F3DFF (oklch 0.50-0.58 0.27 285)
    ============================================ */
 
 :root {
-  /* Medical Premium Palette */
-  --medical-900: #003366;
-  --medical-800: #004080;
-  --medical-700: #004d99;
-  --medical-600: #0059b3;
-  --medical-500: #0066cc;
-  --medical-400: #0073e6;
-  --medical-300: #3385ff;
+  /* Codexy Brand Palette — Light Mode */
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --primary: #8F3DFF;
+  --primary-hover: #7B2FE6;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f0f7;
+  --secondary-foreground: #1a1025;
+  --muted: #f3f0f7;
+  --muted-foreground: #6b6280;
+  --accent: #8F3DFF;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --border: #e5e0ed;
+  --input: #e5e0ed;
+  --ring: #8F3DFF;
 
   /* Semantic Colors */
-  --success: #28a745;
-  --warning: #ffc107;
-  --danger: #dc3545;
-  --info: #17a2b8;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #8F3DFF;
 
-  /* Accent Colors */
-  --accent: var(--medical-400);
-  --accent-rgb: 0, 115, 230;
+  --radius: 0.625rem;
+}
 
-  /* White Shades */
-  --white-100: rgba(255, 255, 255, 0.1);
-  --white-300: rgba(255, 255, 255, 0.3);
-  --white-500: rgba(255, 255, 255, 0.5);
-  --white-700: rgba(255, 255, 255, 0.7);
+/* Dark Mode — OLED black + deep violet + neon */
+.dark, :root {
+  --background: #0a0a12;
+  --foreground: #f0eef5;
+  --card: #12101e;
+  --card-foreground: #f0eef5;
+  --primary: #8F3DFF;
+  --primary-hover: #7B2FE6;
+  --primary-foreground: #0a0a12;
+  --secondary: #1a1528;
+  --secondary-foreground: #e5e0ed;
+  --muted: #1a1528;
+  --muted-foreground: #8a82a0;
+  --accent: #9f5aff;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --border: #2a2440;
+  --input: #1f1a30;
+  --ring: #8F3DFF;
 
-  /* Shadows (dark-optimized) */
-  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
-  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+  --sidebar-bg: #0d0b18;
+  --sidebar-border: #241e38;
+  --sidebar-active: #8F3DFF;
+}
+
+/* oklch support (progressive enhancement) */
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --primary: oklch(0.50 0.27 285);
+    --primary-hover: oklch(0.45 0.27 285);
+    --accent: oklch(0.50 0.27 285);
+    --ring: oklch(0.50 0.27 285);
+  }
+  .dark, :root {
+    --background: oklch(0.07 0.015 285);
+    --foreground: oklch(0.95 0.005 285);
+    --card: oklch(0.10 0.02 285);
+    --primary: oklch(0.58 0.27 285);
+    --primary-hover: oklch(0.52 0.27 285);
+    --accent: oklch(0.58 0.27 285);
+    --border: oklch(0.25 0.02 285);
+    --input: oklch(0.20 0.025 285);
+    --ring: oklch(0.58 0.27 285);
+    --muted: oklch(0.16 0.03 285);
+    --muted-foreground: oklch(0.55 0.015 285);
+    --secondary: oklch(0.16 0.03 285);
+    --sidebar-bg: oklch(0.09 0.03 285);
+    --sidebar-border: oklch(0.22 0.025 285);
+  }
 }
 
 * {
@@ -46,84 +96,78 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #06060e;
-  color: rgba(255, 255, 255, 0.9);
+  background-color: var(--background);
+  color: var(--foreground);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================
-   UTILITY CLASSES
+   PREMIUM SCROLLBARS — 6px, semi-transparent
    ============================================ */
 
-.glass-container {
-  display: flex;
-  min-height: 100vh;
-}
-
-.glass {
-  background: #0d1117;
-  border: 1px solid var(--white-100);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  transition: all 0.3s ease;
-}
-
-.glass:hover {
-  box-shadow: var(--shadow-soft);
-  border-color: var(--medical-300);
-}
-
-/* Custom Scrollbar — Dark */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0e1a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Focus States */
 *:focus-visible {
-  outline: 2px solid var(--medical-500);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Transitions */
-.transition-base {
-  transition: all 0.2s ease-in-out;
+/* ============================================
+   GLOW EFFECTS — Violet Neon
+   ============================================ */
+
+@layer utilities {
+  .glow-violet {
+    box-shadow: 0 0 24px -5px rgba(143, 61, 255, 0.3);
+  }
+  .glow-violet-sm {
+    box-shadow: 0 0 12px -3px rgba(143, 61, 255, 0.25);
+  }
+  .glow-emerald-sm {
+    box-shadow: 0 0 10px -3px rgba(34, 197, 94, 0.2);
+  }
+  .card-glow {
+    box-shadow: 0 0 0 1px rgba(42, 36, 64, 1), 0 0 28px -8px rgba(143, 61, 255, 0.15);
+  }
+  .card-elevated {
+    box-shadow: 0 0 0 1px rgba(42, 36, 64, 1), 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  }
+  .neon-text {
+    text-shadow: 0 0 20px rgba(143, 61, 255, 0.4);
+  }
 }
 
 /* ============================================
-   CARD STYLES — Glass Surface
+   CARD STYLES — Glassmorphism
    ============================================ */
 
 .card {
-  @apply bg-white/[0.03] rounded-xl p-6 border border-white/[0.06];
+  @apply rounded-xl p-6 border;
+  background: var(--card);
+  border-color: var(--border);
 }
 
-.glass {
-  background: #0d1117;
-  border: 1px solid var(--white-300);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  transition: all 0.3s ease;
-}
-
-.glass:hover {
-  box-shadow: var(--shadow-soft);
-  border-color: var(--medical-300);
+.card:hover {
+  box-shadow: 0 0 20px -5px rgba(143, 61, 255, 0.1);
 }
 
 .card-header {
@@ -131,11 +175,12 @@ body {
 }
 
 .card-title {
-  @apply text-lg font-semibold text-white;
+  @apply text-lg font-semibold;
+  color: var(--foreground);
 }
 
 /* ============================================
-   BUTTON STYLES — Dark Theme
+   BUTTON STYLES — Violet Primary
    ============================================ */
 
 .btn {
@@ -143,7 +188,12 @@ body {
 }
 
 .btn-primary {
-  @apply bg-medical-600 text-white hover:bg-medical-500 active:bg-medical-700;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 12px -3px rgba(143, 61, 255, 0.25);
 }
 
 .btn-secondary {
@@ -151,139 +201,41 @@ body {
 }
 
 .btn-success {
-  @apply bg-success text-white hover:bg-success/90;
+  @apply bg-green-600 text-white hover:bg-green-700;
 }
 
 .btn-danger {
-  @apply bg-danger text-white hover:bg-danger/90;
+  @apply bg-red-600 text-white hover:bg-red-700;
 }
 
 /* ============================================
-   INPUT STYLES — Dark Theme
+   INPUT STYLES
    ============================================ */
 
 .input {
-  @apply w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-medical-500 focus:border-transparent focus:bg-white/[0.06] transition-all placeholder-white/30;
+  @apply w-full px-4 py-2.5 rounded-lg text-sm transition-all placeholder-white/30;
+  background: var(--input);
+  border: 1px solid var(--border);
+  color: var(--foreground);
 }
-
-.input-error {
-  @apply border-danger focus:ring-danger;
-}
-
-/* ============================================
-   ANIMATIONS & KEYFRAMES
-   ============================================ */
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  0% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes pulseSoft {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes wobble {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-1deg);
-  }
-  75% {
-    transform: rotate(1deg);
-  }
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-slideIn {
-  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(143, 61, 255, 0.3);
+  border-color: var(--primary);
 }
 
 /* ============================================
-   TABLE STYLES — Dark Theme
-   ============================================ */
-
-.table-container {
-  @apply overflow-x-auto rounded-xl border border-white/[0.06];
-}
-
-.table {
-  @apply w-full text-sm;
-}
-
-.table th {
-  @apply px-4 py-3 text-left font-medium text-white/50 bg-white/[0.03] border-b border-white/[0.06];
-}
-
-.table td {
-  @apply px-4 py-3 border-b border-white/[0.04] text-white/70;
-}
-
-.table tr:hover td {
-  @apply bg-white/[0.04];
-}
-
-/* ============================================
-   BADGE STYLES — Dark Theme
+   BADGE STYLES — Dot + Label Pattern
    ============================================ */
 
 .badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge::before {
+  content: '';
+  @apply w-1.5 h-1.5 rounded-full;
+  background: currentColor;
 }
 
 .badge-success {
@@ -299,50 +251,39 @@ body {
 }
 
 .badge-info {
-  @apply bg-blue-500/10 text-blue-400;
+  @apply bg-violet-500/10 text-violet-400;
 }
 
 /* ============================================
-   ANIMATIONS
+   TABLE STYLES
    ============================================ */
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.table-container {
+  @apply overflow-x-auto rounded-xl;
+  border: 1px solid var(--border);
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+.table {
+  @apply w-full text-sm;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.table th {
+  @apply px-4 py-3 text-left font-medium text-white/50 border-b;
+  background: var(--muted);
+  border-color: var(--border);
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+.table td {
+  @apply px-4 py-3 text-white/70;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+.table tr:hover td {
+  background: rgba(143, 61, 255, 0.04);
 }
 
 /* ============================================
-   LOADING STATES — Dark Theme
-   ============================================ */
-
-.skeleton {
-  @apply bg-white/[0.06] animate-pulse rounded;
-}
-
-/* ============================================
-   MODAL STYLES — Dark Theme
+   MODAL STYLES
    ============================================ */
 
 .modal-overlay {
@@ -350,11 +291,15 @@ body {
 }
 
 .modal-content {
-  @apply bg-[#0d1117] rounded-2xl shadow-elevated max-w-lg w-full max-h-[90vh] overflow-y-auto border border-white/[0.08];
+  @apply rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px -10px rgba(143, 61, 255, 0.15);
 }
 
 .modal-header {
-  @apply flex items-center justify-between p-4 border-b border-white/[0.06];
+  @apply flex items-center justify-between p-4;
+  border-bottom: 1px solid var(--border);
 }
 
 .modal-body {
@@ -362,11 +307,13 @@ body {
 }
 
 .modal-footer {
-  @apply flex justify-end gap-3 p-4 border-t border-white/[0.06] bg-white/[0.02] rounded-b-2xl;
+  @apply flex justify-end gap-3 p-4 rounded-b-2xl;
+  border-top: 1px solid var(--border);
+  background: var(--muted);
 }
 
 /* ============================================
-   TOAST NOTIFICATIONS — Dark Theme
+   TOAST NOTIFICATIONS
    ============================================ */
 
 .toast-container {
@@ -377,106 +324,66 @@ body {
   @apply p-4 rounded-lg shadow-lg border-l-4 animate-slide-in;
 }
 
-.toast-success {
-  @apply bg-green-500/10 border-green-500 text-green-400;
-}
+.toast-success { @apply bg-green-500/10 border-green-500 text-green-400; }
+.toast-warning { @apply bg-yellow-500/10 border-yellow-500 text-yellow-400; }
+.toast-error { @apply bg-red-500/10 border-red-500 text-red-400; }
+.toast-info { @apply bg-violet-500/10 border-violet-500 text-violet-400; }
 
-.toast-warning {
-  @apply bg-yellow-500/10 border-yellow-500 text-yellow-400;
-}
+/* ============================================
+   SKELETON / LOADING
+   ============================================ */
 
-.toast-error {
-  @apply bg-red-500/10 border-red-500 text-red-400;
-}
-
-.toast-info {
-  @apply bg-blue-500/10 border-blue-500 text-blue-400;
+.skeleton {
+  @apply animate-pulse rounded;
+  background: var(--muted);
 }
 
 /* ============================================
-   MOBILE SAFE AREA HELPERS
+   ANIMATIONS
    ============================================ */
-.safe-top {
-  padding-top: max(0.75rem, env(safe-area-inset-top));
+
+@keyframes scaleIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
-.safe-bottom {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes slideIn {
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
-.overscroll-contain {
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
+.animate-scaleIn { animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-fadeIn { animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slideIn { animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-slide-in { animation: slideIn 0.3s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
 
 /* ============================================
-   GUIDE BUTTON ANIMATIONS
+   MOBILE SAFE AREA
    ============================================ */
-
-@keyframes guidePing {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-@keyframes guideWobble {
-  0%, 100% { transform: scale(1) rotate(0deg) translateX(0); }
-  5% { transform: scale(1.15) rotate(-8deg) translateX(-2px); }
-  10% { transform: scale(1.15) rotate(8deg) translateX(2px); }
-  15% { transform: scale(1.2) rotate(-5deg) translateX(-1px); }
-  20% { transform: scale(1.1) rotate(5deg) translateX(1px); }
-  25% { transform: scale(1.3) rotate(0deg) translateX(0); }
-  30% { transform: scale(0.9) rotate(0deg); }
-  35% { transform: scale(1.05) rotate(0deg); }
-  40%, 100% { transform: scale(1) rotate(0deg) translateX(0); }
-}
-
-.guide-btn .guide-icon {
-  animation: guideWobble 6s ease-in-out infinite;
-}
-
-.guide-btn:hover .guide-icon {
-  animation: none;
-  transform: scale(1.1);
-}
+.safe-top { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+.overscroll-contain { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 
 /* ============================================
-   TOOLTIP POPUP ANIMATIONS
+   UTILITY — Glass container
    ============================================ */
-
-@keyframes tooltipIn {
-  0% { opacity: 0; transform: scale(0.8) translateY(8px); }
-  50% { opacity: 1; transform: scale(1.03) translateY(-2px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+.glass-container { display: flex; min-height: 100vh; }
+.glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.3s ease;
 }
-
-/* ============================================
-   NOVA BUTTON ANIMATIONS
-   ============================================ */
-
-@keyframes novaPing {
-  0% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.7); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-@keyframes novaWobble {
-  0%, 100% { transform: scale(1) rotate(0deg) translateX(0); }
-  5% { transform: scale(1.15) rotate(-10deg) translateX(-2px); }
-  10% { transform: scale(1.15) rotate(10deg) translateX(2px); }
-  15% { transform: scale(1.25) rotate(-6deg) translateX(-1px); }
-  20% { transform: scale(1.1) rotate(6deg) translateX(1px); }
-  25% { transform: scale(1.3) rotate(0deg) translateX(0); }
-  30% { transform: scale(0.85) rotate(0deg); }
-  35% { transform: scale(1.08) rotate(0deg); }
-  40%, 100% { transform: scale(1) rotate(0deg) translateX(0); }
-}
-
-.nova-btn .nova-icon {
-  animation: novaWobble 5s ease-in-out infinite;
-}
-
-.nova-btn:hover .nova-icon {
-  animation: none;
-  transform: scale(1.15) rotate(15deg);
-  transition: transform 0.2s ease-out;
+.glass:hover {
+  box-shadow: 0 0 20px -5px rgba(143, 61, 255, 0.15);
+  border-color: rgba(143, 61, 255, 0.3);
 }

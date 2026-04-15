@@ -132,7 +132,7 @@ const SellerPerformanceView: React.FC = () => {
             {daily.slice(0, 30).reverse().map((d: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
-                  className="w-full bg-blue-500/40 rounded-t hover:bg-blue-500/60 transition-colors"
+                  className="w-full bg-violet-500/40 rounded-t hover:bg-violet-500/60 transition-colors"
                   style={{ height: `${(d.actions / maxDailyActions) * 100}%`, minHeight: d.actions > 0 ? '4px' : '0' }}
                   title={`${d.date}: ${d.actions} acciones`}
                 />
@@ -155,7 +155,7 @@ const SellerPerformanceView: React.FC = () => {
                   <div key={type} className="flex items-center gap-3">
                     <span className="text-xs text-white/60 w-40 truncate">{LABELS[type] || type}</span>
                     <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500/50 rounded-full" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-violet-500/50 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                     <span className="text-xs text-white/40 w-12 text-right">{count}</span>
                   </div>

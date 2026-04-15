@@ -82,7 +82,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.06] shrink-0">
           <div className="flex items-center gap-2">
-            <ArrowRight size={18} className="text-blue-400" />
+            <ArrowRight size={18} className="text-violet-400" />
             <h2 className="text-lg font-semibold text-white">Derivar a Closer</h2>
           </div>
           <button
@@ -118,7 +118,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
               <select
                 value={selectedCloser}
                 onChange={(e) => setSelectedCloser(e.target.value)}
-                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40"
               >
                 <option value="" className="bg-[#1a1a2e] text-white">Seleccionar closer...</option>
                 {closers.map((c) => (
@@ -136,7 +136,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
               onChange={(e) => setForm((f) => ({ ...f, handoff_note: e.target.value }))}
               rows={3}
               placeholder="Contexto para el closer sobre esta conversacion..."
-              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 resize-none"
+              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/40 resize-none"
             />
           </div>
 
@@ -151,7 +151,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
                 value={form.prospect_wants}
                 onChange={(e) => setForm((f) => ({ ...f, prospect_wants: e.target.value }))}
                 placeholder="Servicio o producto que le interesa..."
-                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-blue-500/40"
+                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-violet-500/40"
               />
             </div>
 
@@ -162,7 +162,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
                 value={form.budget}
                 onChange={(e) => setForm((f) => ({ ...f, budget: e.target.value }))}
                 placeholder="Rango de presupuesto estimado..."
-                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-blue-500/40"
+                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-violet-500/40"
               />
             </div>
 
@@ -173,7 +173,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
                 onChange={(e) => setForm((f) => ({ ...f, objections: e.target.value }))}
                 rows={2}
                 placeholder="Dudas o resistencias que mostro..."
-                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-blue-500/40 resize-none"
+                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-violet-500/40 resize-none"
               />
             </div>
 
@@ -184,7 +184,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
                 value={form.next_steps}
                 onChange={(e) => setForm((f) => ({ ...f, next_steps: e.target.value }))}
                 placeholder="Que deberia hacer el closer..."
-                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-blue-500/40"
+                className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder-white/25 focus:ring-2 focus:ring-violet-500/40"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function DeriveToCloserModal({ leadId, onClose, onSuccess }: Deri
           <button
             onClick={handleSubmit}
             disabled={!selectedCloser || submitting}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg disabled:opacity-50 transition-colors"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
             Derivar a closer

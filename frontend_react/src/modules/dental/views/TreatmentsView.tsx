@@ -24,7 +24,7 @@ interface TreatmentType {
 // Category icons mapping
 const categoryIcons: Record<string, React.ReactNode> = {
   prevention: <Heart size={16} className="text-green-400" />,
-  restorative: <Activity size={16} className="text-blue-400" />,
+  restorative: <Activity size={16} className="text-violet-400" />,
   surgical: <Zap size={16} className="text-red-400" />,
   orthodontics: <Shield size={16} className="text-purple-400" />,
   emergency: <AlertCircle size={16} className="text-orange-600" />,
@@ -189,12 +189,12 @@ export default function TreatmentsView() {
         {/* Quick Reference */}
         <div className="mb-10 p-6 bg-white/[0.03] backdrop-blur-xl border border-white/[0.06]/[0.06] rounded-3xl">
           <h3 className="font-bold text-white mb-5 flex items-center gap-2">
-            <Clock size={20} className="text-blue-400" />
+            <Clock size={20} className="text-violet-400" />
             {t('treatments.recommended_durations')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-            <div className="flex items-center gap-4 p-4 bg-white/[0.03] rounded-2xl border border-white/[0.06]/[0.06] hover:border-blue-500/20 transition-colors">
-              <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+            <div className="flex items-center gap-4 p-4 bg-white/[0.03] rounded-2xl border border-white/[0.06]/[0.06] hover:border-violet-500/20 transition-colors">
+              <div className="p-3 bg-violet-500/10 text-violet-400 rounded-xl">
                 <Clock size={20} />
               </div>
               <div className="flex flex-col">
@@ -232,7 +232,7 @@ export default function TreatmentsView() {
             <div className="bg-[#0d1117] rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="flex justify-between items-center gap-3 p-4 sm:p-6 border-b border-white/[0.04] shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2.5 sm:p-3 bg-blue-500/10 text-blue-400 rounded-xl shrink-0">
+                  <div className="p-2.5 sm:p-3 bg-violet-500/10 text-violet-400 rounded-xl shrink-0">
                     <Stethoscope size={22} className="sm:w-6 sm:h-6" />
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-white truncate">{t('treatments.create_new_treatment')}</h3>
@@ -329,7 +329,7 @@ export default function TreatmentsView() {
                       type="checkbox"
                       checked={newForm.requires_multiple_sessions || false}
                       onChange={(e) => setNewForm({ ...newForm, requires_multiple_sessions: e.target.checked })}
-                      className="h-5 w-5 rounded border-white/[0.06] text-blue-400 focus:ring-medical-500"
+                      className="h-5 w-5 rounded border-white/[0.06] text-violet-400 focus:ring-medical-500"
                     />
                     <span className="text-sm font-medium text-white/50">{t('treatments.multiple_sessions')}</span>
                   </label>
@@ -376,7 +376,7 @@ export default function TreatmentsView() {
                     </div>
                     <div>
                       <h2 className="font-bold text-white text-xl capitalize tracking-tight">{t('treatments.category_' + category) || category}</h2>
-                      <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">{categoryTreatments.length} {t('treatments.active_services')}</span>
+                      <span className="text-[10px] text-violet-400 font-bold uppercase tracking-widest">{categoryTreatments.length} {t('treatments.active_services')}</span>
                     </div>
                   </div>
                 </div>
@@ -419,14 +419,14 @@ export default function TreatmentsView() {
                           </div>
 
                           {/* Duration Settings */}
-                          <div className="p-6 bg-blue-500/10/50 rounded-2xl border border-white/[0.06]/[0.06]/50">
+                          <div className="p-6 bg-violet-500/10/50 rounded-2xl border border-white/[0.06]/[0.06]/50">
                             <h4 className="text-xs font-bold text-white mb-4 flex items-center gap-2 uppercase tracking-widest">
                               <Clock size={14} />
                               {t('treatments.time_config_minutes')}
                             </h4>
                             <div className="grid grid-cols-3 gap-6">
                               <div className="space-y-1">
-                                <label className="block text-[10px] font-bold text-blue-400 uppercase">{t('treatments.min_label')}</label>
+                                <label className="block text-[10px] font-bold text-violet-400 uppercase">{t('treatments.min_label')}</label>
                                 <input
                                   type="number"
                                   value={editForm.min_duration_minutes || ''}
@@ -435,16 +435,16 @@ export default function TreatmentsView() {
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="block text-[10px] font-bold text-blue-400 uppercase">{t('treatments.default_label')}</label>
+                                <label className="block text-[10px] font-bold text-violet-400 uppercase">{t('treatments.default_label')}</label>
                                 <input
                                   type="number"
                                   value={editForm.default_duration_minutes || ''}
                                   onChange={(e) => handleDurationChange('default', e.target.value)}
-                                  className="w-full px-3 py-2 bg-white/[0.04] border border-blue-500/20 rounded-lg focus:ring-4 focus:ring-medical-400/20 outline-none font-bold text-white text-center text-lg "
+                                  className="w-full px-3 py-2 bg-white/[0.04] border border-violet-500/20 rounded-lg focus:ring-4 focus:ring-medical-400/20 outline-none font-bold text-white text-center text-lg "
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="block text-[10px] font-bold text-blue-400 uppercase">{t('treatments.max_label')}</label>
+                                <label className="block text-[10px] font-bold text-violet-400 uppercase">{t('treatments.max_label')}</label>
                                 <input
                                   type="number"
                                   value={editForm.max_duration_minutes || ''}
@@ -503,11 +503,11 @@ export default function TreatmentsView() {
                                     type="checkbox"
                                     checked={editForm.is_available_for_booking || false}
                                     onChange={(e) => setEditForm({ ...editForm, is_available_for_booking: e.target.checked })}
-                                    className="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border border-white/[0.06]/[0.06] bg-white/[0.03] transition-all checked:bg-blue-600 checked:border-blue-600 "
+                                    className="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border border-white/[0.06]/[0.06] bg-white/[0.03] transition-all checked:bg-violet-600 checked:border-violet-600 "
                                   />
                                   <CheckCircle className="absolute hidden h-4 w-4 text-white peer-checked:block left-1" />
                                 </div>
-                                <span className="text-sm font-bold text-white/40 group-hover:text-blue-400 transition-colors">{t('treatments.in_catalog')}</span>
+                                <span className="text-sm font-bold text-white/40 group-hover:text-violet-400 transition-colors">{t('treatments.in_catalog')}</span>
                               </label>
                             </div>
                           </div>
@@ -562,7 +562,7 @@ export default function TreatmentsView() {
 
                             <div className="flex flex-wrap items-center gap-y-2 gap-x-8">
                               <div className="flex items-center gap-2.5">
-                                <div className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg">
+                                <div className="p-1.5 bg-violet-500/10 text-violet-400 rounded-lg">
                                   <Clock size={14} />
                                 </div>
                                 <span className="text-white/50 text-sm font-semibold">
@@ -586,7 +586,7 @@ export default function TreatmentsView() {
                           <div className="flex gap-2 opacity-0 group-hover/item:opacity-100 transition-all translate-x-2 group-hover/item:translate-x-0">
                             <button
                               onClick={() => handleEdit(treatment)}
-                              className="p-3 text-white/30 hover:text-blue-400 hover:bg-blue-500/10 rounded-2xl transition-all  bg-white/[0.03] border border-white/[0.06]"
+                              className="p-3 text-white/30 hover:text-violet-400 hover:bg-violet-500/10 rounded-2xl transition-all  bg-white/[0.03] border border-white/[0.06]"
                               title={t('common.edit')}
                             >
                               <Edit2 size={18} />
@@ -612,7 +612,7 @@ export default function TreatmentsView() {
         {/* Empty State */}
         {!loading && treatments.length === 0 && (
           <div className="p-20 text-center bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/[0.06]/40  animate-in fade-in duration-700">
-            <div className="w-24 h-24 bg-blue-500/10 text-blue-400/30 rounded-full flex items-center justify-center mx-auto mb-8">
+            <div className="w-24 h-24 bg-violet-500/10 text-violet-400/30 rounded-full flex items-center justify-center mx-auto mb-8">
               <Activity size={48} strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-bold text-white mb-3">{t('treatments.no_treatments_defined')}</h3>
@@ -626,7 +626,7 @@ export default function TreatmentsView() {
               <Zap size={20} fill="currentColor" />
               {t('treatments.setup_first_service')}
             </button>
-            <div className="mt-12 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 inline-block text-blue-400 text-xs font-bold uppercase tracking-widest">
+            <div className="mt-12 p-4 bg-violet-500/10 rounded-2xl border border-violet-500/20 inline-block text-violet-400 text-xs font-bold uppercase tracking-widest">
               Tip: Revisa la migración 006_treatment_config.sql
             </div>
           </div>

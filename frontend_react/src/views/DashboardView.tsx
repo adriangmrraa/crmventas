@@ -218,7 +218,7 @@ export default function DashboardView() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#06060e]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     );
   }
@@ -267,7 +267,7 @@ export default function DashboardView() {
                 title="Total Leads"
                 value={(stats as CrmAnalyticsStats)?.total_leads || 0}
                 icon={Users}
-                color="bg-blue-500"
+                color="bg-violet-500"
                 trend="+12%"
               />
               <KPICard
@@ -298,7 +298,7 @@ export default function DashboardView() {
                 title={t('dashboard.conversations')}
                 value={(stats as DentalAnalyticsStats)?.ia_conversations || 0}
                 icon={MessageSquare}
-                color="bg-blue-500"
+                color="bg-violet-500"
                 trend="+12%"
               />
               <KPICard
@@ -334,7 +334,7 @@ export default function DashboardView() {
               </h2>
               {!isCrmSales && (
                 <div className="hidden sm:flex gap-4 text-xs font-medium text-white/40">
-                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> {t('dashboard.referrals')}</span>
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-violet-500"></div> {t('dashboard.referrals')}</span>
                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t('dashboard.completed')}</span>
                 </div>
               )}
@@ -353,8 +353,8 @@ export default function DashboardView() {
                   <AreaChart data={(stats as DentalAnalyticsStats)?.growth_data ?? []}>
                     <defs>
                       <linearGradient id="colorIA" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#8F3DFF" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#8F3DFF" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorDone" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
@@ -367,7 +367,7 @@ export default function DashboardView() {
                     <Tooltip
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Area type="monotone" dataKey="ia_referrals" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorIA)" />
+                    <Area type="monotone" dataKey="ia_referrals" stroke="#8F3DFF" strokeWidth={3} fillOpacity={1} fill="url(#colorIA)" />
                     <Area type="monotone" dataKey="completed_appointments" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorDone)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -382,7 +382,7 @@ export default function DashboardView() {
             <h2 className="text-lg font-semibold text-white">
               {isCrmSales ? 'Recent Leads' : t('dashboard.urgencies_recent')}
             </h2>
-            <button className="text-blue-400 text-sm font-semibold hover:underline px-3 py-2">
+            <button className="text-violet-400 text-sm font-semibold hover:underline px-3 py-2">
               {isCrmSales ? 'See All Leads' : t('dashboard.see_all')}
             </button>
           </div>
@@ -405,7 +405,7 @@ export default function DashboardView() {
                     <tr key={lead.id} className="hover:bg-[#06060e]/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-violet-500/10 group-hover:text-violet-400 transition-colors">
                             <User size={18} />
                           </div>
                           <div>
@@ -417,7 +417,7 @@ export default function DashboardView() {
                       <td className="px-6 py-4 text-sm text-white/50 font-mono">{lead.phone}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          lead.status === 'new' ? 'bg-blue-500/10 text-blue-400' :
+                          lead.status === 'new' ? 'bg-violet-500/10 text-violet-400' :
                           lead.status === 'contacted' ? 'bg-yellow-500/10 text-yellow-700' :
                           lead.status === 'qualified' ? 'bg-green-500/10 text-green-400' :
                           'bg-white/[0.04] text-white/70'
@@ -433,7 +433,7 @@ export default function DashboardView() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-violet-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
                           <ArrowUpRight size={20} />
                         </button>
                       </td>
@@ -465,7 +465,7 @@ export default function DashboardView() {
                     <tr key={u.id} className="hover:bg-[#06060e]/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] flex items-center justify-center text-white/40 group-hover:bg-violet-500/10 group-hover:text-violet-400 transition-colors">
                             <User size={18} />
                           </div>
                           <div>
@@ -484,7 +484,7 @@ export default function DashboardView() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-blue-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <button className="p-2 hover:bg-white/[0.06] rounded-lg border border-transparent hover:border-white/[0.06] text-white/30 hover:text-violet-400 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center">
                           <ArrowUpRight size={20} />
                         </button>
                       </td>

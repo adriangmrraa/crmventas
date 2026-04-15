@@ -229,7 +229,7 @@ export default function ClientDetailView() {
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
                 />
               </div>
               <div>
@@ -238,7 +238,7 @@ export default function ClientDetailView() {
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
                 />
               </div>
               <div className="sm:col-span-2 flex items-center gap-2 text-sm text-white/40">
@@ -254,7 +254,7 @@ export default function ClientDetailView() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
                 />
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function ClientDetailView() {
             <select
               value={formData.status}
               onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value as 'active' | 'inactive' }))}
-              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+              className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
             >
               <option value="active">{t('clients.status_active')}</option>
               <option value="inactive">{t('clients.status_inactive')}</option>
@@ -274,7 +274,7 @@ export default function ClientDetailView() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 font-medium"
             >
               <Save size={18} />
               {saving ? t('common.saving') : t('common.save_changes')}

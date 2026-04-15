@@ -94,7 +94,7 @@ export const PatientCardSkeleton: React.FC = () => (
 export const AgendaEventSkeleton: React.FC = () => (
   <div className="p-3 rounded-lg border border-white/[0.04] mb-2">
     <div className="flex items-center gap-3">
-      <div className="w-1 h-12 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
+      <div className="w-1 h-12 rounded-full bg-gradient-to-b from-violet-400 to-violet-600" />
       <div className="flex-1 space-y-2">
         <Skeleton variant="text" width="70%" height={14} />
         <Skeleton variant="text" width="50%" height={12} />
@@ -108,7 +108,7 @@ export const ChatMessageSkeleton: React.FC<{ isUser?: boolean }> = ({ isUser = f
   <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
     <Skeleton variant="circular" width={32} height={32} />
     <div className={`max-w-[70%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
-      <div className={`${isUser ? 'bg-blue-500/100/10' : 'bg-white/[0.03]/[0.04]'} p-3 rounded-2xl rounded-${isUser ? 'tl-none' : 'tr-none'}`}>
+      <div className={`${isUser ? 'bg-violet-500/100/10' : 'bg-white/[0.03]/[0.04]'} p-3 rounded-2xl rounded-${isUser ? 'tl-none' : 'tr-none'}`}>
         <Skeleton variant="text" width={120} height={12} />
         <Skeleton variant="text" width={80} height={12} className="mt-1" />
       </div>

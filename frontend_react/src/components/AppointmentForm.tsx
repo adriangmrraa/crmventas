@@ -223,7 +223,7 @@ export default function AppointmentForm({
             type="button"
             onClick={() => setActiveTab(id)}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === id
-                ? 'border-blue-500 text-blue-400'
+                ? 'border-violet-500 text-violet-400'
                 : 'border-transparent text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
                 }`}
         >
@@ -258,7 +258,7 @@ export default function AppointmentForm({
                         <div className="flex items-center gap-2">
                             <p className="text-xs text-white/40">Sales CRM</p>
                             {(initialData as any)?.source && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 font-medium">
                                     {(initialData as any).source}
                                 </span>
                             )}
@@ -290,7 +290,7 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-violet-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                         value={formData.patient_id}
                                         onChange={(e) => handleChange('patient_id', e.target.value)}
                                         disabled={isEditing}
@@ -308,7 +308,7 @@ export default function AppointmentForm({
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                     <select
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-violet-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                         value={formData.professional_id}
                                         onChange={(e) => handleChange('professional_id', e.target.value)}
                                     >
@@ -327,7 +327,7 @@ export default function AppointmentForm({
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                         <input
                                             type="datetime-local"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-violet-500 focus:ring-0 transition-all text-sm"
                                             value={formData.appointment_datetime}
                                             onChange={(e) => handleChange('appointment_datetime', e.target.value)}
                                         />
@@ -338,7 +338,7 @@ export default function AppointmentForm({
                                     <div className="relative">
                                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                                         <select
-                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm cursor-pointer"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:bg-white/[0.06] focus:border-violet-500 focus:ring-0 transition-all text-sm cursor-pointer"
                                             value={formData.duration_minutes}
                                             onChange={(e) => handleChange('duration_minutes', parseInt(e.target.value))}
                                         >
@@ -378,7 +378,7 @@ export default function AppointmentForm({
                                                 }
                                             }}
                                             className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${formData.appointment_type === s.code
-                                                ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                                ? 'bg-violet-500/10 border-violet-500/20 text-violet-400'
                                                 : 'bg-white/[0.03] border-white/[0.06] text-white/50 hover:bg-white/[0.04]'
                                                 }`}
                                         >
@@ -391,7 +391,7 @@ export default function AppointmentForm({
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t('agenda.notes')}</label>
                                 <textarea
-                                    className="w-full p-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-lg focus:bg-white/[0.06] focus:border-blue-500 focus:ring-0 transition-all text-sm min-h-[100px]"
+                                    className="w-full p-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-lg focus:bg-white/[0.06] focus:border-violet-500 focus:ring-0 transition-all text-sm min-h-[100px]"
                                     placeholder={t('agenda.notes_placeholder')}
                                     value={formData.notes}
                                     onChange={(e) => handleChange('notes', e.target.value)}
@@ -407,7 +407,7 @@ export default function AppointmentForm({
                                 <input
                                     type="text"
                                     placeholder="Nombre de la empresa"
-                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                     value={businessData.company_name}
                                     onChange={(e) => setBusinessData(prev => ({ ...prev, company_name: e.target.value }))}
                                 />
@@ -416,7 +416,7 @@ export default function AppointmentForm({
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Industria</label>
                                     <select
-                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 cursor-pointer"
                                         value={businessData.industry}
                                         onChange={(e) => setBusinessData(prev => ({ ...prev, industry: e.target.value }))}
                                     >
@@ -434,7 +434,7 @@ export default function AppointmentForm({
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tamano empresa</label>
                                     <select
-                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 cursor-pointer"
                                         value={businessData.company_size}
                                         onChange={(e) => setBusinessData(prev => ({ ...prev, company_size: e.target.value }))}
                                     >
@@ -451,7 +451,7 @@ export default function AppointmentForm({
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Rango de presupuesto</label>
                                     <select
-                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 cursor-pointer"
                                         value={businessData.budget_range}
                                         onChange={(e) => setBusinessData(prev => ({ ...prev, budget_range: e.target.value }))}
                                     >
@@ -468,7 +468,7 @@ export default function AppointmentForm({
                                     <input
                                         type="text"
                                         placeholder="Nombre del decisor"
-                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                        className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                         value={businessData.decision_maker}
                                         onChange={(e) => setBusinessData(prev => ({ ...prev, decision_maker: e.target.value }))}
                                     />
@@ -479,7 +479,7 @@ export default function AppointmentForm({
                                 <textarea
                                     rows={3}
                                     placeholder="Problemas o necesidades del lead..."
-                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                    className="w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                     value={businessData.pain_points}
                                     onChange={(e) => setBusinessData(prev => ({ ...prev, pain_points: e.target.value }))}
                                 />
@@ -501,14 +501,14 @@ export default function AppointmentForm({
                                         <div>
                                             <label className="text-xs font-semibold text-white/50">Monto ($)</label>
                                             <input type="number" step="0.01" placeholder="0.00"
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                                 value={billingData.billing_amount}
                                                 onChange={(e) => setBillingData(prev => ({ ...prev, billing_amount: e.target.value }))} />
                                         </div>
                                         <div>
                                             <label className="text-xs font-semibold text-white/50">Valor del deal ($)</label>
                                             <input type="number" step="0.01" placeholder="0.00"
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                                 value={billingData.deal_value}
                                                 onChange={(e) => setBillingData(prev => ({ ...prev, deal_value: e.target.value }))} />
                                         </div>
@@ -517,14 +517,14 @@ export default function AppointmentForm({
                                         <div>
                                             <label className="text-xs font-semibold text-white/50">Comision estimada ($)</label>
                                             <input type="number" step="0.01" placeholder="0.00"
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                                 value={billingData.commission_estimate}
                                                 onChange={(e) => setBillingData(prev => ({ ...prev, commission_estimate: e.target.value }))} />
                                         </div>
                                         <div>
                                             <label className="text-xs font-semibold text-white/50">Metodo de pago</label>
                                             <select
-                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/40 cursor-pointer"
+                                                className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-violet-500/40 cursor-pointer"
                                                 value={billingData.payment_method}
                                                 onChange={(e) => setBillingData(prev => ({ ...prev, payment_method: e.target.value }))}
                                             >
@@ -540,7 +540,7 @@ export default function AppointmentForm({
                                     <div>
                                         <label className="text-xs font-semibold text-white/50">Notas de facturacion</label>
                                         <textarea rows={3} placeholder="Observaciones..."
-                                            className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-blue-500/40 placeholder-white/20"
+                                            className="mt-1 w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm resize-none focus:outline-none focus:border-violet-500/40 placeholder-white/20"
                                             value={billingData.billing_notes}
                                             onChange={(e) => setBillingData(prev => ({ ...prev, billing_notes: e.target.value }))} />
                                     </div>
@@ -554,7 +554,7 @@ export default function AppointmentForm({
                                                         billingData.payment_status === ps
                                                             ? ps === 'paid' ? 'bg-green-500/15 border-green-500/30 text-green-400'
                                                             : ps === 'partial' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400'
-                                                            : 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                                                            : 'bg-violet-500/15 border-violet-500/30 text-violet-400'
                                                         : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:bg-white/[0.04]'
                                                     }`}>
                                                     {ps === 'pending' ? 'Pendiente' : ps === 'partial' ? 'Parcial' : 'Pagado'}
@@ -568,7 +568,7 @@ export default function AppointmentForm({
                                         )}
                                         {!billingSuccess && <span />}
                                         <button type="button" disabled={billingSaving}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-500 active:scale-95 transition-all disabled:opacity-50"
                                             onClick={async () => {
                                                 setBillingSaving(true); setBillingSuccess(null);
                                                 try {
@@ -619,7 +619,7 @@ export default function AppointmentForm({
                             type="button"
                             onClick={handleSubmit}
                             disabled={loading}
-                            className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg shadow-blue-500/30 flex items-center gap-2 transition-all ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02]'
+                            className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg shadow-violet-500/30 flex items-center gap-2 transition-all ${loading ? 'bg-violet-400 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:scale-[1.02]'
                                 }`}
                         >
                             {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={16} />}

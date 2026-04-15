@@ -242,7 +242,7 @@ export default function MarketingHubView() {
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="font-bold text-white flex items-center gap-2">
                                     {activePlatform === 'meta' ? (
-                                        <RefreshCw size={18} className={isMetaConnected ? "text-blue-500" : "text-white/30"} />
+                                        <RefreshCw size={18} className={isMetaConnected ? "text-violet-500" : "text-white/30"} />
                                     ) : (
                                         <Globe size={18} className={isGoogleConnected ? "text-green-500" : "text-white/30"} />
                                     )}
@@ -329,9 +329,9 @@ export default function MarketingHubView() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {getPlatformData()?.map((c: any, index: number) => (
-                                    <tr key={c.ad_id || c.id || `campaign-${index}`} className="hover:bg-blue-500/10/30 transition-colors group">
+                                    <tr key={c.ad_id || c.id || `campaign-${index}`} className="hover:bg-violet-500/10/30 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="font-bold text-white group-hover:text-blue-400 transition-colors">
+                                            <div className="font-bold text-white group-hover:text-violet-400 transition-colors">
                                                 {c.ad_name || c.name || `Campaign ${index + 1}`}
                                             </div>
                                             <div className="text-xs text-white/30 font-medium">

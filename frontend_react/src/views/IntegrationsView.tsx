@@ -6,7 +6,7 @@ export default function IntegrationsView() {
     <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-8">
       {/* Page header */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400">
+        <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-400">
           <Plug size={24} />
         </div>
         <div>

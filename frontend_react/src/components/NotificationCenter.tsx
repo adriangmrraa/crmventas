@@ -183,7 +183,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'hot_lead':
         return <Zap size={16} className="text-orange-500" />;
       case 'followup':
-        return <Clock size={16} className="text-blue-500" />;
+        return <Clock size={16} className="text-violet-500" />;
       case 'performance_alert':
         return <TrendingUp size={16} className="text-yellow-500" />;
       case 'assignment':
@@ -202,7 +202,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'medium':
         return 'border-yellow-500 bg-yellow-500/10';
       case 'low':
-        return 'border-blue-500 bg-blue-500/10';
+        return 'border-violet-500 bg-violet-500/10';
       default:
         return 'border-white/[0.10] bg-white/[0.02]';
     }
@@ -349,7 +349,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={() => setFilter('unread')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'unread'
-              ? 'bg-blue-500/10 text-blue-400'
+              ? 'bg-violet-500/10 text-violet-400'
               : 'text-white/50 hover:bg-white/[0.06]'
               }`}
           >
@@ -358,7 +358,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === 'all'
-              ? 'bg-blue-500/10 text-blue-400'
+              ? 'bg-violet-500/10 text-violet-400'
               : 'text-white/50 hover:bg-white/[0.06]'
               }`}
           >
@@ -369,7 +369,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         {notificationCount.total > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1"
           >
             <Check size={14} />
             {t('notifications.mark_all_read')}
@@ -381,7 +381,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
             <p className="mt-2 text-white/40">
               {t('notifications.loading')}
             </p>
@@ -392,7 +392,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             <p className="text-red-400">{error}</p>
             <button
               onClick={refreshNotifications}
-              className="mt-2 text-sm text-blue-400 hover:underline"
+              className="mt-2 text-sm text-violet-400 hover:underline"
             >
               {t('notifications.retry')}
             </button>
@@ -412,7 +412,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-white/[0.04] transition-colors cursor-pointer ${!notification.read ? 'bg-blue-500/5' : ''
+                className={`p-4 hover:bg-white/[0.04] transition-colors cursor-pointer ${!notification.read ? 'bg-violet-500/5' : ''
                   }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -465,7 +465,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       )}
 
                       {notification.related_entity_type && (
-                        <span className="text-xs text-blue-400 flex items-center gap-1">
+                        <span className="text-xs text-violet-400 flex items-center gap-1">
                           <ChevronRight size={10} />
                           {t(`notifications.entity_${notification.related_entity_type}`)}
                         </span>
@@ -480,7 +480,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                             e.stopPropagation();
                             handleNotificationClick(notification);
                           }}
-                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                          className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
                         >
                           <ExternalLink size={12} />
                           {t('notifications.view_entity')}

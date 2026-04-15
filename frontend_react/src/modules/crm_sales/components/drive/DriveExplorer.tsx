@@ -286,7 +286,7 @@ export default function DriveExplorer({ clientId }: DriveExplorerProps) {
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
             placeholder={t('drive.folder_name')}
-            className="flex-1 px-3 py-1.5 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30"
+            className="flex-1 px-3 py-1.5 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg text-sm focus:ring-2 focus:ring-violet-500/30"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCreateFolder();
@@ -295,7 +295,7 @@ export default function DriveExplorer({ clientId }: DriveExplorerProps) {
           />
           <button
             onClick={handleCreateFolder}
-            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-blue-700"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-violet-700"
           >
             {t('common.create')}
           </button>
@@ -310,15 +310,15 @@ export default function DriveExplorer({ clientId }: DriveExplorerProps) {
 
       {/* Upload indicator */}
       {uploading && (
-        <div className="mx-4 mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        <div className="mx-4 mt-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg text-violet-400 text-sm flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
           {t('drive.uploading')}
         </div>
       )}
 
       {/* Drag overlay */}
       {dragActive && currentFolderId && (
-        <div className="mx-4 mt-2 p-8 border-2 border-dashed border-blue-500/40 rounded-lg bg-blue-500/5 text-center text-blue-400 text-sm">
+        <div className="mx-4 mt-2 p-8 border-2 border-dashed border-violet-500/40 rounded-lg bg-violet-500/5 text-center text-violet-400 text-sm">
           {t('drive.drop_files')}
         </div>
       )}

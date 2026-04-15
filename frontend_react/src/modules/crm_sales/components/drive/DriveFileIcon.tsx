@@ -33,7 +33,7 @@ export default function DriveFileIcon({ mimeType, size = 18 }: DriveFileIconProp
     return <FileArchive size={size} className="text-amber-400/70" />;
 
   if (subtype.includes('word') || subtype.includes('document'))
-    return <FileText size={size} className="text-blue-400/70" />;
+    return <FileText size={size} className="text-violet-400/70" />;
 
   return <File size={size} className="text-white/40" />;
 }

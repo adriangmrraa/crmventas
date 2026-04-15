@@ -53,7 +53,7 @@ export default function SupervisorDashboard() {
       <PageHeader
         title="Modo Supervisor"
         subtitle="Monitoreo en tiempo real de conversaciones de IA"
-        icon={<Eye size={20} className="text-blue-400" />}
+        icon={<Eye size={20} className="text-violet-400" />}
         action={
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
@@ -82,7 +82,7 @@ export default function SupervisorDashboard() {
                 <ShieldAlert size={14} />
                 <span className="text-xs font-medium">0 Intervenciones req.</span>
               </div>
-              <div className="flex items-center gap-2 text-blue-400">
+              <div className="flex items-center gap-2 text-violet-400">
                 <Zap size={14} />
                 <span className="text-xs font-medium">Buscando patrones...</span>
               </div>
@@ -94,7 +94,7 @@ export default function SupervisorDashboard() {
         <div className="lg:col-span-3 flex flex-col min-h-0 bg-white/[0.02] rounded-2xl border border-white/5 overflow-hidden">
           <div className="p-4 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <MessageSquare size={16} className="text-blue-400" />
+              <MessageSquare size={16} className="text-violet-400" />
               Live Feed
             </h3>
             <span className="text-[10px] text-white/30 uppercase font-medium">Últimos 50 mensajes</span>
@@ -117,7 +117,7 @@ export default function SupervisorDashboard() {
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    msg.is_silenced ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
+                    msg.is_silenced ? 'bg-red-500/20 text-red-400' : 'bg-violet-500/20 text-violet-400'
                   }`}>
                     <User size={18} />
                   </div>

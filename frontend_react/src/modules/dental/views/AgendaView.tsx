@@ -66,10 +66,10 @@ export interface Patient {
 // Colors for appointment sources: AI (blue), Manual (green), GCalendar (gray)
 const SOURCE_COLORS: Record<string, { hex: string; label: string; bgClass: string; textClass: string }> = {
   ai: {
-    hex: '#3b82f6',
+    hex: '#8F3DFF',
     label: 'AI',
-    bgClass: 'bg-blue-500/10',
-    textClass: 'text-blue-400'
+    bgClass: 'bg-violet-500/10',
+    textClass: 'text-violet-400'
   },
   manual: {
     hex: '#22c55e',
@@ -88,7 +88,7 @@ const SOURCE_COLORS: Record<string, { hex: string; label: string; bgClass: strin
 // Mapeo de IDs de appointment_statuses a colores hexadecimales
 // 1: scheduled, 2: confirmed, 3: in_progress, 4: completed, 5: cancelled, 6: no_show
 const STATUS_COLORS: Record<number, { hex: string; label: string }> = {
-  1: { hex: '#3b82f6', label: 'scheduled' },   // azul - Programado
+  1: { hex: '#8F3DFF', label: 'scheduled' },   // azul - Programado
   2: { hex: '#22c55e', label: 'confirmed' },   // verde - Confirmado
   3: { hex: '#eab308', label: 'in_progress' }, // amarillo - En progreso
   4: { hex: '#6b7280', label: 'completed' },   // gris - Completado
@@ -449,7 +449,7 @@ export default function AgendaView() {
     return list.map((p: Professional) => ({
       id: p.id.toString(),
       title: `Dr. ${p.first_name} ${p.last_name || ''}`,
-      eventColor: '#3b82f6',
+      eventColor: '#8F3DFF',
     }));
   }, [professionals, user?.role, user?.email]);
 
@@ -535,7 +535,7 @@ export default function AgendaView() {
             {/* Professional Filter (CEO/Secretary only) - Mobile Stacking */}
             {(user?.role === 'ceo' || user?.role === 'secretary') && (
               <div className="flex items-center gap-2 bg-white/[0.03]px-3 py-2 rounded-xl  border border-white/[0.04] w-full sm:w-auto">
-                <Stethoscope size={16} className="text-blue-400 shrink-0" />
+                <Stethoscope size={16} className="text-violet-400 shrink-0" />
                 <select
                   value={selectedProfessionalId}
                   onChange={(e) => setSelectedProfessionalId(e.target.value)}
@@ -557,7 +557,7 @@ export default function AgendaView() {
             {/* Source Legend - Compact on Mobile */}
             <div className="flex gap-2 sm:gap-3 bg-white/[0.03]px-3 py-1.5 rounded-full border border-white/[0.04]">
               <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-violet-500"></div>
                 <span className="text-[10px] text-white/50">{t('agenda.source_ai')}</span>
               </div>
               <div className="flex items-center gap-1">
@@ -574,7 +574,7 @@ export default function AgendaView() {
               {/* Pulse Indicator */}
               {isBackgroundSyncing && (
                 <div className="flex items-center justify-center w-8 h-8">
-                  <RefreshCw size={16} className="text-blue-500 animate-spin opacity-60" />
+                  <RefreshCw size={16} className="text-violet-500 animate-spin opacity-60" />
                 </div>
               )}
             </div>
@@ -698,7 +698,7 @@ export default function AgendaView() {
               {loading && appointments.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-4">
-                    <RefreshCw className="w-12 h-12 text-blue-500 animate-spin" />
+                    <RefreshCw className="w-12 h-12 text-violet-500 animate-spin" />
                     <p className="text-white/40 font-medium">{t('common.loading')}</p>
                   </div>
                 </div>

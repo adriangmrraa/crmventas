@@ -124,7 +124,7 @@ export default function AgendaEventForm({
             <select
               value={formData.seller_id || ''}
               onChange={(e) => setFormData({ ...formData, seller_id: Number(e.target.value) })}
-              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               required
             >
               <option value="" className="bg-[#0d1117] text-white">{t('agenda_crm.select_seller')}</option>
@@ -143,7 +143,7 @@ export default function AgendaEventForm({
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               placeholder={t('agenda_crm.title_placeholder')}
               required
             />
@@ -157,7 +157,7 @@ export default function AgendaEventForm({
                 type="datetime-local"
                 value={formData.start_datetime}
                 onChange={(e) => setFormData({ ...formData, start_datetime: e.target.value })}
-                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 required
               />
             </div>
@@ -169,7 +169,7 @@ export default function AgendaEventForm({
                 type="datetime-local"
                 value={formData.end_datetime}
                 onChange={(e) => setFormData({ ...formData, end_datetime: e.target.value })}
-                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 required
               />
             </div>
@@ -181,7 +181,7 @@ export default function AgendaEventForm({
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 text-white bg-white/[0.04] border border-white/[0.08] rounded-xl placeholder-white/30 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 resize-none"
               rows={3}
               placeholder={t('agenda_crm.notes_placeholder')}
             />
@@ -203,7 +203,7 @@ export default function AgendaEventForm({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+              className="px-4 py-2 rounded-xl bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 active:scale-95 transition-all"
             >
               {loading ? t('common.loading') : t('agenda_crm.save')}
             </button>

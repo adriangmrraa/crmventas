@@ -234,7 +234,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ isOpen, onClose }) =>
           <div className="px-5 pt-5 pb-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">{guide.icon}</div>
+                <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400">{guide.icon}</div>
                 <div>
                   <h2 className="text-base font-bold text-white leading-tight">{guide.title}</h2>
                   <p className="text-[11px] text-white/35">{guide.subtitle}</p>
@@ -246,7 +246,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ isOpen, onClose }) =>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
+                <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
               </div>
               <span className="text-[10px] font-bold text-white/25 tabular-nums">{currentStep + 1}/{guide.steps.length}</span>
             </div>
@@ -255,7 +255,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ isOpen, onClose }) =>
           <div className="px-5 pb-2 min-h-[240px] touch-pan-y select-none" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
             <div key={`${currentPath}-${currentStep}`} className={swipeX === 0 ? animClass : ''} style={{ transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined, opacity: swipeX !== 0 ? Math.max(0.3, 1 - Math.abs(swipeX) / 200) : undefined, transition: swipeX !== 0 ? 'none' : undefined }}>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-md bg-blue-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-blue-500/25">{currentStep + 1}</div>
+                <div className="w-6 h-6 rounded-md bg-violet-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-violet-500/25">{currentStep + 1}</div>
                 <h3 className="text-sm font-bold text-white">{step.title}</h3>
               </div>
               <p className="text-[13px] text-white/55 leading-relaxed mb-3">{step.description}</p>
@@ -280,7 +280,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ isOpen, onClose }) =>
             <div className="flex items-center justify-center gap-1 mb-4">
               {guide.steps.map((_, i) => (
                 <button key={i} onClick={() => { setDirection(i > currentStep ? 'next' : 'prev'); setCurrentStep(i); }}
-                  className={`h-1 rounded-full transition-all duration-300 active:scale-90 ${i === currentStep ? 'w-5 bg-blue-500' : i < currentStep ? 'w-1.5 bg-blue-500/30' : 'w-1.5 bg-white/[0.08]'}`} />
+                  className={`h-1 rounded-full transition-all duration-300 active:scale-90 ${i === currentStep ? 'w-5 bg-violet-500' : i < currentStep ? 'w-1.5 bg-violet-500/30' : 'w-1.5 bg-white/[0.08]'}`} />
               ))}
             </div>
             <div className="flex items-center justify-between">
@@ -288,7 +288,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ isOpen, onClose }) =>
                 <ChevronLeft size={14} /> Anterior
               </button>
               {isLastStep ? (
-                <button onClick={handleComplete} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95">
+                <button onClick={handleComplete} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-500 to-cyan-400 text-white shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 transition-all active:scale-95">
                   <CheckCircle size={14} /> Entendido
                 </button>
               ) : (

@@ -173,10 +173,10 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
       
       {/* Current assignment */}
       {currentSellerId && (
-        <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20">
+        <div className="px-4 py-3 bg-violet-500/10 border-b border-violet-500/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-blue-400">{t('sellers.currently_assigned')}:</span>
+              <span className="text-sm text-violet-400">{t('sellers.currently_assigned')}:</span>
               <SellerBadge
                 sellerId={currentSellerId}
                 sellerName={currentSellerName}
@@ -201,7 +201,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
           <button
             onClick={handleAssignToMe}
             disabled={assigning === user.id}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {assigning === user.id ? (
               <Loader2 className="animate-spin" size={18} />
@@ -242,7 +242,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
               onClick={() => setRoleFilter(option.value)}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 roleFilter === option.value
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-violet-600 text-white'
                   : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'
               }`}
             >
@@ -257,7 +257,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
             placeholder={t('sellers.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-white/[0.08] rounded-lg bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 text-sm border border-white/[0.08] rounded-lg bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
           />
         </div>
       </div>
@@ -270,7 +270,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
             <p className="text-white/40 text-sm mt-2">{t('sellers.no_sellers_found')}</p>
             <button
               onClick={fetchSellers}
-              className="mt-3 text-sm text-blue-400 hover:text-blue-300 font-medium"
+              className="mt-3 text-sm text-violet-400 hover:text-violet-300 font-medium"
             >
               {t('sellers.retry')}
             </button>
@@ -286,7 +286,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                 <div
                   key={seller.id}
                   className={`p-3 hover:bg-white/[0.06] transition-colors ${
-                    isCurrent ? 'bg-blue-500/10' : ''
+                    isCurrent ? 'bg-violet-500/10' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -296,7 +296,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                           <User size={18} className="text-white/50" />
                         </div>
                         {isCurrent && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
                             <Check size={10} className="text-white" />
                           </div>
                         )}
@@ -307,7 +307,7 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                           <span className="font-medium text-white">{sellerName}</span>
                           <span className={`px-1.5 py-0.5 text-xs rounded ${
                             seller.role === 'ceo' ? 'bg-purple-500/10 text-purple-400' :
-                            seller.role === 'setter' ? 'bg-blue-500/10 text-blue-400' :
+                            seller.role === 'setter' ? 'bg-violet-500/10 text-violet-400' :
                             seller.role === 'closer' ? 'bg-green-500/10 text-green-400' :
                             'bg-white/[0.04] text-white/70'
                           }`}>
@@ -337,8 +337,8 @@ const SellerSelector: React.FC<SellerSelectorProps> = ({
                       disabled={isCurrent || isAssigning}
                       className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                         isCurrent
-                          ? 'bg-blue-500/10 text-blue-400 cursor-default'
-                          : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                          ? 'bg-violet-500/10 text-violet-400 cursor-default'
+                          : 'bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed'
                       }`}
                     >
                       {isAssigning ? (

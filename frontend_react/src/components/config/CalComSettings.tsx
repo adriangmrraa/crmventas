@@ -112,9 +112,9 @@ export default function CalComSettings() {
         </div>
       </GlassCard>
 
-      <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <AlertCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-400/80 leading-relaxed">
+      <div className="flex items-start gap-3 p-4 bg-violet-500/10 border border-violet-500/20 rounded-xl">
+        <AlertCircle size={18} className="text-violet-400 shrink-0 mt-0.5" />
+        <p className="text-xs text-violet-400/80 leading-relaxed">
           <strong>Nota de Sincronización:</strong> El sistema sincronizará automáticamente los turnos agendados vía Cal.com con la agenda local del vendedor asignado al lead.
         </p>
       </div>

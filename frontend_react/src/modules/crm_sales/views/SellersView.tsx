@@ -236,7 +236,7 @@ const SellersView: React.FC = () => {
             <div className="flex gap-4 mb-4 border-b border-white/[0.06] pb-px shrink-0">
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests' ? 'text-blue-400' : 'text-white/40 hover:text-blue-400'}`}
+                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'requests' ? 'text-violet-400' : 'text-white/40 hover:text-violet-400'}`}
                 >
                     <div className="flex items-center gap-2">
                         {t('sellers.requests')}
@@ -255,7 +255,7 @@ const SellersView: React.FC = () => {
                 </button>
                 <button
                     onClick={() => setActiveTab('sellers')}
-                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'sellers' ? 'text-blue-400' : 'text-white/40 hover:text-blue-400'}`}
+                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl ${activeTab === 'sellers' ? 'text-violet-400' : 'text-white/40 hover:text-violet-400'}`}
                 >
                     {t('sellers.sellers_tab')}
                     {activeTab === 'sellers' && (
@@ -361,7 +361,7 @@ const SellersView: React.FC = () => {
                                     setShowLinkForm(true);
                                     setLinkFormData((p) => ({ ...p, tenant_id: entities[0]?.id ?? null }));
                                 }}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white font-medium hover:bg-violet-700"
                             >
                                 <Plus size={18} />
                                 {sellerRows.length > 0 ? t('sellers.link_to_another_entity') : t('sellers.link_to_entity')}
@@ -438,7 +438,7 @@ const SellersView: React.FC = () => {
                                                             {entities.find((c) => c.id === row.tenant_id)?.clinic_name || `Entidad ${row.tenant_id}`}
                                                         </p>
                                                         {!kpisByRow[key] ? (
-                                                            <button type="button" onClick={() => loadKpis(row)} className="text-blue-400 hover:underline text-xs">
+                                                            <button type="button" onClick={() => loadKpis(row)} className="text-violet-400 hover:underline text-xs">
                                                                 {t('sellers.load_kpis')}
                                                             </button>
                                                         ) : null}
@@ -530,7 +530,7 @@ const SellersView: React.FC = () => {
                                     type="checkbox"
                                     checked={editFormData.is_active}
                                     onChange={(e) => setEditFormData((p) => ({ ...p, is_active: e.target.checked }))}
-                                    className="w-4 h-4 rounded border-white/[0.06] text-blue-400"
+                                    className="w-4 h-4 rounded border-white/[0.06] text-violet-400"
                                 />
                                 <span className="text-sm font-medium text-white/70">{t('approvals.active')}</span>
                             </label>
@@ -538,7 +538,7 @@ const SellersView: React.FC = () => {
                                 <button type="button" onClick={closeEditModal} className="flex-1 py-2 rounded-xl border border-white/[0.06] text-white/70">
                                     {t('common.cancel')}
                                 </button>
-                                <button type="submit" disabled={editFormSubmitting} className="flex-1 py-2 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-50">
+                                <button type="submit" disabled={editFormSubmitting} className="flex-1 py-2 rounded-xl bg-violet-600 text-white font-medium disabled:opacity-50">
                                     {editFormSubmitting ? t('common.saving') : t('common.save_changes')}
                                 </button>
                             </div>

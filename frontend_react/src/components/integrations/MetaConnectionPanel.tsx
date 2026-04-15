@@ -95,7 +95,7 @@ function channelLabel(ch: string) {
 function channelColor(ch: string) {
   switch (ch) {
     case 'facebook':
-      return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+      return 'text-violet-400 bg-violet-500/10 border-violet-500/20';
     case 'instagram':
       return 'text-pink-400 bg-pink-500/10 border-pink-500/20';
     case 'whatsapp':
@@ -272,7 +272,7 @@ export default function MetaConnectionPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
       </div>
     );
   }
@@ -374,7 +374,7 @@ export default function MetaConnectionPanel() {
             <button
               onClick={handleConnect}
               disabled={connecting}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-all"
+              className="text-xs font-bold text-violet-400 hover:text-violet-300 transition-all"
             >
               Re-authenticate
             </button>
@@ -387,7 +387,7 @@ export default function MetaConnectionPanel() {
         <button
           onClick={handleConnect}
           disabled={connecting}
-          className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+          className="w-full py-4 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 disabled:opacity-50"
         >
           {connecting ? (
             <Loader2 size={18} className="animate-spin" />
@@ -426,7 +426,7 @@ export default function MetaConnectionPanel() {
           {/* Facebook Pages */}
           {pageAssets.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-blue-400 flex items-center gap-2">
+              <p className="text-xs font-bold text-violet-400 flex items-center gap-2">
                 <Facebook size={14} /> Facebook Pages
               </p>
               {pageAssets.map((a) => (
@@ -530,13 +530,13 @@ function AssetCheckbox({
       onClick={onToggle}
       className={`w-full p-3 rounded-xl text-left flex items-center gap-3 transition-all ${
         checked
-          ? 'bg-blue-500/10 border border-blue-500/30'
+          ? 'bg-violet-500/10 border border-violet-500/30'
           : 'bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12]'
       }`}
     >
       <div
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-          checked ? 'bg-blue-500 border-blue-500' : 'border-white/20'
+          checked ? 'bg-violet-500 border-violet-500' : 'border-white/20'
         }`}
       >
         {checked && <CheckCircle2 size={12} className="text-white" />}

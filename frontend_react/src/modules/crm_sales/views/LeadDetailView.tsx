@@ -151,7 +151,7 @@ export default function LeadDetailView() {
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/50 hover:text-white bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-colors border border-white/[0.06]"
               title="Ver historial de estados"
             >
-              <History size={18} className="text-blue-400" />
+              <History size={18} className="text-violet-400" />
               <span className="hidden sm:inline">Historial</span>
             </button>
           )}
@@ -159,10 +159,10 @@ export default function LeadDetailView() {
             <button
               type="button"
               onClick={() => setShowDeriveModal(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/50 hover:text-white bg-blue-500/5 hover:bg-blue-500/10 rounded-lg transition-colors border border-blue-500/20"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/50 hover:text-white bg-violet-500/5 hover:bg-violet-500/10 rounded-lg transition-colors border border-violet-500/20"
               title="Derivar a closer"
             >
-              <ArrowRight size={18} className="text-blue-400" />
+              <ArrowRight size={18} className="text-violet-400" />
               <span className="hidden sm:inline">Derivar a closer</span>
             </button>
           )}
@@ -186,7 +186,7 @@ export default function LeadDetailView() {
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData((f) => ({ ...f, phone_number: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
                   required
                 />
               </div>
@@ -197,7 +197,7 @@ export default function LeadDetailView() {
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
@@ -206,7 +206,7 @@ export default function LeadDetailView() {
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function LeadDetailView() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 placeholder:text-white/30"
+                className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 placeholder:text-white/30"
               />
             </div>
             <div>
@@ -224,7 +224,7 @@ export default function LeadDetailView() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50"
+                  className="w-full px-3 py-2 bg-white/[0.05] text-white border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
                 >
                   <option value="nuevo" className="bg-[#1a1a2e] text-white">Nuevo</option>
                   <option value="contactado" className="bg-[#1a1a2e] text-white">Contactado</option>
@@ -273,7 +273,7 @@ export default function LeadDetailView() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 font-medium transition-colors"
               >
                 <Save size={18} />
                 {saving ? 'Guardando...' : isNew ? 'Crear lead' : 'Guardar cambios'}

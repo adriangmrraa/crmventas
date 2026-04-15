@@ -95,7 +95,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
             <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] w-full max-w-lg overflow-hidden shadow-2xl my-auto">
 
                 {/* Header */}
-                <div className="p-7 border-b border-white/[0.04] bg-gradient-to-br from-blue-600 to-blue-700">
+                <div className="p-7 border-b border-white/[0.04] bg-gradient-to-br from-violet-600 to-violet-700">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
                             <BarChart3 size={24} />
@@ -112,7 +112,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {[1, 2, 3].map((s) => (
                                 <React.Fragment key={s}>
                                     <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${step > s ? 'bg-green-400 text-white' :
-                                        step === s ? 'bg-white/[0.03] text-blue-400' :
+                                        step === s ? 'bg-white/[0.03] text-violet-400' :
                                             'bg-white/20 text-white/60'
                                         }`}>
                                         {step > s ? <CheckCircle2 size={16} /> : s}
@@ -136,7 +136,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
 
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-12 gap-4">
-                            <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+                            <Loader2 className="w-10 h-10 text-violet-400 animate-spin" />
                             <p className="text-white/40 font-medium">Cargando datos...</p>
                         </div>
                     ) : (
@@ -145,20 +145,20 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {step === 1 && (
                                 <div className="space-y-6">
                                     <div className="text-center space-y-2">
-                                        <p className="text-xs font-bold text-blue-400 uppercase tracking-wider">Paso 1 de 3</p>
+                                        <p className="text-xs font-bold text-violet-400 uppercase tracking-wider">Paso 1 de 3</p>
                                         <h3 className="text-xl font-bold text-white">Confirmar Entidad</h3>
                                         <p className="text-sm text-white/40">
                                             Vas a conectar Meta Ads a la siguiente entidad de CRM Ventas:
                                         </p>
                                     </div>
 
-                                    <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-3xl flex flex-col items-center gap-3">
-                                        <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                                    <div className="bg-violet-500/10 border border-violet-500/20 p-6 rounded-3xl flex flex-col items-center gap-3">
+                                        <div className="w-16 h-16 bg-violet-500/20 rounded-2xl flex items-center justify-center text-violet-400">
                                             <ShieldCheck size={32} />
                                         </div>
                                         <div className="text-center">
                                             <div className="text-lg font-bold text-white">{entityName}</div>
-                                            <div className="text-xs text-blue-400 font-semibold uppercase tracking-widest mt-1">Tenant Seleccionado</div>
+                                            <div className="text-xs text-violet-400 font-semibold uppercase tracking-widest mt-1">Tenant Seleccionado</div>
                                         </div>
                                     </div>
 
@@ -175,7 +175,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {step === 2 && (
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Paso 2 de 3</p>
+                                        <p className="text-xs font-bold text-violet-400 uppercase tracking-wider mb-1">Paso 2 de 3</p>
                                         <h3 className="text-lg font-bold text-white">Selecciona el Portafolio (BM)</h3>
                                         <p className="text-sm text-white/40 mt-1">Elige el Business Manager que contiene tu cuenta de anuncios.</p>
                                     </div>
@@ -187,10 +187,10 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                     setSelectedPortfolio(p);
                                                     loadAccounts(p.id);
                                                 }}
-                                                className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/10 transition-all text-left flex items-center justify-between group"
+                                                className="w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-violet-500/30 hover:bg-violet-500/10 transition-all text-left flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center group-hover:bg-blue-500/10 transition-all">
+                                                    <div className="w-9 h-9 bg-violet-500/10 text-violet-400 rounded-xl flex items-center justify-center group-hover:bg-violet-500/10 transition-all">
                                                         <Building2 size={18} />
                                                     </div>
                                                     <div>
@@ -198,7 +198,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                         <div className="text-xs text-white/30">ID: {p.id}</div>
                                                     </div>
                                                 </div>
-                                                <ChevronRight className="text-white/20 group-hover:text-blue-500 transition-all" size={18} />
+                                                <ChevronRight className="text-white/20 group-hover:text-violet-500 transition-all" size={18} />
                                             </button>
                                         ))}
                                         {portfolios.length === 0 && !loading && (
@@ -206,7 +206,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                 <p className="text-white/40 text-sm">No se encontraron Business Managers.</p>
                                                 <button
                                                     onClick={() => loadAccounts()}
-                                                    className="w-full py-3 bg-blue-500/10 text-blue-400 rounded-xl font-bold hover:bg-blue-500/10 transition-all text-sm"
+                                                    className="w-full py-3 bg-violet-500/10 text-violet-400 rounded-xl font-bold hover:bg-violet-500/10 transition-all text-sm"
                                                 >
                                                     Listar todas las cuentas de anuncios →
                                                 </button>
@@ -226,7 +226,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                             {step === 3 && (
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Paso 3 de 3</p>
+                                        <p className="text-xs font-bold text-violet-400 uppercase tracking-wider mb-1">Paso 3 de 3</p>
                                         <h3 className="text-lg font-bold text-white">Elige la Cuenta de Anuncios</h3>
                                         {selectedPortfolio && (
                                             <p className="text-sm text-white/40 mt-1">
@@ -241,12 +241,12 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                 key={a.id}
                                                 onClick={() => setSelectedAccount(a)}
                                                 className={`w-full p-4 rounded-2xl transition-all text-left flex items-center justify-between ${selectedAccount?.id === a.id
-                                                    ? 'border border-blue-500 bg-blue-500/10'
-                                                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/10'
+                                                    ? 'border border-violet-500 bg-violet-500/10'
+                                                    : 'bg-white/[0.03] border border-white/[0.08] hover:border-violet-500/30 hover:bg-violet-500/10'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selectedAccount?.id === a.id ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.04] text-white/40'
+                                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selectedAccount?.id === a.id ? 'bg-violet-500/10 text-violet-400' : 'bg-white/[0.04] text-white/40'
                                                         }`}>
                                                         <Briefcase size={16} />
                                                     </div>
@@ -261,7 +261,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                                     </div>
                                                 </div>
                                                 {selectedAccount?.id === a.id && (
-                                                    <CheckCircle2 className="text-blue-400 shrink-0" size={20} />
+                                                    <CheckCircle2 className="text-violet-400 shrink-0" size={20} />
                                                 )}
                                             </button>
                                         ))}
@@ -286,7 +286,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                         <input
                                             type="text"
                                             placeholder="Pegar ID manual (ej. act_1234567890...)"
-                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500 transition-all font-mono"
+                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-violet-500 transition-all font-mono"
                                             onChange={(e) => {
                                                 const val = e.target.value.trim();
                                                 if (val) {
@@ -309,7 +309,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                         <button
                                             disabled={!selectedAccount || loading}
                                             onClick={handleConnect}
-                                            className="flex-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                                            className="flex-2 px-8 py-3.5 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                                         >
                                             {loading ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                                             Confirmar Conexión
@@ -331,7 +331,7 @@ export default function MetaConnectionWizard({ isOpen, onClose, onSuccess }: Met
                                             Sincronizando campañas y métricas...
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2 text-blue-400">
+                                    <div className="flex items-center gap-2 text-violet-400">
                                         <Loader2 size={16} className="animate-spin" />
                                         <span className="text-sm font-medium">Cargando datos de Meta Ads...</span>
                                     </div>

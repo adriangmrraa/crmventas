@@ -12,7 +12,12 @@
       "mcp__claude_ai_Atlassian_Rovo__lookupJiraAccountId",
       "mcp__claude_ai_Atlassian_Rovo__getTransitionsForJiraIssue",
       "mcp__claude_ai_Atlassian_Rovo__getAccessibleAtlassianResources",
-      "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql"
+      "mcp__claude_ai_Atlassian_Rovo__searchJiraIssuesUsingJql",
+      "mcp__plugin_engram_engram__mem_search",
+      "mcp__plugin_engram_engram__mem_context",
+      "Bash(pip install:*)",
+      "mcp__plugin_engram_engram__mem_save",
+      "Bash(xargs sed:*)"
     ]
   }
 }

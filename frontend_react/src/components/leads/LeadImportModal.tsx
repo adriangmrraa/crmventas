@@ -195,8 +195,8 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
               className={`
                 border-2 border-dashed rounded-xl p-10 text-center transition-all cursor-pointer
                 ${isDragging
-                  ? 'border-blue-500/50 bg-blue-500/[0.06]'
-                  : 'border-white/[0.12] hover:border-blue-500/30 hover:bg-white/[0.02]'
+                  ? 'border-violet-500/50 bg-violet-500/[0.06]'
+                  : 'border-white/[0.12] hover:border-violet-500/30 hover:bg-white/[0.02]'
                 }
               `}
               onClick={() => fileInputRef.current?.click()}
@@ -234,7 +234,7 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
           <div>
             {/* File info */}
             <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-              <FileSpreadsheet size={18} className="text-blue-400" />
+              <FileSpreadsheet size={18} className="text-violet-400" />
               <span className="text-white/70 text-sm">
                 {preview.total} registros encontrados
               </span>
@@ -343,7 +343,7 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
         {/* EXECUTING state */}
         {state === 'EXECUTING' && (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 size={32} className="text-blue-400 animate-spin mb-4" />
+            <Loader2 size={32} className="text-violet-400 animate-spin mb-4" />
             <p className="text-white/60 text-sm">Importando...</p>
           </div>
         )}
@@ -360,9 +360,9 @@ const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClose, onCo
                   <span className="text-green-400 text-sm font-medium">{result.created}</span>
                   <span className="text-green-400/70 text-xs">creados</span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <span className="text-blue-400 text-sm font-medium">{result.updated}</span>
-                  <span className="text-blue-400/70 text-xs">actualizados</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                  <span className="text-violet-400 text-sm font-medium">{result.updated}</span>
+                  <span className="text-violet-400/70 text-xs">actualizados</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08]">
                   <span className="text-white/50 text-sm font-medium">{result.skipped}</span>

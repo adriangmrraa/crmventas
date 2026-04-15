@@ -452,7 +452,7 @@ export default function ProspectingView() {
                               </a>
                             )}
                             {lead.social_links?.facebook && (
-                              <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                              <a href={lead.social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-1.5 text-violet-400 hover:bg-violet-500/10 rounded-lg transition-colors">
                                 <Facebook className="w-4 h-4" />
                               </a>
                             )}

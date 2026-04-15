@@ -20,7 +20,7 @@ export default function PrivacyTermsView() {
                 </button>
 
                 <div className="text-center space-y-4">
-                    <div className="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Shield size={32} />
                     </div>
                     <h1 className="text-3xl font-bold text-white">{interpolate('legal.center_title')}</h1>
@@ -30,7 +30,7 @@ export default function PrivacyTermsView() {
                 {/* Privacy Policy */}
                 <section id="privacy" className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-8 space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/[0.04] pb-4">
-                        <Shield className="text-blue-500" size={24} />
+                        <Shield className="text-violet-500" size={24} />
                         <h2 className="text-2xl font-bold text-white">{t('privacy.title')}</h2>
                     </div>
 
@@ -56,7 +56,7 @@ export default function PrivacyTermsView() {
                 {/* Terms of Service */}
                 <section id="terms" className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-8 space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/[0.04] pb-4">
-                        <FileText className="text-blue-500" size={24} />
+                        <FileText className="text-violet-500" size={24} />
                         <h2 className="text-2xl font-bold text-white">{t('terms.title')}</h2>
                     </div>
 

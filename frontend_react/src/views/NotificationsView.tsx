@@ -124,7 +124,7 @@ export default function NotificationsView() {
         switch (type) {
             case 'unanswered': return <MessageSquare size={18} className="text-red-500" />;
             case 'hot_lead': return <Zap size={18} className="text-orange-500" />;
-            case 'followup': return <Clock size={18} className="text-blue-500" />;
+            case 'followup': return <Clock size={18} className="text-violet-500" />;
             case 'performance_alert': return <TrendingUp size={18} className="text-yellow-500" />;
             case 'assignment': return <User size={18} className="text-green-500" />;
             default: return <Bell size={18} className="text-white/40" />;
@@ -135,7 +135,7 @@ export default function NotificationsView() {
         const styles: Record<string, string> = {
             critical: 'bg-red-500/10 text-red-400 border-red-500/20',
             high: 'bg-orange-500/10 text-orange-700 border-orange-500/20',
-            medium: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            medium: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
             low: 'bg-white/[0.04] text-white/70 border-white/[0.06]',
         };
         return (

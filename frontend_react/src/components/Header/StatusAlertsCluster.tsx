@@ -125,8 +125,8 @@ export const StatusAlertsCluster: React.FC<StatusAlertsClusterProps> = ({
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.06] transition-colors group"
                 onClick={() => setShowHelpDropdown(false)}
               >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <Mail size={16} className="text-blue-400" />
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                  <Mail size={16} className="text-violet-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white/80 font-medium">Soporte</p>

@@ -244,7 +244,7 @@ export default function KanbanPipelineView() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
       </div>
     );
   }
@@ -268,7 +268,7 @@ export default function KanbanPipelineView() {
               </button>
               <button
                 onClick={fetchData}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-all active:scale-95"
               >
                 <RefreshCw size={14} />
                 Actualizar
@@ -296,7 +296,7 @@ export default function KanbanPipelineView() {
                 data-status-code={status.code}
                 className={`flex flex-col w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 rounded-xl sm:rounded-2xl border transition-all duration-300
                   ${isOver
-                    ? 'border-blue-500/40 bg-blue-500/[0.04] scale-[1.01]'
+                    ? 'border-violet-500/40 bg-violet-500/[0.04] scale-[1.01]'
                     : 'border-white/[0.06] bg-white/[0.02]'
                   }
                 `}
@@ -356,8 +356,8 @@ export default function KanbanPipelineView() {
                             hover:bg-white/[0.05] hover:border-white/[0.10]
                             active:cursor-grabbing active:scale-[0.97]
                             transition-all duration-500 ease-in-out
-                            ${isDragging ? 'opacity-40 scale-95 rotate-1 ring-2 ring-blue-400/30' : ''}
-                            ${isUpdating ? 'animate-pulse ring-2 ring-blue-500/30' : ''}
+                            ${isDragging ? 'opacity-40 scale-95 rotate-1 ring-2 ring-violet-400/30' : ''}
+                            ${isUpdating ? 'animate-pulse ring-2 ring-violet-500/30' : ''}
                           `}
                         >
                           {/* Drag handle */}
@@ -413,7 +413,7 @@ export default function KanbanPipelineView() {
                           {parseTags(lead.tags).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {parseTags(lead.tags).slice(0, 2).map(tag => (
-                                <span key={tag} className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400/60 truncate max-w-[80px]">
+                                <span key={tag} className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400/60 truncate max-w-[80px]">
                                   {tag}
                                 </span>
                               ))}

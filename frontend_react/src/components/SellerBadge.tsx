@@ -57,9 +57,9 @@ const SellerBadge: React.FC<SellerBadgeProps> = ({
         };
       case 'setter':
         return {
-          bg: 'bg-blue-500/100/10',
-          text: 'text-blue-400',
-          border: 'border-blue-500/20',
+          bg: 'bg-violet-500/100/10',
+          text: 'text-violet-400',
+          border: 'border-violet-500/20',
           icon: Target,
           label: t('roles.setter')
         };

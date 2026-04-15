@@ -8,70 +8,75 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
       },
       colors: {
-        // Medical Premium Palette
-        medical: {
-          900: '#003366', // Deep Blue - Primary brand
-          800: '#004080',
-          700: '#004d99',
-          600: '#0059b3',
-          500: '#0066cc',
-          400: '#0073e6',
-          300: '#3385ff',
-          200: '#66a3ff',
-          100: '#99c2ff',
-          50: '#e6f0ff',
+        // Codexy Brand — Violet Neon
+        primary: {
+          DEFAULT: '#8F3DFF',
+          hover: '#7B2FE6',
+          dark: '#6B28CC',
+          light: '#A65FFF',
+          50: '#F3EEFF',
+          100: '#E4D6FF',
+          200: '#C9ADFF',
+          300: '#AD85FF',
+          400: '#9F5AFF',
+          500: '#8F3DFF',
+          600: '#7B2FE6',
+          700: '#6B28CC',
+          800: '#5A21B3',
+          900: '#3D1680',
         },
-        // Clean White
-        white: {
-          DEFAULT: '#ffffff',
-          50: '#ffffff',
-          100: '#f8f9fa',
-          200: '#f4f7f6', // Custom grey
-          300: '#e9ecef',
-          400: '#dee2e6',
-          500: '#ced4da',
+        // Legacy alias — redirect medical → violet
+        medical: {
+          900: '#3D1680',
+          800: '#5A21B3',
+          700: '#6B28CC',
+          600: '#7B2FE6',
+          500: '#8F3DFF',
+          400: '#9F5AFF',
+          300: '#AD85FF',
+          200: '#C9ADFF',
+          100: '#E4D6FF',
+          50: '#F3EEFF',
         },
         // Semantic colors
         success: {
-          DEFAULT: '#28a745',
-          light: '#34c759',
-          dark: '#1e7e34',
+          DEFAULT: '#22c55e',
+          light: '#34d399',
+          dark: '#16a34a',
         },
         warning: {
-          DEFAULT: '#ffc107',
-          dark: '#e0a800',
+          DEFAULT: '#f59e0b',
+          dark: '#d97706',
         },
         danger: {
-          DEFAULT: '#dc3545',
-          light: '#e4606d',
-          dark: '#c82333',
+          DEFAULT: '#ef4444',
+          light: '#f87171',
+          dark: '#dc2626',
         },
         info: {
-          DEFAULT: '#17a2b8',
-          light: '#38b2ac',
-          dark: '#117a8b',
+          DEFAULT: '#8F3DFF',
+          light: '#A65FFF',
+          dark: '#6B28CC',
         },
-        // Alias para botones y acentos (contraste sobre blanco)
-        primary: {
-          DEFAULT: '#0059b3',
-          dark: '#004d99',
-        },
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-        'elevated': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2)',
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15)',
+        'elevated': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.25)',
+        'glow-violet': '0 0 24px -5px rgba(143, 61, 255, 0.3)',
+        'glow-violet-sm': '0 0 12px -3px rgba(143, 61, 255, 0.25)',
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
+        'sm': '0.375rem',
+        'md': '0.5rem',
+        'lg': '0.625rem',
+        'xl': '0.875rem',
+        '2xl': '1.125rem',
+        '3xl': '1.5rem',
+        '4xl': '2rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

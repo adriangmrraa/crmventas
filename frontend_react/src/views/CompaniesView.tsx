@@ -117,7 +117,7 @@ export default function CompaniesView() {
     if (loading) {
         return (
             <div className="h-full flex flex-col items-center justify-center gap-3 min-h-0 overflow-y-auto">
-                <Loader2 className="animate-spin text-blue-400" size={32} />
+                <Loader2 className="animate-spin text-violet-400" size={32} />
                 <p className="text-white font-medium">{t('common.loading')}</p>
             </div>
         );
@@ -153,13 +153,13 @@ export default function CompaniesView() {
                     >
                         <div className="p-5 space-y-4">
                             <div className="flex justify-between items-start">
-                                <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400 group-hover:bg-blue-500/20 group-hover:text-blue-300 transition-colors">
+                                <div className="bg-violet-500/10 p-3 rounded-lg text-violet-400 group-hover:bg-violet-500/20 group-hover:text-violet-300 transition-colors">
                                     <Building2 size={24} />
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => handleOpenModal(clinica)}
-                                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                        className="p-2 text-violet-400 hover:bg-violet-500/10 rounded-lg transition-colors"
                                     >
                                         <Edit size={18} />
                                     </button>
@@ -174,7 +174,7 @@ export default function CompaniesView() {
 
                             <div>
                                 <h3 className="font-bold text-white text-lg">{clinica.clinic_name}</h3>
-                                <div className="flex items-center gap-2 text-blue-400 mt-2 text-sm">
+                                <div className="flex items-center gap-2 text-violet-400 mt-2 text-sm">
                                     <Phone size={14} className="shrink-0" />
                                     <span className="font-mono">{clinica.bot_phone_number}</span>
                                 </div>
@@ -230,7 +230,7 @@ export default function CompaniesView() {
                     <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] shadow-2xl w-full max-w-md animate-scale-in">
                         <div className="p-6 border-b border-white/[0.06]">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                {editingCompany ? <Edit className="text-blue-400" /> : <Plus className="text-blue-400" />}
+                                {editingCompany ? <Edit className="text-violet-400" /> : <Plus className="text-violet-400" />}
                                 {editingCompany ? t(isEntity ? 'clinics.edit_entity' : 'clinics.edit_clinic') : t(isEntity ? 'clinics.create_entity' : 'clinics.create_clinic')}
                             </h2>
                         </div>
@@ -248,7 +248,7 @@ export default function CompaniesView() {
                                     required
                                     type="text"
                                     placeholder={t(isEntity ? 'clinics.entity_name_placeholder' : 'clinics.clinic_name_placeholder')}
-                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40 outline-none transition-all"
                                     value={formData.clinic_name}
                                     onChange={(e) => setFormData({ ...formData, clinic_name: e.target.value })}
                                 />
@@ -260,7 +260,7 @@ export default function CompaniesView() {
                                     required
                                     type="text"
                                     placeholder={t('clinics.bot_phone_placeholder')}
-                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg font-mono text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg font-mono text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40 outline-none transition-all"
                                     value={formData.bot_phone_number}
                                     onChange={(e) => setFormData({ ...formData, bot_phone_number: e.target.value })}
                                 />
@@ -274,7 +274,7 @@ export default function CompaniesView() {
                                     <Calendar size={14} /> {t('clinics.calendar_provider_label')}
                                 </label>
                                 <select
-                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40 outline-none transition-all"
                                     value={formData.calendar_provider}
                                     onChange={(e) => setFormData({ ...formData, calendar_provider: e.target.value as 'local' | 'google' })}
                                 >

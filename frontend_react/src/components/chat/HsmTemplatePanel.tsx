@@ -48,7 +48,7 @@ interface HsmTemplatePanelProps {
 // ============================================
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  prospeccion:              { label: 'Prospeccion',             color: 'text-blue-300',   bg: 'bg-blue-500/10' },
+  prospeccion:              { label: 'Prospeccion',             color: 'text-violet-300',   bg: 'bg-violet-500/10' },
   previo_llamada:           { label: 'Previo a llamada',       color: 'text-purple-300', bg: 'bg-purple-500/10' },
   ventana_24hs:             { label: 'Ventana 24hs',           color: 'text-amber-300',  bg: 'bg-amber-500/10' },
   apertura_conversacion:    { label: 'Apertura conversacion',  color: 'text-green-300',  bg: 'bg-green-500/10' },

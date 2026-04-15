@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
 import CrmDashboardView from './views/CrmDashboardView';
 import ChatsView from './views/ChatsView';
@@ -14,7 +15,8 @@ import MetaLeadsView from './views/MetaLeadsView';
 import SellersView from './modules/crm_sales/views/SellersView';
 import ClientsView from './modules/crm_sales/views/ClientsView';
 import ClientDetailView from './modules/crm_sales/views/ClientDetailView';
-import CrmAgendaView from './modules/crm_sales/views/CrmAgendaView';
+// Lazy load CrmAgendaView — FullCalendar 6.x has circular deps that break Vite production builds
+const CrmAgendaView = lazy(() => import('./modules/crm_sales/views/CrmAgendaView'));
 import ProspectingView from './modules/crm_sales/views/ProspectingView';
 import KanbanPipelineView from './modules/crm_sales/views/KanbanPipelineView';
 import SalesAnalyticsView from './modules/crm_sales/views/SalesAnalyticsView';
@@ -90,7 +92,7 @@ function App() {
                             <ConfigView />
                           </ProtectedRoute>
                         } />
-                        <Route path="crm/agenda" element={<CrmAgendaView />} />
+                        <Route path="crm/agenda" element={<Suspense fallback={<div className="flex items-center justify-center h-full text-white/40">Cargando agenda...</div>}><CrmAgendaView /></Suspense>} />
                         <Route path="crm/leads" element={<LeadsView />} />
                         <Route path="crm/pipeline" element={<KanbanPipelineView />} />
                         <Route path="crm/analytics" element={

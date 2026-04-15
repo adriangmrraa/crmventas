@@ -1064,6 +1064,15 @@
     "real_time_updates": "Actualizaciones tiempo real",
     "settings": "Configuración"
   },
+  "companies": {
+    "calendar_local": "Local",
+    "calendar_google": "Google Calendar",
+    "phone_invalid": "Telefono invalido. Minimo 7 digitos, solo numeros y + al inicio.",
+    "delete_last_tenant": "No se puede eliminar el ultimo tenant.",
+    "delete_cascade_warning": "No se pudo eliminar. Puede haber datos asociados.",
+    "delete_cascade_text": "Esto eliminara todos los datos asociados (leads, mensajes, vendedores) de manera irreversible",
+    "search_placeholder": "Buscar empresa por nombre..."
+  },
   "checkin": {
     "title": "Check-in Diario",
     "ceo_panel": "Panel de Jornada",
@@ -1110,9 +1119,15 @@
   "client360": {
     "notes": "Notas",
     "calls": "Llamadas",
-    "notes_placeholder": "Las notas del cliente se mostraran aqui. Funcionalidad conectada a lead_notes existente.",
+    "notes_placeholder": "Las notas del cliente se mostraran aqui.",
     "calls_placeholder": "El historial de llamadas se mostrara aqui.",
-    "whatsapp_placeholder": "Los mensajes de WhatsApp se mostraran aqui."
+    "whatsapp_placeholder": "Los mensajes de WhatsApp se mostraran aqui.",
+    "error_loading": "Error al cargar datos.",
+    "no_linked_lead": "Este cliente no tiene un lead vinculado.",
+    "no_notes": "Sin notas todavia.",
+    "no_calls": "Sin llamadas registradas.",
+    "no_whatsapp": "Sin conversaciones de WhatsApp.",
+    "add_note": "Agregar una nota..."
   },
   "chat": {
     "title": "Chat Interno",

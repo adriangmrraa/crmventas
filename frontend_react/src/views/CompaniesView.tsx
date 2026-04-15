@@ -37,6 +37,9 @@ export default function CompaniesView() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchCompanies();
@@ -70,8 +73,19 @@ export default function CompaniesView() {
         setIsModalOpen(true);
     };
 
+    const validatePhone = (phone: string): boolean => {
+        const cleaned = phone.replace(/[\s\-()]/g, '');
+        if (!/^\+?[0-9]{7,15}$/.test(cleaned)) {
+            setPhoneError(t('companies.phone_invalid'));
+            return false;
+        }
+        setPhoneError(null);
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validatePhone(formData.bot_phone_number)) return;
         setSaving(true);
         setError(null);
         try {
@@ -101,13 +115,18 @@ export default function CompaniesView() {
     };
 
     const handleDelete = async (id: number) => {
+        setDeleteError(null);
         try {
             await api.delete(`/admin/core/tenants/${id}`);
-            fetchCompanies();
-        } catch (err) {
-            console.error('Error eliminando clínica:', err);
-        } finally {
             setDeleteTarget(null);
+            fetchCompanies();
+        } catch (err: any) {
+            const status = err?.response?.status;
+            if (status === 400) {
+                setDeleteError(err.response?.data?.detail || t('companies.delete_last_tenant'));
+            } else {
+                setDeleteError(t('companies.delete_cascade_warning'));
+            }
         }
     };
 
@@ -145,8 +164,18 @@ export default function CompaniesView() {
                 </div>
             )}
 
+            {companies.length > 5 && (
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('companies.search_placeholder')}
+                    className="w-full max-w-sm px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm placeholder-white/30 focus:ring-2 focus:ring-violet-500/40 outline-none"
+                />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {companies.map((clinica) => (
+                {companies.filter(c => !searchQuery || c.clinic_name.toLowerCase().includes(searchQuery.toLowerCase())).map((clinica) => (
                     <div
                         key={clinica.id}
                         className="bg-white/[0.03] rounded-xl border border-white/[0.06] overflow-hidden hover:shadow-lg hover:shadow-black/20 transition-shadow group"
@@ -185,8 +214,8 @@ export default function CompaniesView() {
                             </div>
 
                             <div className="pt-4 border-t border-white/[0.04] flex justify-between items-center text-xs text-white/30">
-                                <span>ID: {clinica.id}</span>
-                                <span>{t('common.since')}: {new Date(clinica.created_at).toLocaleDateString()}</span>
+                                <span>{t('common.created')}: {new Date(clinica.created_at).toLocaleDateString()}</span>
+                                {clinica.updated_at && <span>{t('common.updated')}: {new Date(clinica.updated_at).toLocaleDateString()}</span>}
                             </div>
                         </div>
                     </div>
@@ -203,8 +232,13 @@ export default function CompaniesView() {
                             <h2 className="text-lg font-bold text-white">{t(isEntity ? 'alerts.confirm_delete_entity' : 'alerts.confirm_delete_clinic')}</h2>
                         </div>
                         <p className="text-white/50 text-sm">
-                            {t('common.delete_warning')}: <span className="text-white font-medium">{deleteTarget.clinic_name}</span>
+                            {t('companies.delete_cascade_text')}: <span className="text-white font-medium">{deleteTarget.clinic_name}</span>
                         </p>
+                        {deleteError && (
+                            <div className="bg-red-500/10 text-red-400 p-3 rounded-lg text-sm border border-red-500/20 flex items-center gap-2">
+                                <AlertCircle size={16} /> {deleteError}
+                            </div>
+                        )}
                         <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
@@ -267,6 +301,7 @@ export default function CompaniesView() {
                                 <p className="text-[10px] text-white/30 italic">
                                     {t('clinics.bot_phone_help')}
                                 </p>
+                                {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
                             </div>
 
                             <div className="space-y-2">

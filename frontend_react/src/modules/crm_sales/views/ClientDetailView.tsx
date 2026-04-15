@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, Trash2, FolderOpen, MessageSquare, FileText } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, Trash2, FolderOpen, MessageSquare, FileText, Send, Loader2 } from 'lucide-react';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import type { Client } from './ClientsView';
@@ -194,17 +194,11 @@ export default function ClientDetailView() {
       </div>
 
       {activeTab === 'notes' && client ? (
-        <div className="flex-1 min-h-0 overflow-y-auto p-4">
-          <p className="text-white/40 text-sm">{t('client360.notes_placeholder')}</p>
-        </div>
+        <ClientNotesTab clientPhone={client.phone_number} />
       ) : activeTab === 'calls' && client ? (
-        <div className="flex-1 min-h-0 overflow-y-auto p-4">
-          <p className="text-white/40 text-sm">{t('client360.calls_placeholder')}</p>
-        </div>
+        <ClientCallsTab clientPhone={client.phone_number} />
       ) : activeTab === 'whatsapp' && client ? (
-        <div className="flex-1 min-h-0 overflow-y-auto p-4">
-          <p className="text-white/40 text-sm">{t('client360.whatsapp_placeholder')}</p>
-        </div>
+        <ClientWhatsAppTab clientPhone={client.phone_number} />
       ) : activeTab === 'drive' && client ? (
         <div className="flex-1 min-h-0">
           <DriveExplorer clientId={client.id} />
@@ -290,6 +284,147 @@ export default function ClientDetailView() {
         </form>
       </div>
       )}
+    </div>
+  );
+}
+
+// ─── Tab Components ──────────────────────────────────────────────────────────
+
+function ClientNotesTab({ clientPhone }: { clientPhone: string }) {
+  const { t } = useTranslation();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newNote, setNewNote] = useState('');
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Find linked lead by phone
+        const res = await api.get('/admin/core/crm/leads', { params: { search: clientPhone, limit: 1 } });
+        const leads = res.data?.leads || res.data || [];
+        if (leads.length > 0) {
+          const lid = leads[0].id;
+          setLeadId(lid);
+          const notesRes = await api.get(`/admin/core/crm/leads/${lid}/notes`);
+          setNotes(Array.isArray(notesRes.data) ? notesRes.data : notesRes.data?.notes || []);
+        }
+      } catch { setError(t('client360.error_loading')); }
+      setLoading(false);
+    })();
+  }, [clientPhone]);
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !leadId) return;
+    try {
+      await api.post(`/admin/core/crm/leads/${leadId}/notes`, { content: newNote.trim(), note_type: 'internal' });
+      setNewNote('');
+      const res = await api.get(`/admin/core/crm/leads/${leadId}/notes`);
+      setNotes(Array.isArray(res.data) ? res.data : res.data?.notes || []);
+    } catch {}
+  };
+
+  if (loading) return <div className="flex-1 flex items-center justify-center p-4"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
+  if (error) return <div className="flex-1 p-4 text-red-400 text-sm">{error}</div>;
+  if (!leadId) return <div className="flex-1 p-4 text-white/40 text-sm">{t('client360.no_linked_lead')}</div>;
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {notes.length === 0 ? (
+          <p className="text-white/30 text-sm">{t('client360.no_notes')}</p>
+        ) : notes.map((note: any, i: number) => (
+          <div key={note.id || i} className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-medium text-violet-400">{note.author_name || note.author_email || 'Sistema'}</span>
+              <span className="text-[10px] text-white/30">{new Date(note.created_at).toLocaleString()}</span>
+            </div>
+            <p className="text-sm text-white/70">{note.content}</p>
+          </div>
+        ))}
+      </div>
+      <div className="shrink-0 px-4 py-3 border-t border-white/[0.06] flex gap-2">
+        <input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder={t('client360.add_note')}
+          onKeyDown={e => e.key === 'Enter' && handleAddNote()}
+          className="flex-1 px-3 py-2 bg-white/[0.05] text-white text-sm border border-white/[0.08] rounded-lg" />
+        <button onClick={handleAddNote} disabled={!newNote.trim()} className="px-3 py-2 bg-primary text-white rounded-lg disabled:opacity-30"><Send size={16} /></button>
+      </div>
+    </div>
+  );
+}
+
+function ClientCallsTab({ clientPhone }: { clientPhone: string }) {
+  const { t } = useTranslation();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/admin/core/team-activity/feed', { params: { limit: 50 } });
+        const feed = Array.isArray(res.data) ? res.data : res.data?.items || [];
+        setEvents(feed.filter((e: any) => e.event_type?.includes('call') || e.event_type === 'appointment_created'));
+      } catch {}
+      setLoading(false);
+    })();
+  }, [clientPhone]);
+
+  if (loading) return <div className="flex-1 flex items-center justify-center p-4"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
+      {events.length === 0 ? (
+        <p className="text-white/30 text-sm">{t('client360.no_calls')}</p>
+      ) : events.map((ev: any, i: number) => (
+        <div key={ev.id || i} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg">
+          <Phone size={16} className="text-amber-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-white/70">{ev.description || ev.event_type}</p>
+            <p className="text-[10px] text-white/30">{ev.actor_name || ''} - {new Date(ev.created_at).toLocaleString()}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ClientWhatsAppTab({ clientPhone }: { clientPhone: string }) {
+  const { t } = useTranslation();
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await api.get(`/admin/core/chat/messages/${clientPhone}`);
+        setMessages(Array.isArray(res.data) ? res.data : res.data?.messages || []);
+      } catch {}
+      setLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, [clientPhone]);
+
+  if (loading) return <div className="flex-1 flex items-center justify-center p-4"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
+      {messages.length === 0 ? (
+        <p className="text-white/30 text-sm">{t('client360.no_whatsapp')}</p>
+      ) : messages.map((msg: any, i: number) => (
+        <div key={msg.id || i} className={`flex ${msg.role === 'user' || msg.direction === 'inbound' ? '' : 'justify-end'}`}>
+          <div className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
+            msg.role === 'user' || msg.direction === 'inbound'
+              ? 'bg-white/[0.04] text-white/70'
+              : 'bg-primary/20 text-white/80'
+          }`}>
+            <p>{msg.content || msg.text || msg.body || ''}</p>
+            <p className="text-[10px] text-white/30 mt-1">{new Date(msg.created_at || msg.timestamp).toLocaleTimeString()}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

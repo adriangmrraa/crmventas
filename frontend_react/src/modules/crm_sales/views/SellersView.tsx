@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import {
     UserCheck, UserX, Clock, ShieldCheck, Mail, AlertTriangle, User, Users,
-    Lock, Unlock, X, Building2, BarChart3, Plus, Phone, Save, Settings, Edit
+    Lock, Unlock, X, Building2, BarChart3, Plus, Phone, Save, Settings, Edit, TrendingUp
 } from 'lucide-react';
 
 const CRM_PREFIX = '/admin/core/crm';
@@ -37,8 +38,11 @@ interface TenantOption {
 
 type KpisByRowRecord = Record<string, { total_leads: number; by_status: Record<string, number> }>;
 
+const CONVERTED_STATUSES = ['closed_won', 'sold', 'ganado', 'convertido'];
+
 const SellersView: React.FC = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [users, setUsers] = useState<StaffUser[]>([]);
     const [sellers, setSellers] = useState<SellerRow[]>([]);
     const [loading, setLoading] = useState(true);
@@ -117,6 +121,21 @@ const SellersView: React.FC = () => {
         setShowLinkForm(false);
         setLinkFormData({ tenant_id: null, phone: '' });
         setKpisByRow({});
+    };
+
+    // Auto-load KPIs when seller rows change (F-07: VEND-03)
+    useEffect(() => {
+        if (sellerRows.length > 0) {
+            sellerRows.forEach(row => loadKpis(row));
+        }
+    }, [sellerRows]);
+
+    const getConversionRate = (kpi: { total_leads: number; by_status: Record<string, number> }): string => {
+        if (!kpi || kpi.total_leads === 0) return '0%';
+        const converted = Object.entries(kpi.by_status)
+            .filter(([status]) => CONVERTED_STATUSES.includes(status.toLowerCase()))
+            .reduce((sum, [, count]) => sum + count, 0);
+        return `${((converted / kpi.total_leads) * 100).toFixed(1)}%`;
     };
 
     const loadKpis = async (row: SellerRow) => {
@@ -455,14 +474,26 @@ const SellersView: React.FC = () => {
                                             })}
                                         </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveAccess}
-                                        className="btn-icon-labeled danger"
-                                    >
-                                        <Lock size={18} />
-                                        {t('sellers.remove_access')}
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {selectedSeller?.user_id && (
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate(`/crm/vendedores/${selectedSeller.user_id}/performance`)}
+                                                className="flex items-center gap-2 px-3 py-2 bg-violet-500/10 text-violet-400 rounded-lg hover:bg-violet-500/20 text-sm font-medium"
+                                            >
+                                                <TrendingUp size={16} />
+                                                {t('sellers.view_performance')}
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveAccess}
+                                            className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 text-sm font-medium"
+                                        >
+                                            <Lock size={18} />
+                                            {t('sellers.remove_access')}
+                                        </button>
+                                    </div>
                                 </>
                             ) : (
                                 <p className="text-white/40 text-sm">{t('sellers.not_linked_hint')}</p>

@@ -33,6 +33,8 @@ import IntegrationsView from './components/integrations/IntegrationsView';
 import PlantillasView from './modules/crm_sales/views/PlantillasView';
 import InternalChatView from './modules/crm_sales/views/InternalChatView';
 import DailyCheckinView from './modules/crm_sales/views/DailyCheckinView';
+import LeadFormsView from './modules/crm_sales/views/LeadFormsView';
+import PublicFormView from './views/PublicFormView';
 import MisNotasView from './modules/crm_sales/views/MisNotasView';
 import ManualesView from './modules/crm_sales/views/ManualesView';
 // Optional Notifications Pages
@@ -65,6 +67,7 @@ function App() {
                 <Route path="/login" element={<LoginView />} />
                 <Route path="/demo" element={<LandingView />} />
                 <Route path="/legal" element={<PrivacyTermsView />} />
+                <Route path="/f/:slug" element={<PublicFormView />} />
                 <Route path="/privacy" element={<PrivacyTermsView />} />
                 <Route path="/terms" element={<PrivacyTermsView />} />
 
@@ -162,6 +165,11 @@ function App() {
                         <Route path="crm/hsm" element={
                           <ProtectedRoute allowedRoles={['ceo', 'admin', 'setter', 'closer']}>
                             <MetaTemplatesView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/formularios" element={
+                          <ProtectedRoute allowedRoles={['ceo', 'secretary']}>
+                            <LeadFormsView />
                           </ProtectedRoute>
                         } />
                         <Route path="crm/chat-interno" element={<InternalChatView />} />

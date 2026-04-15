@@ -352,6 +352,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not mount Drive routes: {e}")
 
+# Lead Forms Routes (F-02)
+try:
+    from routes.lead_forms_routes import router as lead_forms_router, public_router as lead_forms_public_router
+    app.include_router(lead_forms_router, tags=["Lead Forms"])
+    app.include_router(lead_forms_public_router, tags=["Lead Forms Public"])
+    logger.info("✅ Lead Forms API mounted at /admin/core/crm/forms + /f/{slug}")
+except Exception as e:
+    logger.warning(f"⚠️ Could not mount Lead Forms routes: {e}")
+
 # Daily Check-in Routes (SPEC-05)
 try:
     from routes.checkin_routes import router as checkin_router

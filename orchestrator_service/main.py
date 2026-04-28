@@ -412,6 +412,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not mount Telegram routes: {e}")
 
+# Lead Timeline Routes (DEV-45)
+try:
+    from routes.lead_timeline_routes import router as lead_timeline_router
+
+    app.include_router(lead_timeline_router, tags=["Lead Timeline"])
+    logger.info("✅ Lead Timeline API mounted at /admin/core/crm/leads/{lead_id}/timeline")
+except Exception as e:
+    logger.error(f"❌ Could not mount Lead Timeline routes: {e}", exc_info=True)
+
 # --- LANGCHAIN AGENT FACTORY ---
 llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 

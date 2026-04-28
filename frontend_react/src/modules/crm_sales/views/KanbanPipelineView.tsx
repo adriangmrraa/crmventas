@@ -36,6 +36,8 @@ interface Lead {
   tags?: string[] | string;
   notes?: string;
   estimated_value?: number;
+  close_probability?: number;
+  weighted_revenue?: number;
   score?: number;
 }
 
@@ -241,6 +243,12 @@ export default function KanbanPipelineView() {
     return total;
   };
 
+  const getColumnWeightedValue = (statusCode: string) => {
+    const columnLeads = getLeadsByStatus(statusCode);
+    const total = columnLeads.reduce((sum, l) => sum + (l.weighted_revenue || 0), 0);
+    return total;
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -289,6 +297,7 @@ export default function KanbanPipelineView() {
             const columnLeads = getLeadsByStatus(status.code);
             const isOver = dragOverColumn === status.code;
             const totalValue = getColumnValue(status.code);
+            const totalWeighted = getColumnWeightedValue(status.code);
 
             return (
               <div
@@ -320,9 +329,15 @@ export default function KanbanPipelineView() {
                     </span>
                   </div>
                   {totalValue > 0 && (
-                    <div className="flex items-center gap-1 text-[10px] text-white/30">
+                    <div className="flex items-center gap-1 text-[10px] text-white/30 flex-wrap">
                       <DollarSign size={10} />
-                      <span>${totalValue.toLocaleString()}</span>
+                      <span>Estimado: ${totalValue.toLocaleString()}</span>
+                      {totalWeighted > 0 && (
+                        <>
+                          <span className="text-white/20">|</span>
+                          <span className="text-emerald-400/60">Ponderado: ${totalWeighted.toLocaleString()}</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -385,7 +400,7 @@ export default function KanbanPipelineView() {
                           </div>
 
                           {/* Meta row — hidden on mobile for compactness */}
-                          <div className="hidden sm:flex items-center gap-3 mt-1.5 text-[10px] text-white/30">
+                          <div className="hidden sm:flex items-center gap-3 mt-1.5 text-[10px] text-white/30 flex-wrap">
                             {lead.seller_name && (
                               <div className="flex items-center gap-1">
                                 <User size={10} />
@@ -397,6 +412,11 @@ export default function KanbanPipelineView() {
                                 <DollarSign size={10} />
                                 <span>${lead.estimated_value.toLocaleString()}</span>
                               </div>
+                            )}
+                            {lead.close_probability != null && lead.close_probability > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400/80 font-semibold">
+                                {lead.close_probability}%
+                              </span>
                             )}
                           </div>
 

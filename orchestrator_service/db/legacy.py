@@ -1478,6 +1478,16 @@ class Database:
             EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE 'Parche 39: Error: %', SQLERRM;
             END $$;
+            """,
+
+            # Parche 40: DEV-50 — Email index for deduplication performance
+            """
+            DO $$ BEGIN
+                CREATE INDEX IF NOT EXISTS idx_leads_tenant_email ON leads (tenant_id, email) WHERE email IS NOT NULL;
+                RAISE NOTICE 'Parche 40: DEV-50 email index created on leads (tenant_id, email)';
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 40: Error: %', SQLERRM;
+            END $$;
             """
         ]
 

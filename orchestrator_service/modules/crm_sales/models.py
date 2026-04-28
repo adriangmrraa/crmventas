@@ -37,6 +37,8 @@ class LeadUpdate(BaseModel):
     source: Optional[str] = None
     tags: Optional[List[str]] = None
     assigned_seller_id: Optional[UUID] = None
+    estimated_value: Optional[float] = None
+    close_probability: Optional[float] = Field(None, ge=0, le=100)
 
 
 class LeadResponse(LeadBase):
@@ -47,6 +49,9 @@ class LeadResponse(LeadBase):
     stage_id: Optional[UUID] = None
     score: Optional[int] = None
     seller_name: Optional[str] = None
+    estimated_value: Optional[float] = None
+    close_probability: Optional[float] = None
+    weighted_revenue: Optional[float] = None
 
     # Apify / Prospecting fields
     apify_title: Optional[str] = None

@@ -35,7 +35,10 @@
     "integrations": "Integraciones",
     "team_activity": "Actividad Equipo",
     "audit_log": "Auditoría",
-    "supervisor": "Modo Supervisor"
+    "supervisor": "Modo Supervisor",
+    "admin_chat": "Conversaciones",
+    "duplicados": "Duplicados",
+    "blacklist": "Blacklist"
   },
   "common": {
     "save": "Guardar",

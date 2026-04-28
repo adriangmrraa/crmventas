@@ -6,6 +6,7 @@ import re
 import json
 import logging
 import uuid as uuid_lib
+import datetime
 from typing import Optional
 
 logger = logging.getLogger("deduplication")
@@ -175,11 +176,17 @@ async def create_duplicate_candidates(
     lead_id: str,
     duplicates: list,
     pool,
+    lead_name: Optional[str] = None,
+    lead_phone: Optional[str] = None,
 ):
-    """Persiste los candidatos de duplicados en la tabla duplicate_candidates."""
+    """Persiste los candidatos de duplicados en la tabla duplicate_candidates.
+    Cuando confidence >= 85, emite notificación a CEO/admin (R6).
+    """
     if not duplicates:
         return
     lead_uuid = uuid_lib.UUID(lead_id) if isinstance(lead_id, str) else lead_id
+    high_confidence_found = False
+
     for dup in duplicates:
         dup_uuid = uuid_lib.UUID(dup["lead_id"]) if isinstance(dup["lead_id"], str) else dup["lead_id"]
         # Ordenar IDs para evitar duplicados bidireccionales
@@ -199,8 +206,59 @@ async def create_duplicate_candidates(
                 dup["confidence"],
                 json.dumps(dup["match_reasons"]),
             )
+            if dup["confidence"] >= 85:
+                high_confidence_found = True
         except Exception as e:
             logger.warning(f"DEV-50: Error creating duplicate candidate: {e}")
+
+    # R6: notificar a CEO/admin cuando hay candidatos de alta confianza
+    if high_confidence_found:
+        try:
+            await _notify_admin_duplicate_found(tenant_id, lead_name, lead_phone, pool)
+        except Exception as e:
+            logger.warning(f"DEV-50: Error sending duplicate notification: {e}")
+
+
+async def _notify_admin_duplicate_found(
+    tenant_id: int,
+    lead_name: Optional[str],
+    lead_phone: Optional[str],
+    pool,
+):
+    """Crea una notificación para CEO/admin cuando se detecta un duplicado de alta confianza."""
+    try:
+        from services.seller_notification_service import seller_notification_service, Notification
+    except ImportError:
+        logger.warning("DEV-50: seller_notification_service not available for duplicate notification")
+        return
+
+    # Buscar CEO activo del tenant
+    ceo_row = await pool.fetchrow(
+        "SELECT id FROM users WHERE tenant_id = $1 AND role = 'ceo' AND status = 'active' LIMIT 1",
+        tenant_id,
+    )
+    if not ceo_row:
+        return
+
+    display_name = lead_name or lead_phone or "Lead desconocido"
+    display_phone = lead_phone or ""
+    timestamp = datetime.datetime.utcnow().timestamp()
+
+    notification = Notification(
+        id=f"dup_{tenant_id}_{lead_phone}_{timestamp}",
+        tenant_id=tenant_id,
+        type="duplicate_found",
+        title="Posible duplicado detectado",
+        message=f"Posible duplicado detectado: {display_name} ({display_phone})",
+        priority="high",
+        recipient_id=str(ceo_row["id"]),
+        related_entity_type="lead",
+        related_entity_id=str(lead_phone) if lead_phone else None,
+        metadata={"lead_name": display_name, "phone": display_phone},
+    )
+
+    await seller_notification_service.save_notifications([notification])
+    await seller_notification_service.broadcast_notifications([notification])
 
 
 async def merge_leads(
@@ -283,6 +341,55 @@ async def merge_leads(
             await conn.execute(
                 "UPDATE activity_events SET entity_id = $1 WHERE entity_id = $2::text AND entity_type = 'lead' AND tenant_id = $3",
                 str(primary_uuid), str(secondary_uuid), tenant_id,
+            )
+
+            # 6b. Mover lead_status_history
+            await conn.execute(
+                "UPDATE lead_status_history SET lead_id = $1 WHERE lead_id = $2 AND tenant_id = $3",
+                primary_uuid, secondary_uuid, tenant_id,
+            )
+
+            # 6c. Mover lead_status_trigger_logs
+            await conn.execute(
+                "UPDATE lead_status_trigger_logs SET lead_id = $1 WHERE lead_id = $2 AND tenant_id = $3",
+                primary_uuid, secondary_uuid, tenant_id,
+            )
+
+            # 6d. Mover seller_agenda_events
+            await conn.execute(
+                "UPDATE seller_agenda_events SET lead_id = $1 WHERE lead_id = $2 AND tenant_id = $3",
+                primary_uuid, secondary_uuid, tenant_id,
+            )
+
+            # 6e. Mover opportunities
+            await conn.execute(
+                "UPDATE opportunities SET lead_id = $1 WHERE lead_id = $2 AND tenant_id = $3",
+                primary_uuid, secondary_uuid, tenant_id,
+            )
+
+            # 6f. Mover sales_transactions (via opportunity join — no direct lead_id)
+            await conn.execute(
+                """
+                UPDATE sales_transactions st
+                SET opportunity_id = st.opportunity_id
+                FROM opportunities o
+                WHERE o.id = st.opportunity_id
+                  AND o.lead_id = $1
+                  AND st.tenant_id = $2
+                """,
+                primary_uuid, tenant_id,
+            )
+
+            # 6g. Mover lead_tag_log (tabla creada condicionalmente, usar DO para IF EXISTS)
+            await conn.execute(
+                """
+                DO $tag$ BEGIN
+                    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'lead_tag_log') THEN
+                        UPDATE lead_tag_log SET lead_id = $1 WHERE lead_id = $2 AND tenant_id = $3;
+                    END IF;
+                END $tag$;
+                """,
+                primary_uuid, secondary_uuid, tenant_id,
             )
 
             # 7. Soft-delete del lead secundario

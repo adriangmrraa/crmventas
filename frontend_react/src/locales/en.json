@@ -32,7 +32,10 @@
     "plantillas": "Templates",
     "integrations": "Integrations",
     "team_activity": "Team Activity",
-    "audit_log": "Audit Log"
+    "audit_log": "Audit Log",
+    "admin_chat": "Conversations",
+    "duplicados": "Duplicates",
+    "blacklist": "Blacklist"
   },
   "common": {
     "save": "Save",

@@ -22,7 +22,9 @@ import {
   LayoutGrid,
   BarChart3,
   Clock,
-  Eye
+  Eye,
+  Copy,
+  Ban
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -49,6 +51,9 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   integrations:   'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&q=60',
   settings:       'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=60',
   supervisor:     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=60',
+  admin_chat:     'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&q=60',
+  duplicados:     'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&q=60',
+  blacklist:      'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=400&q=60',
 };
 
 interface SidebarProps {
@@ -127,8 +132,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'mis_notas', labelKey: 'nav.mis_notas' as const, icon: <ClipboardList size={17} />, path: '/mis-notas', roles: ['ceo', 'setter', 'closer', 'professional', 'secretary'], hint: 'Tareas asignadas, notas del admin y tareas personales' },
     { id: 'manuales', labelKey: 'nav.manuales' as const, icon: <Home size={17} />, path: '/crm/manuales', roles: ['ceo', 'setter', 'closer', 'professional', 'secretary'], hint: 'Base de conocimiento: guiones, objeciones y procesos' },
     { id: 'plantillas', labelKey: 'nav.plantillas' as const, icon: <Layout size={17} />, path: '/crm/plantillas', roles: ['ceo', 'setter', 'closer'], hint: 'Plantillas de mensajes reutilizables con variables' },
+    { id: 'duplicados', labelKey: 'nav.duplicados' as const, icon: <Copy size={17} />, path: '/crm/duplicados', roles: ['ceo'], hint: 'Leads duplicados detectados automaticamente: fusion y descarte' },
+    { id: 'blacklist', labelKey: 'nav.blacklist' as const, icon: <Ban size={17} />, path: '/crm/blacklist', roles: ['ceo'], hint: 'Contactos bloqueados: teléfonos y emails en blacklist' },
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
     { id: 'supervisor', labelKey: 'nav.supervisor' as const, icon: <Eye size={17} />, path: '/crm/supervisor', roles: ['ceo'], hint: 'Monitoreo en tiempo real de conversaciones y alertas de IA' },
+    { id: 'admin_chat', labelKey: 'nav.admin_chat' as const, icon: <MessageSquare size={17} />, path: '/crm/admin-chat', roles: ['ceo'], hint: 'Panel de todas las conversaciones del equipo: canales y DMs' },
     { id: 'tenants', labelKey: 'nav.companies' as const, icon: <ShieldCheck size={17} />, path: '/empresas', roles: ['ceo'], hint: 'Empresas y organizaciones registradas en la plataforma' },
     { id: 'profile', labelKey: 'nav.profile' as const, icon: <User size={17} />, path: '/perfil', roles: ['ceo', 'professional', 'secretary', 'setter', 'closer'], hint: 'Tu perfil, cuenta y preferencias personales' },
     { id: 'integrations', labelKey: 'nav.integrations' as const, icon: <Link2 size={17} />, path: '/crm/integraciones', roles: ['ceo'], hint: 'WhatsApp, Instagram y Facebook: canales de mensajeria' },
@@ -155,6 +163,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/actividad-equipo') return location.pathname === path;
     if (path === '/crm/auditoria') return location.pathname === path;
     if (path === '/crm/supervisor') return location.pathname === path;
+    if (path === '/crm/admin-chat') return location.pathname === path;
+    if (path === '/crm/duplicados') return location.pathname === path;
+    if (path === '/crm/blacklist') return location.pathname === path;
     return location.pathname === path;
   };
 

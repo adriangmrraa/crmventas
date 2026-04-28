@@ -125,6 +125,29 @@ async def get_all_dms(
     return await chat_service.get_all_dms(tenant_id)
 
 
+@router.get("/admin/conversaciones", dependencies=[Depends(require_role(["ceo"]))])
+async def get_admin_conversaciones(
+    vendedor_id: Optional[str] = Query(None),
+    fecha_desde: Optional[str] = Query(None),
+    fecha_hasta: Optional[str] = Query(None),
+    tipo: Optional[str] = Query(None, pattern="^(canal|dm)$"),
+    keyword: Optional[str] = Query(None),
+    limit: int = Query(30, ge=1, le=100),
+    user_data=Depends(verify_admin_token),
+    tenant_id: int = Depends(get_resolved_tenant_id),
+):
+    """CEO admin panel: all team conversations with filters and last-message preview."""
+    return await chat_service.get_admin_conversaciones(
+        tenant_id=tenant_id,
+        vendedor_id=vendedor_id,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        tipo=tipo,
+        keyword=keyword,
+        limit=limit,
+    )
+
+
 @router.get("/perfiles")
 async def get_perfiles(
     user_data=Depends(verify_admin_token),

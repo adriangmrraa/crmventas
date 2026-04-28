@@ -220,6 +220,10 @@ class Lead(Base):
     company = Column(Text)
     estimated_value = Column(DECIMAL(12, 2), default=0)
 
+    # Forecasting fields (DEV-56)
+    close_probability = Column(DECIMAL(5, 2), default=0)
+    weighted_revenue = Column(DECIMAL(12, 2), default=0)
+
     # Lead status system (Patch 018)
     status_changed_at = Column(DateTime)
     status_changed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
@@ -234,6 +238,7 @@ class Lead(Base):
         Index("idx_leads_lead_source", "tenant_id", "lead_source"),
         Index("idx_leads_meta_campaign", "tenant_id", "meta_campaign_id"),
         Index("idx_leads_meta_ad", "tenant_id", "meta_ad_id"),
+        CheckConstraint("close_probability >= 0 AND close_probability <= 100", name="leads_close_probability_range"),
     )
 
 

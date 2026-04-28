@@ -35,6 +35,10 @@ export interface Lead {
   source?: string;
   assigned_seller_id?: string;
   tags?: string[];
+  // Forecasting fields
+  estimated_value?: number;
+  close_probability?: number;
+  weighted_revenue?: number;
   // Prospecting fields
   apify_title?: string;
   apify_category_name?: string;

@@ -130,6 +130,9 @@ class MigrationRunner:
             """DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'lead_forms') THEN CREATE TABLE lead_forms (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, fields JSONB NOT NULL DEFAULT '[]', thank_you_message TEXT DEFAULT '', redirect_url TEXT DEFAULT '', active BOOLEAN NOT NULL DEFAULT TRUE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()); CREATE INDEX idx_lead_forms_tenant ON lead_forms(tenant_id); CREATE INDEX idx_lead_forms_slug ON lead_forms(slug); END IF; END $$;""",
             # Parche 19: Lead Form Submissions (F-02)
             """DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'lead_form_submissions') THEN CREATE TABLE lead_form_submissions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), form_id UUID NOT NULL REFERENCES lead_forms(id) ON DELETE CASCADE, lead_id UUID, data JSONB NOT NULL DEFAULT '{}', ip_address TEXT, submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()); CREATE INDEX idx_lead_form_submissions_form ON lead_form_submissions(form_id); END IF; END $$;""",
+            # Parche 20: Lead forecasting fields (DEV-56)
+            """DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='close_probability') THEN ALTER TABLE leads ADD COLUMN close_probability DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (close_probability >= 0 AND close_probability <= 100); END IF; END $$;""",
+            """DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='weighted_revenue') THEN ALTER TABLE leads ADD COLUMN weighted_revenue DECIMAL(12,2) NOT NULL DEFAULT 0; END IF; END $$;""",
         ]
 
 

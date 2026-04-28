@@ -32,11 +32,14 @@ import MetaTemplatesView from './views/marketing/MetaTemplatesView';
 import IntegrationsView from './components/integrations/IntegrationsView';
 import PlantillasView from './modules/crm_sales/views/PlantillasView';
 import InternalChatView from './modules/crm_sales/views/InternalChatView';
+import AdminConversationsPanel from './modules/crm_sales/views/AdminConversationsPanel';
 import DailyCheckinView from './modules/crm_sales/views/DailyCheckinView';
 import LeadFormsView from './modules/crm_sales/views/LeadFormsView';
 import PublicFormView from './views/PublicFormView';
 import MisNotasView from './modules/crm_sales/views/MisNotasView';
 import ManualesView from './modules/crm_sales/views/ManualesView';
+import DuplicateManagementView from './modules/crm_sales/views/DuplicateManagementView';
+import BlacklistManagementView from './modules/crm_sales/views/BlacklistManagementView';
 // Optional Notifications Pages
 import NotificationsView from './views/NotificationsView';
 // Legal Pages
@@ -173,6 +176,11 @@ function App() {
                           </ProtectedRoute>
                         } />
                         <Route path="crm/chat-interno" element={<InternalChatView />} />
+                        <Route path="crm/admin-chat" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <AdminConversationsPanel />
+                          </ProtectedRoute>
+                        } />
                         <Route path="crm/checkin" element={<DailyCheckinView />} />
                         <Route path="mis-notas" element={<MisNotasView />} />
                         <Route path="crm/manuales" element={<ManualesView />} />
@@ -184,6 +192,16 @@ function App() {
                         <Route path="crm/integraciones" element={
                           <ProtectedRoute allowedRoles={['ceo']}>
                             <IntegrationsView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/duplicados" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <DuplicateManagementView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="crm/blacklist" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <BlacklistManagementView />
                           </ProtectedRoute>
                         } />
                         <Route path="notificaciones" element={<NotificationsView />} />

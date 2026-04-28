@@ -8,6 +8,7 @@ import json
 import asyncio
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request, UploadFile, File
+from pydantic import BaseModel
 from typing import List, Optional, Any
 from uuid import UUID
 import httpx
@@ -30,6 +31,7 @@ from modules.crm_sales.models import (
 from core.security import get_current_user_context, verify_admin_token, get_resolved_tenant_id, get_allowed_tenant_ids, audit_access
 from core.utils import normalize_phone
 from db import db
+from services.blacklist_service import blacklist_service
 
 router = APIRouter(prefix="", tags=["CRM Sales"])
 APIFY_ACTOR_URL = "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items"
@@ -76,6 +78,7 @@ async def list_leads(
                l.prospecting_niche, l.prospecting_location_query,
                l.outreach_message_sent, l.outreach_send_requested, l.outreach_last_requested_at, l.outreach_last_sent_at,
                l.score,
+               l.estimated_value, l.close_probability, l.weighted_revenue,
                CASE WHEN u.id IS NOT NULL THEN TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) ELSE NULL END AS seller_name,
                l.created_at, l.updated_at,
                COALESCE(l.tags::text, '[]') AS tags_raw
@@ -136,6 +139,44 @@ async def list_leads(
     return results
 
 
+async def _check_duplicates_background(
+    tenant_id: int,
+    lead_id: str,
+    phone: str,
+    email: Optional[str],
+    first_name: str,
+    last_name: str,
+):
+    """
+    Tarea en segundo plano (fire-and-forget) para detección de duplicados tras crear un lead.
+    Nunca falla la request principal — cualquier excepción es capturada y logueada.
+    """
+    try:
+        from services.deduplication_service import find_duplicates_for_lead, create_duplicate_candidates
+        duplicates = await find_duplicates_for_lead(
+            tenant_id=tenant_id,
+            lead_id=lead_id,
+            phone=phone,
+            email=email,
+            first_name=first_name or "",
+            last_name=last_name or "",
+            pool=db.pool,
+        )
+        if duplicates:
+            lead_name = f"{first_name or ''} {last_name or ''}".strip() or phone
+            await create_duplicate_candidates(
+                tenant_id=tenant_id,
+                lead_id=lead_id,
+                duplicates=duplicates,
+                pool=db.pool,
+                lead_name=lead_name,
+                lead_phone=phone,
+            )
+            logger.info(f"DEV-50: {len(duplicates)} duplicate candidates created for lead {lead_id}")
+    except Exception as e:
+        logger.warning(f"DEV-50: Background duplicate check failed for lead {lead_id}: {e}")
+
+
 @router.post("/leads", response_model=LeadResponse, status_code=201)
 async def create_lead(
     lead: LeadCreate,
@@ -146,7 +187,19 @@ async def create_lead(
     Phone number must be unique per tenant.
     """
     tenant_id = context["tenant_id"]
-    
+
+    # G2: Blacklist check before creating lead
+    is_blocked, block_reason = await blacklist_service.is_blacklisted_normalized(
+        tenant_id,
+        phone=lead.phone_number,
+        email=lead.email,
+    )
+    if is_blocked:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Contacto bloqueado en blacklist: {block_reason or 'sin motivo especificado'}"
+        )
+
     # Check if lead already exists
     existing = await db.pool.fetchrow(
         "SELECT id FROM leads WHERE tenant_id = $1 AND phone_number = $2",
@@ -154,9 +207,9 @@ async def create_lead(
     )
     if existing:
         raise HTTPException(status_code=400, detail="Lead with this phone number already exists")
-    
+
     row = await db.pool.fetchrow("""
-        INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email, 
+        INSERT INTO leads (tenant_id, phone_number, first_name, last_name, email,
                           status, source, meta_lead_id, tags)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, phone_number, first_name, last_name, email,
@@ -164,7 +217,17 @@ async def create_lead(
                   created_at, updated_at
     """, tenant_id, lead.phone_number, lead.first_name, lead.last_name, lead.email,
         lead.status, lead.source, lead.meta_lead_id, lead.tags)
-    
+
+    # DEV-50: fire-and-forget duplicate detection (never blocks the response)
+    asyncio.create_task(_check_duplicates_background(
+        tenant_id=tenant_id,
+        lead_id=str(row["id"]),
+        phone=lead.phone_number,
+        email=lead.email,
+        first_name=lead.first_name or "",
+        last_name=lead.last_name or "",
+    ))
+
     return dict(row)
 
 
@@ -220,19 +283,32 @@ async def get_lead(
 ):
     """Get a specific lead by ID"""
     tenant_id = context["tenant_id"]
-    
+
     row = await db.pool.fetchrow("""
         SELECT id, tenant_id, phone_number, first_name, last_name, email,
                status, stage_id, assigned_seller_id, source, meta_lead_id, tags,
+               estimated_value, close_probability, weighted_revenue,
                created_at, updated_at
         FROM leads
         WHERE id = $1 AND tenant_id = $2
     """, lead_id, tenant_id)
-    
+
     if not row:
         raise HTTPException(status_code=404, detail="Lead not found")
-    
-    return dict(row)
+
+    result = dict(row)
+
+    # DEV-50: indicar si este lead tiene candidatos de duplicado pendientes
+    dup_count = await db.pool.fetchval(
+        """
+        SELECT COUNT(*) FROM duplicate_candidates
+        WHERE (lead_a_id = $1 OR lead_b_id = $1) AND status = 'pending' AND tenant_id = $2
+        """,
+        lead_id, tenant_id,
+    )
+    result["has_pending_duplicates"] = (dup_count or 0) > 0
+
+    return result
 
 
 @router.put("/leads/{lead_id}", )
@@ -260,33 +336,51 @@ async def update_lead(
             raise HTTPException(status_code=403, detail="No tienes permiso para editar este Lead")
     
     # Build dynamic UPDATE query
+    update_data = lead.dict(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    # Compute weighted_revenue whenever estimated_value or close_probability changes
+    forecasting_fields = {"estimated_value", "close_probability"}
+    if forecasting_fields & update_data.keys():
+        # Fetch current values for whichever field is NOT in the update
+        current = await db.pool.fetchrow(
+            "SELECT estimated_value, close_probability FROM leads WHERE id = $1 AND tenant_id = $2",
+            lead_id, tenant_id
+        )
+        if not current:
+            raise HTTPException(status_code=404, detail="Lead not found")
+
+        ev = float(update_data.get("estimated_value", current["estimated_value"] or 0))
+        cp = float(update_data.get("close_probability", current["close_probability"] or 0))
+        update_data["weighted_revenue"] = round(ev * (cp / 100), 2)
+
     updates = []
     params = [lead_id, tenant_id]
     param_idx = 3
-    
-    for field, value in lead.dict(exclude_unset=True).items():
+
+    for field, value in update_data.items():
         updates.append(f"{field} = ${param_idx}")
         params.append(value)
         param_idx += 1
-    
-    if not updates:
-        raise HTTPException(status_code=400, detail="No fields to update")
-    
-    updates.append(f"updated_at = NOW()")
-    
+
+    updates.append("updated_at = NOW()")
+
     query = f"""
         UPDATE leads
         SET {', '.join(updates)}
         WHERE id = $1 AND tenant_id = $2
         RETURNING id, tenant_id, phone_number, first_name, last_name, email,
                   status, stage_id, assigned_seller_id, source, meta_lead_id, tags,
+                  estimated_value, close_probability, weighted_revenue,
                   created_at, updated_at
     """
-    
+
     row = await db.pool.fetchrow(query, *params)
     if not row:
         raise HTTPException(status_code=404, detail="Lead not found")
-    
+
     return dict(row)
 
 
@@ -359,6 +453,38 @@ async def delete_lead(
     if result == "UPDATE 0":
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"status": "deleted", "id": str(lead_id)}
+
+
+class LeadBlockRequest(BaseModel):
+    reason: str = "lead_descartado"
+
+
+@router.post("/leads/{lead_id}/block", status_code=200)
+async def block_lead(
+    lead_id: UUID,
+    body: LeadBlockRequest,
+    context: dict = Depends(get_current_user_context),
+):
+    """
+    G5: Blocks a lead — adds phone + email to blacklist and sets status to 'blocked'.
+    Only accessible by ceo role.
+    """
+    tenant_id = context["tenant_id"]
+    role = context.get("role") or context.get("user_role") or ""
+    if role not in ("ceo",):
+        raise HTTPException(status_code=403, detail="Solo CEOs pueden bloquear contactos")
+    try:
+        result = await blacklist_service.block_lead(
+            tenant_id=tenant_id,
+            lead_id=str(lead_id),
+            reason=body.reason,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error blocking lead {lead_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error al bloquear el contacto")
 
 
 @router.post("/leads/{lead_id}/convert-to-client", response_model=ClientResponse, status_code=201)
@@ -2643,6 +2769,7 @@ async def import_execute(body: dict, user=Depends(verify_admin_token)):
     created = 0
     updated = 0
     skipped = 0
+    blocked = 0
     errors: list = []
 
     for idx, row in enumerate(rows[:1000], start=1):
@@ -2658,6 +2785,15 @@ async def import_execute(body: dict, user=Depends(verify_admin_token)):
             if not phone and not email:
                 errors.append({"row": idx, "reason": "Sin teléfono ni email"})
                 skipped += 1
+                continue
+
+            # G3: Blacklist check before inserting
+            is_blk, blk_reason = await blacklist_service.is_blacklisted_normalized(
+                tenant_id, phone=phone or None, email=email or None
+            )
+            if is_blk:
+                errors.append({"row": idx, "reason": f"Bloqueado: {blk_reason or 'blacklist'}"})
+                blocked += 1
                 continue
 
             # Check duplicate by phone OR email
@@ -2705,7 +2841,7 @@ async def import_execute(body: dict, user=Depends(verify_admin_token)):
             errors.append({"row": idx, "reason": str(e)})
             skipped += 1
 
-    return {"total": len(rows), "created": created, "updated": updated, "skipped": skipped, "errors": errors}
+    return {"total": len(rows), "created": created, "updated": updated, "skipped": skipped, "blocked": blocked, "errors": errors}
 
 
 # =============================================================================

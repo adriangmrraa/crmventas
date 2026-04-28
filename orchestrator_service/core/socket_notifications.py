@@ -238,8 +238,119 @@ def register_notification_socket_handlers():
         except Exception as e:
             logger.error(f"Error in unsubscribe_team_activity: {e}")
 
+    # ============================================
+    # ADMIN CHAT HANDLERS (DEV-66)
+    # ============================================
+
+    @sio.on('chat:admin_subscribe')
+    async def handle_admin_chat_subscribe(sid, data):
+        """Subscribe CEO to admin chat room for real-time activity across all conversations."""
+        try:
+            tenant_id = data.get('tenant_id')
+            role = data.get('role')
+            if not tenant_id:
+                logger.error(f"No tenant_id in chat:admin_subscribe: {data}")
+                return
+            if role != 'ceo':
+                logger.warning(f"Non-CEO role '{role}' tried to subscribe to admin chat")
+                await sio.emit('chat:admin:error', {
+                    'message': 'Solo el rol CEO puede acceder al panel de conversaciones'
+                }, room=sid)
+                return
+            await sio.enter_room(sid, f"chat:admin:{tenant_id}")
+            logger.info(f"Client {sid} subscribed to admin chat for tenant {tenant_id}")
+            await sio.emit('chat:admin:subscribed', {
+                'tenant_id': tenant_id,
+                'status': 'subscribed'
+            }, room=sid)
+        except Exception as e:
+            logger.error(f"Error in chat:admin_subscribe: {e}")
+
+    @sio.on('chat:admin_unsubscribe')
+    async def handle_admin_chat_unsubscribe(sid, data):
+        """Unsubscribe from admin chat room."""
+        try:
+            tenant_id = data.get('tenant_id')
+            if tenant_id:
+                await sio.leave_room(sid, f"chat:admin:{tenant_id}")
+                logger.info(f"Client {sid} unsubscribed from admin chat for tenant {tenant_id}")
+        except Exception as e:
+            logger.error(f"Error in chat:admin_unsubscribe: {e}")
+
+    # ============================================
+    # DM ROOM HANDLERS (DEV-65)
+    # ============================================
+
+    @sio.on('chat:join_canal')
+    async def handle_chat_join_canal(sid, data):
+        """Join a chat room (channel or DM). Validates participant access for DMs."""
+        try:
+            tenant_id = data.get('tenant_id')
+            canal_id = data.get('canal_id')
+            user_id = data.get('user_id')
+
+            if not tenant_id or not canal_id:
+                logger.error(f"Missing tenant_id or canal_id in chat:join_canal: {data}")
+                return
+
+            # For DM channels: verify user is a participant
+            if canal_id.startswith('dm_'):
+                parts = canal_id.replace('dm_', '').split('_')
+                if user_id not in parts:
+                    logger.warning(f"User {user_id} tried to join DM {canal_id} but is not a participant")
+                    await sio.emit('chat:error', {
+                        'message': 'No sos participante de este canal DM'
+                    }, room=sid)
+                    return
+
+            room = f"chat:{tenant_id}:{canal_id}"
+            await sio.enter_room(sid, room)
+            logger.info(f"Client {sid} (user={user_id}) joined room {room}")
+
+        except Exception as e:
+            logger.error(f"Error in chat:join_canal: {e}")
+
+    @sio.on('chat:leave_canal')
+    async def handle_chat_leave_canal(sid, data):
+        """Leave a chat room."""
+        try:
+            tenant_id = data.get('tenant_id')
+            canal_id = data.get('canal_id')
+
+            if not tenant_id or not canal_id:
+                logger.error(f"Missing tenant_id or canal_id in chat:leave_canal: {data}")
+                return
+
+            room = f"chat:{tenant_id}:{canal_id}"
+            await sio.leave_room(sid, room)
+            logger.info(f"Client {sid} left room {room}")
+
+        except Exception as e:
+            logger.error(f"Error in chat:leave_canal: {e}")
+
+    @sio.on('chat:dm_leido')
+    async def handle_chat_dm_leido(sid, data):
+        """Mark a DM as read via Socket.IO. Delegates to internal_chat_service."""
+        try:
+            tenant_id = data.get('tenant_id')
+            canal_id = data.get('canal_id')
+            user_id = data.get('user_id')
+
+            if not tenant_id or not canal_id or not user_id:
+                logger.error(f"Missing fields in chat:dm_leido: {data}")
+                return
+
+            from services.internal_chat_service import chat_service
+            await chat_service.marcar_dm_leido(tenant_id, canal_id, user_id)
+            logger.info(f"DM {canal_id} marked as read by user {user_id}")
+
+        except Exception as e:
+            logger.error(f"Error in chat:dm_leido: {e}")
+
     logger.info("✅ Notification socket handlers registered")
     logger.info("✅ Team Activity socket handlers registered (DEV-39)")
+    logger.info("✅ Admin Chat socket handlers registered (DEV-66)")
+    logger.info("✅ DM room handlers registered (DEV-65)")
 
 async def emit_notification_count_update(user_id: str):
     """Emitir actualización de count de notificaciones"""

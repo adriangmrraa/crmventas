@@ -621,6 +621,34 @@ async def add_to_blacklist(payload: BlacklistAdd, tenant_id: int = Depends(get_r
     await blacklist_service.add_to_blacklist(tenant_id, payload.value, payload.type, payload.reason)
     return {"status": "added"}
 
+# G4: Attempts log endpoint — declared BEFORE /{value} to avoid routing ambiguity
+@router.get("/blacklist/attempts", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
+async def list_blacklist_attempts(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    tenant_id: int = Depends(get_resolved_tenant_id),
+):
+    """List blocked attempts log with pagination."""
+    items = await blacklist_service.list_attempts(tenant_id, limit=limit, offset=offset)
+    total = await blacklist_service.get_attempts_count(tenant_id)
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+# G5: Bulk add endpoint — declared BEFORE /{value} to avoid routing ambiguity
+class BlacklistBulkItem(BaseModel):
+    value: str
+    type: str = "phone"
+    reason: Optional[str] = None
+
+class BlacklistBulkAdd(BaseModel):
+    items: List[BlacklistBulkItem]
+
+@router.post("/blacklist/bulk", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
+async def bulk_add_to_blacklist(payload: BlacklistBulkAdd, tenant_id: int = Depends(get_resolved_tenant_id)):
+    """Bulk add entries to the blacklist."""
+    items = [{"value": i.value, "type": i.type, "reason": i.reason} for i in payload.items]
+    result = await blacklist_service.add_bulk(tenant_id, items)
+    return result
+
 @router.delete("/blacklist/{value}", dependencies=[Depends(verify_admin_token)], tags=["Seguridad"])
 async def remove_from_blacklist(value: str, tenant_id: int = Depends(get_resolved_tenant_id)):
     await blacklist_service.remove_from_blacklist(tenant_id, value)

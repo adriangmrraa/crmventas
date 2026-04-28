@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Hash, MessageSquare, Send, Plus, Users, Phone, Bell, ChevronDown
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import { useSocket } from '../../../context/SocketContext';
@@ -116,6 +117,19 @@ export default function InternalChatView() {
         setMessages(prev => {
           if (prev.some(m => m.id === msg.id)) return prev; // Dedup
           return [...prev, msg];
+        });
+      }
+
+      // Toast notification for incoming DMs not currently visible
+      if (
+        msg.canal_id.startsWith('dm_') &&
+        msg.autor_id !== user?.id &&
+        activeCanal !== msg.canal_id
+      ) {
+        toast(`${msg.autor_nombre}: ${msg.contenido.slice(0, 80)}`, {
+          icon: '💬',
+          duration: 5000,
+          style: { maxWidth: '360px' },
         });
       }
     };

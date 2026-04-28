@@ -146,6 +146,13 @@ class InternalChatService:
             room = f"chat:{tenant_id}:{canal_id}"
             await sio.emit("chat:nuevo_mensaje", msg_serialized, room=room)
 
+            # Admin fan-out: notify CEO admin panel of new activity
+            await sio.emit(
+                "chat:admin:nueva_actividad",
+                msg_serialized,
+                room=f"chat:admin:{tenant_id}",
+            )
+
             # DM badge update
             if canal_id.startswith("dm_"):
                 parts = canal_id.replace("dm_", "").split("_")
@@ -170,6 +177,48 @@ class InternalChatService:
                         {"canal_id": canal_id, "no_leidos": new_count or 0},
                         room=f"notifications:{dest_id}",
                     )
+
+                    # Create persistent notification for the recipient
+                    try:
+                        import uuid as _uuid
+                        from datetime import datetime as _datetime
+                        from services.seller_notification_service import (
+                            Notification as _Notification,
+                            notification_service as _notif_svc,
+                        )
+
+                        notif = _Notification(
+                            id=f"dm_{canal_id}_{_uuid.uuid4().hex[:8]}",
+                            tenant_id=tenant_id,
+                            type="direct_message",
+                            title=f"Mensaje de {autor_nombre}",
+                            message=contenido[:100],
+                            priority="medium",
+                            recipient_id=dest_id,
+                            sender_id=autor_id,
+                            related_entity_type="dm",
+                            related_entity_id=canal_id,
+                            created_at=_datetime.utcnow(),
+                        )
+                        await _notif_svc.save_notifications([notif])
+
+                        # Emit real-time notification to recipient's personal room
+                        await sio.emit(
+                            "new_notification",
+                            {
+                                "id": notif.id,
+                                "type": notif.type,
+                                "title": notif.title,
+                                "message": notif.message,
+                                "priority": notif.priority,
+                                "created_at": notif.created_at.isoformat(),
+                                "related_entity_type": notif.related_entity_type,
+                                "related_entity_id": notif.related_entity_id,
+                            },
+                            room=f"notifications:{dest_id}",
+                        )
+                    except Exception as notif_err:
+                        logger.warning(f"Could not create DM notification: {notif_err}")
 
             return msg_serialized
 
@@ -214,6 +263,92 @@ class InternalChatService:
                 tenant_id,
             )
             return [dict(r) for r in rows]
+
+    async def get_admin_conversaciones(
+        self,
+        tenant_id: int,
+        vendedor_id: Optional[str] = None,
+        fecha_desde: Optional[str] = None,
+        fecha_hasta: Optional[str] = None,
+        tipo: Optional[str] = None,
+        keyword: Optional[str] = None,
+        limit: int = 30,
+    ) -> dict:
+        """CEO admin view: all conversations with last-message preview and filters."""
+        async with db.pool.acquire() as conn:
+            conditions = ["c.tenant_id = $1"]
+            params: list = [tenant_id]
+            idx = 2
+
+            if tipo in ("canal", "dm"):
+                conditions.append(f"c.tipo = ${idx}")
+                params.append(tipo)
+                idx += 1
+
+            if fecha_desde:
+                conditions.append(f"c.ultima_actividad >= ${idx}::timestamptz")
+                params.append(fecha_desde)
+                idx += 1
+
+            if fecha_hasta:
+                conditions.append(f"c.ultima_actividad <= ${idx}::timestamptz")
+                params.append(fecha_hasta)
+                idx += 1
+
+            if keyword:
+                conditions.append(f"lm.contenido ILIKE ${idx}")
+                params.append(f"%{keyword}%")
+                idx += 1
+
+            if vendedor_id:
+                conditions.append(f"lm.autor_id = ${idx}::uuid")
+                params.append(vendedor_id)
+                idx += 1
+
+            where_clause = " AND ".join(conditions)
+
+            query = f"""
+                SELECT
+                    c.canal_id,
+                    c.tipo,
+                    c.participantes,
+                    c.ultima_actividad,
+                    lm.autor_nombre   AS last_autor_nombre,
+                    lm.autor_rol      AS last_autor_rol,
+                    LEFT(lm.contenido, 120) AS last_contenido,
+                    lm.created_at     AS last_created_at
+                FROM chat_conversaciones c
+                LEFT JOIN LATERAL (
+                    SELECT autor_nombre, autor_rol, contenido, created_at, autor_id
+                    FROM chat_mensajes
+                    WHERE tenant_id = $1 AND canal_id = c.canal_id
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ) lm ON true
+                WHERE {where_clause}
+                ORDER BY c.ultima_actividad DESC
+                LIMIT ${idx}
+            """
+            params.append(limit)
+
+            rows = await conn.fetch(query, *params)
+
+            conversaciones = []
+            for r in rows:
+                conversaciones.append({
+                    "canal_id": r["canal_id"],
+                    "tipo": r["tipo"],
+                    "participantes": list(r["participantes"]) if r["participantes"] else [],
+                    "ultima_actividad": str(r["ultima_actividad"]) if r["ultima_actividad"] else None,
+                    "last_message": {
+                        "autor_nombre": r["last_autor_nombre"],
+                        "autor_rol": r["last_autor_rol"],
+                        "contenido": r["last_contenido"],
+                        "created_at": str(r["last_created_at"]) if r["last_created_at"] else None,
+                    } if r["last_autor_nombre"] else None,
+                })
+
+            return {"conversaciones": conversaciones, "total": len(conversaciones)}
 
     async def get_perfiles(self, tenant_id: int) -> list:
         """List all users in the tenant (for new DM dialog)."""

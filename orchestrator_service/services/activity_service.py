@@ -84,6 +84,29 @@ async def record_event(
     except Exception as e:
         logger.warning(f"Could not emit team_activity event: {e}")
 
+    # DEV-45: Also emit lead_timeline:new_event when entity_type is 'lead'
+    if entity_type == "lead":
+        try:
+            from services.lead_timeline_service import emit_timeline_event
+            timeline_event = {
+                "id": f"ae_{event_id}",
+                "event_type": event_type,
+                "timestamp": row["created_at"].isoformat(),
+                "actor": {"id": str(actor_id), "name": actor_name, "role": actor_role},
+                "content": {
+                    "summary": event_type.replace("_", " ").title(),
+                    "detail": meta.get("notes") or meta.get("reason"),
+                    "structured": meta,
+                },
+                "visibility": "internal",
+                "source_table": "activity_events",
+                "source_id": str(event_id),
+                "metadata": meta,
+            }
+            await emit_timeline_event(tenant_id, entity_id, timeline_event)
+        except Exception as e:
+            logger.warning(f"Could not emit lead_timeline event: {e}")
+
     return event_data
 
 

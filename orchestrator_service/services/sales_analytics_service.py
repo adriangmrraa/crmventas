@@ -77,32 +77,49 @@ async def get_funnel_data(pool, tenant_id: int, days: int = 30) -> dict:
 
 
 async def get_forecast_data(pool, tenant_id: int) -> dict:
-    """Revenue forecast: weighted pipeline value."""
+    """Revenue forecast: weighted pipeline value using per-lead close_probability when available."""
     try:
-        stages = await pool.fetch("""
-            SELECT l.status, COUNT(*) as count,
-                   COALESCE(SUM(l.estimated_value), 0) as total_value
+        leads = await pool.fetch("""
+            SELECT l.status,
+                   COALESCE(l.estimated_value, 0) AS estimated_value,
+                   COALESCE(l.close_probability, 0) AS close_probability
             FROM leads l
             WHERE l.tenant_id = $1
             AND l.status NOT IN ('won', 'lost')
-            GROUP BY l.status
         """, tenant_id)
 
-        pipeline = []
-        total_weighted = 0
-        total_unweighted = 0
+        # Aggregate per-stage using per-lead probability (fallback to STAGE_PROBABILITIES)
+        stage_buckets: dict = {}
+        for lead in leads:
+            code = lead["status"] or "new"
+            ev = float(lead["estimated_value"] or 0)
+            cp = float(lead["close_probability"] or 0)
+            # Use per-lead probability if explicitly set (> 0), else stage default
+            prob = (cp / 100) if cp > 0 else STAGE_PROBABILITIES.get(code, 0.1)
+            weighted = ev * prob
 
-        for stage in stages:
-            code = stage["status"]
-            prob = STAGE_PROBABILITIES.get(code, 0.1)
-            value = float(stage["total_value"] or 0)
-            weighted = value * prob
+            if code not in stage_buckets:
+                stage_buckets[code] = {"count": 0, "total_value": 0.0, "total_weighted": 0.0, "prob_sum": 0.0}
+            stage_buckets[code]["count"] += 1
+            stage_buckets[code]["total_value"] += ev
+            stage_buckets[code]["total_weighted"] += weighted
+            stage_buckets[code]["prob_sum"] += prob
+
+        pipeline = []
+        total_weighted = 0.0
+        total_unweighted = 0.0
+
+        for code, bucket in stage_buckets.items():
+            count = bucket["count"]
+            value = bucket["total_value"]
+            weighted = bucket["total_weighted"]
+            avg_prob = round(bucket["prob_sum"] / count, 4) if count > 0 else 0.0
 
             pipeline.append({
                 "stage": code,
-                "count": stage["count"],
-                "total_value": value,
-                "probability": prob,
+                "count": count,
+                "total_value": round(value, 2),
+                "probability": avg_prob,
                 "weighted_value": round(weighted, 2),
             })
 

@@ -30,7 +30,9 @@
     "plantillas": "Modeles",
     "integrations": "Intégrations",
     "team_activity": "Activité Équipe",
-    "audit_log": "Journal d'Audit"
+    "audit_log": "Journal d'Audit",
+    "duplicados": "Doublons",
+    "blacklist": "Liste noire"
   },
   "header": {
     "tenant_selector": "Sélecteur de Clinique",

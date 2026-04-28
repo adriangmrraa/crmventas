@@ -188,6 +188,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         return <TrendingUp size={16} className="text-yellow-500" />;
       case 'assignment':
         return <User size={16} className="text-green-500" />;
+      case 'direct_message':
+        return <MessageSquare size={16} className="text-blue-400" />;
       default:
         return <Bell size={16} className="text-white/40" />;
     }
@@ -254,6 +256,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         case 'client':
           // Navigate to client
           window.location.href = `/crm/clientes/${notification.related_entity_id}`;
+          break;
+        case 'dm':
+          // Navigate to internal chat with the DM canal open
+          window.location.href = `/chat-interno?canal=${notification.related_entity_id}`;
           break;
       }
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, Plus, Info, Database, AlertTriangle, Clock, Bell, ShieldCheck, Mail, RefreshCw, ToggleLeft, ToggleRight, Wifi } from 'lucide-react';
+import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, Plus, Info, Database, AlertTriangle, Clock, Bell, ShieldCheck, Mail, RefreshCw, ToggleLeft, ToggleRight, Wifi, Facebook, Instagram, Phone, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { Modal } from '../components/Modal';
 import BlacklistManager from '../components/config/BlacklistManager';
 import CalComSettings from '../components/config/CalComSettings';
+import MetaConnectionPanel from '../components/integrations/MetaConnectionPanel';
 
 type UiLanguage = 'es' | 'en' | 'fr';
 
@@ -83,6 +84,14 @@ export default function ConfigView() {
     // Meta Settings State
     const [metaTenantId, setMetaTenantId] = useState<number | null>(null);
     const [baseMetaWebhookUrl, setBaseMetaWebhookUrl] = useState<string | null>(null);
+    const [metaModalOpen, setMetaModalOpen] = useState(false);
+    const [metaStatusData, setMetaStatusData] = useState<{
+        connected: boolean;
+        token_valid?: boolean;
+        channels: { facebook: boolean; instagram: boolean; whatsapp: boolean };
+        bindings: Array<{ id: number; channel: string; asset_id: string; asset_name: string; active: boolean }>;
+    } | null>(null);
+    const [metaStatusLoading, setMetaStatusLoading] = useState(false);
 
     // Email Monitor State
     const [emailConfig, setEmailConfig] = useState({
@@ -132,6 +141,9 @@ export default function ConfigView() {
         if ((activeTab === 'ycloud') && user?.role === 'ceo') {
             loadIntegrationConfig(activeTab, intConfig.tenant_id);
         }
+        if (activeTab === 'meta' && user?.role === 'ceo') {
+            loadMetaStatus();
+        }
     }, [activeTab, intConfig.tenant_id]);
 
 
@@ -171,6 +183,18 @@ export default function ConfigView() {
             if (Array.isArray(data)) setCredentials(data);
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const loadMetaStatus = async () => {
+        setMetaStatusLoading(true);
+        try {
+            const { data } = await api.get('/admin/meta/status');
+            setMetaStatusData(data.data);
+        } catch (e) {
+            console.error('Error loading Meta status:', e);
+        } finally {
+            setMetaStatusLoading(false);
         }
     };
 
@@ -544,8 +568,123 @@ export default function ConfigView() {
             ? (metaTenantId ? `${baseMetaWebhookUrl}/${metaTenantId}` : baseMetaWebhookUrl)
             : 'Cargando...';
 
+        const channelColor = (ch: string) => {
+            switch (ch) {
+                case 'facebook': return 'text-violet-400 bg-violet-500/10 border-violet-500/20';
+                case 'instagram': return 'text-pink-400 bg-pink-500/10 border-pink-500/20';
+                case 'whatsapp': return 'text-green-400 bg-green-500/10 border-green-500/20';
+                default: return 'text-white/40 bg-white/5 border-white/10';
+            }
+        };
+
+        const channelIcon = (ch: string) => {
+            switch (ch) {
+                case 'facebook': return <Facebook size={16} />;
+                case 'instagram': return <Instagram size={16} />;
+                case 'whatsapp': return <MessageCircle size={16} />;
+                default: return <Phone size={16} />;
+            }
+        };
+
+        const channelLabel = (ch: string) => {
+            switch (ch) {
+                case 'facebook': return 'Facebook Pages';
+                case 'instagram': return 'Instagram';
+                case 'whatsapp': return 'WhatsApp';
+                default: return ch;
+            }
+        };
+
         return (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+                {/* Meta Business Connection section */}
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <Facebook className="text-violet-400" size={20} />
+                                {t('config.meta_connect_title')}
+                            </h2>
+                            <p className="text-sm text-white/40 mt-1">{t('config.meta_connect_hint')}</p>
+                        </div>
+                        <button
+                            onClick={() => setMetaModalOpen(true)}
+                            className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg shadow-violet-600/20"
+                        >
+                            <Facebook size={16} />
+                            {metaStatusData?.connected ? t('config.meta_manage_channels') : t('config.meta_connect_btn')}
+                        </button>
+                    </div>
+
+                    {/* Connection status */}
+                    {metaStatusLoading ? (
+                        <div className="flex items-center gap-2 text-white/30 text-sm py-2">
+                            <Loader2 size={14} className="animate-spin" /> {t('common.loading')}
+                        </div>
+                    ) : metaStatusData ? (
+                        <div className="space-y-4">
+                            {/* Channel status badges */}
+                            <div className="grid grid-cols-3 gap-3">
+                                {(['facebook', 'instagram', 'whatsapp'] as const).map((ch) => {
+                                    const active = metaStatusData.channels[ch];
+                                    const color = channelColor(ch);
+                                    return (
+                                        <div key={ch} className={`p-3 rounded-xl border ${color} flex flex-col items-center gap-1.5`}>
+                                            <div className="opacity-80">{channelIcon(ch)}</div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{channelLabel(ch)}</span>
+                                            {active ? (
+                                                <span className="text-[10px] font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                                                    {t('config.meta_status_active')}
+                                                </span>
+                                            ) : metaStatusData.connected ? (
+                                                <span className="text-[10px] font-bold bg-white/10 text-white/30 px-2 py-0.5 rounded-full">
+                                                    {t('config.meta_status_not_selected')}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold bg-white/10 text-white/30 px-2 py-0.5 rounded-full">
+                                                    {t('config.meta_status_disconnected')}
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Active bindings list */}
+                            {metaStatusData.bindings.filter(b => b.active).length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider">{t('config.meta_active_channels')}</p>
+                                    <div className="space-y-1.5">
+                                        {metaStatusData.bindings.filter(b => b.active).map(b => (
+                                            <div key={b.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl border ${channelColor(b.channel)} text-sm`}>
+                                                <span className="opacity-70">{channelIcon(b.channel)}</span>
+                                                <span className="font-semibold truncate flex-1">{b.asset_name || b.asset_id}</span>
+                                                <span className="text-[10px] font-bold uppercase opacity-60">{channelLabel(b.channel)}</span>
+                                                <CheckCircle2 size={14} className="text-green-400 shrink-0" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {metaStatusData.connected && metaStatusData.bindings.filter(b => b.active).length === 0 && (
+                                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-sm flex items-center gap-3">
+                                    <AlertTriangle size={16} className="shrink-0" />
+                                    {t('config.meta_no_channels_selected')}
+                                </div>
+                            )}
+
+                            {!metaStatusData.connected && (
+                                <div className="p-4 bg-white/[0.02] border border-dashed border-white/[0.08] rounded-xl text-white/30 text-sm text-center">
+                                    {t('config.meta_not_connected')}
+                                </div>
+                            )}
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* Webhook URL section */}
                 <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-6">
                     <div className="flex items-center gap-2 mb-2 text-violet-400">
                         <Globe className="w-5 h-5" />
@@ -572,6 +711,31 @@ export default function ConfigView() {
                         </button>
                     </div>
                 </div>
+
+                {/* Meta Connection Modal */}
+                {metaModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <div className="bg-[#0d1117] rounded-2xl border border-white/[0.08] w-full max-w-xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+                            <div className="p-5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-violet-500/10 rounded-xl flex items-center justify-center text-violet-400">
+                                        <Facebook size={18} />
+                                    </div>
+                                    <h3 className="font-bold text-white">{t('config.meta_connect_title')}</h3>
+                                </div>
+                                <button
+                                    onClick={() => { setMetaModalOpen(false); loadMetaStatus(); }}
+                                    className="p-2 hover:bg-white/[0.06] rounded-xl text-white/40 hover:text-white transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div className="p-5 overflow-y-auto flex-1">
+                                <MetaConnectionPanel />
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };

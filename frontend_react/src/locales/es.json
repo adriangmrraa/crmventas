@@ -129,7 +129,22 @@
     "email_monitor_check_now_btn": "Revisar ahora",
     "email_monitor_check_result": "lead(s) procesado(s)",
     "email_monitor_info_title": "¿Cómo funciona?",
-    "email_monitor_info_body": "Meta Ads envía notificaciones por email cuando llega un nuevo lead de formulario. El monitor busca en la bandeja IMAP correos de facebookmail.com o con 'lead' en el asunto, extrae los datos y crea el lead en el CRM automáticamente."
+    "email_monitor_info_body": "Meta Ads envía notificaciones por email cuando llega un nuevo lead de formulario. El monitor busca en la bandeja IMAP correos de facebookmail.com o con 'lead' en el asunto, extrae los datos y crea el lead en el CRM automáticamente.",
+    "meta_connect_title": "Conexión Meta Business",
+    "meta_connect_hint": "Conectá Facebook Pages, Instagram y WhatsApp a tu CRM mediante OAuth de Meta.",
+    "meta_connect_btn": "Conectar con Facebook",
+    "meta_manage_channels": "Administrar canales",
+    "meta_status_active": "ACTIVO",
+    "meta_status_not_selected": "NO SELECCIONADO",
+    "meta_status_disconnected": "DESCONECTADO",
+    "meta_active_channels": "Canales activos",
+    "meta_no_channels_selected": "Conectado pero sin canales activos. Hacé clic en \"Administrar canales\" para seleccionar cuáles activar.",
+    "meta_not_connected": "Meta Business no está conectado. Hacé clic en el botón para iniciar la conexión.",
+    "meta_asset_whatsapp_number": "Número de WhatsApp",
+    "meta_asset_facebook_page": "Página de Facebook",
+    "meta_asset_instagram": "Cuenta de Instagram",
+    "meta_select_channels_title": "Activar canales",
+    "meta_select_channels_hint": "Seleccioná los activos que querés activar como canales de comunicación."
   },
   "login": {
     "title": "CRM Ventas",

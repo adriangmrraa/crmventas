@@ -1488,6 +1488,32 @@ class Database:
             EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE 'Parche 40: Error: %', SQLERRM;
             END $$;
+            """,
+
+            # Parche 41: DEV-46 — Email Monitor Config per tenant
+            """
+            DO $$ BEGIN
+                CREATE TABLE IF NOT EXISTS email_monitor_config (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    imap_host TEXT,
+                    imap_user TEXT,
+                    imap_password_encrypted TEXT,
+                    imap_port INTEGER DEFAULT 993,
+                    imap_folder TEXT DEFAULT 'INBOX',
+                    polling_interval INTEGER DEFAULT 300,
+                    active BOOLEAN DEFAULT TRUE,
+                    last_check_at TIMESTAMPTZ,
+                    last_check_result TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW(),
+                    CONSTRAINT email_monitor_config_tenant_unique UNIQUE (tenant_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_email_monitor_config_tenant ON email_monitor_config (tenant_id, active);
+                RAISE NOTICE 'Parche 41: DEV-46 email_monitor_config table created';
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Parche 41: Error: %', SQLERRM;
+            END $$;
             """
         ]
 

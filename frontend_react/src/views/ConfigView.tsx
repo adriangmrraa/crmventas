@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, Plus, Info, Database, AlertTriangle, Clock, Bell, ShieldCheck } from 'lucide-react';
+import { Settings, Globe, Loader2, CheckCircle2, Copy, Trash2, Edit2, Zap, MessageCircle, Key, Plus, Info, Database, AlertTriangle, Clock, Bell, ShieldCheck, Mail, RefreshCw, ToggleLeft, ToggleRight, Wifi } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useTranslation } from '../context/LanguageContext';
@@ -60,7 +60,7 @@ export default function ConfigView() {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
     const initialTab = (searchParams.get('tab') as any) || 'general';
-    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance' | 'notifications' | 'security' | 'calendar'>(initialTab);
+    const [activeTab, setActiveTab] = useState<'general' | 'ycloud' | 'meta' | 'others' | 'maintenance' | 'notifications' | 'security' | 'calendar' | 'email_monitor'>(initialTab);
 
     // General Settings State
     const [settings, setSettings] = useState<ClinicSettings | null>(null);
@@ -84,6 +84,27 @@ export default function ConfigView() {
     const [metaTenantId, setMetaTenantId] = useState<number | null>(null);
     const [baseMetaWebhookUrl, setBaseMetaWebhookUrl] = useState<string | null>(null);
 
+    // Email Monitor State
+    const [emailConfig, setEmailConfig] = useState({
+        imap_host: '',
+        imap_user: '',
+        imap_password: '',
+        imap_port: 993,
+        imap_folder: 'INBOX',
+        polling_interval: 300,
+        active: false,
+    });
+    const [emailStatus, setEmailStatus] = useState<{
+        configured: boolean;
+        polling_active: boolean;
+        last_check_at: string | null;
+        last_check_result: string | null;
+    } | null>(null);
+    const [emailSaving, setEmailSaving] = useState(false);
+    const [emailTesting, setEmailTesting] = useState(false);
+    const [emailChecking, setEmailChecking] = useState(false);
+    const [emailTestResult, setEmailTestResult] = useState<{ status: string; message: string } | null>(null);
+
     // Status State
     const [isLoading, setIsLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -98,6 +119,13 @@ export default function ConfigView() {
             loadDeploymentConfig();
         }
     }, [user, activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 'email_monitor' && user?.role === 'ceo') {
+            loadEmailMonitorConfig();
+            loadEmailMonitorStatus();
+        }
+    }, [activeTab, user]);
 
     // Re-load integration config when tab or tenant changes
     useEffect(() => {
@@ -268,6 +296,72 @@ export default function ConfigView() {
             showSuccess("Credencial eliminada.");
         } catch (e: any) {
             alert('Error: ' + e.message);
+        }
+    };
+
+    const loadEmailMonitorConfig = async () => {
+        try {
+            const { data } = await api.get('/admin/core/email-monitor/config');
+            setEmailConfig({
+                imap_host: data.imap_host || '',
+                imap_user: data.imap_user || '',
+                imap_password: '',
+                imap_port: data.imap_port || 993,
+                imap_folder: data.imap_folder || 'INBOX',
+                polling_interval: data.polling_interval || 300,
+                active: data.active ?? false,
+            });
+        } catch (e) {
+            console.error('Error loading email monitor config:', e);
+        }
+    };
+
+    const loadEmailMonitorStatus = async () => {
+        try {
+            const { data } = await api.get('/admin/core/email-monitor/status');
+            setEmailStatus(data);
+        } catch (e) {
+            console.error('Error loading email monitor status:', e);
+        }
+    };
+
+    const handleSaveEmailConfig = async () => {
+        setEmailSaving(true);
+        setError(null);
+        try {
+            await api.put('/admin/core/email-monitor/config', emailConfig);
+            showSuccess(t('config.email_monitor_saved'));
+            loadEmailMonitorStatus();
+        } catch (err: any) {
+            setError(err.response?.data?.detail || err.message || t('config.save_error'));
+        } finally {
+            setEmailSaving(false);
+        }
+    };
+
+    const handleTestEmailConnection = async () => {
+        setEmailTesting(true);
+        setEmailTestResult(null);
+        try {
+            const { data } = await api.post('/admin/core/email-monitor/test-connection');
+            setEmailTestResult(data);
+        } catch (err: any) {
+            setEmailTestResult({ status: 'error', message: err.response?.data?.detail || err.message });
+        } finally {
+            setEmailTesting(false);
+        }
+    };
+
+    const handleCheckNowEmail = async () => {
+        setEmailChecking(true);
+        try {
+            const { data } = await api.post('/admin/core/email-monitor/check-now');
+            showSuccess(`${data.leads_found} lead(s) ${t('config.email_monitor_check_result')}`);
+            loadEmailMonitorStatus();
+        } catch (err: any) {
+            setError(err.response?.data?.detail || err.message);
+        } finally {
+            setEmailChecking(false);
         }
     };
 
@@ -617,6 +711,210 @@ export default function ConfigView() {
         </div>
     );
 
+    const POLLING_INTERVAL_OPTIONS = [
+        { value: 120, label: t('config.email_monitor_interval_2min') },
+        { value: 300, label: t('config.email_monitor_interval_5min') },
+        { value: 600, label: t('config.email_monitor_interval_10min') },
+        { value: 1800, label: t('config.email_monitor_interval_30min') },
+    ];
+
+    const renderEmailMonitorTab = () => (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Header info */}
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6">
+                <div className="flex items-center gap-2 mb-2 text-blue-400">
+                    <Mail className="w-5 h-5" />
+                    <h3 className="font-semibold">{t('config.email_monitor_title')}</h3>
+                </div>
+                <p className="text-sm text-blue-400">{t('config.email_monitor_hint')}</p>
+            </div>
+
+            {/* Status bar */}
+            {emailStatus && (
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${emailStatus.polling_active ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
+                        <span className="text-sm text-white/60">
+                            {emailStatus.polling_active ? t('config.email_monitor_polling_active') : t('config.email_monitor_polling_inactive')}
+                        </span>
+                    </div>
+                    {emailStatus.last_check_at && (
+                        <div className="flex items-center gap-2 text-sm text-white/40">
+                            <Clock size={14} />
+                            <span>{t('config.email_monitor_last_check')}: {new Date(emailStatus.last_check_at).toLocaleString()}</span>
+                        </div>
+                    )}
+                    {emailStatus.last_check_result && (
+                        <span className="text-xs text-white/30 bg-white/[0.03] px-2 py-1 rounded-lg">
+                            {emailStatus.last_check_result}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* IMAP Config Form */}
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Mail size={18} className="text-blue-400" />
+                        {t('config.email_monitor_imap_settings')}
+                    </h2>
+
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-2">
+                            <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_host')}</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                placeholder="imap.gmail.com"
+                                value={emailConfig.imap_host}
+                                onChange={e => setEmailConfig({ ...emailConfig, imap_host: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_port')}</label>
+                            <input
+                                type="number"
+                                className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                placeholder="993"
+                                value={emailConfig.imap_port}
+                                onChange={e => setEmailConfig({ ...emailConfig, imap_port: parseInt(e.target.value) || 993 })}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_user')}</label>
+                        <input
+                            type="email"
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="leads@empresa.com"
+                            value={emailConfig.imap_user}
+                            onChange={e => setEmailConfig({ ...emailConfig, imap_user: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_password')}</label>
+                        <input
+                            type="password"
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder={t('config.email_monitor_password_placeholder')}
+                            value={emailConfig.imap_password}
+                            onChange={e => setEmailConfig({ ...emailConfig, imap_password: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_folder')}</label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="INBOX"
+                            value={emailConfig.imap_folder}
+                            onChange={e => setEmailConfig({ ...emailConfig, imap_folder: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-white/70 mb-1 block">{t('config.email_monitor_interval')}</label>
+                        <select
+                            className="w-full px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            value={emailConfig.polling_interval}
+                            onChange={e => setEmailConfig({ ...emailConfig, polling_interval: parseInt(e.target.value) })}
+                        >
+                            {POLLING_INTERVAL_OPTIONS.map(o => (
+                                <option key={o.value} value={o.value} className="bg-[#0d1117] text-white">{o.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Active toggle */}
+                    <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+                        <div>
+                            <p className="text-sm font-medium text-white">{t('config.email_monitor_active')}</p>
+                            <p className="text-xs text-white/40">{t('config.email_monitor_active_hint')}</p>
+                        </div>
+                        <button
+                            onClick={() => setEmailConfig(prev => ({ ...prev, active: !prev.active }))}
+                            className={`transition-colors ${emailConfig.active ? 'text-blue-400' : 'text-white/30'}`}
+                        >
+                            {emailConfig.active ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={handleSaveEmailConfig}
+                        disabled={emailSaving}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all flex justify-center items-center gap-2"
+                    >
+                        {emailSaving ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> {t('config.save_config')}</>}
+                    </button>
+                </div>
+
+                {/* Actions panel */}
+                <div className="space-y-4">
+                    {/* Connection test */}
+                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
+                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                            <Wifi size={16} className="text-blue-400" />
+                            {t('config.email_monitor_test_title')}
+                        </h3>
+                        <p className="text-xs text-white/40 mb-4">{t('config.email_monitor_test_hint')}</p>
+
+                        {emailTestResult && (
+                            <div className={`mb-3 p-3 rounded-xl text-sm flex items-start gap-2 ${
+                                emailTestResult.status === 'ok'
+                                    ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                            }`}>
+                                {emailTestResult.status === 'ok' ? <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="shrink-0 mt-0.5" />}
+                                {emailTestResult.message}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleTestEmailConnection}
+                            disabled={emailTesting}
+                            className="w-full py-2.5 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-white rounded-xl font-medium transition-all flex justify-center items-center gap-2"
+                        >
+                            {emailTesting ? <Loader2 className="animate-spin" size={16} /> : <><Wifi size={16} /> {t('config.email_monitor_test_btn')}</>}
+                        </button>
+                    </div>
+
+                    {/* Manual check */}
+                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
+                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                            <RefreshCw size={16} className="text-blue-400" />
+                            {t('config.email_monitor_check_now_title')}
+                        </h3>
+                        <p className="text-xs text-white/40 mb-4">{t('config.email_monitor_check_now_hint')}</p>
+                        <button
+                            onClick={handleCheckNowEmail}
+                            disabled={emailChecking}
+                            className="w-full py-2.5 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 rounded-xl font-medium transition-all flex justify-center items-center gap-2"
+                        >
+                            {emailChecking ? <Loader2 className="animate-spin" size={16} /> : <><RefreshCw size={16} /> {t('config.email_monitor_check_now_btn')}</>}
+                        </button>
+                    </div>
+
+                    {/* Info box */}
+                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 border-dashed">
+                        <div className="flex gap-3">
+                            <Info size={18} className="text-blue-400 shrink-0" />
+                            <div>
+                                <h4 className="text-sm font-semibold text-blue-400">{t('config.email_monitor_info_title')}</h4>
+                                <p className="text-xs text-blue-400 leading-relaxed mt-1">
+                                    {t('config.email_monitor_info_body')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     if (isLoading && !settings) {
         return (
             <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -694,6 +992,12 @@ export default function ConfigView() {
                                 <ShieldCheck size={18} /> Seguridad
                             </button>
                             <button
+                                onClick={() => setActiveTab('email_monitor')}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'email_monitor' ? 'border-blue-500 text-blue-400 font-semibold' : 'border-transparent text-white/40 hover:text-blue-400 hover:border-blue-500/20'}`}
+                            >
+                                <Mail size={18} /> {t('config.email_monitor_tab')}
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('maintenance')}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === 'maintenance' ? 'border-amber-600 text-amber-600 font-semibold' : 'border-transparent text-white/40 hover:text-amber-600 hover:border-amber-500/20'}`}
                             >
@@ -714,6 +1018,7 @@ export default function ConfigView() {
                     {activeTab === 'notifications' && user?.role === 'ceo' && renderNotificationsTab()}
                     {activeTab === 'calendar' && user?.role === 'ceo' && <CalComSettings />}
                     {activeTab === 'security' && user?.role === 'ceo' && <BlacklistManager />}
+                    {activeTab === 'email_monitor' && user?.role === 'ceo' && renderEmailMonitorTab()}
                     {activeTab === 'maintenance' && user?.role === 'ceo' && renderMaintenanceTab()}
                 </div>
             </div>

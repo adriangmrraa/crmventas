@@ -2,6 +2,11 @@
 DEV-34 Part 2: Email Lead Monitor — Meta Ads → Email → CRM
 Monitors an IMAP inbox for Meta Ads lead notification emails and auto-creates leads.
 Backup channel when the Meta webhook fails.
+
+DEV-46 additions:
+- _load_config_from_db: reads per-tenant IMAP config from email_monitor_config table
+- check_new_emails: reloads DB config before each check; updates last_check_at
+- _create_lead: blacklist check before CRM insert (G4)
 """
 
 import os
@@ -193,6 +198,31 @@ class EmailLeadMonitor:
         self._polling_task: Optional[asyncio.Task] = None
 
     # ------------------------------------------------------------------
+    # Config: load from DB (DEV-46 G2)
+    # ------------------------------------------------------------------
+
+    async def _load_config_from_db(self) -> None:
+        """
+        Load IMAP config from email_monitor_config table for self.tenant_id.
+        Falls back to env vars if no DB config exists or DB is unavailable.
+        """
+        try:
+            row = await db.fetchrow(
+                "SELECT imap_host, imap_user, imap_password_encrypted, imap_port, imap_folder, "
+                "polling_interval, active FROM email_monitor_config WHERE tenant_id = $1",
+                self.tenant_id,
+            )
+            if row and row["imap_host"]:
+                self.imap_host = row["imap_host"] or self.imap_host
+                self.imap_user = row["imap_user"] or self.imap_user
+                self.imap_password = row["imap_password_encrypted"] or self.imap_password
+                self.imap_port = row["imap_port"] or self.imap_port
+                self.imap_folder = row["imap_folder"] or self.imap_folder
+                logger.info(f"Email monitor: config loaded from DB for tenant {self.tenant_id}")
+        except Exception as e:
+            logger.warning(f"Email monitor: could not load config from DB (using env vars): {e}")
+
+    # ------------------------------------------------------------------
     # Core: check inbox
     # ------------------------------------------------------------------
 
@@ -201,13 +231,16 @@ class EmailLeadMonitor:
         Connect to IMAP, search for UNSEEN Meta lead emails,
         parse and ingest leads, mark as SEEN.
         Returns the number of leads created/updated.
+
+        DEV-46: Reloads DB config before each check; updates last_check_at after.
         """
+        await self._load_config_from_db()
+
         if not self.imap_host or not self.imap_user:
             logger.warning("Email monitor: IMAP not configured (IMAP_HOST / IMAP_USER missing)")
             return 0
 
         leads_found = 0
-
         try:
             # imaplib is synchronous — run in executor to avoid blocking the event loop
             leads_found = await asyncio.get_event_loop().run_in_executor(
@@ -215,6 +248,17 @@ class EmailLeadMonitor:
             )
         except Exception as exc:
             logger.error(f"Email monitor error: {exc}", exc_info=True)
+
+        # Update last_check_at in DB (best-effort)
+        try:
+            await db.execute(
+                "UPDATE email_monitor_config SET last_check_at = NOW(), last_check_result = $1, "
+                "updated_at = NOW() WHERE tenant_id = $2",
+                f"{leads_found} lead(s) processed",
+                self.tenant_id,
+            )
+        except Exception:
+            pass  # Non-critical; table may not exist yet on first run
 
         return leads_found
 
@@ -331,6 +375,31 @@ class EmailLeadMonitor:
             if not identifier:
                 logger.warning(f"Email monitor: lead '{name}' has no phone or email, skipping CRM insert")
                 return
+
+            # DEV-46 G4: Blacklist check before lead creation
+            try:
+                from services.blacklist_service import BlacklistService
+                _bl = BlacklistService()
+                is_blocked, bl_reason = await _bl.is_blacklisted_normalized(
+                    tenant_id=self.tenant_id,
+                    phone=phone_clean or None,
+                    email=lead_email or None,
+                )
+                if is_blocked:
+                    logger.info(
+                        f"Email monitor: skipping blacklisted lead '{name}' "
+                        f"(phone={phone_clean}, email={lead_email}, reason={bl_reason})"
+                    )
+                    await _bl.log_attempt(
+                        tenant_id=self.tenant_id,
+                        value=phone_clean or lead_email,
+                        type="phone" if phone_clean else "email",
+                        source="email_monitor",
+                        payload=lead_data,
+                    )
+                    return
+            except Exception as bl_err:
+                logger.warning(f"Email monitor: blacklist check failed (proceeding): {bl_err}")
 
             # Build referral-like attribution for ensure_lead_exists
             referral = None

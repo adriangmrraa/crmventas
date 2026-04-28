@@ -84,6 +84,21 @@ async def record_event(
     except Exception as e:
         logger.warning(f"Could not emit team_activity event: {e}")
 
+    # G2: Emit seller_status_changed so TeamActivityView seller cards refresh in real time.
+    # We emit "active" immediately since the actor just produced an event right now.
+    try:
+        from core.socket_manager import sio as _sio
+        now_ts = datetime.now(timezone.utc)
+        seller_status_payload = {
+            "seller_id": str(actor_id),
+            "status": "active",
+            "last_activity_at": now_ts.isoformat(),
+            "last_activity_type": event_type,
+        }
+        await _sio.emit("team_activity:seller_status_changed", seller_status_payload, room=f"team_activity:{tenant_id}")
+    except Exception as e:
+        logger.warning(f"Could not emit team_activity:seller_status_changed: {e}")
+
     # DEV-45: Also emit lead_timeline:new_event when entity_type is 'lead'
     if entity_type == "lead":
         try:

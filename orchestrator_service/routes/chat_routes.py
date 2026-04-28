@@ -149,6 +149,29 @@ async def send_free_text_message(
     except Exception as e:
         logger.warning(f"Socket.IO emit failed (non-critical): {e}")
 
+    # DEV-39: Registrar evento de actividad (chat_message_sent por humano)
+    try:
+        from services.activity_service import record_event
+        from uuid import UUID as _UUID
+        sender_id = user_data.get("user_id") or user_data.get("id") if isinstance(user_data, dict) else getattr(user_data, "user_id", None)
+        if sender_id:
+            lead_row = await db.fetchrow(
+                "SELECT id, first_name, last_name, phone_number FROM leads WHERE tenant_id = $1 AND phone_number = $2 LIMIT 1",
+                tenant_id, phone
+            )
+            if lead_row:
+                lead_name = f"{lead_row['first_name'] or ''} {lead_row['last_name'] or ''}".strip() or lead_row["phone_number"]
+                await record_event(
+                    tenant_id=tenant_id,
+                    actor_id=_UUID(str(sender_id)),
+                    event_type="chat_message_sent",
+                    entity_type="lead",
+                    entity_id=str(lead_row["id"]),
+                    metadata={"lead_name": lead_name, "channel": payload.channel},
+                )
+    except Exception:
+        pass  # Non-critical
+
     # 7. Return success
     return {
         "success": True,

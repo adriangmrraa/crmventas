@@ -228,6 +228,24 @@ async def create_lead(
         last_name=lead.last_name or "",
     ))
 
+    # DEV-39: Registrar evento de actividad
+    try:
+        from services.activity_service import record_event
+        from uuid import UUID as _UUID
+        user_id = context.get("user_id") or context.get("id")
+        if user_id:
+            lead_name = f"{lead.first_name or ''} {lead.last_name or ''}".strip() or lead.phone_number
+            await record_event(
+                tenant_id=tenant_id,
+                actor_id=_UUID(str(user_id)),
+                event_type="lead_created",
+                entity_type="lead",
+                entity_id=str(row["id"]),
+                metadata={"lead_name": lead_name, "source": lead.source or "manual"},
+            )
+    except Exception:
+        pass  # Non-critical
+
     return dict(row)
 
 
@@ -411,7 +429,30 @@ async def assign_lead(
     
     if not row:
         raise HTTPException(status_code=404, detail="Lead not found")
-    
+
+    # DEV-39: Registrar evento de actividad
+    try:
+        from services.activity_service import record_event
+        from uuid import UUID as _UUID
+        user_id = context.get("user_id") or context.get("id")
+        if user_id:
+            lead_info = await db.pool.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id)
+            lead_name = f"{lead_info['first_name'] or ''} {lead_info['last_name'] or ''}".strip() if lead_info else str(lead_id)
+            if not lead_name and lead_info:
+                lead_name = lead_info["phone_number"] or str(lead_id)
+            seller_info = await db.pool.fetchrow("SELECT first_name, last_name FROM users WHERE id = $1", request.seller_id)
+            seller_name = f"{seller_info['first_name'] or ''} {seller_info['last_name'] or ''}".strip() if seller_info else str(request.seller_id)
+            await record_event(
+                tenant_id=tenant_id,
+                actor_id=_UUID(str(user_id)),
+                event_type="lead_assigned",
+                entity_type="lead",
+                entity_id=str(lead_id),
+                metadata={"lead_name": lead_name, "to_seller": seller_name},
+            )
+    except Exception:
+        pass  # Non-critical
+
     return dict(row)
 
 
@@ -2322,6 +2363,31 @@ async def complete_task(task_id: int, body: dict, user=Depends(verify_admin_toke
             })
         except Exception as e:
             logger.warning(f"DEV-44: Could not emit TASK_COMPLETED: {e}")
+
+    # DEV-39: Registrar evento de actividad
+    try:
+        from services.activity_service import record_event
+        from uuid import UUID as _UUID
+        if user_id:
+            lead_id_for_task = task.get("lead_id")
+            entity_type = "lead" if lead_id_for_task else "task"
+            entity_id = str(lead_id_for_task) if lead_id_for_task else str(task_id)
+            lead_name = ""
+            if lead_id_for_task:
+                lead_info = await db.pool.fetchrow("SELECT first_name, last_name, phone_number FROM leads WHERE id = $1", lead_id_for_task)
+                lead_name = f"{lead_info['first_name'] or ''} {lead_info['last_name'] or ''}".strip() if lead_info else ""
+                if not lead_name and lead_info:
+                    lead_name = lead_info["phone_number"] or ""
+            await record_event(
+                tenant_id=tenant_id,
+                actor_id=_UUID(str(user_id)),
+                event_type="task_completed",
+                entity_type=entity_type,
+                entity_id=entity_id,
+                metadata={"lead_name": lead_name, "task_title": task.get("title", ""), "task_id": task_id},
+            )
+    except Exception:
+        pass  # Non-critical
 
     return task
 

@@ -1,10 +1,10 @@
 /**
  * SellerPerformanceView — DEV-41: Reportes de performance individual por vendedor.
- * KPIs, gráfica diaria, breakdown por tipo, comparativa vs equipo.
+ * KPIs, gráfica diaria, breakdown por tipo, comparativa vs equipo, ranking, export CSV.
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Users, Clock, Target, BarChart3, Activity } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Clock, Target, BarChart3, Activity, Download, Medal, ChevronUp, ChevronDown, Minus } from 'lucide-react';
 import api from '../../../api/axios';
 
 interface KPIs {
@@ -19,15 +19,29 @@ interface KPIs {
   active_leads_now: number;
 }
 
+type PeriodPreset = 'week' | 'month' | '3months' | 'custom';
+
 const SellerPerformanceView: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
-  const [period, setPeriod] = useState<'week' | 'month' | '3months'>('month');
+  const [period, setPeriod] = useState<PeriodPreset>('month');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+
+  // Initialise custom dates to current month on first render
+  useEffect(() => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    setCustomFrom(firstDay.toISOString().slice(0, 10));
+    setCustomTo(now.toISOString().slice(0, 10));
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
+    // For custom, wait until both dates are filled
+    if (period === 'custom' && (!customFrom || !customTo)) return;
     const load = async () => {
       setLoading(true);
       try {
@@ -35,17 +49,58 @@ const SellerPerformanceView: React.FC = () => {
         let dateFrom = new Date();
         if (period === 'week') dateFrom.setDate(now.getDate() - 7);
         else if (period === 'month') dateFrom.setDate(now.getDate() - 30);
-        else dateFrom.setDate(now.getDate() - 90);
+        else if (period === '3months') dateFrom.setDate(now.getDate() - 90);
+
+        const fromParam = period === 'custom' ? new Date(customFrom).toISOString() : dateFrom.toISOString();
+        const toParam = period === 'custom' ? new Date(customTo + 'T23:59:59').toISOString() : now.toISOString();
 
         const res = await api.get(`/admin/core/team-activity/seller/${userId}/performance`, {
-          params: { date_from: dateFrom.toISOString(), date_to: now.toISOString() },
+          params: { date_from: fromParam, date_to: toParam },
         });
         setData(res.data);
       } catch { /* */ }
       setLoading(false);
     };
     load();
-  }, [userId, period]);
+  }, [userId, period, customFrom, customTo]);
+
+  const handleExportCSV = () => {
+    if (!data) return;
+    const kpis: KPIs = data.kpis;
+    const teamAvg = data.team_avg || {};
+    const breakdown = data.event_type_breakdown || {};
+    const daily = data.daily_breakdown || [];
+    const sellerName = data.seller?.name || userId;
+
+    const rows: string[][] = [];
+    rows.push(['Reporte de Performance', sellerName]);
+    rows.push(['Período', period === 'custom' ? `${customFrom} — ${customTo}` : period]);
+    rows.push([]);
+    rows.push(['KPIs Clave', 'Vendedor', 'Equipo (promedio)']);
+    rows.push(['Leads Asignados', String(kpis.leads_assigned), '']);
+    rows.push(['Leads Convertidos', String(kpis.leads_converted), '']);
+    rows.push(['Tasa de Conversión', `${kpis.conversion_rate}%`, teamAvg.conversion_rate ? `${teamAvg.conversion_rate}%` : '-']);
+    rows.push(['Respuesta Promedio (s)', kpis.avg_first_response_seconds != null ? String(kpis.avg_first_response_seconds) : '-', teamAvg.avg_first_response_seconds ? String(teamAvg.avg_first_response_seconds) : '-']);
+    rows.push(['Acciones Totales', String(kpis.total_actions), '']);
+    rows.push(['Leads Activos', String(kpis.active_leads_now), '']);
+    rows.push([]);
+    rows.push(['Desglose por Tipo', 'Cantidad']);
+    Object.entries(breakdown).sort(([, a]: any, [, b]: any) => b - a).forEach(([type, count]: any) => {
+      rows.push([LABELS[type] || type, String(count)]);
+    });
+    rows.push([]);
+    rows.push(['Actividad Diaria', 'Fecha', 'Acciones']);
+    daily.forEach((d: any) => rows.push(['', d.date, String(d.actions)]));
+
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance_${sellerName.replace(/\s+/g, '_')}_${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -65,6 +120,7 @@ const SellerPerformanceView: React.FC = () => {
 
   const kpis: KPIs = data.kpis;
   const teamAvg = data.team_avg || {};
+  const teamComparison = data.team_comparison || {};
   const breakdown = data.event_type_breakdown || {};
   const daily = data.daily_breakdown || [];
 
@@ -76,11 +132,17 @@ const SellerPerformanceView: React.FC = () => {
 
   const maxDailyActions = Math.max(...daily.map((d: any) => d.actions), 1);
 
+  // Derive ranking info from team_comparison if available
+  const rankConversion = teamComparison.rank_conversion_rate;
+  const rankResponse = teamComparison.rank_response_time;
+  const rankActions = teamComparison.rank_actions;
+  const totalSellers = teamComparison.total_sellers;
+
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
       <div className="shrink-0 px-4 sm:px-6 py-4 border-b border-white/[0.06]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-white/[0.06] text-white/60 hover:text-white">
             <ArrowLeft size={16} />
           </button>
@@ -88,20 +150,51 @@ const SellerPerformanceView: React.FC = () => {
             <h1 className="text-lg font-semibold text-white">{data.seller?.name}</h1>
             <p className="text-xs text-white/40">{data.seller?.role} — Performance</p>
           </div>
-          <div className="ml-auto flex gap-1">
-            {(['week', 'month', '3months'] as const).map(p => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                  period === p ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                {p === 'week' ? '7d' : p === 'month' ? '30d' : '90d'}
-              </button>
-            ))}
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
+            {/* Period preset buttons */}
+            <div className="flex gap-1">
+              {(['week', 'month', '3months', 'custom'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                    period === p ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
+                  }`}
+                >
+                  {p === 'week' ? '7d' : p === 'month' ? '30d' : p === '3months' ? '90d' : 'Custom'}
+                </button>
+              ))}
+            </div>
+            {/* Export button */}
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+            >
+              <Download size={12} />
+              Exportar CSV
+            </button>
           </div>
         </div>
+
+        {/* Custom date range inputs */}
+        {period === 'custom' && (
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <span className="text-xs text-white/40">Desde</span>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={e => setCustomFrom(e.target.value)}
+              className="bg-white/[0.05] border border-white/[0.10] rounded-lg px-3 py-1.5 text-xs text-white/80 focus:outline-none focus:border-violet-500/50"
+            />
+            <span className="text-xs text-white/40">Hasta</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={e => setCustomTo(e.target.value)}
+              className="bg-white/[0.05] border border-white/[0.10] rounded-lg px-3 py-1.5 text-xs text-white/80 focus:outline-none focus:border-violet-500/50"
+            />
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -113,7 +206,7 @@ const SellerPerformanceView: React.FC = () => {
           <KpiCard
             icon={<BarChart3 size={16} />} label="Conversión"
             value={`${kpis.conversion_rate}%`}
-            comparison={teamAvg.conversion_rate ? `Equipo: ${teamAvg.conversion_rate}%` : undefined}
+            comparison={teamAvg.conversion_rate != null ? `Equipo: ${teamAvg.conversion_rate}%` : undefined}
             isGood={kpis.conversion_rate >= (teamAvg.conversion_rate || 0)}
           />
           <KpiCard
@@ -123,6 +216,46 @@ const SellerPerformanceView: React.FC = () => {
             isGood={(kpis.avg_first_response_seconds || 999) <= (teamAvg.avg_first_response_seconds || 999)}
           />
           <KpiCard icon={<Activity size={16} />} label="Acciones totales" value={kpis.total_actions} />
+        </div>
+
+        {/* G1: Ranking / Team Comparison Card */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
+          <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Medal size={14} />
+            Ranking vs Equipo
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <CompareRow
+              label="Conversión"
+              sellerVal={`${kpis.conversion_rate}%`}
+              teamVal={teamAvg.conversion_rate != null ? `${teamAvg.conversion_rate}%` : null}
+              rank={rankConversion}
+              total={totalSellers}
+              higherIsBetter
+              sellerRaw={kpis.conversion_rate}
+              teamRaw={teamAvg.conversion_rate}
+            />
+            <CompareRow
+              label="Resp. promedio"
+              sellerVal={formatTime(kpis.avg_first_response_seconds)}
+              teamVal={teamAvg.avg_first_response_seconds ? formatTime(teamAvg.avg_first_response_seconds) : null}
+              rank={rankResponse}
+              total={totalSellers}
+              higherIsBetter={false}
+              sellerRaw={kpis.avg_first_response_seconds || 0}
+              teamRaw={teamAvg.avg_first_response_seconds || 0}
+            />
+            <CompareRow
+              label="Acciones"
+              sellerVal={String(kpis.total_actions)}
+              teamVal={teamAvg.total_actions != null ? String(teamAvg.total_actions) : null}
+              rank={rankActions}
+              total={totalSellers}
+              higherIsBetter
+              sellerRaw={kpis.total_actions}
+              teamRaw={teamAvg.total_actions}
+            />
+          </div>
         </div>
 
         {/* Daily Activity Chart (simple bars) */}
@@ -168,6 +301,53 @@ const SellerPerformanceView: React.FC = () => {
         <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
           <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Leads Activos Ahora</h3>
           <p className="text-2xl font-bold text-white">{kpis.active_leads_now}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// G1: Team comparison row component
+const CompareRow: React.FC<{
+  label: string;
+  sellerVal: string;
+  teamVal: string | null;
+  rank?: number;
+  total?: number;
+  higherIsBetter: boolean;
+  sellerRaw: number;
+  teamRaw?: number;
+}> = ({ label, sellerVal, teamVal, rank, total, higherIsBetter, sellerRaw, teamRaw }) => {
+  const hasComparison = teamVal != null && teamRaw != null;
+  const isGood = hasComparison
+    ? higherIsBetter ? sellerRaw >= teamRaw! : sellerRaw <= teamRaw!
+    : null;
+
+  const DeltaIcon = isGood === null ? null : isGood ? ChevronUp : ChevronDown;
+
+  return (
+    <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 space-y-2">
+      <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">{label}</p>
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-xl font-bold text-white leading-none">{sellerVal}</p>
+          {hasComparison && (
+            <p className="text-[10px] text-white/40 mt-1">Equipo: {teamVal}</p>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          {rank != null && total != null && (
+            <span className="text-[10px] font-bold text-white/60 bg-white/[0.06] px-2 py-0.5 rounded-full">
+              #{rank} de {total}
+            </span>
+          )}
+          {DeltaIcon && (
+            <DeltaIcon
+              size={16}
+              className={isGood ? 'text-emerald-400' : 'text-red-400'}
+            />
+          )}
+          {isGood === null && <Minus size={14} className="text-white/30" />}
         </div>
       </div>
     </div>

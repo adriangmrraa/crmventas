@@ -4,7 +4,7 @@ import api from '../../../api/axios';
 import { useTranslation } from '../../../context/LanguageContext';
 import {
     UserCheck, UserX, Clock, ShieldCheck, Mail, AlertTriangle, User, Users,
-    Lock, Unlock, X, Building2, BarChart3, Plus, Phone, Save, Settings, Edit, TrendingUp
+    Lock, Unlock, X, Building2, BarChart3, Plus, Phone, Save, Settings, Edit, TrendingUp, Medal, ChevronUp
 } from 'lucide-react';
 
 const CRM_PREFIX = '/admin/core/crm';
@@ -47,7 +47,7 @@ const SellersView: React.FC = () => {
     const [sellers, setSellers] = useState<SellerRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'requests' | 'sellers'>('requests');
+    const [activeTab, setActiveTab] = useState<'requests' | 'sellers' | 'ranking'>('requests');
     const [selectedSeller, setSelectedSeller] = useState<SellerRow | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [sellerRows, setSellerRows] = useState<SellerRow[]>([]);
@@ -61,6 +61,9 @@ const SellersView: React.FC = () => {
     });
     const [editFormSubmitting, setEditFormSubmitting] = useState(false);
     const [kpisByRow, setKpisByRow] = useState<KpisByRowRecord>({});
+    const [rankingData, setRankingData] = useState<any[]>([]);
+    const [rankingLoading, setRankingLoading] = useState(false);
+    const [rankingMetric, setRankingMetric] = useState<'conversion_rate' | 'total_actions' | 'avg_first_response_seconds'>('conversion_rate');
 
     useEffect(() => {
         fetchUsers();
@@ -72,6 +75,48 @@ const SellersView: React.FC = () => {
             setEntities(res.data || []);
         }).catch(() => setEntities([]));
     }, []);
+
+    // Load ranking when ranking tab is activated
+    useEffect(() => {
+        if (activeTab !== 'ranking') return;
+        if (rankingData.length > 0) return; // already loaded
+        setRankingLoading(true);
+        const now = new Date();
+        const dateFrom = new Date();
+        dateFrom.setDate(now.getDate() - 30);
+        Promise.all(
+            sellers.map(async (seller) => {
+                try {
+                    const res = await api.get(`/admin/core/team-activity/seller/${seller.user_id}/performance`, {
+                        params: { date_from: dateFrom.toISOString(), date_to: now.toISOString() },
+                    });
+                    return {
+                        user_id: seller.user_id,
+                        name: `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || seller.email || seller.user_id,
+                        role: seller.role,
+                        conversion_rate: res.data?.kpis?.conversion_rate ?? 0,
+                        total_actions: res.data?.kpis?.total_actions ?? 0,
+                        avg_first_response_seconds: res.data?.kpis?.avg_first_response_seconds ?? null,
+                        leads_assigned: res.data?.kpis?.leads_assigned ?? 0,
+                        leads_converted: res.data?.kpis?.leads_converted ?? 0,
+                    };
+                } catch {
+                    return {
+                        user_id: seller.user_id,
+                        name: `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || seller.user_id,
+                        role: seller.role,
+                        conversion_rate: 0,
+                        total_actions: 0,
+                        avg_first_response_seconds: null,
+                        leads_assigned: 0,
+                        leads_converted: 0,
+                    };
+                }
+            })
+        ).then((results) => {
+            setRankingData(results);
+        }).finally(() => setRankingLoading(false));
+    }, [activeTab, sellers]);
 
     useEffect(() => {
         if (!selectedSeller) {
@@ -284,6 +329,19 @@ const SellersView: React.FC = () => {
                         </>
                     )}
                 </button>
+                <button
+                    onClick={() => setActiveTab('ranking')}
+                    className={`pb-3 px-6 font-semibold transition-all relative rounded-t-xl flex items-center gap-2 ${activeTab === 'ranking' ? 'text-violet-400' : 'text-white/40 hover:text-violet-400'}`}
+                >
+                    <Medal size={14} />
+                    Ranking
+                    {activeTab === 'ranking' && (
+                        <>
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-medical-600" />
+                            <div className="absolute inset-0 bg-medical-400/10 blur-xl rounded-full -z-10 shadow-[0_0_20px_rgba(0,102,204,0.15)]" />
+                        </>
+                    )}
+                </button>
             </div>
 
             {error ? (
@@ -306,6 +364,14 @@ const SellersView: React.FC = () => {
                                     <SellerUserCard key={user.id} user={user} onAction={handleAction} isRequest />
                                 ))
                             )
+                        ) : activeTab === 'ranking' ? (
+                            <RankingPanel
+                                data={rankingData}
+                                loading={rankingLoading}
+                                metric={rankingMetric}
+                                onMetricChange={setRankingMetric}
+                                onViewPerformance={(userId) => navigate(`/crm/vendedores/${userId}/performance`)}
+                            />
                         ) : sellers.length === 0 ? (
                             <div className="glass p-12 text-center">
                                 <Users size={48} className="mx-auto mb-4 opacity-50" />
@@ -676,6 +742,116 @@ const SellerCard: React.FC<SellerCardProps> = ({ seller, onCardClick, onConfigCl
                     <Settings size={20} />
                 </button>
             </div>
+        </div>
+    );
+};
+
+// G4: Comparative ranking panel
+interface RankingPanelProps {
+    data: any[];
+    loading: boolean;
+    metric: 'conversion_rate' | 'total_actions' | 'avg_first_response_seconds';
+    onMetricChange: (m: 'conversion_rate' | 'total_actions' | 'avg_first_response_seconds') => void;
+    onViewPerformance: (userId: string) => void;
+}
+
+const RANKING_METRICS: { key: 'conversion_rate' | 'total_actions' | 'avg_first_response_seconds'; label: string; higherIsBetter: boolean }[] = [
+    { key: 'conversion_rate', label: 'Conversión', higherIsBetter: true },
+    { key: 'total_actions', label: 'Acciones', higherIsBetter: true },
+    { key: 'avg_first_response_seconds', label: 'Resp. promedio', higherIsBetter: false },
+];
+
+const formatResponseTime = (s: number | null) => {
+    if (!s) return '-';
+    if (s < 60) return `${Math.round(s)}s`;
+    return `${Math.round(s / 60)}min`;
+};
+
+const RankingPanel: React.FC<RankingPanelProps> = ({ data, loading, metric, onMetricChange, onViewPerformance }) => {
+    const metaDef = RANKING_METRICS.find(m => m.key === metric)!;
+    const sorted = [...data].sort((a, b) => {
+        const av = a[metric] ?? (metaDef.higherIsBetter ? -Infinity : Infinity);
+        const bv = b[metric] ?? (metaDef.higherIsBetter ? -Infinity : Infinity);
+        return metaDef.higherIsBetter ? bv - av : av - bv;
+    });
+    const maxVal = sorted.length > 0 ? (sorted[0][metric] ?? 1) || 1 : 1;
+
+    const formatVal = (row: any) => {
+        const v = row[metric];
+        if (v == null) return '-';
+        if (metric === 'conversion_rate') return `${v}%`;
+        if (metric === 'avg_first_response_seconds') return formatResponseTime(v);
+        return String(v);
+    };
+
+    const medalColors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+
+    return (
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 space-y-4">
+            {/* Metric selector */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-white/40 font-medium">Ordenar por:</span>
+                {RANKING_METRICS.map(m => (
+                    <button
+                        key={m.key}
+                        onClick={() => onMetricChange(m.key)}
+                        className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                            metric === m.key ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30' : 'bg-white/[0.04] text-white/50 hover:text-white/80'
+                        }`}
+                    >
+                        {m.label}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/40" />
+                </div>
+            ) : sorted.length === 0 ? (
+                <p className="text-white/40 text-sm text-center py-8">Sin datos de vendedores</p>
+            ) : (
+                <div className="space-y-2">
+                    {sorted.map((row, idx) => {
+                        const val = row[metric] ?? 0;
+                        const barPct = maxVal > 0 ? Math.max((val / maxVal) * 100, 2) : 2;
+                        return (
+                            <div key={row.user_id} className="flex items-center gap-3 group">
+                                {/* Rank badge */}
+                                <span className={`text-sm font-bold w-7 text-center shrink-0 ${medalColors[idx] || 'text-white/30'}`}>
+                                    {idx < 3 ? <Medal size={16} className="mx-auto" /> : <span className="text-xs">{idx + 1}</span>}
+                                </span>
+                                {/* Name + bar */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm text-white/80 truncate">{row.name}</span>
+                                        <span className="text-sm font-bold text-white ml-2 shrink-0">{formatVal(row)}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all ${idx === 0 ? 'bg-violet-500' : 'bg-violet-500/40'}`}
+                                            style={{ width: `${barPct}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Secondary metrics */}
+                                <div className="hidden sm:flex items-center gap-3 text-[10px] text-white/30 shrink-0 w-48">
+                                    <span>{row.leads_assigned} leads</span>
+                                    <span>{row.leads_converted} conv.</span>
+                                </div>
+                                {/* View button */}
+                                <button
+                                    onClick={() => onViewPerformance(row.user_id)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 shrink-0"
+                                    title="Ver performance"
+                                >
+                                    <ChevronUp size={14} className="rotate-90" />
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };

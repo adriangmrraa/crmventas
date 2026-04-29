@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios';
 
-type Tab = 'general' | 'by_lead' | 'by_seller';
+type Tab = 'general' | 'by_lead' | 'by_seller' | 'sistema';
 
 const EVENT_LABELS: Record<string, string> = {
   lead_created: 'Creó lead',
@@ -43,6 +43,12 @@ const AuditLogView: React.FC = () => {
   const [leadResults, setLeadResults] = useState<any[]>([]);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [leadTimeline, setLeadTimeline] = useState<any[]>([]);
+
+  // Sistema tab
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [systemTotal, setSystemTotal] = useState(0);
+  const [systemFilterType, setSystemFilterType] = useState('');
+  const [systemFilterSeverity, setSystemFilterSeverity] = useState('');
 
   // By Seller tab
   const [selectedSeller, setSelectedSeller] = useState('');
@@ -103,6 +109,24 @@ const AuditLogView: React.FC = () => {
     setLoading(false);
   };
 
+  // System logs
+  const loadSystemLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: any = { limit: 100 };
+      if (systemFilterType) params.event_type = systemFilterType;
+      if (systemFilterSeverity) params.severity = systemFilterSeverity;
+      const res = await api.get('/admin/core/audit/logs', { params });
+      setSystemLogs(res.data.items || res.data.logs || []);
+      setSystemTotal(res.data.total || 0);
+    } catch { /* */ }
+    setLoading(false);
+  }, [systemFilterType, systemFilterSeverity]);
+
+  useEffect(() => {
+    if (tab === 'sistema') loadSystemLogs();
+  }, [tab, loadSystemLogs]);
+
   // Export CSV
   const handleExport = async () => {
     try {
@@ -123,7 +147,15 @@ const AuditLogView: React.FC = () => {
     { key: 'general', label: 'General' },
     { key: 'by_lead', label: 'Por Lead' },
     { key: 'by_seller', label: 'Por Vendedor' },
+    { key: 'sistema', label: 'Sistema' },
   ];
+
+  const SEVERITY_BADGE: Record<string, string> = {
+    info: 'bg-blue-500/20 text-blue-300',
+    warning: 'bg-yellow-500/20 text-yellow-300',
+    error: 'bg-red-500/20 text-red-300',
+    critical: 'bg-red-700/30 text-red-200',
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -273,6 +305,68 @@ const AuditLogView: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Sistema Tab */}
+        {tab === 'sistema' && (
+          <div>
+            {/* Filters */}
+            <div className="px-4 py-3 border-b border-white/[0.04] flex flex-wrap gap-3">
+              <input
+                type="text"
+                value={systemFilterType}
+                onChange={e => setSystemFilterType(e.target.value)}
+                placeholder="Filtrar por tipo de evento..."
+                className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white text-xs placeholder-white/30 w-52"
+              />
+              <select
+                value={systemFilterSeverity}
+                onChange={e => setSystemFilterSeverity(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white text-xs"
+              >
+                <option value="">Toda severidad</option>
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+                <option value="critical">Critical</option>
+              </select>
+              <span className="ml-auto text-xs text-white/30 self-center">{systemTotal} eventos</span>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-white/[0.06] text-white/40 text-left">
+                    <th className="px-4 py-2 font-medium">Tipo</th>
+                    <th className="px-4 py-2 font-medium">Severidad</th>
+                    <th className="px-4 py-2 font-medium">Mensaje</th>
+                    <th className="px-4 py-2 font-medium whitespace-nowrap">Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {systemLogs.map((log: any) => (
+                    <tr key={log.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                      <td className="px-4 py-2.5 text-white/70 font-mono">{log.event_type}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SEVERITY_BADGE[log.severity] || 'bg-white/10 text-white/50'}`}>
+                          {log.severity || '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-white/80 max-w-xs truncate">{log.message || log.description || '—'}</td>
+                      <td className="px-4 py-2.5 text-white/30 whitespace-nowrap">{log.time_ago || log.created_at || '—'}</td>
+                    </tr>
+                  ))}
+                  {!loading && systemLogs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-6 text-center text-white/30">Sin eventos de sistema</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {loading && <p className="p-4 text-center text-white/30 text-xs">Cargando...</p>}
           </div>
         )}
 

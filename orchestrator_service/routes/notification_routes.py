@@ -340,6 +340,12 @@ async def get_notification_types():
                 "name": "Alertas de métricas",
                 "description": "Alertas cuando métricas del equipo alcanzan objetivos o requieren atención",
                 "default_priority": "medium"
+            },
+            {
+                "id": "sla_violation",
+                "name": "Violaciones de SLA",
+                "description": "Alertas cuando un lead excede el tiempo límite sin actividad o primera respuesta (DEV-42)",
+                "default_priority": "high"
             }
         ]
     }

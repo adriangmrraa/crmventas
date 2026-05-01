@@ -32,7 +32,9 @@
     "team_activity": "Activité Équipe",
     "audit_log": "Journal d'Audit",
     "duplicados": "Doublons",
-    "blacklist": "Liste noire"
+    "blacklist": "Liste noire",
+    "sla_rules": "Règles SLA",
+    "sla_violations": "Violations SLA"
   },
   "header": {
     "tenant_selector": "Sélecteur de Clinique",

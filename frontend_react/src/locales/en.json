@@ -35,7 +35,9 @@
     "audit_log": "Audit Log",
     "admin_chat": "Conversations",
     "duplicados": "Duplicates",
-    "blacklist": "Blacklist"
+    "blacklist": "Blacklist",
+    "sla_rules": "SLA Rules",
+    "sla_violations": "SLA Violations"
   },
   "common": {
     "save": "Save",

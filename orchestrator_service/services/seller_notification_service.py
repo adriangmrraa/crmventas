@@ -481,6 +481,56 @@ class SellerNotificationService:
         
         return notifications
     
+    async def check_sla_violations(self, tenant_id: int) -> List[Notification]:
+        """
+        Verificar violaciones de SLA y crear notificaciones
+        """
+        notifications = []
+        
+        try:
+            from services.sla_service import check_sla_violations as get_violations
+            
+            violations = await get_violations(tenant_id)
+            
+            for v in violations:
+                # Buscar CEO del tenant para notificar
+                async with get_db() as db:
+                    ceo_query = text("""
+                        SELECT id, email FROM users 
+                        WHERE tenant_id = :tenant_id AND role = 'ceo' AND status = 'active'
+                        LIMIT 1
+                    """)
+                    ceo_result = await db.execute(ceo_query, {"tenant_id": tenant_id})
+                    ceo = ceo_result.fetchone()
+                
+                if not ceo:
+                    continue
+                
+                priority = "critical" if v.get("should_escalate") else "high"
+                trigger_label = "primera respuesta" if v["trigger_type"] == "first_response" else "seguimiento"
+                
+                notification = Notification(
+                    id=f"sla_violation_{v['lead_id']}_{v['rule_id']}_{datetime.utcnow().timestamp()}",
+                    tenant_id=tenant_id,
+                    type="sla_violation",
+                    title="SLA Vencido",
+                    message=f"Lead {v['lead_name']} — SLA de {trigger_label} excedido por {v['minutes_exceeded']} min (límite: {v['threshold_minutes']} min)",
+                    priority=priority,
+                    recipient_id=ceo.id,
+                    sender_id=v.get("seller_id"),
+                    related_entity_type="lead",
+                    related_entity_id=v["lead_id"],
+                    metadata=v
+                )
+                notifications.append(notification)
+            
+            logger.info(f"Found {len(notifications)} SLA violations for tenant {tenant_id}")
+        
+        except Exception as e:
+            logger.error(f"Error checking SLA violations: {e}")
+        
+        return notifications
+
     async def run_all_checks(self, tenant_id: int) -> List[Notification]:
         """
         Ejecutar todas las verificaciones de notificaciones
@@ -493,7 +543,8 @@ class SellerNotificationService:
                 self.check_unanswered_conversations(tenant_id),
                 self.detect_hot_leads(tenant_id),
                 self.check_followup_reminders(tenant_id),
-                self.check_performance_alerts(tenant_id)
+                self.check_performance_alerts(tenant_id),
+                self.check_sla_violations(tenant_id)
             ]
             
             results = await asyncio.gather(*tasks, return_exceptions=True)

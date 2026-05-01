@@ -206,6 +206,33 @@ class ScheduledTasksService:
         except Exception as e:
             logger.error(f"Error in scheduled deduplication checks: {e}")
 
+    async def run_sla_checks(self):
+        """DEV-42: Verificar violaciones de SLA y generar notificaciones"""
+        logger.info("Running scheduled SLA checks")
+        try:
+            async with get_db() as db:
+                result = await db.execute(
+                    "SELECT id FROM tenants WHERE status = 'active'"
+                )
+                tenants = result.fetchall()
+
+            tasks = []
+            for tenant in tenants:
+                task = notification_service.run_all_checks(tenant.id)
+                tasks.append(task)
+
+            if tasks:
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                total = 0
+                for i, r in enumerate(results):
+                    if isinstance(r, Exception):
+                        logger.error(f"SLA check error for tenant {tenants[i].id}: {r}")
+                    elif isinstance(r, list):
+                        total += len(r)
+                logger.info(f"SLA checks completed: {total} violations across {len(tenants)} tenants")
+        except Exception as e:
+            logger.error(f"Error in scheduled SLA checks: {e}")
+
     async def sync_dentalogic_leads(self):
         """Sincronizar leads de alta intención desde Dentalogic"""
         logger.info("Running scheduled Dentalogic leads sync")
@@ -292,6 +319,15 @@ class ScheduledTasksService:
                 IntervalTrigger(hours=2),
                 id='deduplication_checks',
                 name='Lead Deduplication Checks',
+                replace_existing=True
+            )
+
+            # 9. SLA Checks (Frecuencia: 5 minutos) — DEV-42
+            self.scheduler.add_job(
+                self.run_sla_checks,
+                IntervalTrigger(minutes=5),
+                id='sla_checks',
+                name='SLA Violation Checks',
                 replace_existing=True
             )
             

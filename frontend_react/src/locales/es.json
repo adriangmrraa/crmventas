@@ -38,7 +38,9 @@
     "supervisor": "Modo Supervisor",
     "admin_chat": "Conversaciones",
     "duplicados": "Duplicados",
-    "blacklist": "Blacklist"
+    "blacklist": "Blacklist",
+    "sla_rules": "Reglas SLA",
+    "sla_violations": "Violaciones SLA"
   },
   "common": {
     "save": "Guardar",

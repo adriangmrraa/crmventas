@@ -24,7 +24,9 @@ import {
   Clock,
   Eye,
   Copy,
-  Ban
+  Ban,
+  AlarmClock,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -54,6 +56,8 @@ const SIDEBAR_IMAGES: Record<string, string> = {
   admin_chat:     'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&q=60',
   duplicados:     'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&q=60',
   blacklist:      'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=400&q=60',
+  sla_rules:      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=60',
+  sla_violations: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60',
 };
 
 interface SidebarProps {
@@ -133,6 +137,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     { id: 'manuales', labelKey: 'nav.manuales' as const, icon: <Home size={17} />, path: '/crm/manuales', roles: ['ceo', 'setter', 'closer', 'professional', 'secretary'], hint: 'Base de conocimiento: guiones, objeciones y procesos' },
     { id: 'plantillas', labelKey: 'nav.plantillas' as const, icon: <Layout size={17} />, path: '/crm/plantillas', roles: ['ceo', 'setter', 'closer'], hint: 'Plantillas de mensajes reutilizables con variables' },
     { id: 'duplicados', labelKey: 'nav.duplicados' as const, icon: <Copy size={17} />, path: '/crm/duplicados', roles: ['ceo'], hint: 'Leads duplicados detectados automaticamente: fusion y descarte' },
+    { id: 'sla_rules', labelKey: 'nav.sla_rules' as const, icon: <AlarmClock size={17} />, path: '/admin/sla-rules', roles: ['ceo'], hint: 'Configuración de reglas SLA para monitoreo de tiempos' },
+    { id: 'sla_violations', labelKey: 'nav.sla_violations' as const, icon: <AlertTriangle size={17} />, path: '/admin/sla-violations', roles: ['ceo'], hint: 'Violaciones activas de SLA: leads que excedieron el tiempo límite' },
     { id: 'blacklist', labelKey: 'nav.blacklist' as const, icon: <Ban size={17} />, path: '/crm/blacklist', roles: ['ceo'], hint: 'Contactos bloqueados: teléfonos y emails en blacklist' },
     { id: 'sellers', labelKey: 'nav.sellers' as const, icon: <ShieldCheck size={17} />, path: '/crm/vendedores', roles: ['ceo'], hint: 'Equipo de ventas: setters, closers y asignacion de leads' },
     { id: 'supervisor', labelKey: 'nav.supervisor' as const, icon: <Eye size={17} />, path: '/crm/supervisor', roles: ['ceo'], hint: 'Monitoreo en tiempo real de conversaciones y alertas de IA' },
@@ -166,6 +172,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onCloseMo
     if (path === '/crm/admin-chat') return location.pathname === path;
     if (path === '/crm/duplicados') return location.pathname === path;
     if (path === '/crm/blacklist') return location.pathname === path;
+    if (path === '/crm/blacklist') return location.pathname === path;
+    if (path === '/admin/sla-rules') return location.pathname === path;
+    if (path === '/admin/sla-violations') return location.pathname === path;
     return location.pathname === path;
   };
 

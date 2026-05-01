@@ -40,6 +40,8 @@ import MisNotasView from './modules/crm_sales/views/MisNotasView';
 import ManualesView from './modules/crm_sales/views/ManualesView';
 import DuplicateManagementView from './modules/crm_sales/views/DuplicateManagementView';
 import BlacklistManagementView from './modules/crm_sales/views/BlacklistManagementView';
+import SlaRulesView from './modules/crm_sales/views/SlaRulesView';
+import SlaViolationsView from './modules/crm_sales/views/SlaViolationsView';
 // Optional Notifications Pages
 import NotificationsView from './views/NotificationsView';
 // Legal Pages
@@ -202,6 +204,16 @@ function App() {
                         <Route path="crm/blacklist" element={
                           <ProtectedRoute allowedRoles={['ceo']}>
                             <BlacklistManagementView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="admin/sla-rules" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <SlaRulesView />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="admin/sla-violations" element={
+                          <ProtectedRoute allowedRoles={['ceo']}>
+                            <SlaViolationsView />
                           </ProtectedRoute>
                         } />
                         <Route path="notificaciones" element={<NotificationsView />} />
